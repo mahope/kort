@@ -15,3 +15,13 @@ export interface SearchResult {
 }
 
 export type MapStyle = "klassisk" | "daempet" | "graa" | "moerkt";
+
+export type BaseLayer = "skaermkort" | "ortofoto";
+
+export type OverlayId = "contours" | "hillshade";
+
+export interface OverlayState {
+  id: OverlayId;
+  enabled: boolean;
+  opacity: number;
+}

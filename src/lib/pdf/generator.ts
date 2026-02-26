@@ -1,8 +1,8 @@
 import { jsPDF } from "jspdf";
-import type { PaperFormat, Orientation, PrintFrameBounds } from "@/types/print";
-import type { MapStyle } from "@/types/map";
+import type { PaperFormat, Orientation, DpiOption, PrintFrameBounds } from "@/types/print";
+import type { MapStyle, BaseLayer, OverlayState } from "@/types/map";
 import { useMapStore } from "@/stores/mapStore";
-import { calculatePdfLayout, mmToPt } from "./layout";
+import { calculatePdfLayout } from "./layout";
 import { renderMapToCanvas } from "./renderer";
 
 interface GeneratePdfOptions {
@@ -10,6 +10,7 @@ interface GeneratePdfOptions {
   scale: number;
   paperFormat: PaperFormat;
   orientation: Orientation;
+  dpi: DpiOption;
 }
 
 export async function generatePdf({
@@ -17,9 +18,13 @@ export async function generatePdf({
   scale,
   paperFormat,
   orientation,
+  dpi,
 }: GeneratePdfOptions): Promise<void> {
-  const style: MapStyle = useMapStore.getState().style;
-  const layout = calculatePdfLayout(paperFormat, orientation, 300);
+  const mapState = useMapStore.getState();
+  const style: MapStyle = mapState.style;
+  const baseLayer: BaseLayer = mapState.baseLayer;
+  const overlays: OverlayState[] = mapState.overlays;
+  const layout = calculatePdfLayout(paperFormat, orientation, dpi);
 
   // Render map at target resolution
   const canvas = await renderMapToCanvas({
@@ -27,6 +32,8 @@ export async function generatePdf({
     canvasWidth: layout.canvasWidth,
     canvasHeight: layout.canvasHeight,
     style,
+    baseLayer,
+    overlays,
   });
 
   // Create PDF

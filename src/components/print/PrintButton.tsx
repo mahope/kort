@@ -4,14 +4,14 @@ import { usePrintStore } from "@/stores/printStore";
 import { generatePdf } from "@/lib/pdf/generator";
 
 export function PrintButton() {
-  const { frameBounds, scale, paperFormat, orientation, isGenerating, setIsGenerating } =
+  const { frameBounds, scale, paperFormat, orientation, dpi, isGenerating, setIsGenerating } =
     usePrintStore();
 
   const handleClick = async () => {
     if (!frameBounds || isGenerating) return;
     setIsGenerating(true);
     try {
-      await generatePdf({ bounds: frameBounds, scale, paperFormat, orientation });
+      await generatePdf({ bounds: frameBounds, scale, paperFormat, orientation, dpi });
     } catch (err) {
       alert(
         `Fejl ved PDF-generering: ${err instanceof Error ? err.message : "Ukendt fejl"}`

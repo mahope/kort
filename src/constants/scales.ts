@@ -1,6 +1,4 @@
-import type { ScalePreset } from "@/types/print";
-
-export const SCALE_PRESETS: { value: ScalePreset; label: string }[] = [
+export const SCALE_PRESETS: { value: number; label: string }[] = [
   { value: 10000, label: "1:10.000" },
   { value: 25000, label: "1:25.000" },
   { value: 50000, label: "1:50.000" },
@@ -9,4 +7,7 @@ export const SCALE_PRESETS: { value: ScalePreset; label: string }[] = [
   { value: 500000, label: "1:500.000" },
 ];
 
-export const DEFAULT_SCALE: ScalePreset = 25000;
+export const DEFAULT_SCALE = 25000;
+
+export const MIN_CUSTOM_SCALE = 1000;
+export const MAX_CUSTOM_SCALE = 1000000;
