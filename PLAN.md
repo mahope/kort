@@ -2,25 +2,34 @@
 
 ## Tech Stack
 
-| Komponent | Valg | Begrundelse |
-|---|---|---|
-| Framework | **Next.js 15 (App Router)** | SSR, serverless functions, Vercel-deploy |
-| Kort | **MapLibre GL JS** | Open-source, WebGL, smooth, gratis |
-| Styling | **Tailwind CSS 4** | Hurtigt, utility-first, dark mode built-in |
-| State | **Zustand** | Simpelt, performant, ingen boilerplate |
-| PDF | **jsPDF + html2canvas** (client) / **Puppeteer** (server) | Client-first, server som fallback for høj DPI |
-| Kortdata | **Dataforsyningen WMTS/WMS** | Gratis, officielle danske kort |
-| Adressesøgning | **DAWA API** | Gratis, ingen token, Danmarks adresser |
-| Hosting | **Vercel** | Gratis tier, edge functions, CDN |
-| Test | **Vitest + Playwright** | Hurtige unit tests + E2E |
+| Komponent | Valg | Version | Begrundelse |
+|---|---|---|---|
+| Runtime | **Node.js** | ≥ 20.9 | Minimum for Next.js 16 |
+| Language | **TypeScript** | 5.7 (stable) | Stabil, bred support. TS 6 beta er for ny, TS 7 (Go) endnu ikke klar |
+| Framework | **Next.js 16 (App Router)** | 16.1.6 | React 19, Turbopack stable, `use cache`, serverless functions |
+| React | **React 19** | 19.x | Bundlet med Next.js 16 - Actions, Suspense, concurrent rendering |
+| Kort | **MapLibre GL JS** | 5.19.0 | Open-source, WebGL, smooth, gratis, aktiv udvikling |
+| React-kort | **react-map-gl** | 8.1.0 | React wrapper for MapLibre (`react-map-gl/maplibre`) |
+| Styling | **Tailwind CSS** | 4.2.0 | 5x hurtigere builds, nye farvepaletter, CSS-first config |
+| State | **Zustand** | 5.0.11 | Simpelt, performant, ingen boilerplate, persist middleware |
+| PDF | **jsPDF** (client) / **LibPDF** (server) | jsPDF 4.2.0 / LibPDF beta | jsPDF for simpel client-PDF, LibPDF (TypeScript-native) til avanceret server-side |
+| Kortdata | **Dataforsyningen WMTS/WMS** | - | Gratis, officielle danske kort |
+| Adressesøgning | **DAWA API** | - | Gratis, ingen token, Danmarks adresser |
+| Hosting | **Vercel** | - | Gratis tier, edge functions, CDN |
+| Linting | **ESLint** | 10.0.x | Flat config only (eslint.config.ts), defineConfig() |
+| Test - Unit | **Vitest** | 4.0.18 | Browser Mode stable, visual regression |
+| Test - E2E | **Playwright** | 1.58.x | Cross-browser E2E |
+| GPX/KML parse | **@tmcw/togeojson** | 7.1.2 | Aktivt vedligeholdt, GPX + KML → GeoJSON |
 
 ---
 
 ## Fase 1 - MVP (Fundament + Print)
 
 ### 1.1 Projektopsætning
-- [ ] Initialiser Next.js 15 med App Router, TypeScript, Tailwind CSS
-- [ ] Konfigurer ESLint, Prettier, Vitest
+- [ ] Initialiser Next.js 16 med App Router, TypeScript, Tailwind CSS 4.2
+  - `npx create-next-app@latest topoprint --app --turbopack --src-dir`
+  - Default setup inkluderer: TypeScript, Tailwind CSS, ESLint, App Router, Turbopack
+- [ ] Konfigurer ESLint 10 (flat config, `eslint.config.ts`), Prettier, Vitest 4
 - [ ] Opsæt mappestruktur:
   ```
   src/
@@ -44,16 +53,17 @@
 - [ ] Opret CLAUDE.md med projektkonventioner
 - [ ] Konfigurer Vercel-projekt
 
-### 1.2 Kortvisning (MapLibre GL JS)
+### 1.2 Kortvisning (MapLibre GL JS 5 + react-map-gl)
+- [ ] Installer `maplibre-gl@5` og `react-map-gl@8` (import fra `react-map-gl/maplibre`)
 - [ ] Opsæt MapLibre GL JS med Dataforsyningens WMTS tiles
   - Hent gratis API-token fra dataforsyningen.dk
   - Konfigurer raster tile source med topografisk kort (topo_skaermkort)
-- [ ] Implementer basis kort-kontroller:
-  - Zoom in/ud knapper
-  - Fullscreen toggle
+- [ ] Implementer basis kort-kontroller via react-map-gl:
+  - `<NavigationControl>` (zoom in/ud + kompas)
+  - `<FullscreenControl>`
   - Zoom til Danmark ved load (center: [10.5, 56.0], zoom: 7)
-- [ ] Smooth zoom/pan med mouse, touch og scroll
-- [ ] Vis målestok-lineal (MapLibre ScaleControl)
+- [ ] Smooth zoom/pan med mouse, touch og scroll (WebGL via MapLibre 5)
+- [ ] Vis målestok-lineal (`<ScaleControl>`)
 - [ ] Vis attribution (Klimadatastyrelsen) - påkrævet
 
 ### 1.3 Adressesøgning
@@ -102,13 +112,14 @@
   1. Beregn bounding box fra print-rammen
   2. Hent kort-tiles for det specifikke område i korrekt opløsning
   3. Kompositer tiles til ét billede via OffscreenCanvas
-  4. Generer PDF med jsPDF:
+  4. Generer PDF med jsPDF 4.2:
      - Korrekt sidestørrelse
      - Kort-billede skaleret til præcis målestok
      - Marginer med: nordpil (SVG), målestok-lineal, koordinater for hjørner, dato, "Kilde: Klimadatastyrelsen / Dataforsyningen"
 - [ ] Alternativ server-side route (`/api/pdf`) som fallback:
   - Modtag bounding box, målestok, format, DPI
-  - Render via headless browser eller direkte tile-compositing
+  - LibPDF (TypeScript-native) til avanceret PDF-generering
+  - Direkte tile-compositing med canvas
   - Returner PDF som stream
 - [ ] Valider at målestok er korrekt ved 100% print (±1%)
 
@@ -189,8 +200,8 @@
 
 ### 3.1 GPX/KML/GeoJSON Import
 - [ ] Upload-zone: Drag & drop + filvalg-knap
-- [ ] Parse GPX → GeoJSON (via `@tmcw/togeojson`)
-- [ ] Parse KML → GeoJSON (via `@tmcw/togeojson`)
+- [ ] Parse GPX → GeoJSON (via `@tmcw/togeojson@7`)
+- [ ] Parse KML → GeoJSON (via `@tmcw/togeojson@7`)
 - [ ] Parse GeoJSON direkte
 - [ ] Vis ruter som linje-lag på kortet
 - [ ] Vis waypoints som markører med labels
@@ -284,8 +295,7 @@ topoprint/
 ├── CLAUDE.md
 ├── package.json
 ├── next.config.ts
-├── tailwind.config.ts
-├── tsconfig.json
+├── tsconfig.json              # Tailwind 4.2 bruger CSS-first config (ingen tailwind.config)
 ├── vitest.config.ts
 ├── playwright.config.ts
 ├── .env.local                 # NEXT_PUBLIC_DATAFORSYNINGEN_TOKEN
@@ -412,4 +422,26 @@ https://api.dataforsyningen.dk/stednavne2/autocomplete?q={query}
 
 ---
 
+## Versioner (fastlagt 2026-02-26)
+
+Alle versioner er de nyeste stabile releases per dags dato:
+
+| Package | Version | Seneste release |
+|---|---|---|
+| Next.js | 16.1.6 | 2026-02-24 |
+| React | 19.x | Bundlet med Next.js 16 |
+| TypeScript | 5.7.x | Stable (TS 6 beta, TS 7 preview - for tidligt) |
+| MapLibre GL JS | 5.19.0 | 2026-02-24 |
+| react-map-gl | 8.1.0 | 2025-09 |
+| Tailwind CSS | 4.2.0 | 2026-02-19 |
+| Zustand | 5.0.11 | 2026-02-01 |
+| jsPDF | 4.2.0 | 2026-02-19 |
+| LibPDF | beta | 2025 (Documenso) |
+| ESLint | 10.0.x | 2026-02 |
+| Vitest | 4.0.18 | 2026-01 |
+| Playwright | 1.58.x | 2026-01-30 |
+| @tmcw/togeojson | 7.1.2 | 2025-05 |
+| Node.js | ≥ 20.9 | LTS |
+
 *Plan oprettet: 2026-02-26*
+*Opdateret med nyeste versioner: 2026-02-26*
