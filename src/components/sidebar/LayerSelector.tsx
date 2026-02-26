@@ -53,6 +53,16 @@ export function LayerSelector() {
           <input
             type="radio"
             name="sidebar-baseLayer"
+            checked={baseLayer === "dtk25"}
+            onChange={() => setBaseLayer("dtk25")}
+            className="accent-primary"
+          />
+          <span className="text-sm">Topo kort 1:25.000</span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="sidebar-baseLayer"
             checked={baseLayer === "osm"}
             onChange={() => setBaseLayer("osm")}
             className="accent-primary"

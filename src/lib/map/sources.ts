@@ -14,33 +14,47 @@ export const ORTOFOTO_TILES_URL =
   `&format=image/jpeg&token=${DATAFORSYNINGEN_TOKEN}`;
 
 /**
+ * DTK 25 (topografisk kort 1:25.000) WMS tile URL.
+ * Uses Dataforsyningens dtk_25_DAF service.
+ */
+export const DTK25_TILES_URL =
+  `https://api.dataforsyningen.dk/dtk_25_DAF?` +
+  `service=WMS&version=1.1.1&request=GetMap` +
+  `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
+  `&LAYERS=DTK25&STYLES=default` +
+  `&TRANSPARENT=TRUE&FORMAT=image/png` +
+  `&token=${DATAFORSYNINGEN_TOKEN}` +
+  `&BBOX={bbox-epsg-3857}`;
+
+/**
  * DHM (Danmarks Højdemodel) WMS base URL.
  * Used for contours and hillshade overlays.
  */
 const DHM_WMS_BASE =
   `https://api.dataforsyningen.dk/dhm_DAF?` +
-  `service=WMS&version=1.3.0&request=GetMap` +
-  `&crs=EPSG:3857&width=256&height=256` +
-  `&format=image/png&transparent=true` +
+  `service=WMS&version=1.1.1&request=GetMap` +
+  `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
+  `&STYLES=&TRANSPARENT=TRUE&FORMAT=image/png` +
   `&token=${DATAFORSYNINGEN_TOKEN}`;
 
 /**
  * DHM Contour lines (0.5m) WMS tile URL.
  */
 export const DHM_CONTOURS_URL =
-  `${DHM_WMS_BASE}&layers=dhm_kurve_0_5_m&bbox={bbox-epsg-3857}`;
+  `${DHM_WMS_BASE}&LAYERS=dhm_kurve_0_5_m&BBOX={bbox-epsg-3857}`;
 
 /**
  * DHM Hillshade (terrain shadow) WMS tile URL.
  */
 export const DHM_HILLSHADE_URL =
-  `${DHM_WMS_BASE}&layers=dhm_terraen_skyggekort&bbox={bbox-epsg-3857}`;
+  `${DHM_WMS_BASE}&LAYERS=dhm_terraen_skyggekort&BBOX={bbox-epsg-3857}`;
 
 /**
  * Minimal blank MapLibre style for use with ortofoto raster base layer.
  */
 export const BLANK_STYLE = {
   version: 8 as const,
+  glyphs: "https://cdn.dataforsyningen.dk/assets/vector_tiles_assets/latest/fonts/{fontstack}/{range}.pbf",
   sources: {},
   layers: [
     {
@@ -61,6 +75,12 @@ export const ORTOFOTO_SOURCE: RasterSourceConfig = {
   tiles: [ORTOFOTO_TILES_URL],
   tileSize: 256,
   attribution: "&copy; Klimadatastyrelsen",
+};
+
+export const DTK25_SOURCE: RasterSourceConfig = {
+  tiles: [DTK25_TILES_URL],
+  tileSize: 256,
+  attribution: "&copy; Klimadatastyrelsen (DTK25)",
 };
 
 export const OSM_SOURCE: RasterSourceConfig = {

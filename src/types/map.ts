@@ -16,7 +16,7 @@ export interface SearchResult {
 
 export type MapStyle = "klassisk" | "daempet" | "graa" | "moerkt";
 
-export type BaseLayer = "skaermkort" | "ortofoto" | "osm";
+export type BaseLayer = "skaermkort" | "ortofoto" | "osm" | "dtk25";
 
 export type OverlayId = "contours" | "hillshade";
 

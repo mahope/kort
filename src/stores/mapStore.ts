@@ -12,12 +12,14 @@ interface MapStore {
   style: MapStyle;
   baseLayer: BaseLayer;
   overlays: OverlayState[];
+  showUtmGrid: boolean;
   flyToTarget: { lng: number; lat: number; zoom: number } | null;
   setViewState: (viewState: MapViewState) => void;
   setStyle: (style: MapStyle) => void;
   setBaseLayer: (baseLayer: BaseLayer) => void;
   toggleOverlay: (id: OverlayId) => void;
   setOverlayOpacity: (id: OverlayId, opacity: number) => void;
+  toggleUtmGrid: () => void;
   flyTo: (lng: number, lat: number, zoom?: number) => void;
   clearFlyTo: () => void;
 }
@@ -31,8 +33,9 @@ export const useMapStore = create<MapStore>((set) => ({
     pitch: 0,
   },
   style: DEFAULT_STYLE,
-  baseLayer: "skaermkort",
+  baseLayer: "dtk25",
   overlays: DEFAULT_OVERLAYS,
+  showUtmGrid: false,
   flyToTarget: null,
   setViewState: (viewState) => set({ viewState }),
   setStyle: (style) => set({ style }),
@@ -49,6 +52,7 @@ export const useMapStore = create<MapStore>((set) => ({
         o.id === id ? { ...o, opacity } : o
       ),
     })),
+  toggleUtmGrid: () => set((s) => ({ showUtmGrid: !s.showUtmGrid })),
   flyTo: (lng, lat, zoom = 14) => set({ flyToTarget: { lng, lat, zoom } }),
   clearFlyTo: () => set({ flyToTarget: null }),
 }));

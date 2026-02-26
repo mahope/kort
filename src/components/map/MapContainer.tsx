@@ -12,9 +12,12 @@ import Map, {
 } from "react-map-gl/maplibre";
 import { useMapStore } from "@/stores/mapStore";
 import { MAP_STYLES, DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
-import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
+import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
 import { PrintFrame } from "./PrintFrame";
 import { GeolocationButton } from "./GeolocationButton";
+import { ImportedLayers } from "./ImportedLayers";
+import { DrawingTools } from "./DrawingTools";
+import { UtmGrid } from "./UtmGrid";
 
 export function MapContainer() {
   const mapRef = useRef<MapRef>(null);
@@ -27,7 +30,7 @@ export function MapContainer() {
   const clearFlyTo = useMapStore((s) => s.clearFlyTo);
 
   const mapStyle = useMemo(() => {
-    if (baseLayer === "ortofoto" || baseLayer === "osm") return BLANK_STYLE;
+    if (baseLayer === "ortofoto" || baseLayer === "osm" || baseLayer === "dtk25") return BLANK_STYLE;
     return MAP_STYLES[style].url;
   }, [baseLayer, style]);
 
@@ -83,6 +86,19 @@ export function MapContainer() {
         </Source>
       )}
 
+      {/* DTK25 (topografisk kort 1:25.000) base layer */}
+      {baseLayer === "dtk25" && (
+        <Source
+          id="dtk25"
+          type="raster"
+          tiles={DTK25_SOURCE.tiles}
+          tileSize={DTK25_SOURCE.tileSize}
+          attribution={DTK25_SOURCE.attribution}
+        >
+          <Layer id="dtk25-layer" type="raster" />
+        </Source>
+      )}
+
       {/* OpenStreetMap base layer */}
       {baseLayer === "osm" && (
         <Source
@@ -128,6 +144,9 @@ export function MapContainer() {
         </Source>
       )}
 
+      <ImportedLayers />
+      <DrawingTools />
+      <UtmGrid />
       <PrintFrame />
 
       <NavigationControl position="bottom-right" />

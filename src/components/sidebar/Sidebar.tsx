@@ -7,7 +7,13 @@ import { OverlaySelector } from "./OverlaySelector";
 import { ScaleSelector } from "./ScaleSelector";
 import { PaperFormatSelector } from "./PaperFormatSelector";
 import { DpiSelector } from "./DpiSelector";
+import { BearingSelector } from "./BearingSelector";
 import { PrintButton } from "@/components/print/PrintButton";
+import { FileImport } from "./FileImport";
+import { ImportedLayerList } from "./ImportedLayerList";
+import { DrawToolbar } from "./DrawToolbar";
+import { MeasureTool } from "./MeasureTool";
+import { ExportPanel } from "./ExportPanel";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { useIsMobile } from "@/lib/hooks/useIsMobile";
 
@@ -63,9 +69,22 @@ function SidebarContent() {
         <OverlaySelector />
       </CollapsibleSection>
 
+      <CollapsibleSection title="Import & Lag">
+        <FileImport />
+        <ImportedLayerList />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Tegning & Mål" defaultOpen={false}>
+        <DrawToolbar />
+        <MeasureTool />
+      </CollapsibleSection>
+
+      <ExportPanel />
+
       <CollapsibleSection title="Udskrivning">
         <ScaleSelector />
         <PaperFormatSelector />
+        <BearingSelector />
         <DpiSelector />
       </CollapsibleSection>
 

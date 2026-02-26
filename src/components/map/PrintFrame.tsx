@@ -6,9 +6,32 @@ import { useMapStore } from "@/stores/mapStore";
 import { usePrintStore } from "@/stores/printStore";
 import { calculatePrintArea, groundExtentToBounds } from "@/lib/geo/calculations";
 
+/**
+ * Rotate a point around a center by a given angle (in degrees, clockwise).
+ * Returns [lng, lat].
+ */
+function rotatePoint(
+  lng: number,
+  lat: number,
+  centerLng: number,
+  centerLat: number,
+  angleDeg: number
+): [number, number] {
+  const rad = (angleDeg * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const dx = lng - centerLng;
+  const dy = lat - centerLat;
+  return [
+    centerLng + dx * cos - dy * sin,
+    centerLat + dx * sin + dy * cos,
+  ];
+}
+
 export function PrintFrame() {
   const viewState = useMapStore((s) => s.viewState);
   const { paperFormat, orientation, scale, setFrameBounds } = usePrintStore();
+  const bearing = viewState.bearing;
 
   const bounds = useMemo(() => {
     const area = calculatePrintArea(paperFormat, orientation, scale);
@@ -24,6 +47,22 @@ export function PrintFrame() {
     setFrameBounds(bounds);
   }, [bounds, setFrameBounds]);
 
+  // Corner points of the print area (axis-aligned)
+  const corners: [number, number][] = useMemo(() => [
+    [bounds.west, bounds.south],
+    [bounds.east, bounds.south],
+    [bounds.east, bounds.north],
+    [bounds.west, bounds.north],
+  ], [bounds]);
+
+  // Rotate corners by bearing around map center
+  const rotatedCorners: [number, number][] = useMemo(() => {
+    if (bearing === 0) return corners;
+    return corners.map(([lng, lat]) =>
+      rotatePoint(lng, lat, viewState.longitude, viewState.latitude, -bearing)
+    );
+  }, [corners, bearing, viewState.longitude, viewState.latitude]);
+
   // Dimming mask: large outer polygon with a hole for the print area
   const maskGeoJSON = useMemo(() => {
     const outer = [
@@ -33,13 +72,7 @@ export function PrintFrame() {
       [-180, 90],
       [-180, -90],
     ];
-    const inner = [
-      [bounds.west, bounds.south],
-      [bounds.east, bounds.south],
-      [bounds.east, bounds.north],
-      [bounds.west, bounds.north],
-      [bounds.west, bounds.south],
-    ];
+    const inner = [...rotatedCorners, rotatedCorners[0]];
     return {
       type: "FeatureCollection" as const,
       features: [
@@ -53,7 +86,7 @@ export function PrintFrame() {
         },
       ],
     };
-  }, [bounds]);
+  }, [rotatedCorners]);
 
   // Print frame border
   const borderGeoJSON = useMemo(
@@ -65,18 +98,12 @@ export function PrintFrame() {
           properties: {},
           geometry: {
             type: "LineString" as const,
-            coordinates: [
-              [bounds.west, bounds.south],
-              [bounds.east, bounds.south],
-              [bounds.east, bounds.north],
-              [bounds.west, bounds.north],
-              [bounds.west, bounds.south],
-            ],
+            coordinates: [...rotatedCorners, rotatedCorners[0]],
           },
         },
       ],
     }),
-    [bounds]
+    [rotatedCorners]
   );
 
   return (
