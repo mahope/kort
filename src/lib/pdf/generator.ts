@@ -1,12 +1,15 @@
 import { jsPDF } from "jspdf";
-import type { PaperFormat, Orientation, DpiOption, PrintFrameBounds } from "@/types/print";
+import type { PaperFormat, Orientation, DpiOption, PrintFrameBounds, PageCell } from "@/types/print";
 import type { MapStyle, BaseLayer, OverlayState } from "@/types/map";
 import type { PdfLayout } from "@/types/print";
 import { useMapStore } from "@/stores/mapStore";
+import { usePrintStore } from "@/stores/printStore";
 import { useImportStore } from "@/stores/importStore";
 import { useDrawStore } from "@/stores/drawStore";
+import { useHistoryStore } from "@/stores/historyStore";
 import { calculatePdfLayout } from "./layout";
 import { renderMapToCanvas } from "./renderer";
+import { calculateMultiPageGrid } from "@/lib/geo/calculations";
 import { latlngToUtm, utmToLatlng, getGridInterval } from "@/lib/geo/utm";
 
 interface GeneratePdfOptions {
@@ -24,6 +27,13 @@ export async function generatePdf({
   orientation,
   dpi,
 }: GeneratePdfOptions): Promise<void> {
+  const printState = usePrintStore.getState();
+
+  // Delegate to multi-page if enabled
+  if (printState.multiPage) {
+    return generateMultiPagePdf({ bounds, scale, paperFormat, orientation, dpi });
+  }
+
   const mapState = useMapStore.getState();
   const style: MapStyle = mapState.style;
   const baseLayer: BaseLayer = mapState.baseLayer;
@@ -81,6 +91,17 @@ export async function generatePdf({
   // Download via blob to avoid page navigation
   const scaleStr = scale >= 1000 ? `${scale / 1000}k` : String(scale);
   const filename = `kort_1${scaleStr}_${paperFormat}.pdf`;
+  // Record in print history
+  useHistoryStore.getState().addEntry({
+    lng: mapState.viewState.longitude,
+    lat: mapState.viewState.latitude,
+    zoom: mapState.viewState.zoom,
+    scale,
+    paperFormat,
+    orientation,
+    baseLayer,
+  });
+
   const blob = pdf.output("blob");
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -301,4 +322,108 @@ function drawAttribution(
   pdf.text(attribution, layout.pageWidthMm - layout.marginMm, y, {
     align: "right",
   });
+}
+
+async function generateMultiPagePdf({
+  scale,
+  paperFormat,
+  orientation,
+  dpi,
+}: GeneratePdfOptions): Promise<void> {
+  const mapState = useMapStore.getState();
+  const printState = usePrintStore.getState();
+  const style: MapStyle = mapState.style;
+  const baseLayer: BaseLayer = mapState.baseLayer;
+  const overlays: OverlayState[] = mapState.overlays;
+  const importedLayers = useImportStore.getState().layers;
+  const drawnFeatures = useDrawStore.getState().features;
+  const showUtmGrid = mapState.showUtmGrid;
+  const bearing = mapState.viewState.bearing;
+  const layout = calculatePdfLayout(paperFormat, orientation, dpi);
+
+  const { cells } = calculateMultiPageGrid(
+    mapState.viewState.longitude,
+    mapState.viewState.latitude,
+    paperFormat,
+    orientation,
+    scale,
+    printState.overlapMm,
+    printState.gridCols,
+    printState.gridRows
+  );
+
+  const totalPages = cells.length;
+  printState.setTotalPages(totalPages);
+
+  const pdf = new jsPDF({
+    orientation: orientation === "landscape" ? "landscape" : "portrait",
+    unit: "mm",
+    format: [layout.pageWidthMm, layout.pageHeightMm],
+  });
+
+  for (let i = 0; i < cells.length; i++) {
+    const cell = cells[i];
+    printState.setGeneratingPage(i + 1);
+
+    if (i > 0) {
+      pdf.addPage([layout.pageWidthMm, layout.pageHeightMm], orientation === "landscape" ? "landscape" : "portrait");
+    }
+
+    const canvas = await renderMapToCanvas({
+      bounds: cell.bounds,
+      canvasWidth: layout.canvasWidth,
+      canvasHeight: layout.canvasHeight,
+      style,
+      baseLayer,
+      overlays,
+      importedLayers,
+      drawnFeatures,
+      showUtmGrid,
+      scale,
+      bearing,
+    });
+
+    const imgData = canvas.toDataURL("image/jpeg", 0.92);
+    pdf.addImage(imgData, "JPEG", layout.marginMm, layout.marginMm, layout.mapWidthMm, layout.mapHeightMm);
+
+    if (showUtmGrid) {
+      drawUtmGrid(pdf, layout, cell.bounds, scale);
+    }
+
+    drawScaleBar(pdf, layout, scale);
+    drawNorthArrow(pdf, layout, bearing);
+
+    // Page label
+    pdf.setFontSize(8);
+    pdf.setTextColor(0);
+    pdf.text(`Side ${cell.label}`, layout.marginMm, layout.marginMm - 2);
+
+    drawAttribution(pdf, layout, scale, showUtmGrid, cell.bounds);
+  }
+
+  printState.setGeneratingPage(0);
+  printState.setTotalPages(0);
+
+  // Record in print history
+  useHistoryStore.getState().addEntry({
+    lng: mapState.viewState.longitude,
+    lat: mapState.viewState.latitude,
+    zoom: mapState.viewState.zoom,
+    scale,
+    paperFormat,
+    orientation,
+    baseLayer,
+  });
+
+  const scaleStr = scale >= 1000 ? `${scale / 1000}k` : String(scale);
+  const filename = `kort_1${scaleStr}_${paperFormat}_${cells.length}sider.pdf`;
+  const blob = pdf.output("blob");
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }

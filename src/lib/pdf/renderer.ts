@@ -4,7 +4,8 @@ import type { MapStyle, BaseLayer, OverlayState } from "@/types/map";
 import type { ImportedLayer } from "@/stores/importStore";
 import type { DrawnFeature } from "@/stores/drawStore";
 import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
-import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
+import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
+import type { RasterSourceConfig } from "@/lib/map/sources";
 import { latlngToUtm, utmToLatlng, getGridInterval } from "@/lib/geo/utm";
 
 function getDashArray(lineStyle: string): number[] | undefined {
@@ -54,6 +55,14 @@ export async function renderMapToCanvas({
   try {
     const mapStyle = baseLayer === "skaermkort" ? MAP_STYLES[style].url : BLANK_STYLE;
 
+    const RASTER_BASE_LAYERS: Record<string, RasterSourceConfig> = {
+      ortofoto: ORTOFOTO_SOURCE,
+      dtk25: DTK25_SOURCE,
+      osm: OSM_SOURCE,
+      historisk_hoeje: HISTORISK_HOEJE_SOURCE,
+      historisk_lave: HISTORISK_LAVE_SOURCE,
+    };
+
     const centerLng = (bounds.west + bounds.east) / 2;
     const centerLat = (bounds.north + bounds.south) / 2;
 
@@ -95,27 +104,14 @@ export async function renderMapToCanvas({
     await waitForMapLoad(map);
 
     // Add raster base layer if not skaermkort
-    if (baseLayer === "ortofoto") {
-      map.addSource("ortofoto", {
+    const rasterSource = RASTER_BASE_LAYERS[baseLayer];
+    if (rasterSource) {
+      map.addSource(`base-${baseLayer}`, {
         type: "raster",
-        tiles: ORTOFOTO_SOURCE.tiles,
-        tileSize: ORTOFOTO_SOURCE.tileSize,
+        tiles: rasterSource.tiles,
+        tileSize: rasterSource.tileSize,
       });
-      map.addLayer({ id: "ortofoto-layer", type: "raster", source: "ortofoto" });
-    } else if (baseLayer === "dtk25") {
-      map.addSource("dtk25", {
-        type: "raster",
-        tiles: DTK25_SOURCE.tiles,
-        tileSize: DTK25_SOURCE.tileSize,
-      });
-      map.addLayer({ id: "dtk25-layer", type: "raster", source: "dtk25" });
-    } else if (baseLayer === "osm") {
-      map.addSource("osm", {
-        type: "raster",
-        tiles: OSM_SOURCE.tiles,
-        tileSize: OSM_SOURCE.tileSize,
-      });
-      map.addLayer({ id: "osm-layer", type: "raster", source: "osm" });
+      map.addLayer({ id: `base-${baseLayer}-layer`, type: "raster", source: `base-${baseLayer}` });
     }
 
     // Add active overlays

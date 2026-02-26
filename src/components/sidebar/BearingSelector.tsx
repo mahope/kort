@@ -36,9 +36,9 @@ export function BearingSelector() {
             step={1}
             value={Math.round(bearing)}
             onChange={(e) => setBearing(Number(e.target.value))}
-            className="w-14 rounded border border-gray-300 px-1 py-0.5 text-xs text-right bg-white"
+            className="w-14 rounded border border-border px-1 py-0.5 text-xs text-right bg-surface"
           />
-          <span className="text-xs text-gray-400">°</span>
+          <span className="text-xs text-text-muted">°</span>
         </div>
         {bearing !== 0 && (
           <button

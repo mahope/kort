@@ -49,7 +49,7 @@ export function ScaleSelector() {
       <select
         value={selectValue}
         onChange={(e) => handleSelectChange(e.target.value)}
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+        className="w-full rounded-lg border border-border px-3 py-2 text-sm bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
       >
         {SCALE_PRESETS.map((s) => (
           <option key={s.value} value={String(s.value)}>
@@ -62,7 +62,7 @@ export function ScaleSelector() {
       {(isCustom || !isPreset) && (
         <div className="mt-2">
           <div className="flex items-center gap-1">
-            <span className="text-sm text-gray-500">1:</span>
+            <span className="text-sm text-text-secondary">1:</span>
             <input
               type="text"
               inputMode="numeric"
@@ -74,14 +74,14 @@ export function ScaleSelector() {
               onBlur={handleCustomSubmit}
               onKeyDown={handleKeyDown}
               placeholder="f.eks. 15000"
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="flex-1 rounded-lg border border-border px-3 py-1.5 text-sm bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
           {error && (
             <p className="mt-1 text-xs text-red-500">{error}</p>
           )}
           {!isPreset && !error && (
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-text-muted">
               Aktuel: 1:{scale.toLocaleString("da-DK")}
             </p>
           )}

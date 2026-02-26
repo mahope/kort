@@ -4,7 +4,7 @@ import { usePrintStore } from "@/stores/printStore";
 import { generatePdf } from "@/lib/pdf/generator";
 
 export function PrintButton() {
-  const { frameBounds, scale, paperFormat, orientation, dpi, isGenerating, setIsGenerating } =
+  const { frameBounds, scale, paperFormat, orientation, dpi, isGenerating, setIsGenerating, generatingPage, totalPages } =
     usePrintStore();
 
   const handleClick = async () => {
@@ -49,7 +49,7 @@ export function PrintButton() {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
             />
           </svg>
-          Genererer PDF...
+          {generatingPage > 0 ? `Side ${generatingPage} af ${totalPages}...` : "Genererer PDF..."}
         </span>
       ) : (
         "Download PDF"

@@ -42,7 +42,7 @@ export function BottomSheet({ children }: BottomSheetProps) {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-40 rounded-t-2xl bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.15)]"
+      className="fixed bottom-0 left-0 right-0 z-40 rounded-t-2xl bg-surface shadow-[0_-4px_20px_rgba(0,0,0,0.15)]"
       style={{ height }}
     >
       <div
@@ -51,7 +51,7 @@ export function BottomSheet({ children }: BottomSheetProps) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
       >
-        <div className="w-10 h-1 rounded-full bg-gray-300" />
+        <div className="w-10 h-1 rounded-full bg-text-muted" />
       </div>
       <div className="overflow-y-auto px-4 pb-4" style={{ height: height - 28 }}>
         {children}

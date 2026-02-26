@@ -1,0 +1,18 @@
+{
+  "name": "Kort.mahoje.dk - Topografisk Kortudskrivning",
+  "short_name": "TopoPrint",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#2563eb",
+  "background_color": "#ffffff",
+  "description": "Gratis dansk topografisk kortudskrivning som PDF",
+  "lang": "da",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -30,7 +30,7 @@ export function LayerSelector() {
           <select
             value={currentStyle}
             onChange={(e) => setStyle(e.target.value as MapStyle)}
-            className="ml-6 rounded-lg border border-gray-300 px-2 py-1 text-sm bg-white focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="ml-6 rounded-lg border border-border px-2 py-1 text-sm bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           >
             {STYLE_KEYS.map((key) => (
               <option key={key} value={key}>
@@ -68,6 +68,26 @@ export function LayerSelector() {
             className="accent-primary"
           />
           <span className="text-sm">OpenStreetMap</span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="sidebar-baseLayer"
+            checked={baseLayer === "historisk_hoeje"}
+            onChange={() => setBaseLayer("historisk_hoeje")}
+            className="accent-primary"
+          />
+          <span className="text-sm">Høje Målebordsblade (1842-1899)</span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="sidebar-baseLayer"
+            checked={baseLayer === "historisk_lave"}
+            onChange={() => setBaseLayer("historisk_lave")}
+            className="accent-primary"
+          />
+          <span className="text-sm">Lave Målebordsblade (1901-1971)</span>
         </label>
       </div>
     </div>

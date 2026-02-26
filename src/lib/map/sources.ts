@@ -27,6 +27,54 @@ export const DTK25_TILES_URL =
   `&BBOX={bbox-epsg-3857}`;
 
 /**
+ * Høje Målebordsblade (1842-1899) WMS tile URL.
+ */
+export const HISTORISK_HOEJE_TILES_URL =
+  `https://api.dataforsyningen.dk/topo20_hoeje_maalebordsblade_DAF?` +
+  `service=WMS&version=1.1.1&request=GetMap` +
+  `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
+  `&LAYERS=dtk_hoeje_maalebordsblade&STYLES=default` +
+  `&TRANSPARENT=TRUE&FORMAT=image/png` +
+  `&token=${DATAFORSYNINGEN_TOKEN}` +
+  `&BBOX={bbox-epsg-3857}`;
+
+/**
+ * Lave Målebordsblade (1901-1971) WMS tile URL.
+ */
+export const HISTORISK_LAVE_TILES_URL =
+  `https://api.dataforsyningen.dk/topo20_lave_maalebordsblade_DAF?` +
+  `service=WMS&version=1.1.1&request=GetMap` +
+  `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
+  `&LAYERS=dtk_lave_maalebordsblade&STYLES=default` +
+  `&TRANSPARENT=TRUE&FORMAT=image/png` +
+  `&token=${DATAFORSYNINGEN_TOKEN}` +
+  `&BBOX={bbox-epsg-3857}`;
+
+/**
+ * Danske Stednavne WMS tile URL.
+ */
+export const STEDNAVNE_TILES_URL =
+  `https://api.dataforsyningen.dk/danske_stednavne_DAF?` +
+  `service=WMS&version=1.1.1&request=GetMap` +
+  `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
+  `&LAYERS=danske_stednavne&STYLES=default` +
+  `&TRANSPARENT=TRUE&FORMAT=image/png` +
+  `&token=${DATAFORSYNINGEN_TOKEN}` +
+  `&BBOX={bbox-epsg-3857}`;
+
+/**
+ * Matrikelskel WMS tile URL.
+ */
+export const MATRIKEL_TILES_URL =
+  `https://api.dataforsyningen.dk/forvaltning2_udv?` +
+  `service=WMS&version=1.1.1&request=GetMap` +
+  `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
+  `&LAYERS=Matrikelskel&STYLES=default` +
+  `&TRANSPARENT=TRUE&FORMAT=image/png` +
+  `&token=${DATAFORSYNINGEN_TOKEN}` +
+  `&BBOX={bbox-epsg-3857}`;
+
+/**
  * DHM (Danmarks Højdemodel) WMS base URL.
  * Used for contours and hillshade overlays.
  */
@@ -89,6 +137,18 @@ export const OSM_SOURCE: RasterSourceConfig = {
   attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors",
 };
 
+export const HISTORISK_HOEJE_SOURCE: RasterSourceConfig = {
+  tiles: [HISTORISK_HOEJE_TILES_URL],
+  tileSize: 256,
+  attribution: "&copy; Klimadatastyrelsen (Høje Målebordsblade)",
+};
+
+export const HISTORISK_LAVE_SOURCE: RasterSourceConfig = {
+  tiles: [HISTORISK_LAVE_TILES_URL],
+  tileSize: 256,
+  attribution: "&copy; Klimadatastyrelsen (Lave Målebordsblade)",
+};
+
 export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
   contours: {
     tiles: [DHM_CONTOURS_URL],
@@ -99,5 +159,15 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     tiles: [DHM_HILLSHADE_URL],
     tileSize: 256,
     attribution: "&copy; Klimadatastyrelsen (DHM)",
+  },
+  stednavne: {
+    tiles: [STEDNAVNE_TILES_URL],
+    tileSize: 256,
+    attribution: "&copy; Klimadatastyrelsen (Stednavne)",
+  },
+  matrikel: {
+    tiles: [MATRIKEL_TILES_URL],
+    tileSize: 256,
+    attribution: "&copy; Klimadatastyrelsen (Matrikelskel)",
   },
 };

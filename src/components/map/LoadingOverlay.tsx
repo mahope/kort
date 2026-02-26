@@ -9,7 +9,7 @@ export function LoadingOverlay() {
 
   return (
     <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/40">
-      <div className="rounded-xl bg-white px-8 py-6 text-center shadow-lg">
+      <div className="rounded-xl bg-surface px-8 py-6 text-center shadow-lg">
         <svg
           className="mx-auto mb-3 h-8 w-8 animate-spin text-primary"
           viewBox="0 0 24 24"
@@ -29,8 +29,8 @@ export function LoadingOverlay() {
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
           />
         </svg>
-        <p className="text-sm font-medium text-gray-700">Genererer PDF...</p>
-        <p className="text-xs text-gray-400 mt-1">Dette kan tage et ojeblik</p>
+        <p className="text-sm font-medium text-foreground">Genererer PDF...</p>
+        <p className="text-xs text-text-muted mt-1">Dette kan tage et ojeblik</p>
       </div>
     </div>
   );

@@ -81,10 +81,10 @@ export function SearchBar() {
         onKeyDown={handleKeyDown}
         onFocus={() => results.length > 0 && setIsOpen(true)}
         placeholder="Sog efter adresse eller stednavn..."
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+        className="w-full rounded-lg border border-border px-3 py-2 text-sm bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
       />
       {isOpen && (
-        <ul className="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-60 overflow-y-auto">
+        <ul className="absolute z-50 mt-1 w-full rounded-lg border border-border bg-surface shadow-lg max-h-60 overflow-y-auto">
           {results.map((r, i) => (
             <li key={r.id}>
               <button
@@ -95,7 +95,7 @@ export function SearchBar() {
                 onMouseDown={() => selectResult(r)}
               >
                 <div className="font-medium">{r.text}</div>
-                <div className="text-xs text-gray-500">{r.description}</div>
+                <div className="text-xs text-text-secondary">{r.description}</div>
               </button>
             </li>
           ))}

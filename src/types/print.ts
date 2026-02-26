@@ -29,3 +29,10 @@ export interface PdfLayout {
   canvasWidth: number;
   canvasHeight: number;
 }
+
+export interface PageCell {
+  row: number;
+  col: number;
+  label: string;
+  bounds: PrintFrameBounds;
+}

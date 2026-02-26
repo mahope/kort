@@ -132,8 +132,8 @@ export function GeolocationButton({ mapRef }: GeolocationButtonProps) {
           onClick={handleClick}
           disabled={state === "loading"}
           title={errorMsg || "Find min position"}
-          className={`flex items-center justify-center w-[29px] h-[29px] rounded bg-white shadow-md border border-gray-300 hover:bg-gray-50 transition-colors ${
-            state === "active" ? "text-blue-500" : state === "error" ? "text-red-400" : "text-gray-600"
+          className={`flex items-center justify-center w-[29px] h-[29px] rounded bg-surface shadow-md border border-border hover:bg-surface-secondary transition-colors ${
+            state === "active" ? "text-primary" : state === "error" ? "text-accent" : "text-text-secondary"
           } ${state === "loading" ? "animate-pulse" : ""}`}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

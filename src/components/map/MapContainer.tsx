@@ -12,7 +12,8 @@ import Map, {
 } from "react-map-gl/maplibre";
 import { useMapStore } from "@/stores/mapStore";
 import { MAP_STYLES, DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
-import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
+import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
+import type { BaseLayer } from "@/types/map";
 import { PrintFrame } from "./PrintFrame";
 import { GeolocationButton } from "./GeolocationButton";
 import { ImportedLayers } from "./ImportedLayers";
@@ -29,8 +30,16 @@ export function MapContainer() {
   const flyToTarget = useMapStore((s) => s.flyToTarget);
   const clearFlyTo = useMapStore((s) => s.clearFlyTo);
 
+  const RASTER_BASE_LAYERS: Record<string, typeof ORTOFOTO_SOURCE> = useMemo(() => ({
+    ortofoto: ORTOFOTO_SOURCE,
+    dtk25: DTK25_SOURCE,
+    osm: OSM_SOURCE,
+    historisk_hoeje: HISTORISK_HOEJE_SOURCE,
+    historisk_lave: HISTORISK_LAVE_SOURCE,
+  }), []);
+
   const mapStyle = useMemo(() => {
-    if (baseLayer === "ortofoto" || baseLayer === "osm" || baseLayer === "dtk25") return BLANK_STYLE;
+    if (baseLayer !== "skaermkort") return BLANK_STYLE;
     return MAP_STYLES[style].url;
   }, [baseLayer, style]);
 
@@ -58,9 +67,6 @@ export function MapContainer() {
     }
   }, [flyToTarget, clearFlyTo]);
 
-  const hillshadeOverlay = overlays.find((o) => o.id === "hillshade");
-  const contoursOverlay = overlays.find((o) => o.id === "contours");
-
   return (
     <Map
       ref={mapRef}
@@ -73,76 +79,35 @@ export function MapContainer() {
       canvasContextAttributes={{ preserveDrawingBuffer: true }}
       style={{ width: "100%", height: "100%" }}
     >
-      {/* Ortofoto base layer */}
-      {baseLayer === "ortofoto" && (
+      {/* Raster base layer (ortofoto, dtk25, osm, historiske kort) */}
+      {baseLayer !== "skaermkort" && RASTER_BASE_LAYERS[baseLayer] && (
         <Source
-          id="ortofoto"
+          id={`base-${baseLayer}`}
           type="raster"
-          tiles={ORTOFOTO_SOURCE.tiles}
-          tileSize={ORTOFOTO_SOURCE.tileSize}
-          attribution={ORTOFOTO_SOURCE.attribution}
+          tiles={RASTER_BASE_LAYERS[baseLayer].tiles}
+          tileSize={RASTER_BASE_LAYERS[baseLayer].tileSize}
+          attribution={RASTER_BASE_LAYERS[baseLayer].attribution}
         >
-          <Layer id="ortofoto-layer" type="raster" />
+          <Layer id={`base-${baseLayer}-layer`} type="raster" />
         </Source>
       )}
 
-      {/* DTK25 (topografisk kort 1:25.000) base layer */}
-      {baseLayer === "dtk25" && (
+      {/* Overlays (generic loop) */}
+      {overlays.filter((o) => o.enabled).map((overlay) => (
         <Source
-          id="dtk25"
+          key={overlay.id}
+          id={`${overlay.id}-overlay`}
           type="raster"
-          tiles={DTK25_SOURCE.tiles}
-          tileSize={DTK25_SOURCE.tileSize}
-          attribution={DTK25_SOURCE.attribution}
-        >
-          <Layer id="dtk25-layer" type="raster" />
-        </Source>
-      )}
-
-      {/* OpenStreetMap base layer */}
-      {baseLayer === "osm" && (
-        <Source
-          id="osm"
-          type="raster"
-          tiles={OSM_SOURCE.tiles}
-          tileSize={OSM_SOURCE.tileSize}
-          attribution={OSM_SOURCE.attribution}
-        >
-          <Layer id="osm-layer" type="raster" />
-        </Source>
-      )}
-
-      {/* Hillshade overlay (rendered below contours) */}
-      {hillshadeOverlay?.enabled && (
-        <Source
-          id="hillshade-overlay"
-          type="raster"
-          tiles={OVERLAY_SOURCES.hillshade.tiles}
-          tileSize={OVERLAY_SOURCES.hillshade.tileSize}
+          tiles={OVERLAY_SOURCES[overlay.id].tiles}
+          tileSize={OVERLAY_SOURCES[overlay.id].tileSize}
         >
           <Layer
-            id="hillshade-overlay-layer"
+            id={`${overlay.id}-overlay-layer`}
             type="raster"
-            paint={{ "raster-opacity": hillshadeOverlay.opacity }}
+            paint={{ "raster-opacity": overlay.opacity }}
           />
         </Source>
-      )}
-
-      {/* Contours overlay */}
-      {contoursOverlay?.enabled && (
-        <Source
-          id="contours-overlay"
-          type="raster"
-          tiles={OVERLAY_SOURCES.contours.tiles}
-          tileSize={OVERLAY_SOURCES.contours.tileSize}
-        >
-          <Layer
-            id="contours-overlay-layer"
-            type="raster"
-            paint={{ "raster-opacity": contoursOverlay.opacity }}
-          />
-        </Source>
-      )}
+      ))}
 
       <ImportedLayers />
       <DrawingTools />

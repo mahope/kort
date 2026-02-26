@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kort.mahoje.dk - Offline</title>
+  <style>
+    body { font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; color: #1a1a2e; }
+    .container { text-align: center; padding: 2rem; }
+    h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    p { color: #64748b; }
+    button { margin-top: 1rem; padding: 0.5rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-size: 0.875rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Du er offline</h1>
+    <p>Kort.mahoje.dk kræver en internetforbindelse for at indlæse kortdata.</p>
+    <p>Allerede indlæste kort-tiles er stadig tilgængelige.</p>
+    <button onclick="location.reload()">Prøv igen</button>
+  </div>
+</body>
+</html>

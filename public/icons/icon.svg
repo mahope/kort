@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#2563eb"/>
+  <g fill="none" stroke="#ffffff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Map fold lines -->
+    <path d="M160 120L160 392"/>
+    <path d="M352 120L352 392"/>
+    <!-- Map outline -->
+    <path d="M96 392L160 360L256 392L352 360L416 392V120L352 152L256 120L160 152L96 120Z" fill="#ffffff" fill-opacity="0.15"/>
+    <!-- Compass north arrow -->
+    <polygon points="256,180 240,260 256,240 272,260" fill="#ffffff" stroke="none"/>
+  </g>
+  <text x="256" y="440" text-anchor="middle" fill="#ffffff" font-family="system-ui" font-weight="700" font-size="72">N</text>
+</svg>

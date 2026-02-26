@@ -72,7 +72,7 @@ export function ExportPanel() {
         <select
           value={format}
           onChange={(e) => setFormat(e.target.value as ExportFormat)}
-          className="rounded border border-gray-300 px-2 py-1 text-xs bg-white"
+          className="rounded border border-border px-2 py-1 text-xs bg-surface"
         >
           <option value="geojson">GeoJSON</option>
           <option value="gpx">GPX</option>
@@ -88,12 +88,12 @@ export function ExportPanel() {
         <button
           type="button"
           onClick={handleCopy}
-          className="px-2 py-1 rounded text-xs border border-gray-300 hover:border-gray-400 transition-colors"
+          className="px-2 py-1 rounded text-xs border border-border hover:border-text-muted transition-colors"
         >
           {copied ? "Kopieret!" : "Kopiér GeoJSON"}
         </button>
       </div>
-      <p className="text-[10px] text-gray-400 mt-1">
+      <p className="text-[10px] text-text-muted mt-1">
         {allFeatures.length} feature{allFeatures.length !== 1 ? "s" : ""} ({importedLayers.length} importerede lag, {drawnFeatures.length} tegnede)
       </p>
     </div>

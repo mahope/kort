@@ -10,6 +10,8 @@ const STYLE_KEYS = Object.keys(MAP_STYLES) as MapStyle[];
 const OVERLAY_LABELS: Record<OverlayId, string> = {
   contours: "Højdekurver",
   hillshade: "Skyggekort",
+  stednavne: "Stednavne",
+  matrikel: "Matrikelskel",
 };
 
 export function MapControls() {
@@ -27,7 +29,7 @@ export function MapControls() {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 rounded-lg bg-white/90 px-3 py-2 text-sm font-medium shadow-md backdrop-blur-sm hover:bg-white transition-colors"
+        className="flex items-center gap-1.5 rounded-lg bg-surface/90 px-3 py-2 text-sm font-medium shadow-md backdrop-blur-sm hover:bg-surface transition-colors"
         title="Kortlag"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -37,10 +39,10 @@ export function MapControls() {
       </button>
 
       {isOpen && (
-        <div className="mt-2 w-64 rounded-lg bg-white/95 p-3 shadow-lg backdrop-blur-sm">
+        <div className="mt-2 w-64 rounded-lg bg-surface/95 p-3 shadow-lg backdrop-blur-sm">
           {/* Base layer */}
           <div className="mb-3">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Basiskort</h3>
+            <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Basiskort</h3>
             <div className="space-y-1">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -62,7 +64,7 @@ export function MapControls() {
                       className={`rounded px-2 py-0.5 text-xs transition-colors ${
                         currentStyle === key
                           ? "bg-primary text-white"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          : "bg-surface-secondary text-text-secondary hover:bg-border"
                       }`}
                     >
                       {MAP_STYLES[key].label}
@@ -90,12 +92,32 @@ export function MapControls() {
                 />
                 <span className="text-sm">OpenStreetMap</span>
               </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="baseLayer"
+                  checked={baseLayer === "historisk_hoeje"}
+                  onChange={() => setBaseLayer("historisk_hoeje")}
+                  className="accent-primary"
+                />
+                <span className="text-sm">Høje Målebordsblade</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="baseLayer"
+                  checked={baseLayer === "historisk_lave"}
+                  onChange={() => setBaseLayer("historisk_lave")}
+                  className="accent-primary"
+                />
+                <span className="text-sm">Lave Målebordsblade</span>
+              </label>
             </div>
           </div>
 
           {/* Overlays */}
-          <div className="border-t border-gray-200 pt-3">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Overlays</h3>
+          <div className="border-t border-border pt-3">
+            <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Overlays</h3>
             <div className="space-y-2">
               {overlays.map((overlay) => (
                 <div key={overlay.id}>
@@ -110,7 +132,7 @@ export function MapControls() {
                   </label>
                   {overlay.enabled && (
                     <div className="ml-6 mt-1 flex items-center gap-2">
-                      <span className="text-xs text-gray-400 w-14">Opacity</span>
+                      <span className="text-xs text-text-muted w-14">Opacity</span>
                       <input
                         type="range"
                         min={0}
@@ -120,7 +142,7 @@ export function MapControls() {
                         onChange={(e) => setOverlayOpacity(overlay.id, Number(e.target.value))}
                         className="flex-1 h-1 accent-primary"
                       />
-                      <span className="text-xs text-gray-500 w-8 text-right">
+                      <span className="text-xs text-text-secondary w-8 text-right">
                         {Math.round(overlay.opacity * 100)}%
                       </span>
                     </div>

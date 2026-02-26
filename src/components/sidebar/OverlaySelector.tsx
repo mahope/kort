@@ -6,6 +6,8 @@ import type { OverlayId } from "@/types/map";
 const OVERLAY_LABELS: Record<OverlayId, string> = {
   contours: "Højdekurver (0,5 m)",
   hillshade: "Skyggekort (terræn)",
+  stednavne: "Stednavne",
+  matrikel: "Matrikelskel",
 };
 
 export function OverlaySelector() {
@@ -32,7 +34,7 @@ export function OverlaySelector() {
             </label>
             {overlay.enabled && (
               <div className="ml-6 mt-1 flex items-center gap-2">
-                <span className="text-xs text-gray-400">Gennemsigtighed</span>
+                <span className="text-xs text-text-muted">Gennemsigtighed</span>
                 <input
                   type="range"
                   min={0}
@@ -44,7 +46,7 @@ export function OverlaySelector() {
                   }
                   className="flex-1 h-1 accent-primary"
                 />
-                <span className="text-xs text-gray-500 w-8 text-right">
+                <span className="text-xs text-text-secondary w-8 text-right">
                   {Math.round(overlay.opacity * 100)}%
                 </span>
               </div>

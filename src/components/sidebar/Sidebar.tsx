@@ -8,13 +8,18 @@ import { ScaleSelector } from "./ScaleSelector";
 import { PaperFormatSelector } from "./PaperFormatSelector";
 import { DpiSelector } from "./DpiSelector";
 import { BearingSelector } from "./BearingSelector";
+import { MultiPageSelector } from "./MultiPageSelector";
 import { PrintButton } from "@/components/print/PrintButton";
 import { FileImport } from "./FileImport";
 import { ImportedLayerList } from "./ImportedLayerList";
 import { DrawToolbar } from "./DrawToolbar";
 import { MeasureTool } from "./MeasureTool";
 import { ExportPanel } from "./ExportPanel";
+import { BookmarksPanel } from "./BookmarksPanel";
+import { HistoryPanel } from "./HistoryPanel";
+import { ShareButton } from "./ShareButton";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useIsMobile } from "@/lib/hooks/useIsMobile";
 
 function CollapsibleSection({
@@ -34,11 +39,11 @@ function CollapsibleSection({
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between py-1"
       >
-        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+        <span className="text-xs font-semibold text-text-muted uppercase tracking-wide">
           {title}
         </span>
         <svg
-          className={`w-3.5 h-3.5 text-gray-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`w-3.5 h-3.5 text-text-muted transition-transform ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -57,7 +62,7 @@ function SidebarContent() {
     <div className="space-y-4">
       <div>
         <h1 className="text-lg font-bold">Kort.mahoje.dk</h1>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-text-secondary">
           Gratis topografisk kortudskrivning
         </p>
       </div>
@@ -86,13 +91,26 @@ function SidebarContent() {
         <PaperFormatSelector />
         <BearingSelector />
         <DpiSelector />
+        <MultiPageSelector />
       </CollapsibleSection>
 
       <PrintButton />
+      <ShareButton />
 
-      <p className="text-[10px] text-gray-400 mt-4">
-        Kortdata &copy; Klimadatastyrelsen
-      </p>
+      <CollapsibleSection title="Bogmærker" defaultOpen={false}>
+        <BookmarksPanel />
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Historik" defaultOpen={false}>
+        <HistoryPanel />
+      </CollapsibleSection>
+
+      <div className="flex items-center justify-between mt-4">
+        <p className="text-[10px] text-text-muted">
+          Kortdata &copy; Klimadatastyrelsen
+        </p>
+        <ThemeToggle />
+      </div>
     </div>
   );
 }

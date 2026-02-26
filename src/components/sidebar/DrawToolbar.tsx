@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useDrawStore } from "@/stores/drawStore";
+import { StylePanel } from "./StylePanel";
 import type { DrawMode } from "@/stores/drawStore";
 
 interface ToolButton {
@@ -71,7 +73,9 @@ export function DrawToolbar() {
   const setMode = useDrawStore((s) => s.setMode);
   const features = useDrawStore((s) => s.features);
   const removeFeature = useDrawStore((s) => s.removeFeature);
+  const updateFeatureStyle = useDrawStore((s) => s.updateFeatureStyle);
   const clearAll = useDrawStore((s) => s.clearAll);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
     <div>
@@ -85,7 +89,7 @@ export function DrawToolbar() {
             className={`flex items-center gap-1 px-2 py-1 rounded text-xs border transition-colors ${
               activeMode === tool.mode
                 ? "bg-blue-500 text-white border-blue-500"
-                : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"
+                : "bg-surface text-foreground border-border hover:border-text-muted"
             }`}
             title={tool.label}
           >
@@ -98,7 +102,7 @@ export function DrawToolbar() {
       {features.length > 0 && (
         <div className="mt-2 space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-text-secondary">
               {features.length} feature{features.length !== 1 ? "s" : ""}
             </span>
             <button
@@ -109,28 +113,46 @@ export function DrawToolbar() {
               Slet alle
             </button>
           </div>
-          <div className="max-h-32 overflow-y-auto space-y-0.5">
+          <div className="max-h-64 overflow-y-auto space-y-0.5">
             {features.map((f) => {
               const type = f.geojson.geometry?.type || "Unknown";
               return (
-                <div
-                  key={f.id}
-                  className="flex items-center justify-between px-2 py-0.5 text-xs bg-gray-50 rounded"
-                >
-                  <span className="text-gray-600 truncate">{type}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeFeature(f.id)}
-                    className="text-gray-400 hover:text-red-500 ml-1"
-                  >
-                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                <div key={f.id} className="border border-border rounded overflow-hidden">
+                  <div className="flex items-center justify-between px-2 py-0.5 text-xs bg-surface-secondary">
+                    <button
+                      type="button"
+                      className="flex-1 text-left text-foreground truncate hover:text-primary"
+                      onClick={() => setExpandedId(expandedId === f.id ? null : f.id)}
+                    >
+                      <span
+                        className="inline-block w-2 h-2 rounded-sm mr-1"
+                        style={{ backgroundColor: f.style.lineColor }}
+                      />
+                      {type}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeFeature(f.id)}
+                      className="text-text-muted hover:text-accent ml-1"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  {expandedId === f.id && (
+                    <div className="border-t border-border px-2 py-2">
+                      <StylePanel
+                        style={f.style}
+                        onUpdate={(s) => updateFeatureStyle(f.id, s)}
+                      />
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
+          <p className="text-[10px] text-text-muted mt-1">Styling påvirker PDF og eksport</p>
         </div>
       )}
     </div>
