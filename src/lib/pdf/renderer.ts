@@ -2,7 +2,7 @@ import maplibregl from "maplibre-gl";
 import type { PrintFrameBounds } from "@/types/print";
 import type { MapStyle, BaseLayer, OverlayState } from "@/types/map";
 import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
-import { BLANK_STYLE, ORTOFOTO_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
+import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
 
 interface RenderOptions {
   bounds: PrintFrameBounds;
@@ -31,7 +31,7 @@ export async function renderMapToCanvas({
   document.body.appendChild(container);
 
   try {
-    const mapStyle = baseLayer === "ortofoto" ? BLANK_STYLE : MAP_STYLES[style].url;
+    const mapStyle = baseLayer === "skaermkort" ? MAP_STYLES[style].url : BLANK_STYLE;
 
     const map = new maplibregl.Map({
       container,
@@ -50,7 +50,7 @@ export async function renderMapToCanvas({
 
     await waitForMapLoad(map);
 
-    // Add ortofoto base layer if selected
+    // Add raster base layer if not skaermkort
     if (baseLayer === "ortofoto") {
       map.addSource("ortofoto", {
         type: "raster",
@@ -58,6 +58,13 @@ export async function renderMapToCanvas({
         tileSize: ORTOFOTO_SOURCE.tileSize,
       });
       map.addLayer({ id: "ortofoto-layer", type: "raster", source: "ortofoto" });
+    } else if (baseLayer === "osm") {
+      map.addSource("osm", {
+        type: "raster",
+        tiles: OSM_SOURCE.tiles,
+        tileSize: OSM_SOURCE.tileSize,
+      });
+      map.addLayer({ id: "osm-layer", type: "raster", source: "osm" });
     }
 
     // Add active overlays

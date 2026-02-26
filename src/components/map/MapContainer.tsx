@@ -12,7 +12,7 @@ import Map, {
 } from "react-map-gl/maplibre";
 import { useMapStore } from "@/stores/mapStore";
 import { MAP_STYLES, DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
-import { BLANK_STYLE, ORTOFOTO_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
+import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
 import { PrintFrame } from "./PrintFrame";
 import { GeolocationButton } from "./GeolocationButton";
 
@@ -27,7 +27,7 @@ export function MapContainer() {
   const clearFlyTo = useMapStore((s) => s.clearFlyTo);
 
   const mapStyle = useMemo(() => {
-    if (baseLayer === "ortofoto") return BLANK_STYLE;
+    if (baseLayer === "ortofoto" || baseLayer === "osm") return BLANK_STYLE;
     return MAP_STYLES[style].url;
   }, [baseLayer, style]);
 
@@ -80,6 +80,19 @@ export function MapContainer() {
           attribution={ORTOFOTO_SOURCE.attribution}
         >
           <Layer id="ortofoto-layer" type="raster" />
+        </Source>
+      )}
+
+      {/* OpenStreetMap base layer */}
+      {baseLayer === "osm" && (
+        <Source
+          id="osm"
+          type="raster"
+          tiles={OSM_SOURCE.tiles}
+          tileSize={OSM_SOURCE.tileSize}
+          attribution={OSM_SOURCE.attribution}
+        >
+          <Layer id="osm-layer" type="raster" />
         </Source>
       )}
 

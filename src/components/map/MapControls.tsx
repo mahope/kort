@@ -80,6 +80,16 @@ export function MapControls() {
                 />
                 <span className="text-sm">Ortofoto</span>
               </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="baseLayer"
+                  checked={baseLayer === "osm"}
+                  onChange={() => setBaseLayer("osm")}
+                  className="accent-primary"
+                />
+                <span className="text-sm">OpenStreetMap</span>
+              </label>
             </div>
           </div>
 

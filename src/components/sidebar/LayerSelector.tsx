@@ -49,6 +49,16 @@ export function LayerSelector() {
           />
           <span className="text-sm">Ortofoto (luftfoto)</span>
         </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="radio"
+            name="sidebar-baseLayer"
+            checked={baseLayer === "osm"}
+            onChange={() => setBaseLayer("osm")}
+            className="accent-primary"
+          />
+          <span className="text-sm">OpenStreetMap</span>
+        </label>
       </div>
     </div>
   );

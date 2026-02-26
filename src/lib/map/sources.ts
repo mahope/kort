@@ -63,6 +63,12 @@ export const ORTOFOTO_SOURCE: RasterSourceConfig = {
   attribution: "&copy; Klimadatastyrelsen",
 };
 
+export const OSM_SOURCE: RasterSourceConfig = {
+  tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+  tileSize: 256,
+  attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors",
+};
+
 export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
   contours: {
     tiles: [DHM_CONTOURS_URL],
