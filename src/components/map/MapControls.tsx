@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMapStore } from "@/stores/mapStore";
 import { MAP_STYLES } from "@/lib/map/styles";
+import { useIsMobile } from "@/lib/hooks/useIsMobile";
 import type { MapStyle, BaseLayer, OverlayId } from "@/types/map";
 
 const STYLE_KEYS = Object.keys(MAP_STYLES) as MapStyle[];
@@ -16,6 +17,7 @@ const OVERLAY_LABELS: Record<OverlayId, string> = {
 
 export function MapControls() {
   const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
   const currentStyle = useMapStore((s) => s.style);
   const setStyle = useMapStore((s) => s.setStyle);
   const baseLayer = useMapStore((s) => s.baseLayer);
@@ -35,7 +37,7 @@ export function MapControls() {
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
         </svg>
-        Kortlag
+        {!isMobile && "Kortlag"}
       </button>
 
       {isOpen && (

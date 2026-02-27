@@ -238,7 +238,7 @@ function drawUtmGrid(
   pdf.clip();
 
   pdf.setDrawColor(30, 64, 175); // Blue
-  pdf.setLineWidth(0.15);
+  pdf.setLineWidth(0.3);
 
   // Draw vertical grid lines (constant easting)
   for (let e = minE; e <= maxE; e += interval) {
@@ -268,7 +268,7 @@ function drawUtmGrid(
   pdf.restoreGraphicsState();
 
   // Draw coordinate labels outside the map area
-  pdf.setFontSize(5);
+  pdf.setFontSize(7);
   pdf.setTextColor(30, 64, 175);
 
   // Bottom edge: easting labels
@@ -277,9 +277,9 @@ function drawUtmGrid(
     const xMm = lngToMm(ll.lng);
     if (xMm >= mapLeftMm && xMm <= mapLeftMm + mapWidthMm) {
       const label = `${Math.round(e / 1000)}`;
-      pdf.text(label, xMm, mapTopMm + mapHeightMm + 3.5, { align: "center" });
+      pdf.text(label, xMm, mapTopMm + mapHeightMm + 4, { align: "center" });
       // Top edge
-      pdf.text(label, xMm, mapTopMm - 1, { align: "center" });
+      pdf.text(label, xMm, mapTopMm - 1.5, { align: "center" });
     }
   }
 
@@ -289,9 +289,9 @@ function drawUtmGrid(
     const yMm = latToMm(ll.lat);
     if (yMm >= mapTopMm && yMm <= mapTopMm + mapHeightMm) {
       const label = `${Math.round(n / 1000)}`;
-      pdf.text(label, mapLeftMm - 1, yMm + 0.5, { align: "right" });
+      pdf.text(label, mapLeftMm - 1.5, yMm + 0.5, { align: "right" });
       // Right edge
-      pdf.text(label, mapLeftMm + mapWidthMm + 1, yMm + 0.5, { align: "left" });
+      pdf.text(label, mapLeftMm + mapWidthMm + 1.5, yMm + 0.5, { align: "left" });
     }
   }
 }

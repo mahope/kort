@@ -108,8 +108,8 @@ export function UtmGrid() {
         filter={["any", ["==", ["get", "type"], "easting"], ["==", ["get", "type"], "northing"]]}
         paint={{
           "line-color": "#1e40af",
-          "line-width": 0.8,
-          "line-opacity": 0.5,
+          "line-width": 1.2,
+          "line-opacity": 0.65,
         }}
       />
       <Layer
@@ -121,7 +121,7 @@ export function UtmGrid() {
         ]}
         layout={{
           "text-field": ["get", "label"],
-          "text-size": 10,
+          "text-size": 12,
           "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
           "text-anchor": "center",
           "text-allow-overlap": true,
@@ -129,8 +129,8 @@ export function UtmGrid() {
         paint={{
           "text-color": "#1e40af",
           "text-halo-color": "#ffffff",
-          "text-halo-width": 1.5,
-          "text-opacity": 0.8,
+          "text-halo-width": 2,
+          "text-opacity": 1.0,
         }}
       />
     </Source>
