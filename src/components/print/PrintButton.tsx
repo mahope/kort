@@ -2,6 +2,7 @@
 
 import { usePrintStore } from "@/stores/printStore";
 import { generatePdf } from "@/lib/pdf/generator";
+import { trackEvent } from "@/lib/analytics";
 
 export function PrintButton() {
   const { frameBounds, scale, paperFormat, orientation, dpi, isGenerating, setIsGenerating, generatingPage, totalPages } =
@@ -12,6 +13,7 @@ export function PrintButton() {
     setIsGenerating(true);
     try {
       await generatePdf({ bounds: frameBounds, scale, paperFormat, orientation, dpi });
+      trackEvent("PDF Download", { scale: `1:${scale}`, format: paperFormat, orientation });
     } catch (err) {
       alert(
         `Fejl ved PDF-generering: ${err instanceof Error ? err.message : "Ukendt fejl"}`

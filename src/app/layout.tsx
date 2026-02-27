@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@/components/Analytics";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -40,7 +41,10 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="apple-touch-icon" href="/icons/icon.svg" />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <Analytics />
+        {children}
+      </body>
     </html>
   );
 }

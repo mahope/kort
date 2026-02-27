@@ -113,7 +113,17 @@ export default function AboutPage() {
             <h2 className="text-lg font-semibold mb-3">Altid gratis</h2>
             <p className="text-text-secondary">
               Kort.mahoje.dk er gratis og kommer altid til at forblive det. Ingen
-              login, ingen tracking, ingen cookies. Kortdata kommer fra{" "}
+              login, ingen cookies. Vi bruger{" "}
+              <a
+                href="https://plausible.io/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:text-primary-hover underline underline-offset-2"
+              >
+                Plausible Analytics
+              </a>{" "}
+              til anonym, cookieless brugsstatistik &mdash; ingen persondata
+              indsamles. Kortdata kommer fra{" "}
               <a
                 href="https://dataforsyningen.dk/"
                 target="_blank"
