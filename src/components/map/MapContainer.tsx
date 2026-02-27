@@ -55,6 +55,19 @@ export function MapContainer() {
     [setViewState]
   );
 
+  // Imperatively update raster tiles when base layer changes
+  // (react-map-gl doesn't reliably diff the tiles prop on raster sources)
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (!map || baseLayer === "skaermkort") return;
+    const cfg = RASTER_BASE_LAYERS[baseLayer];
+    if (!cfg) return;
+    const source = map.getSource("base-raster");
+    if (source && "setTiles" in source) {
+      (source as import("maplibre-gl").RasterTileSource).setTiles(cfg.tiles);
+    }
+  }, [baseLayer, RASTER_BASE_LAYERS]);
+
   useEffect(() => {
     if (flyToTarget && mapRef.current) {
       mapRef.current.flyTo({
