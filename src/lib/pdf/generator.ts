@@ -266,15 +266,9 @@ function drawUtmGrid(
   pdf.rect(mapLeftMm, mapTopMm, mapWidthMm, mapHeightMm);
   pdf.clip();
 
-  // Pass 1: White halo behind grid lines for contrast
-  pdf.setDrawColor(255, 255, 255);
-  pdf.setLineWidth(1.0);
-  drawLines(verticalLines);
-  drawLines(horizontalLines);
-
-  // Pass 2: Blue grid lines on top
-  pdf.setDrawColor(0, 50, 180);
-  pdf.setLineWidth(0.35);
+  // Black grid lines, full opacity
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(0.6);
   drawLines(verticalLines);
   drawLines(horizontalLines);
 
@@ -283,7 +277,7 @@ function drawUtmGrid(
   // Draw coordinate labels outside the map area
   pdf.setFontSize(8);
   pdf.setFont("helvetica", "bold");
-  pdf.setTextColor(0, 70, 200);
+  pdf.setTextColor(0, 0, 0);
 
   // Bottom edge: easting labels
   for (let e = minE; e <= maxE; e += interval) {
