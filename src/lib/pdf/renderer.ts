@@ -6,7 +6,7 @@ import type { DrawnFeature } from "@/stores/drawStore";
 import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
 import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
 import type { RasterSourceConfig } from "@/lib/map/sources";
-import { latlngToUtm, utmToLatlng, getGridInterval } from "@/lib/geo/utm";
+
 
 function getDashArray(lineStyle: string): number[] | undefined {
   switch (lineStyle) {
@@ -210,68 +210,8 @@ export async function renderMapToCanvas({
       }
     }
 
-    // Add UTM grid lines on the map canvas
-    if (showUtmGrid) {
-      const zone = Math.floor((centerLng + 180) / 6) + 1;
-      const interval = getGridInterval(scale);
-
-      const sw = latlngToUtm(bounds.south, bounds.west, zone);
-      const ne = latlngToUtm(bounds.north, bounds.east, zone);
-
-      const minE = Math.floor(sw.easting / interval) * interval;
-      const maxE = Math.ceil(ne.easting / interval) * interval;
-      const minN = Math.floor(sw.northing / interval) * interval;
-      const maxN = Math.ceil(ne.northing / interval) * interval;
-
-      const gridFeatures: GeoJSON.Feature[] = [];
-
-      // Vertical lines (constant easting)
-      for (let e = minE; e <= maxE; e += interval) {
-        const coords: [number, number][] = [];
-        for (let n = minN; n <= maxN; n += interval / 4) {
-          const ll = utmToLatlng(e, n, zone);
-          coords.push([ll.lng, ll.lat]);
-        }
-        if (coords.length >= 2) {
-          gridFeatures.push({
-            type: "Feature",
-            properties: {},
-            geometry: { type: "LineString", coordinates: coords },
-          });
-        }
-      }
-
-      // Horizontal lines (constant northing)
-      for (let n = minN; n <= maxN; n += interval) {
-        const coords: [number, number][] = [];
-        for (let e = minE; e <= maxE; e += interval / 4) {
-          const ll = utmToLatlng(e, n, zone);
-          coords.push([ll.lng, ll.lat]);
-        }
-        if (coords.length >= 2) {
-          gridFeatures.push({
-            type: "Feature",
-            properties: {},
-            geometry: { type: "LineString", coordinates: coords },
-          });
-        }
-      }
-
-      map.addSource("pdf-utm-grid", {
-        type: "geojson",
-        data: { type: "FeatureCollection", features: gridFeatures },
-      });
-      map.addLayer({
-        id: "pdf-utm-grid-lines",
-        type: "line",
-        source: "pdf-utm-grid",
-        paint: {
-          "line-color": "#1e40af",
-          "line-width": 0.8,
-          "line-opacity": 0.5,
-        },
-      });
-    }
+    // UTM grid is drawn as vector lines in the PDF generator (drawUtmGrid),
+    // not baked into the raster image, for crisp output at any zoom level.
 
     // Wait for all tiles (including raster overlays) to load
     await waitForTilesLoaded(map);

@@ -266,9 +266,9 @@ function drawUtmGrid(
   pdf.rect(mapLeftMm, mapTopMm, mapWidthMm, mapHeightMm);
   pdf.clip();
 
-  // Black grid lines, full opacity
+  // Black grid lines — thick enough to be clearly visible on print
   pdf.setDrawColor(0, 0, 0);
-  pdf.setLineWidth(0.6);
+  pdf.setLineWidth(0.5);
   drawLines(verticalLines);
   drawLines(horizontalLines);
 
