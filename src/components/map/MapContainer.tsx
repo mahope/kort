@@ -13,7 +13,6 @@ import Map, {
 import { useMapStore } from "@/stores/mapStore";
 import { MAP_STYLES, DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
 import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
-import type { BaseLayer } from "@/types/map";
 import { PrintFrame } from "./PrintFrame";
 import { GeolocationButton } from "./GeolocationButton";
 import { ImportedLayers } from "./ImportedLayers";
@@ -82,14 +81,13 @@ export function MapContainer() {
       {/* Raster base layer (ortofoto, dtk25, osm, historiske kort) */}
       {baseLayer !== "skaermkort" && RASTER_BASE_LAYERS[baseLayer] && (
         <Source
-          key={baseLayer}
-          id={`base-${baseLayer}`}
+          id="base-raster"
           type="raster"
           tiles={RASTER_BASE_LAYERS[baseLayer].tiles}
           tileSize={RASTER_BASE_LAYERS[baseLayer].tileSize}
           attribution={RASTER_BASE_LAYERS[baseLayer].attribution}
         >
-          <Layer id={`base-${baseLayer}-layer`} type="raster" />
+          <Layer id="base-raster-layer" type="raster" />
         </Source>
       )}
 
