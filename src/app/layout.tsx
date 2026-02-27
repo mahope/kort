@@ -3,10 +3,30 @@ import { Analytics } from "@/components/Analytics";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Kort.mahoje.dk - Gratis Topografisk Kortudskrivning",
+  title: {
+    default: "Kort.mahoje.dk - Gratis Topografisk Kortudskrivning",
+    template: "%s | Kort.mahoje.dk",
+  },
   description:
     "Udskriv danske topografiske kort i høj kvalitet. Vælg målestok, papirformat og download som PDF. Gratis og uden login.",
   metadataBase: new URL("https://kort.mahoje.dk"),
+  alternates: {
+    canonical: "/",
+  },
+  keywords: [
+    "topografisk kort",
+    "kort udskrivning",
+    "PDF kort",
+    "Danmark kort",
+    "gratis kort",
+    "UTM gitter",
+    "orientering",
+    "spejder kort",
+    "vandrekort",
+    "Dataforsyningen",
+  ],
+  authors: [{ name: "Mads Holst Jensen", url: "https://mahoje.dk" }],
+  creator: "Mads Holst Jensen",
   openGraph: {
     title: "Kort.mahoje.dk - Gratis Topografisk Kortudskrivning",
     description:
@@ -42,6 +62,33 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon.svg" />
       </head>
       <body className="antialiased">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              name: "Kort.mahoje.dk",
+              url: "https://kort.mahoje.dk",
+              description:
+                "Gratis webapplikation til udskrivning af danske topografiske kort som PDF. Vælg målestok, papirformat og download - helt uden login.",
+              applicationCategory: "UtilityApplication",
+              operatingSystem: "Web",
+              offers: {
+                "@type": "Offer",
+                price: "0",
+                priceCurrency: "DKK",
+              },
+              author: {
+                "@type": "Person",
+                name: "Mads Holst Jensen",
+                url: "https://mahoje.dk",
+              },
+              inLanguage: "da",
+              isAccessibleForFree: true,
+            }),
+          }}
+        />
         <Analytics />
         {children}
       </body>
