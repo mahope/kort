@@ -141,6 +141,12 @@ src/
 - **Søgning:** Parallel fetch fra DAWA adresse- og stednavne-autocomplete endpoints
 - **State:** Zustand stores for kort-state, print-indstillinger og UI-state med localStorage persistence
 
+## Lavet af
+
+Kort.mahoje.dk er bygget af **Mads Holst Jensen**, freelance webudvikler fra Odense med 18+ års erfaring.
+
+Til daglig hjælper jeg virksomheder med WordPress-udvikling, WooCommerce, SEO, sikkerhed, hastighed og AI-optimering via [mahoje.dk](https://mahoje.dk).
+
 ## Licens
 
 MIT
