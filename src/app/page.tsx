@@ -32,7 +32,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex h-screen w-screen">
+    <div className="flex h-screen w-screen overflow-hidden">
       <OfflineBanner />
       <Sidebar />
       <main className="relative flex-1">
