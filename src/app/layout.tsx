@@ -5,12 +5,21 @@ export const metadata: Metadata = {
   title: "Kort.mahoje.dk - Gratis Topografisk Kortudskrivning",
   description:
     "Udskriv danske topografiske kort i høj kvalitet. Vælg målestok, papirformat og download som PDF. Gratis og uden login.",
+  metadataBase: new URL("https://kort.mahoje.dk"),
   openGraph: {
     title: "Kort.mahoje.dk - Gratis Topografisk Kortudskrivning",
     description:
       "Udskriv danske topografiske kort i høj kvalitet. Vælg målestok, papirformat og download som PDF.",
     locale: "da_DK",
     type: "website",
+    url: "https://kort.mahoje.dk",
+    siteName: "Kort.mahoje.dk",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Kort.mahoje.dk - Gratis Topografisk Kortudskrivning",
+    description:
+      "Udskriv danske topografiske kort i høj kvalitet som PDF. Gratis og uden login.",
   },
 };
 

@@ -4,16 +4,33 @@ Gratis, moderne webapplikation til udskrivning af danske topografiske kort i hø
 
 **Live:** [kort.mahoje.dk](https://kort.mahoje.dk)
 
+## Hvorfor?
+
+Jeg er selv spejder og har tit manglet en nem, gratis måde at udskrive et ordentligt topografisk kort. Ofte vil man gerne have et fysisk kort med - til at lære børn at læse kort, til orientering i naturen, eller bare til turen. Der fandtes ikke en god dansk service til det, så jeg byggede en.
+
+Kort.mahoje.dk er gratis og vil altid forblive det.
+
 ## Features
 
 - **Interaktivt kort** - Danske topografiske kort via Dataforsyningens vector tiles (MapLibre GL JS)
 - **4 kortstilarter** - Klassisk, Dæmpet, Grå og Mørkt skærmkort
+- **5 basiskort** - Skærmkort, Ortofoto, OpenStreetMap, Høje & Lave Målebordsblade
 - **6 målestoksforhold** - 1:10.000, 1:25.000, 1:50.000, 1:100.000, 1:250.000, 1:500.000
 - **4 papirformater** - A5, A4, A3, A2 i stående eller liggende
-- **Print-ramme** - Realtime preview med dimming-mask der viser præcist hvad der udskrives
-- **Adressesøgning** - Søg efter adresser og stednavne via DAWA API
+- **UTM-gitter** - Grid-linjer og koordinater på kort og PDF, til orientering i felten
+- **Overlays** - Højdekurver, skyggekort, matrikelskel og stednavne
+- **Import** - Indlæs GPX, GeoJSON og KML-filer og print dem direkte
+- **Tegning & mål** - Tegn ruter og mål afstande direkte på kortet
+- **Multi-page print** - Udskriv store områder over flere sider
 - **PDF-generering** - Client-side PDF med målestok-lineal, nordpil og attribution
-- **Responsivt design** - Desktop sidebar + mobil bottom sheet
+- **Kortrotation** - Drej kortet til en valgfri bearing/retning
+- **Adressesøgning** - Søg efter adresser og stednavne via DAWA API
+- **Bogmærker & historik** - Gem dine yndlingssteder og se tidligere udskrifter
+- **Simpel/avanceret tilstand** - Overskuelig for nye brugere, med alle funktioner tilgængelige
+- **Mørkt tema** - Light, dark og system-følgende tema
+- **Responsivt design** - Desktop sidebar + mobil bottom sheet med snap-points
+- **PWA** - Installerbar som app, virker offline med cached tiles
+- **Del-funktion** - Del et kortudsnit via URL
 - **Ingen login** - Ingen konto, ingen tracking, ingen cookies
 
 ## Tech Stack
@@ -96,22 +113,23 @@ Se [Dockerfile](./Dockerfile) for detaljer.
 ```
 src/
 ├── app/                  # Next.js App Router
-│   ├── page.tsx          # Hovedside
-│   ├── layout.tsx        # Root layout med metadata
+│   ├── page.tsx          # Hovedside (kort)
+│   ├── om/page.tsx       # Om-side
+│   ├── layout.tsx        # Root layout med metadata + OG
 │   └── globals.css       # Tailwind + MapLibre CSS
 ├── components/
-│   ├── map/              # MapContainer, PrintFrame, MapControls, LoadingOverlay
-│   ├── sidebar/          # Sidebar, ScaleSelector, PaperFormatSelector
+│   ├── map/              # MapContainer, PrintFrame, UtmGrid, MapControls
+│   ├── sidebar/          # Sidebar, LayerSelector, OverlaySelector, ScaleSelector
 │   ├── search/           # SearchBar (DAWA autocomplete)
 │   ├── print/            # PrintButton
-│   └── ui/               # Select, Toggle, BottomSheet
+│   └── ui/               # Select, Toggle, BottomSheet, ThemeToggle
 ├── lib/
 │   ├── map/              # Map styles og konfiguration
 │   ├── pdf/              # PDF layout, renderer og generator
 │   ├── api/              # DAWA API klient
-│   ├── geo/              # Geometriske beregninger
+│   ├── geo/              # Geometriske beregninger, UTM
 │   └── hooks/            # Custom React hooks
-├── stores/               # Zustand stores (map, print, ui)
+├── stores/               # Zustand stores (map, print, ui, import, draw, history)
 ├── types/                # TypeScript type-definitioner
 └── constants/            # Målestok, papirformater
 ```
@@ -121,7 +139,7 @@ src/
 - **Kort:** Dataforsyningens vector tiles i Web Mercator (EPSG:3857) renderes direkte i MapLibre GL JS - ingen reprojektion nødvendig
 - **PDF:** En skjult MapLibre-instans oprettes ved fuld target-opløsning (300 DPI), renderer tiles, og eksporterer som JPEG til jsPDF
 - **Søgning:** Parallel fetch fra DAWA adresse- og stednavne-autocomplete endpoints
-- **State:** Zustand stores for kort-state, print-indstillinger og UI-state
+- **State:** Zustand stores for kort-state, print-indstillinger og UI-state med localStorage persistence
 
 ## Licens
 

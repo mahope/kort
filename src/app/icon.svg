@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="96" fill="#1e40af"/>
-  <!-- Contour lines (topographic feel) -->
   <g fill="none" stroke="#ffffff" stroke-opacity="0.2" stroke-width="10">
     <ellipse cx="280" cy="300" rx="180" ry="140"/>
     <ellipse cx="275" cy="290" rx="145" ry="110"/>
@@ -8,14 +7,11 @@
     <ellipse cx="265" cy="270" rx="76" ry="56"/>
     <ellipse cx="262" cy="264" rx="44" ry="32"/>
   </g>
-  <!-- Map fold -->
   <g fill="none" stroke="#ffffff" stroke-width="3" stroke-opacity="0.3">
     <line x1="170" y1="100" x2="170" y2="412"/>
     <line x1="342" y1="100" x2="342" y2="412"/>
   </g>
-  <!-- Map outline -->
   <path d="M80 400L170 365L256 400L342 365L432 400V112L342 147L256 112L170 147L80 112Z" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-width="16" stroke-linejoin="round" stroke-linecap="round"/>
-  <!-- UTM grid lines -->
   <g stroke="#93c5fd" stroke-width="2" stroke-opacity="0.5">
     <line x1="140" y1="140" x2="140" y2="390"/>
     <line x1="210" y1="140" x2="210" y2="390"/>
@@ -25,7 +21,6 @@
     <line x1="100" y1="250" x2="415" y2="250"/>
     <line x1="100" y1="320" x2="415" y2="320"/>
   </g>
-  <!-- Compass north arrow -->
   <polygon points="256,155 244,215 256,200 268,215" fill="#ffffff"/>
   <text x="256" y="146" text-anchor="middle" fill="#ffffff" font-family="system-ui,sans-serif" font-weight="700" font-size="36">N</text>
 </svg>

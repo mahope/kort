@@ -170,9 +170,11 @@ function SidebarContent() {
       )}
 
       <div className="flex items-center justify-between mt-4">
-        <p className="text-[10px] text-text-muted">
-          Kortdata &copy; Klimadatastyrelsen
-        </p>
+        <div className="flex items-center gap-2 text-[10px] text-text-muted">
+          <span>Kortdata &copy; Klimadatastyrelsen</span>
+          <span>&middot;</span>
+          <a href="/om" className="hover:text-text-secondary underline underline-offset-2">Om</a>
+        </div>
         <ThemeToggle />
       </div>
     </div>
