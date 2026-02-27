@@ -237,8 +237,8 @@ function drawUtmGrid(
   pdf.rect(mapLeftMm, mapTopMm, mapWidthMm, mapHeightMm);
   pdf.clip();
 
-  pdf.setDrawColor(30, 64, 175); // Blue
-  pdf.setLineWidth(0.3);
+  pdf.setDrawColor(0, 70, 200); // Brighter blue for visibility
+  pdf.setLineWidth(0.4);
 
   // Draw vertical grid lines (constant easting)
   for (let e = minE; e <= maxE; e += interval) {
@@ -268,8 +268,9 @@ function drawUtmGrid(
   pdf.restoreGraphicsState();
 
   // Draw coordinate labels outside the map area
-  pdf.setFontSize(7);
-  pdf.setTextColor(30, 64, 175);
+  pdf.setFontSize(8);
+  pdf.setFont("helvetica", "bold");
+  pdf.setTextColor(0, 70, 200);
 
   // Bottom edge: easting labels
   for (let e = minE; e <= maxE; e += interval) {
@@ -294,6 +295,8 @@ function drawUtmGrid(
       pdf.text(label, mapLeftMm + mapWidthMm + 1.5, yMm + 0.5, { align: "left" });
     }
   }
+
+  pdf.setFont("helvetica", "normal");
 }
 
 function drawAttribution(
