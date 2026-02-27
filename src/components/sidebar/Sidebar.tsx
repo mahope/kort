@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SearchBar } from "@/components/search/SearchBar";
 import { LayerSelector } from "./LayerSelector";
 import { OverlaySelector } from "./OverlaySelector";
@@ -105,6 +105,15 @@ function AdvancedToggleButton({ advanced, onToggle }: { advanced: boolean; onTog
 function SidebarContent() {
   const advancedMode = useUiStore((s) => s.advancedMode);
   const setAdvancedMode = useUiStore((s) => s.setAdvancedMode);
+
+  // Sync advancedMode from localStorage after hydration
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("advancedMode") === "true") {
+        setAdvancedMode(true);
+      }
+    } catch {}
+  }, [setAdvancedMode]);
 
   return (
     <div className="space-y-4">

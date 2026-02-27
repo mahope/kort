@@ -30,18 +30,10 @@ function getInitialTheme(): Theme {
   return "system";
 }
 
-function getInitialAdvancedMode(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    return localStorage.getItem("advancedMode") === "true";
-  } catch {}
-  return false;
-}
-
 export const useUiStore = create<UiStore>((set) => ({
   sidebarOpen: true,
   theme: getInitialTheme(),
-  advancedMode: getInitialAdvancedMode(),
+  advancedMode: false,
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
   setTheme: (theme) => {

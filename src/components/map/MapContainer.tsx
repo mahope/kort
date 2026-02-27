@@ -82,6 +82,7 @@ export function MapContainer() {
       {/* Raster base layer (ortofoto, dtk25, osm, historiske kort) */}
       {baseLayer !== "skaermkort" && RASTER_BASE_LAYERS[baseLayer] && (
         <Source
+          key={baseLayer}
           id={`base-${baseLayer}`}
           type="raster"
           tiles={RASTER_BASE_LAYERS[baseLayer].tiles}
