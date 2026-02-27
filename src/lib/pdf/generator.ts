@@ -214,11 +214,11 @@ function drawUtmGrid(
   const sw = latlngToUtm(bounds.south, bounds.west, zone);
   const ne = latlngToUtm(bounds.north, bounds.east, zone);
 
-  // Round to grid interval
-  const minE = Math.floor(sw.easting / interval) * interval;
-  const maxE = Math.ceil(ne.easting / interval) * interval;
-  const minN = Math.floor(sw.northing / interval) * interval;
-  const maxN = Math.ceil(ne.northing / interval) * interval;
+  // Round to grid interval, with extra padding so lines extend beyond edges
+  const minE = Math.floor(sw.easting / interval) * interval - interval;
+  const maxE = Math.ceil(ne.easting / interval) * interval + interval;
+  const minN = Math.floor(sw.northing / interval) * interval - interval;
+  const maxN = Math.ceil(ne.northing / interval) * interval + interval;
 
   // Map area in mm on the PDF
   const mapLeftMm = layout.marginMm;
@@ -257,27 +257,29 @@ function drawUtmGrid(
   pdf.setDrawColor(0, 0, 0);
   pdf.setLineWidth(0.5);
 
-  // Clip lines to map area manually by clamping coordinates
-  const drawLinesClipped = (lines: { x: number; y: number }[][]) => {
-    const xMin = mapLeftMm;
-    const xMax = mapLeftMm + mapWidthMm;
-    const yMin = mapTopMm;
-    const yMax = mapTopMm + mapHeightMm;
+  // Clamp coordinates to map edges so lines extend fully to the border
+  const xMin = mapLeftMm;
+  const xMax = mapLeftMm + mapWidthMm;
+  const yMin = mapTopMm;
+  const yMax = mapTopMm + mapHeightMm;
+  const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+
+  const drawLinesClamped = (lines: { x: number; y: number }[][]) => {
     for (const points of lines) {
       for (let i = 0; i < points.length - 1; i++) {
-        const a = points[i];
-        const b = points[i + 1];
-        // Only draw segments where both points are within the map area
-        if (a.x >= xMin && a.x <= xMax && b.x >= xMin && b.x <= xMax &&
-            a.y >= yMin && a.y <= yMax && b.y >= yMin && b.y <= yMax) {
-          pdf.line(a.x, a.y, b.x, b.y);
-        }
+        const ax = clamp(points[i].x, xMin, xMax);
+        const ay = clamp(points[i].y, yMin, yMax);
+        const bx = clamp(points[i + 1].x, xMin, xMax);
+        const by = clamp(points[i + 1].y, yMin, yMax);
+        // Skip zero-length segments (both points clamped to same edge)
+        if (ax === bx && ay === by) continue;
+        pdf.line(ax, ay, bx, by);
       }
     }
   };
 
-  drawLinesClipped(verticalLines);
-  drawLinesClipped(horizontalLines);
+  drawLinesClamped(verticalLines);
+  drawLinesClamped(horizontalLines);
 
   // Draw coordinate labels outside the map area
   pdf.setFontSize(8);
