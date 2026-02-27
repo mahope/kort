@@ -232,38 +232,51 @@ function drawUtmGrid(
   const latToMm = (lat: number) =>
     mapTopMm + ((bounds.north - lat) / (bounds.north - bounds.south)) * mapHeightMm;
 
-  // Clip to map area
-  pdf.saveGraphicsState();
-  pdf.rect(mapLeftMm, mapTopMm, mapWidthMm, mapHeightMm);
-  pdf.clip();
-
-  pdf.setDrawColor(0, 70, 200); // Brighter blue for visibility
-  pdf.setLineWidth(0.4);
-
-  // Draw vertical grid lines (constant easting)
+  // Precompute all grid line segments
+  const verticalLines: { x: number; y: number }[][] = [];
   for (let e = minE; e <= maxE; e += interval) {
-    // Sample multiple points for slight curvature
     const points: { x: number; y: number }[] = [];
     for (let n = minN; n <= maxN; n += interval / 4) {
       const ll = utmToLatlng(e, n, zone);
       points.push({ x: lngToMm(ll.lng), y: latToMm(ll.lat) });
     }
-    for (let i = 0; i < points.length - 1; i++) {
-      pdf.line(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
-    }
+    verticalLines.push(points);
   }
 
-  // Draw horizontal grid lines (constant northing)
+  const horizontalLines: { x: number; y: number }[][] = [];
   for (let n = minN; n <= maxN; n += interval) {
     const points: { x: number; y: number }[] = [];
     for (let e = minE; e <= maxE; e += interval / 4) {
       const ll = utmToLatlng(e, n, zone);
       points.push({ x: lngToMm(ll.lng), y: latToMm(ll.lat) });
     }
-    for (let i = 0; i < points.length - 1; i++) {
-      pdf.line(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
-    }
+    horizontalLines.push(points);
   }
+
+  const drawLines = (lines: { x: number; y: number }[][]) => {
+    for (const points of lines) {
+      for (let i = 0; i < points.length - 1; i++) {
+        pdf.line(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
+      }
+    }
+  };
+
+  // Clip to map area
+  pdf.saveGraphicsState();
+  pdf.rect(mapLeftMm, mapTopMm, mapWidthMm, mapHeightMm);
+  pdf.clip();
+
+  // Pass 1: White halo behind grid lines for contrast
+  pdf.setDrawColor(255, 255, 255);
+  pdf.setLineWidth(1.0);
+  drawLines(verticalLines);
+  drawLines(horizontalLines);
+
+  // Pass 2: Blue grid lines on top
+  pdf.setDrawColor(0, 50, 180);
+  pdf.setLineWidth(0.35);
+  drawLines(verticalLines);
+  drawLines(horizontalLines);
 
   pdf.restoreGraphicsState();
 
