@@ -253,26 +253,31 @@ function drawUtmGrid(
     horizontalLines.push(points);
   }
 
-  const drawLines = (lines: { x: number; y: number }[][]) => {
+  // Draw black grid lines directly on top of the map image
+  pdf.setDrawColor(0, 0, 0);
+  pdf.setLineWidth(0.5);
+
+  // Clip lines to map area manually by clamping coordinates
+  const drawLinesClipped = (lines: { x: number; y: number }[][]) => {
+    const xMin = mapLeftMm;
+    const xMax = mapLeftMm + mapWidthMm;
+    const yMin = mapTopMm;
+    const yMax = mapTopMm + mapHeightMm;
     for (const points of lines) {
       for (let i = 0; i < points.length - 1; i++) {
-        pdf.line(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y);
+        const a = points[i];
+        const b = points[i + 1];
+        // Only draw segments where both points are within the map area
+        if (a.x >= xMin && a.x <= xMax && b.x >= xMin && b.x <= xMax &&
+            a.y >= yMin && a.y <= yMax && b.y >= yMin && b.y <= yMax) {
+          pdf.line(a.x, a.y, b.x, b.y);
+        }
       }
     }
   };
 
-  // Clip to map area
-  pdf.saveGraphicsState();
-  pdf.rect(mapLeftMm, mapTopMm, mapWidthMm, mapHeightMm);
-  pdf.clip();
-
-  // Black grid lines — thick enough to be clearly visible on print
-  pdf.setDrawColor(0, 0, 0);
-  pdf.setLineWidth(0.5);
-  drawLines(verticalLines);
-  drawLines(horizontalLines);
-
-  pdf.restoreGraphicsState();
+  drawLinesClipped(verticalLines);
+  drawLinesClipped(horizontalLines);
 
   // Draw coordinate labels outside the map area
   pdf.setFontSize(8);
