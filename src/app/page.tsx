@@ -7,6 +7,7 @@ import { LoadingOverlay } from "@/components/map/LoadingOverlay";
 import { MapControls } from "@/components/map/MapControls";
 import { UrlSync } from "@/components/map/UrlSync";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
+import { ToastContainer } from "@/components/ui/Toast";
 import { registerServiceWorker } from "@/lib/pwa/register";
 import { useUiStore } from "@/stores/uiStore";
 
@@ -41,6 +42,7 @@ export default function Home() {
         <LoadingOverlay />
       </main>
       <UrlSync />
+      <ToastContainer />
     </div>
   );
 }

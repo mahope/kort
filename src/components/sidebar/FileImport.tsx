@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import { parseFile } from "@/lib/import/parser";
 import { useImportStore } from "@/stores/importStore";
 import { useMapStore } from "@/stores/mapStore";
+import { useUiStore } from "@/stores/uiStore";
 import type { ImportedLayer } from "@/stores/importStore";
 
 function getBoundingBox(geojson: GeoJSON.FeatureCollection): [number, number, number, number] | null {
@@ -43,6 +44,7 @@ export function FileImport() {
   const inputRef = useRef<HTMLInputElement>(null);
   const addLayer = useImportStore((s) => s.addLayer);
   const flyTo = useMapStore((s) => s.flyTo);
+  const addToast = useUiStore((s) => s.addToast);
 
   const handleImport = useCallback(
     async (file: File) => {
@@ -51,6 +53,7 @@ export function FileImport() {
       try {
         const layer: ImportedLayer = await parseFile(file);
         addLayer(layer);
+        addToast("success", `${file.name} importeret (${layer.geojson.features.length} features)`);
 
         // Auto-zoom to imported data
         const bbox = getBoundingBox(layer.geojson);

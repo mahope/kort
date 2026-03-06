@@ -3,10 +3,12 @@
 import { usePrintStore } from "@/stores/printStore";
 import { generatePdf } from "@/lib/pdf/generator";
 import { trackEvent } from "@/lib/analytics";
+import { useUiStore } from "@/stores/uiStore";
 
 export function PrintButton() {
   const { frameBounds, scale, paperFormat, orientation, dpi, isGenerating, setIsGenerating, generatingPage, totalPages } =
     usePrintStore();
+  const addToast = useUiStore((s) => s.addToast);
 
   const handleClick = async () => {
     if (!frameBounds || isGenerating) return;
@@ -14,10 +16,9 @@ export function PrintButton() {
     try {
       await generatePdf({ bounds: frameBounds, scale, paperFormat, orientation, dpi });
       trackEvent("PDF Download", { scale: `1:${scale}`, format: paperFormat, orientation });
+      addToast("success", "PDF downloadet!");
     } catch (err) {
-      alert(
-        `Fejl ved PDF-generering: ${err instanceof Error ? err.message : "Ukendt fejl"}`
-      );
+      addToast("error", `Fejl ved PDF-generering: ${err instanceof Error ? err.message : "Ukendt fejl"}`, 8000);
     } finally {
       setIsGenerating(false);
     }

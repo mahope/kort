@@ -4,12 +4,14 @@ import { useState } from "react";
 import { useBookmarkStore, type Bookmark } from "@/stores/bookmarkStore";
 import { useMapStore } from "@/stores/mapStore";
 import { usePrintStore } from "@/stores/printStore";
+import { useUiStore } from "@/stores/uiStore";
 
 export function BookmarksPanel() {
   const bookmarks = useBookmarkStore((s) => s.bookmarks);
   const addBookmark = useBookmarkStore((s) => s.addBookmark);
   const removeBookmark = useBookmarkStore((s) => s.removeBookmark);
   const renameBookmark = useBookmarkStore((s) => s.renameBookmark);
+  const addToast = useUiStore((s) => s.addToast);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
 
@@ -90,7 +92,7 @@ export function BookmarksPanel() {
           }
         }
       } catch {
-        alert("Kunne ikke importere bogmærker");
+        addToast("error", "Kunne ikke importere bogmærker");
       }
     };
     input.click();

@@ -2,6 +2,7 @@
 
 import { useState, useCallback, type RefObject } from "react";
 import { Source, Layer, type MapRef } from "react-map-gl/maplibre";
+import { useUiStore } from "@/stores/uiStore";
 
 interface GeolocationButtonProps {
   mapRef: RefObject<MapRef | null>;
@@ -12,17 +13,17 @@ type GeoState = "idle" | "loading" | "active" | "error";
 export function GeolocationButton({ mapRef }: GeolocationButtonProps) {
   const [state, setState] = useState<GeoState>("idle");
   const [position, setPosition] = useState<{ lng: number; lat: number; accuracy: number } | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const addToast = useUiStore((s) => s.addToast);
 
   const handleClick = useCallback(() => {
     if (!navigator.geolocation) {
-      setErrorMsg("Geolokation er ikke understøttet i din browser");
+      addToast("error", "Geolokation er ikke understøttet i din browser");
       setState("error");
       return;
     }
 
     setState("loading");
-    setErrorMsg(null);
+    addToast("info", "Finder din position...", 3000);
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -40,23 +41,25 @@ export function GeolocationButton({ mapRef }: GeolocationButtonProps) {
       },
       (err) => {
         setState("error");
+        let msg: string;
         switch (err.code) {
           case err.PERMISSION_DENIED:
-            setErrorMsg("Adgang til lokation nægtet");
+            msg = "Adgang til lokation nægtet";
             break;
           case err.POSITION_UNAVAILABLE:
-            setErrorMsg("Lokation ikke tilgængelig");
+            msg = "Lokation ikke tilgængelig";
             break;
           case err.TIMEOUT:
-            setErrorMsg("Lokationsforespørgsel timeout");
+            msg = "Lokationsforespørgsel timeout";
             break;
           default:
-            setErrorMsg("Kunne ikke finde din position");
+            msg = "Kunne ikke finde din position";
         }
+        addToast("error", msg, 6000);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
-  }, [mapRef]);
+  }, [mapRef, addToast]);
 
   // Accuracy ring as a GeoJSON circle approximation
   const accuracyGeoJSON = position
@@ -131,7 +134,7 @@ export function GeolocationButton({ mapRef }: GeolocationButtonProps) {
           type="button"
           onClick={handleClick}
           disabled={state === "loading"}
-          title={errorMsg || "Find min position"}
+          title="Find min position"
           className={`flex items-center justify-center w-[29px] h-[29px] rounded bg-surface shadow-md border border-border hover:bg-surface-secondary transition-colors ${
             state === "active" ? "text-primary" : state === "error" ? "text-accent" : "text-text-secondary"
           } ${state === "loading" ? "animate-pulse" : ""}`}
@@ -147,11 +150,6 @@ export function GeolocationButton({ mapRef }: GeolocationButtonProps) {
             )}
           </svg>
         </button>
-        {errorMsg && state === "error" && (
-          <div className="absolute bottom-full right-0 mb-1 w-48 rounded bg-red-50 border border-red-200 p-2 text-xs text-red-600 shadow">
-            {errorMsg}
-          </div>
-        )}
       </div>
     </>
   );
