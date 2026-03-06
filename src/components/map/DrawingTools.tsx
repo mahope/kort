@@ -104,10 +104,13 @@ export function DrawingTools() {
     }
   }, [activeMode, ensureDraw]);
 
-  // Sync features from Terra Draw on changes
+  // Sync features from Terra Draw on changes, preserving existing styles
   const syncFeatures = useCallback(() => {
     const draw = drawRef.current;
     if (!draw) return;
+
+    const currentFeatures = useDrawStore.getState().features;
+    const existingStyles = new Map(currentFeatures.map((f) => [f.id, f.style]));
 
     const snapshot = draw.getSnapshot();
     const drawnFeatures: DrawnFeature[] = snapshot
@@ -115,15 +118,17 @@ export function DrawingTools() {
       .map((f) => ({
         id: String(f.id),
         geojson: f as unknown as GeoJSON.Feature,
-        style: { ...DRAW_DEFAULT_STYLE },
+        style: existingStyles.get(String(f.id)) ?? { ...DRAW_DEFAULT_STYLE },
       }));
 
     setFeatures(drawnFeatures);
   }, [setFeatures]);
 
-  // Listen for draw events
+  // Listen for draw events — combined with mode sync to ensure drawRef is ready
   useEffect(() => {
-    const draw = drawRef.current;
+    if (activeMode === null) return;
+
+    const draw = ensureDraw();
     if (!draw) return;
 
     const onFinish = () => syncFeatures();
@@ -136,7 +141,7 @@ export function DrawingTools() {
       draw.off("finish", onFinish);
       draw.off("change", onChange);
     };
-  }, [syncFeatures, activeMode]);
+  }, [syncFeatures, activeMode, ensureDraw]);
 
   // Sync removals from store to Terra Draw
   useEffect(() => {

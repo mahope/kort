@@ -11,7 +11,13 @@ const DEFAULT_STYLE: LayerStyle = {
 
 let layerCounter = 0;
 
+const MAX_FILE_SIZE_MB = 50;
+
 export async function parseFile(file: File): Promise<ImportedLayer> {
+  if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+    throw new Error(`Filen er for stor (max ${MAX_FILE_SIZE_MB} MB)`);
+  }
+
   const ext = file.name.split(".").pop()?.toLowerCase();
   const text = await file.text();
 

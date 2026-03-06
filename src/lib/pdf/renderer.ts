@@ -172,42 +172,41 @@ export async function renderMapToCanvas({
       });
     }
 
-    // Add drawn features
-    if (drawnFeatures.length > 0) {
-      const drawnGeoJSON: GeoJSON.FeatureCollection = {
-        type: "FeatureCollection",
-        features: drawnFeatures.map((f) => f.geojson),
-      };
-      map.addSource("pdf-drawn", { type: "geojson", data: drawnGeoJSON });
-      const ds = drawnFeatures[0]?.style;
-      if (ds) {
-        map.addLayer({
-          id: "pdf-drawn-fill",
-          type: "fill",
-          source: "pdf-drawn",
-          filter: ["==", ["geometry-type"], "Polygon"],
-          paint: { "fill-color": ds.fillColor, "fill-opacity": ds.fillOpacity },
-        });
-        map.addLayer({
-          id: "pdf-drawn-line",
-          type: "line",
-          source: "pdf-drawn",
-          filter: ["any", ["==", ["geometry-type"], "LineString"], ["==", ["geometry-type"], "Polygon"]],
-          paint: { "line-color": ds.lineColor, "line-width": ds.lineWidth },
-        });
-        map.addLayer({
-          id: "pdf-drawn-point",
-          type: "circle",
-          source: "pdf-drawn",
-          filter: ["==", ["geometry-type"], "Point"],
-          paint: {
-            "circle-color": ds.fillColor,
-            "circle-radius": ds.lineWidth + 2,
-            "circle-stroke-color": ds.lineColor,
-            "circle-stroke-width": 2,
-          },
-        });
-      }
+    // Add drawn features — one source+layer set per feature to preserve individual styles
+    for (let i = 0; i < drawnFeatures.length; i++) {
+      const f = drawnFeatures[i];
+      const ds = f.style;
+      const sourceId = `pdf-drawn-${i}`;
+      map.addSource(sourceId, {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [f.geojson] },
+      });
+      map.addLayer({
+        id: `${sourceId}-fill`,
+        type: "fill",
+        source: sourceId,
+        filter: ["==", ["geometry-type"], "Polygon"],
+        paint: { "fill-color": ds.fillColor, "fill-opacity": ds.fillOpacity },
+      });
+      map.addLayer({
+        id: `${sourceId}-line`,
+        type: "line",
+        source: sourceId,
+        filter: ["any", ["==", ["geometry-type"], "LineString"], ["==", ["geometry-type"], "Polygon"]],
+        paint: { "line-color": ds.lineColor, "line-width": ds.lineWidth },
+      });
+      map.addLayer({
+        id: `${sourceId}-point`,
+        type: "circle",
+        source: sourceId,
+        filter: ["==", ["geometry-type"], "Point"],
+        paint: {
+          "circle-color": ds.fillColor,
+          "circle-radius": ds.lineWidth + 2,
+          "circle-stroke-color": ds.lineColor,
+          "circle-stroke-width": 2,
+        },
+      });
     }
 
     // UTM grid is drawn as vector lines in the PDF generator (drawUtmGrid),
@@ -223,9 +222,8 @@ export async function renderMapToCanvas({
     resultCanvas.width = canvas.width;
     resultCanvas.height = canvas.height;
     const ctx = resultCanvas.getContext("2d");
-    if (ctx) {
-      ctx.drawImage(canvas, 0, 0);
-    }
+    if (!ctx) throw new Error("Kunne ikke oprette 2D canvas-kontekst");
+    ctx.drawImage(canvas, 0, 0);
 
     map.remove();
     return resultCanvas;
@@ -249,11 +247,14 @@ function waitForMapLoad(map: maplibregl.Map): Promise<void> {
 
 function waitForTilesLoaded(map: maplibregl.Map): Promise<void> {
   return new Promise((resolve, reject) => {
+    let checkInterval: ReturnType<typeof setInterval>;
+
     const timeout = setTimeout(() => {
+      clearInterval(checkInterval);
       reject(new Error("Tile-loading timeout (60s)"));
     }, 60000);
 
-    const checkInterval = setInterval(() => {
+    checkInterval = setInterval(() => {
       if (map.isStyleLoaded() && map.areTilesLoaded()) {
         clearInterval(checkInterval);
         // Extra delay for final render

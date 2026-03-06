@@ -90,7 +90,8 @@ export async function generatePdf({
 
   // Download via blob to avoid page navigation
   const scaleStr = scale >= 1000 ? `${scale / 1000}k` : String(scale);
-  const filename = `kort_1${scaleStr}_${paperFormat}.pdf`;
+  const timestamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "");
+  const filename = `kort_1${scaleStr}_${paperFormat}_${timestamp}.pdf`;
   // Record in print history
   useHistoryStore.getState().addEntry({
     lng: mapState.viewState.longitude,
@@ -433,7 +434,8 @@ async function generateMultiPagePdf({
   });
 
   const scaleStr = scale >= 1000 ? `${scale / 1000}k` : String(scale);
-  const filename = `kort_1${scaleStr}_${paperFormat}_${cells.length}sider.pdf`;
+  const timestamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "");
+  const filename = `kort_1${scaleStr}_${paperFormat}_${cells.length}sider_${timestamp}.pdf`;
   const blob = pdf.output("blob");
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

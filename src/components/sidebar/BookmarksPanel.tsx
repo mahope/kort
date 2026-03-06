@@ -15,7 +15,16 @@ export function BookmarksPanel() {
 
   const handleAdd = () => {
     const name = `Bogmærke ${bookmarks.length + 1}`;
-    addBookmark(name);
+    const mapState = useMapStore.getState();
+    const printState = usePrintStore.getState();
+    addBookmark(name, {
+      longitude: mapState.viewState.longitude,
+      latitude: mapState.viewState.latitude,
+      zoom: mapState.viewState.zoom,
+      bearing: mapState.viewState.bearing,
+      baseLayer: mapState.baseLayer,
+      style: mapState.style,
+    }, printState.scale);
   };
 
   const handleGoTo = (bookmark: Bookmark) => {
@@ -73,16 +82,10 @@ export function BookmarksPanel() {
           const store = useBookmarkStore.getState();
           for (const b of data) {
             if (b.lng && b.lat && b.name) {
-              store.addBookmark(b.name);
-              // Update the last added bookmark with full data
-              const added = useBookmarkStore.getState().bookmarks[0];
-              if (added) {
-                useBookmarkStore.setState((s) => ({
-                  bookmarks: s.bookmarks.map((bm) =>
-                    bm.id === added.id ? { ...bm, ...b, id: added.id } : bm
-                  ),
-                }));
-              }
+              store.addBookmarkFull({
+                ...b,
+                id: crypto.randomUUID(),
+              });
             }
           }
         }

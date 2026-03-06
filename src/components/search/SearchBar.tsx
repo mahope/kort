@@ -13,6 +13,7 @@ export function SearchBar() {
   const flyTo = useMapStore((s) => s.flyTo);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const searchVersionRef = useRef(0);
 
   const doSearch = useCallback(async (q: string) => {
     if (q.length < 2) {
@@ -20,7 +21,9 @@ export function SearchBar() {
       setIsOpen(false);
       return;
     }
+    const version = ++searchVersionRef.current;
     const res = await searchAddresses(q);
+    if (version !== searchVersionRef.current) return;
     setResults(res);
     setIsOpen(res.length > 0);
     setActiveIndex(-1);

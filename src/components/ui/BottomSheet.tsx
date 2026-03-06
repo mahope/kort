@@ -11,8 +11,9 @@ const SNAP_MID_VH = 40;
 const SNAP_MAX_VH = 85;
 
 function getSnapPoints() {
-  const mid = (window.innerHeight * SNAP_MID_VH) / 100;
-  const max = (window.innerHeight * SNAP_MAX_VH) / 100;
+  const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+  const mid = (vh * SNAP_MID_VH) / 100;
+  const max = (vh * SNAP_MAX_VH) / 100;
   return [SNAP_MIN, mid, max];
 }
 
