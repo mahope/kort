@@ -53,32 +53,45 @@ export default function OgImage() {
           </g>
         </svg>
 
-        {/* Map icon */}
-        <svg
-          viewBox="0 0 80 80"
-          style={{ width: 80, height: 80, marginBottom: 20 }}
+        {/* Map icon. Satori (next/og) does not support SVG <text>, so the
+            "N" compass label is rendered as an absolutely-positioned div. */}
+        <div
+          style={{
+            position: "relative",
+            display: "flex",
+            width: 80,
+            height: 80,
+            marginBottom: 20,
+          }}
         >
-          <path
-            d="M12 62L27 54L40 62L53 54L68 62V18L53 26L40 18L27 26L12 18Z"
-            fill="white"
-            fillOpacity="0.2"
-            stroke="white"
-            strokeWidth="3"
-            strokeLinejoin="round"
-          />
-          <polygon points="40,24 36,42 40,38 44,42" fill="white" />
-          <text
-            x="40"
-            y="22"
-            textAnchor="middle"
-            fill="white"
-            fontFamily="system-ui"
-            fontWeight="700"
-            fontSize="10"
+          <svg viewBox="0 0 80 80" style={{ width: 80, height: 80 }}>
+            <path
+              d="M12 62L27 54L40 62L53 54L68 62V18L53 26L40 18L27 26L12 18Z"
+              fill="white"
+              fillOpacity="0.2"
+              stroke="white"
+              strokeWidth="3"
+              strokeLinejoin="round"
+            />
+            <polygon points="40,24 36,42 40,38 44,42" fill="white" />
+          </svg>
+          <div
+            style={{
+              position: "absolute",
+              top: 12,
+              left: 0,
+              width: 80,
+              display: "flex",
+              justifyContent: "center",
+              fontSize: 11,
+              fontWeight: 700,
+              color: "white",
+              fontFamily: "system-ui",
+            }}
           >
             N
-          </text>
-        </svg>
+          </div>
+        </div>
 
         {/* Title */}
         <div
