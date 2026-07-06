@@ -104,7 +104,7 @@ export function BookmarksPanel() {
         <button
           type="button"
           onClick={handleAdd}
-          className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-primary text-white hover:bg-primary-hover transition-colors"
+          className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-primary text-on-primary hover:bg-primary-hover transition-colors"
         >
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />

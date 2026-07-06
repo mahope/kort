@@ -79,7 +79,7 @@ export default function LandingPage() {
           </p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-base font-semibold text-white hover:bg-primary-hover transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-base font-semibold text-on-primary hover:bg-primary-hover transition-colors"
           >
             Start kortudskrivning
             <svg
@@ -183,7 +183,7 @@ export default function LandingPage() {
               "Tryk Download PDF. Kortet genereres direkte i din browser.",
             ].map((step, i) => (
               <li key={i} className="flex gap-4">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white text-sm font-bold shrink-0">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-on-primary text-sm font-bold shrink-0">
                   {i + 1}
                 </span>
                 <p className="text-text-secondary pt-1">{step}</p>
@@ -193,7 +193,7 @@ export default function LandingPage() {
           <div className="mt-8">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary hover:bg-primary-hover transition-colors"
             >
               Prøv det nu &mdash; det er gratis
             </Link>
@@ -249,7 +249,7 @@ export default function LandingPage() {
           </p>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-base font-semibold text-white hover:bg-primary-hover transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-base font-semibold text-on-primary hover:bg-primary-hover transition-colors"
           >
             Gå til kortet
           </Link>

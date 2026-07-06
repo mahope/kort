@@ -24,7 +24,7 @@ export function Toggle({ label, value, options, onChange }: ToggleProps) {
             onClick={() => onChange(opt.value)}
             className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
               value === opt.value
-                ? "bg-primary text-white"
+                ? "bg-primary text-on-primary"
                 : "bg-surface text-foreground hover:bg-surface-secondary"
             }`}
           >
