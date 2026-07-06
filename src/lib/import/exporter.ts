@@ -1,3 +1,5 @@
+import { getBrand } from "@/config/brand";
+
 /**
  * Export features as GeoJSON string.
  */
@@ -37,7 +39,7 @@ export function exportAsGPX(features: GeoJSON.Feature[]): string {
   }
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="kort.mahoje.dk"
+<gpx version="1.1" creator="${getBrand().credit.short}"
   xmlns="http://www.topografix.com/GPX/1/1">
 ${waypoints}${tracks}</gpx>`;
 }
@@ -94,7 +96,7 @@ export function exportAsKML(features: GeoJSON.Feature[]): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
-    <name>Eksport fra kort.mahoje.dk</name>
+    <name>Eksport fra ${getBrand().credit.short}</name>
 ${placemarks}  </Document>
 </kml>`;
 }

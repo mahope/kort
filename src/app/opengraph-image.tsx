@@ -1,11 +1,13 @@
 import { ImageResponse } from "next/og";
+import { getBrand } from "@/config/brand";
 
 export const runtime = "edge";
-export const alt = "Kort.mahoje.dk - Gratis Topografisk Kortudskrivning";
+export const alt = `${getBrand().siteName} - Gratis Topografisk Kortudskrivning`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 export default function OgImage() {
+  const brand = getBrand();
   return new ImageResponse(
     (
       <div
@@ -16,7 +18,7 @@ export default function OgImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #1e3a5f 0%, #1e40af 50%, #2563eb 100%)",
+          background: brand.og.gradient,
           fontFamily: "system-ui, sans-serif",
           position: "relative",
           overflow: "hidden",
@@ -96,7 +98,7 @@ export default function OgImage() {
               lineHeight: 1.1,
             }}
           >
-            Kort.mahoje.dk
+            {brand.og.title}
           </div>
           <div
             style={{

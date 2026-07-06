@@ -8,6 +8,7 @@ import { useImportStore } from "@/stores/importStore";
 import { useDrawStore } from "@/stores/drawStore";
 import { useHistoryStore } from "@/stores/historyStore";
 import { calculatePdfLayout } from "./layout";
+import { getBrand } from "@/config/brand";
 import { renderMapToCanvas } from "./renderer";
 import { calculateMultiPageGrid } from "@/lib/geo/calculations";
 import { latlngToUtm, utmToLatlng, getGridInterval } from "@/lib/geo/utm";
@@ -336,7 +337,7 @@ function drawAttribution(
   pdf.text(scaleText, layout.marginMm, y);
 
   // Attribution on right
-  const attribution = "Kortdata: Klimadatastyrelsen | kort.mahoje.dk";
+  const attribution = `Kortdata: Klimadatastyrelsen | ${getBrand().credit.short}`;
   pdf.text(attribution, layout.pageWidthMm - layout.marginMm, y, {
     align: "right",
   });
