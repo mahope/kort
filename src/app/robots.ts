@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { getBrand } from "@/config/brand";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -6,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: "https://kort.mahoje.dk/sitemap.xml",
+    sitemap: `${getBrand().baseUrl}/sitemap.xml`,
   };
 }

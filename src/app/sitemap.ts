@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
+import { getBrand } from "@/config/brand";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://kort.mahoje.dk";
+  const baseUrl = getBrand().baseUrl;
 
   return [
     {

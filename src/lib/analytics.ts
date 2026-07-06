@@ -1,3 +1,5 @@
+import { getBrand } from "@/config/brand";
+
 let initialized = false;
 
 export async function enableAnalytics() {
@@ -6,7 +8,7 @@ export async function enableAnalytics() {
 
   const { init } = await import("@plausible-analytics/tracker");
   init({
-    domain: "kort.mahoje.dk",
+    domain: getBrand().analyticsDomain,
     endpoint: "https://analytics.holstjensen.eu/api/event",
     autoCapturePageviews: true,
     outboundLinks: true,

@@ -65,7 +65,7 @@ export function MapControls() {
                       onClick={() => setStyle(key)}
                       className={`rounded px-2 py-0.5 text-xs transition-colors ${
                         currentStyle === key
-                          ? "bg-primary text-white"
+                          ? "bg-primary text-on-primary"
                           : "bg-surface-secondary text-text-secondary hover:bg-border"
                       }`}
                     >

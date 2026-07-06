@@ -11,6 +11,8 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ARG NEXT_PUBLIC_BRAND=mahoje
+ENV NEXT_PUBLIC_BRAND=$NEXT_PUBLIC_BRAND
 RUN npm run build
 
 # Production image

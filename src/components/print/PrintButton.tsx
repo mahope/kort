@@ -29,7 +29,7 @@ export function PrintButton() {
       type="button"
       onClick={handleClick}
       disabled={isGenerating || !frameBounds}
-      className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
+      className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition-colors hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {isGenerating ? (
         <span className="flex items-center justify-center gap-2">
