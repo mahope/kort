@@ -10,6 +10,7 @@ import { DpiSelector } from "./DpiSelector";
 import { BearingSelector } from "./BearingSelector";
 import { MultiPageSelector } from "./MultiPageSelector";
 import { PrintButton } from "@/components/print/PrintButton";
+import { getBrand } from "@/config/brand";
 import { FileImport } from "./FileImport";
 import { ImportedLayerList } from "./ImportedLayerList";
 import { DrawToolbar } from "./DrawToolbar";
@@ -115,13 +116,23 @@ function SidebarContent() {
     } catch {}
   }, [setAdvancedMode]);
 
+  const brand = getBrand();
+
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-lg font-bold">Kort.mahoje.dk</h1>
-        <p className="text-xs text-text-secondary">
-          Gratis topografisk kortudskrivning
-        </p>
+        <h1 className="text-lg font-bold">{brand.siteName}</h1>
+        <p className="text-xs text-text-secondary">{brand.tagline}</p>
+        {brand.id === "solaris" && (
+          <a
+            href={brand.credit.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] text-text-muted hover:text-text-secondary underline underline-offset-2"
+          >
+            {brand.credit.label}
+          </a>
+        )}
       </div>
 
       <SearchBar />
