@@ -92,7 +92,7 @@ interface Brand {
 ### 4. "Om"-side & mahoje-kredit
 
 - `src/app/om/page.tsx` renderer brand-betinget indhold fra `Brand.about`.
-- **Solaris-variant** (foreningens stemme): kort "hvorfor" (spejderforening under DDS, behov for gratis print af ordentlige topografiske kort til ture/orientering/kortlære), fastholder gratis-/ingen-login-etos, og en fremhævet **"Bygget af mahoje.dk"**-blok der linker til https://mahoje.dk. Ingen personlig Mads-bio/portræt.
+- **Solaris-variant** (foreningens stemme): kort "hvorfor" (spejderforening under DDS, behov for gratis print af ordentlige topografiske kort til ture/orientering/kortlære), fastholder gratis-/ingen-login-etos, og en fremhævet **"Bygget af mahoje.dk"**-blok der linker til https://mahoje.dk. Ingen personlig Mads-bio/portræt. **Ingen Solaris-kontakt-email** — kun mahoje-kreditten. GitHub-link peger på det fælles repo `https://github.com/mahope/kort`.
 - **mahoje-variant:** nuværende personlige side, uændret.
 - mahoje-kreditten går desuden igen i:
   - Sidebar-footer (link "Bygget af mahoje.dk" → mahoje.dk)
@@ -133,8 +133,12 @@ Uændret: Dataforsyningen (Klimadatastyrelsen) vector tiles (EPSG:3857) + DAWA (
 - **Kontrast:** gul som accent kan give WCAG-problemer på hvid. Afbødet af sort-primær + gul-kun-accent, og kontrasttjek på knapper/links.
 - **PWA-cache:** to brands må ikke dele service-worker-cache på tværs af domæner — de kører på hver sit domæne, så cachen er domæne-isoleret (intet problem).
 
+## Afklarede beslutninger
+
+- Solaris-om-siden har **ingen kontakt-email** — kun mahoje-kreditten.
+- GitHub-links på Solaris-varianten peger på det fælles repo `https://github.com/mahope/kort` (org `mahope`; bemærk: brand-domænet er `mahoje.dk`, GitHub-org er `mahope`).
+
 ## Åbne punkter (afklares i plan)
 
 - Præcis Solaris-farvemapping for surface/border/text i lys+mørk (konkrete hex).
 - Om `package.json` `name` og repo-README skal nævne begge brands (kosmetisk).
-- Solaris' kontakt-email + evt. egen GitHub-issues-kanal, eller genbrug af mahope/kort issues.
