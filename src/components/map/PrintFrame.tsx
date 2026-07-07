@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, memo } from "react";
 import { Source, Layer, Marker } from "react-map-gl/maplibre";
 import { useMapStore } from "@/stores/mapStore";
 import { usePrintStore } from "@/stores/printStore";
@@ -37,7 +37,7 @@ function boundsToCorners(bounds: { north: number; south: number; east: number; w
   ];
 }
 
-export function PrintFrame() {
+function PrintFrameImpl() {
   const viewState = useMapStore((s) => s.viewState);
   const { paperFormat, orientation, scale, setFrameBounds, multiPage, gridCols, gridRows, overlapMm } = usePrintStore();
   const bearing = viewState.bearing;
@@ -217,3 +217,5 @@ export function PrintFrame() {
     </>
   );
 }
+
+export const PrintFrame = memo(PrintFrameImpl);

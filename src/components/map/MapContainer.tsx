@@ -19,6 +19,16 @@ import { ImportedLayers } from "./ImportedLayers";
 import { DrawingTools } from "./DrawingTools";
 import { UtmGrid } from "./UtmGrid";
 
+// Static lookup — module scope so it isn't re-created per render or used as an
+// effect dependency.
+const RASTER_BASE_LAYERS: Record<string, typeof ORTOFOTO_SOURCE> = {
+  ortofoto: ORTOFOTO_SOURCE,
+  dtk25: DTK25_SOURCE,
+  osm: OSM_SOURCE,
+  historisk_hoeje: HISTORISK_HOEJE_SOURCE,
+  historisk_lave: HISTORISK_LAVE_SOURCE,
+};
+
 export function MapContainer() {
   const mapRef = useRef<MapRef>(null);
   const viewState = useMapStore((s) => s.viewState);
@@ -28,14 +38,6 @@ export function MapContainer() {
   const overlays = useMapStore((s) => s.overlays);
   const flyToTarget = useMapStore((s) => s.flyToTarget);
   const clearFlyTo = useMapStore((s) => s.clearFlyTo);
-
-  const RASTER_BASE_LAYERS: Record<string, typeof ORTOFOTO_SOURCE> = useMemo(() => ({
-    ortofoto: ORTOFOTO_SOURCE,
-    dtk25: DTK25_SOURCE,
-    osm: OSM_SOURCE,
-    historisk_hoeje: HISTORISK_HOEJE_SOURCE,
-    historisk_lave: HISTORISK_LAVE_SOURCE,
-  }), []);
 
   const mapStyle = useMemo(() => {
     if (baseLayer !== "skaermkort") return BLANK_STYLE;
@@ -66,7 +68,7 @@ export function MapContainer() {
     if (source && "setTiles" in source) {
       (source as import("maplibre-gl").RasterTileSource).setTiles(cfg.tiles);
     }
-  }, [baseLayer, RASTER_BASE_LAYERS]);
+  }, [baseLayer]);
 
   useEffect(() => {
     if (flyToTarget && mapRef.current) {

@@ -36,6 +36,13 @@ const THEMES: { value: Theme; label: string; icon: React.ReactNode }[] = [
 export function ThemeToggle() {
   const theme = useUiStore((s) => s.theme);
   const setTheme = useUiStore((s) => s.setTheme);
+  const hydrateTheme = useUiStore((s) => s.hydrateTheme);
+
+  // Sync the store from localStorage after hydration (store seeds "system"
+  // deterministically to match SSR; the .dark class is set by the inline script).
+  useEffect(() => {
+    hydrateTheme();
+  }, [hydrateTheme]);
 
   // Apply theme on mount and listen for system preference changes
   useEffect(() => {

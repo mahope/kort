@@ -48,6 +48,15 @@ describe("utmToLatlng ↔ latlngToUtm round-trip", () => {
   }
 });
 
+describe("EPSG:25832 → WGS84 (Adressevælger address pipeline)", () => {
+  it("converts an Adressevælger access point to the right WGS84 location", () => {
+    // Rentemestervej 8, 2400 København NV — adgangspunkt in EPSG:25832.
+    const { lat, lng } = utmToLatlng(722125.86, 6178892.29, 32);
+    expect(lng).toBeCloseTo(12.5355, 3);
+    expect(lat).toBeCloseTo(55.7048, 3);
+  });
+});
+
 describe("getUtmZone", () => {
   it("maps Danish longitudes to zone 32", () => {
     expect(getUtmZone(9)).toBe(32);

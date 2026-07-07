@@ -9,11 +9,9 @@ import { useDrawStore } from "@/stores/drawStore";
 import { useHistoryStore } from "@/stores/historyStore";
 import { calculatePdfLayout } from "./layout";
 import { getBrand } from "@/config/brand";
-import { renderMapToCanvas } from "./renderer";
+import { renderMapToImage } from "./renderer";
 import { calculateMultiPageGrid } from "@/lib/geo/calculations";
 import { latlngToUtm, utmToLatlng, getGridInterval, getUtmZone } from "@/lib/geo/utm";
-
-const JPEG_QUALITY = 0.92;
 
 /** Build the download filename shared by single- and multi-page output. */
 function buildFilename(
@@ -74,8 +72,8 @@ export async function generatePdf({
   const showUtmGrid = mapState.showUtmGrid;
   const bearing = mapState.viewState.bearing;
 
-  // Render map at target resolution
-  const canvas = await renderMapToCanvas({
+  // Render map at target resolution (returns a JPEG data URL)
+  const imgData = await renderMapToImage({
     bounds,
     canvasWidth: layout.canvasWidth,
     canvasHeight: layout.canvasHeight,
@@ -97,7 +95,6 @@ export async function generatePdf({
   });
 
   // Add map image
-  const imgData = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
   pdf.addImage(
     imgData,
     "JPEG",
@@ -404,7 +401,7 @@ async function generateMultiPagePdf({
         pdf.addPage([layout.pageWidthMm, layout.pageHeightMm], orientation === "landscape" ? "landscape" : "portrait");
       }
 
-      const canvas = await renderMapToCanvas({
+      const imgData = await renderMapToImage({
         bounds: cell.bounds,
         canvasWidth: layout.canvasWidth,
         canvasHeight: layout.canvasHeight,
@@ -418,7 +415,6 @@ async function generateMultiPagePdf({
         bearing,
       });
 
-      const imgData = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
       pdf.addImage(imgData, "JPEG", layout.marginMm, layout.marginMm, layout.mapWidthMm, layout.mapHeightMm);
 
       if (showUtmGrid) {

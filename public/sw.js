@@ -1,5 +1,7 @@
-const CACHE_NAME = "topoprint-v1";
-const TILE_CACHE = "topoprint-tiles-v1";
+// Bump these on any caching-logic change so activate() purges stale caches —
+// e.g. address-search responses that the previous version wrongly stored as tiles.
+const CACHE_NAME = "topoprint-v2";
+const TILE_CACHE = "topoprint-tiles-v2";
 const MAX_TILE_ENTRIES = 500;
 
 const APP_SHELL = ["/", "/offline.html"];

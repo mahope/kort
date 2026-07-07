@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, type RefObject } from "react";
+import { useState, useCallback, useMemo, memo, type RefObject } from "react";
 import { Source, Layer, type MapRef } from "react-map-gl/maplibre";
 import { useUiStore } from "@/stores/uiStore";
 
@@ -10,7 +10,7 @@ interface GeolocationButtonProps {
 
 type GeoState = "idle" | "loading" | "active" | "error";
 
-export function GeolocationButton({ mapRef }: GeolocationButtonProps) {
+function GeolocationButtonImpl({ mapRef }: GeolocationButtonProps) {
   const [state, setState] = useState<GeoState>("idle");
   const [position, setPosition] = useState<{ lng: number; lat: number; accuracy: number } | null>(null);
   const addToast = useUiStore((s) => s.addToast);
@@ -61,26 +61,35 @@ export function GeolocationButton({ mapRef }: GeolocationButtonProps) {
     );
   }, [mapRef, addToast]);
 
-  // Accuracy ring as a GeoJSON circle approximation
-  const accuracyGeoJSON = position
-    ? createCircleGeoJSON(position.lng, position.lat, position.accuracy)
-    : null;
+  // Accuracy ring as a GeoJSON circle approximation. Memoized on `position` so
+  // the 64-point trig loop doesn't re-run on every parent (map-move) re-render.
+  const accuracyGeoJSON = useMemo(
+    () =>
+      position
+        ? createCircleGeoJSON(position.lng, position.lat, position.accuracy)
+        : null,
+    [position]
+  );
 
-  const pointGeoJSON = position
-    ? {
-        type: "FeatureCollection" as const,
-        features: [
-          {
-            type: "Feature" as const,
-            properties: {},
-            geometry: {
-              type: "Point" as const,
-              coordinates: [position.lng, position.lat],
-            },
-          },
-        ],
-      }
-    : null;
+  const pointGeoJSON = useMemo(
+    () =>
+      position
+        ? {
+            type: "FeatureCollection" as const,
+            features: [
+              {
+                type: "Feature" as const,
+                properties: {},
+                geometry: {
+                  type: "Point" as const,
+                  coordinates: [position.lng, position.lat],
+                },
+              },
+            ],
+          }
+        : null,
+    [position]
+  );
 
   return (
     <>
@@ -154,6 +163,9 @@ export function GeolocationButton({ mapRef }: GeolocationButtonProps) {
     </>
   );
 }
+
+// Memoized so parent (map-move) re-renders don't re-render the marker/button.
+export const GeolocationButton = memo(GeolocationButtonImpl);
 
 /**
  * Create a GeoJSON polygon approximating a circle on the map.
