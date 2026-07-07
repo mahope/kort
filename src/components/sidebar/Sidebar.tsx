@@ -6,6 +6,7 @@ import { LayerSelector } from "./LayerSelector";
 import { OverlaySelector } from "./OverlaySelector";
 import { ScaleSelector } from "./ScaleSelector";
 import { PaperFormatSelector } from "./PaperFormatSelector";
+import { CoverageInfo } from "./CoverageInfo";
 import { DpiSelector } from "./DpiSelector";
 import { BearingSelector } from "./BearingSelector";
 import { MultiPageSelector } from "./MultiPageSelector";
@@ -143,6 +144,7 @@ function SidebarContent() {
 
       <ScaleSelector />
       <PaperFormatSelector />
+      <CoverageInfo />
 
       <div className="max-md:sticky max-md:bottom-0 max-md:z-10 max-md:bg-gradient-to-t max-md:from-surface max-md:from-60% max-md:to-transparent max-md:pt-3 max-md:-mx-4 max-md:px-4 max-md:pb-2">
         <PrintButton />

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { LayerStyle } from "./importStore";
 
 export type DrawMode =
@@ -34,20 +35,31 @@ const DEFAULT_STYLE: LayerStyle = {
   fillOpacity: 0.2,
 };
 
-export const useDrawStore = create<DrawStore>((set) => ({
-  activeMode: null,
-  features: [],
-  setMode: (activeMode) => set({ activeMode }),
-  setFeatures: (features) => set({ features }),
-  removeFeature: (id) =>
-    set((s) => ({ features: s.features.filter((f) => f.id !== id) })),
-  updateFeatureStyle: (id, style) =>
-    set((s) => ({
-      features: s.features.map((f) =>
-        f.id === id ? { ...f, style: { ...f.style, ...style } } : f
-      ),
-    })),
-  clearAll: () => set({ features: [], activeMode: null }),
-}));
+export const useDrawStore = create<DrawStore>()(
+  persist(
+    (set) => ({
+      activeMode: null,
+      features: [],
+      setMode: (activeMode) => set({ activeMode }),
+      setFeatures: (features) => set({ features }),
+      removeFeature: (id) =>
+        set((s) => ({ features: s.features.filter((f) => f.id !== id) })),
+      updateFeatureStyle: (id, style) =>
+        set((s) => ({
+          features: s.features.map((f) =>
+            f.id === id ? { ...f, style: { ...f.style, ...style } } : f
+          ),
+        })),
+      clearAll: () => set({ features: [], activeMode: null }),
+    }),
+    {
+      name: "kort-drawings",
+      version: 1,
+      // Persist only the drawn features; the active tool resets on reload.
+      // DrawingTools re-adds these to Terra Draw on the initial style.load.
+      partialize: (s) => ({ features: s.features }),
+    }
+  )
+);
 
 export { DEFAULT_STYLE as DRAW_DEFAULT_STYLE };

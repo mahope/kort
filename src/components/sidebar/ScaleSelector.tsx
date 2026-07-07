@@ -78,7 +78,7 @@ export function ScaleSelector() {
             />
           </div>
           {error && (
-            <p className="mt-1 text-xs text-red-500">{error}</p>
+            <p className="mt-1 text-xs text-danger">{error}</p>
           )}
           {!isPreset && !error && (
             <p className="mt-1 text-xs text-text-muted">

@@ -144,11 +144,12 @@ function GeolocationButtonImpl({ mapRef }: GeolocationButtonProps) {
           onClick={handleClick}
           disabled={state === "loading"}
           title="Find min position"
-          className={`flex items-center justify-center w-[29px] h-[29px] rounded bg-surface shadow-md border border-border hover:bg-surface-secondary transition-colors ${
-            state === "active" ? "text-primary" : state === "error" ? "text-accent" : "text-text-secondary"
+          aria-label="Find min position"
+          className={`flex items-center justify-center w-10 h-10 rounded-lg bg-surface shadow-md border border-border hover:bg-surface-secondary transition-colors ${
+            state === "active" ? "text-primary" : state === "error" ? "text-danger" : "text-text-secondary"
           } ${state === "loading" ? "animate-pulse" : ""}`}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             {state === "active" ? (
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0-6C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="currentColor" stroke="none" />
             ) : (

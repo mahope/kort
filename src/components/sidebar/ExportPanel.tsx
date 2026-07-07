@@ -81,7 +81,7 @@ export function ExportPanel() {
         <button
           type="button"
           onClick={handleDownload}
-          className="px-2 py-1 rounded text-xs bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+          className="px-2 py-1 rounded text-xs bg-primary text-on-primary hover:bg-primary-hover transition-colors"
         >
           Download
         </button>

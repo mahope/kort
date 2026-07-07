@@ -14,12 +14,9 @@ export function OverlaySelector() {
   const overlays = useMapStore((s) => s.overlays);
   const toggleOverlay = useMapStore((s) => s.toggleOverlay);
   const setOverlayOpacity = useMapStore((s) => s.setOverlayOpacity);
-  const showUtmGrid = useMapStore((s) => s.showUtmGrid);
-  const toggleUtmGrid = useMapStore((s) => s.toggleUtmGrid);
 
   return (
     <div>
-      <label className="block text-sm font-medium mb-1">Overlays</label>
       <div className="space-y-2">
         {overlays.map((overlay) => (
           <div key={overlay.id}>
@@ -53,17 +50,6 @@ export function OverlaySelector() {
             )}
           </div>
         ))}
-        <div>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showUtmGrid}
-              onChange={toggleUtmGrid}
-              className="accent-primary"
-            />
-            <span className="text-sm">UTM-gitter (zone 32N)</span>
-          </label>
-        </div>
       </div>
     </div>
   );

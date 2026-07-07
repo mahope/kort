@@ -51,7 +51,7 @@ export function LoadingOverlay() {
           </div>
         )}
         {!isMultiPage && (
-          <p className="text-xs text-text-muted mt-1">Dette kan tage et ojeblik</p>
+          <p className="text-xs text-text-muted mt-1">Dette kan tage et øjeblik</p>
         )}
       </div>
     </div>

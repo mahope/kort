@@ -44,7 +44,7 @@ export function BearingSelector() {
           <button
             type="button"
             onClick={() => setBearing(0)}
-            className="text-xs text-blue-500 hover:text-blue-700"
+            className="text-xs text-primary hover:text-primary-hover"
             title="Nulstil rotation"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
