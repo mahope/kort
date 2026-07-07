@@ -7,6 +7,8 @@ import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
 import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
 import type { RasterSourceConfig } from "@/lib/map/sources";
 
+// JPEG quality for the rendered map image embedded in the PDF.
+export const MAP_JPEG_QUALITY = 0.92;
 
 function getDashArray(lineStyle: string): number[] | undefined {
   switch (lineStyle) {
@@ -30,7 +32,7 @@ interface RenderOptions {
   bearing?: number;
 }
 
-export async function renderMapToCanvas({
+export async function renderMapToImage({
   bounds,
   canvasWidth,
   canvasHeight,
@@ -42,7 +44,7 @@ export async function renderMapToCanvas({
   showUtmGrid = false,
   scale = 25000,
   bearing = 0,
-}: RenderOptions): Promise<HTMLCanvasElement> {
+}: RenderOptions): Promise<string> {
   // Create hidden container at target resolution
   const container = document.createElement("div");
   container.style.position = "absolute";
@@ -52,6 +54,7 @@ export async function renderMapToCanvas({
   container.style.height = `${canvasHeight}px`;
   document.body.appendChild(container);
 
+  let map: maplibregl.Map | undefined;
   try {
     const mapStyle = baseLayer === "skaermkort" ? MAP_STYLES[style].url : BLANK_STYLE;
 
@@ -99,7 +102,7 @@ export async function renderMapToCanvas({
       mapOptions.fitBoundsOptions = { padding: 0 };
     }
 
-    const map = new maplibregl.Map(mapOptions);
+    map = new maplibregl.Map(mapOptions);
 
     await waitForMapLoad(map);
 
@@ -215,19 +218,14 @@ export async function renderMapToCanvas({
     // Wait for all tiles (including raster overlays) to load
     await waitForTilesLoaded(map);
 
-    const canvas = map.getCanvas();
-
-    // Clone canvas data before cleanup
-    const resultCanvas = document.createElement("canvas");
-    resultCanvas.width = canvas.width;
-    resultCanvas.height = canvas.height;
-    const ctx = resultCanvas.getContext("2d");
-    if (!ctx) throw new Error("Kunne ikke oprette 2D canvas-kontekst");
-    ctx.drawImage(canvas, 0, 0);
-
-    map.remove();
-    return resultCanvas;
+    // Encode straight from the map's own canvas (preserveDrawingBuffer keeps it
+    // valid) before cleanup — avoids cloning the full-resolution canvas a second
+    // time, which roughly halves peak memory for large formats.
+    return map.getCanvas().toDataURL("image/jpeg", MAP_JPEG_QUALITY);
   } finally {
+    // Always release the WebGL context, even if load/tile waits time out —
+    // otherwise repeated failures exhaust the browser's ~16 context limit.
+    map?.remove();
     document.body.removeChild(container);
   }
 }
@@ -247,14 +245,12 @@ function waitForMapLoad(map: maplibregl.Map): Promise<void> {
 
 function waitForTilesLoaded(map: maplibregl.Map): Promise<void> {
   return new Promise((resolve, reject) => {
-    let checkInterval: ReturnType<typeof setInterval>;
-
     const timeout = setTimeout(() => {
       clearInterval(checkInterval);
       reject(new Error("Tile-loading timeout (60s)"));
     }, 60000);
 
-    checkInterval = setInterval(() => {
+    const checkInterval = setInterval(() => {
       if (map.isStyleLoaded() && map.areTilesLoaded()) {
         clearInterval(checkInterval);
         // Extra delay for final render

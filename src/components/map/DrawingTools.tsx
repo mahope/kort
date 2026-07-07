@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, memo } from "react";
 import { useMap } from "react-map-gl/maplibre";
 import {
   TerraDraw,
@@ -24,7 +24,7 @@ const TERRA_MODE_MAP = {
   select: "select",
 } as const;
 
-export function DrawingTools() {
+function DrawingToolsImpl() {
   const { current: mapInstance } = useMap();
   const drawRef = useRef<TerraDraw | null>(null);
   const activeMode = useDrawStore((s) => s.activeMode);
@@ -77,6 +77,58 @@ export function DrawingTools() {
       }
     };
   }, []);
+
+  // Switching the base map reloads the MapLibre style, which wipes every
+  // imperatively-added layer — including Terra Draw's — and leaves drawRef
+  // pointing at a dead instance. Rebuild it on style.load and restore the
+  // drawn features from the store so drawings survive a base-map change.
+  useEffect(() => {
+    if (!mapInstance) return;
+    const map = mapInstance.getMap();
+
+    const handleStyleLoad = () => {
+      const hadDraw = drawRef.current !== null;
+      const featuresToRestore = useDrawStore.getState().features;
+      if (drawRef.current) {
+        try {
+          drawRef.current.stop();
+        } catch {
+          // ignore
+        }
+        drawRef.current = null;
+      }
+      // Nothing to rebuild if drawing was never started and there's no state.
+      if (!hadDraw && featuresToRestore.length === 0) return;
+
+      const draw = ensureDraw();
+      if (!draw) return;
+
+      if (featuresToRestore.length > 0) {
+        try {
+          draw.addFeatures(
+            featuresToRestore.map((f) => f.geojson) as Parameters<
+              typeof draw.addFeatures
+            >[0]
+          );
+        } catch {
+          // ignore features Terra Draw refuses to re-hydrate
+        }
+      }
+      const mode = useDrawStore.getState().activeMode;
+      if (mode) {
+        try {
+          draw.setMode(TERRA_MODE_MAP[mode]);
+        } catch {
+          // ignore
+        }
+      }
+    };
+
+    map.on("style.load", handleStyleLoad);
+    return () => {
+      map.off("style.load", handleStyleLoad);
+    };
+  }, [mapInstance, ensureDraw]);
 
   // Sync mode - only init Terra Draw when a mode is selected
   useEffect(() => {
@@ -165,3 +217,5 @@ export function DrawingTools() {
 
   return null;
 }
+
+export const DrawingTools = memo(DrawingToolsImpl);

@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { searchAddresses } from "@/lib/api/dawa";
+import { searchAddresses, resolveCoordinates } from "@/lib/api/address";
 import { useMapStore } from "@/stores/mapStore";
+import { useUiStore } from "@/stores/uiStore";
 import type { SearchResult } from "@/types/map";
 
 export function SearchBar() {
@@ -61,10 +62,27 @@ export function SearchBar() {
     debounceRef.current = setTimeout(() => doSearch(value), 300);
   };
 
-  const selectResult = (result: SearchResult) => {
+  const selectResult = async (result: SearchResult) => {
     setQuery(result.text);
     setIsOpen(false);
-    flyTo(result.coordinates[0], result.coordinates[1]);
+    if (result.coordinates) {
+      flyTo(result.coordinates[0], result.coordinates[1]);
+      return;
+    }
+    // Adressevælger results carry no coordinates — resolve them on select.
+    setIsLoading(true);
+    try {
+      const coords = await resolveCoordinates(result);
+      if (coords) {
+        flyTo(coords[0], coords[1]);
+      } else {
+        useUiStore.getState().addToast("error", "Kunne ikke finde adressens placering");
+      }
+    } catch {
+      useUiStore.getState().addToast("error", "Kunne ikke slå adressen op");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -102,7 +120,7 @@ export function SearchBar() {
   return (
     <div ref={containerRef} className="relative">
       <label htmlFor="search-input" className="block text-sm font-medium mb-1">
-        Adressesogning
+        Adressesøgning
       </label>
       <div className="relative">
         <input
@@ -117,7 +135,7 @@ export function SearchBar() {
           onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => hasSearched && setIsOpen(true)}
-          placeholder="Sog efter adresse eller stednavn..."
+          placeholder="Søg efter adresse eller stednavn..."
           className="w-full rounded-lg border border-border px-3 py-2 pr-8 text-sm bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
         {isLoading && (

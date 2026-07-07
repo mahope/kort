@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Source, Layer } from "react-map-gl/maplibre";
 import { useImportStore } from "@/stores/importStore";
 import type { LayerStyle } from "@/stores/importStore";
@@ -15,7 +16,7 @@ function getDashArray(lineStyle: LayerStyle["lineStyle"]): number[] | undefined 
   }
 }
 
-export function ImportedLayers() {
+function ImportedLayersImpl() {
   const layers = useImportStore((s) => s.layers);
 
   return (
@@ -72,3 +73,5 @@ export function ImportedLayers() {
     </>
   );
 }
+
+export const ImportedLayers = memo(ImportedLayersImpl);

@@ -1,14 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 import { Source, Layer } from "react-map-gl/maplibre";
 import { useMapStore } from "@/stores/mapStore";
 import { usePrintStore } from "@/stores/printStore";
-import { latlngToUtm, utmToLatlng, getGridInterval } from "@/lib/geo/utm";
+import { latlngToUtm, utmToLatlng, getGridInterval, getUtmZone } from "@/lib/geo/utm";
 
-export function UtmGrid() {
+function UtmGridImpl() {
   const showGrid = useMapStore((s) => s.showUtmGrid);
-  const viewState = useMapStore((s) => s.viewState);
+  // Only the longitude decides the UTM zone — subscribing to the whole
+  // viewState would re-render this on every map-move frame.
+  const longitude = useMapStore((s) => s.viewState.longitude);
   const scale = usePrintStore((s) => s.scale);
   const frameBounds = usePrintStore((s) => s.frameBounds);
 
@@ -17,7 +19,7 @@ export function UtmGrid() {
 
     // Use print frame bounds with some padding
     const { north, south, east, west } = frameBounds;
-    const zone = Math.floor((viewState.longitude + 180) / 6) + 1;
+    const zone = getUtmZone(longitude);
     const interval = getGridInterval(scale);
 
     // Convert corners to UTM
@@ -96,7 +98,7 @@ export function UtmGrid() {
       type: "FeatureCollection" as const,
       features,
     };
-  }, [showGrid, frameBounds, viewState.longitude, scale]);
+  }, [showGrid, frameBounds, longitude, scale]);
 
   if (!showGrid || !gridData) return null;
 
@@ -136,3 +138,6 @@ export function UtmGrid() {
     </Source>
   );
 }
+
+// No props — memo stops parent (map-move) re-renders from cascading here.
+export const UtmGrid = memo(UtmGridImpl);

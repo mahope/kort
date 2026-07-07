@@ -6,12 +6,19 @@ export interface MapViewState {
   pitch: number;
 }
 
+/** Deferred coordinate lookup for Adressevælger results (search returns no coords). */
+export type AddressLookup =
+  | { kind: "husnummer"; id: string }
+  | { kind: "adresse"; id: string }
+  | { kind: "vej"; vejnavn: string; postnr: string };
+
 export interface SearchResult {
   id: string;
   text: string;
   description: string;
-  coordinates: [number, number]; // [lng, lat]
+  coordinates: [number, number] | null; // [lng, lat]; null until resolved via lookup
   type: "address" | "place";
+  lookup?: AddressLookup;
 }
 
 export type MapStyle = "klassisk" | "daempet" | "graa" | "moerkt";

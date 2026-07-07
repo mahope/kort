@@ -1,15 +1,23 @@
-import { useState, useEffect } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
+/**
+ * Reactive matchMedia hook backed by useSyncExternalStore so React reads the
+ * live value directly (no setState-in-effect, no hydration mismatch).
+ */
 export function useIsMobile(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState(false);
+  const query = `(max-width: ${breakpoint - 1}px)`;
 
-  useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
-    setIsMobile(mql.matches);
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
-  }, [breakpoint]);
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      const mql = window.matchMedia(query);
+      mql.addEventListener("change", callback);
+      return () => mql.removeEventListener("change", callback);
+    },
+    [query]
+  );
 
-  return isMobile;
+  const getSnapshot = () => window.matchMedia(query).matches;
+  const getServerSnapshot = () => false;
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

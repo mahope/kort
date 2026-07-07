@@ -17,6 +17,7 @@ interface UiStore {
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   setTheme: (theme: Theme) => void;
+  hydrateTheme: () => void;
   setAdvancedMode: (v: boolean) => void;
   addToast: (type: ToastMessage["type"], message: string, duration?: number) => void;
   removeToast: (id: string) => void;
@@ -31,18 +32,21 @@ function applyTheme(theme: Theme) {
   try { localStorage.setItem("theme", theme); } catch {}
 }
 
-function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "system";
+function getStoredTheme(): Theme | null {
+  if (typeof window === "undefined") return null;
   try {
     const stored = localStorage.getItem("theme");
     if (stored === "light" || stored === "dark" || stored === "system") return stored;
   } catch {}
-  return "system";
+  return null;
 }
 
 export const useUiStore = create<UiStore>((set) => ({
   sidebarOpen: true,
-  theme: getInitialTheme(),
+  // Deterministic on the server AND on first client render (the inline script in
+  // layout.tsx already sets the .dark class); the real value is read from
+  // localStorage post-hydration via hydrateTheme() to avoid a hydration mismatch.
+  theme: "system",
   advancedMode: false,
   toasts: [],
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
@@ -50,6 +54,10 @@ export const useUiStore = create<UiStore>((set) => ({
   setTheme: (theme) => {
     applyTheme(theme);
     set({ theme });
+  },
+  hydrateTheme: () => {
+    const stored = getStoredTheme();
+    if (stored) set({ theme: stored });
   },
   setAdvancedMode: (advancedMode) => {
     try { localStorage.setItem("advancedMode", String(advancedMode)); } catch {}

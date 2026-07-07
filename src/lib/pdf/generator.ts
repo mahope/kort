@@ -9,9 +9,35 @@ import { useDrawStore } from "@/stores/drawStore";
 import { useHistoryStore } from "@/stores/historyStore";
 import { calculatePdfLayout } from "./layout";
 import { getBrand } from "@/config/brand";
-import { renderMapToCanvas } from "./renderer";
+import { renderMapToImage } from "./renderer";
 import { calculateMultiPageGrid } from "@/lib/geo/calculations";
-import { latlngToUtm, utmToLatlng, getGridInterval } from "@/lib/geo/utm";
+import { latlngToUtm, utmToLatlng, getGridInterval, getUtmZone } from "@/lib/geo/utm";
+
+/** Build the download filename shared by single- and multi-page output. */
+function buildFilename(
+  scale: number,
+  paperFormat: PaperFormat,
+  pageCount?: number
+): string {
+  const scaleStr = scale >= 1000 ? `${scale / 1000}k` : String(scale);
+  const timestamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "");
+  const pages = pageCount ? `_${pageCount}sider` : "";
+  return `kort_1${scaleStr}_${paperFormat}${pages}_${timestamp}.pdf`;
+}
+
+/** Trigger a browser download of the generated PDF via an object URL. */
+function downloadPdf(pdf: jsPDF, filename: string): void {
+  const blob = pdf.output("blob");
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  // Revoke on the next tick so large-blob downloads are not interrupted.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 interface GeneratePdfOptions {
   bounds: PrintFrameBounds;
@@ -46,8 +72,8 @@ export async function generatePdf({
   const showUtmGrid = mapState.showUtmGrid;
   const bearing = mapState.viewState.bearing;
 
-  // Render map at target resolution
-  const canvas = await renderMapToCanvas({
+  // Render map at target resolution (returns a JPEG data URL)
+  const imgData = await renderMapToImage({
     bounds,
     canvasWidth: layout.canvasWidth,
     canvasHeight: layout.canvasHeight,
@@ -69,7 +95,6 @@ export async function generatePdf({
   });
 
   // Add map image
-  const imgData = canvas.toDataURL("image/jpeg", 0.92);
   pdf.addImage(
     imgData,
     "JPEG",
@@ -89,10 +114,6 @@ export async function generatePdf({
   drawNorthArrow(pdf, layout, bearing);
   drawAttribution(pdf, layout, scale, showUtmGrid, bounds);
 
-  // Download via blob to avoid page navigation
-  const scaleStr = scale >= 1000 ? `${scale / 1000}k` : String(scale);
-  const timestamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "");
-  const filename = `kort_1${scaleStr}_${paperFormat}_${timestamp}.pdf`;
   // Record in print history
   useHistoryStore.getState().addEntry({
     lng: mapState.viewState.longitude,
@@ -104,15 +125,7 @@ export async function generatePdf({
     baseLayer,
   });
 
-  const blob = pdf.output("blob");
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  downloadPdf(pdf, buildFilename(scale, paperFormat));
 }
 
 function drawScaleBar(
@@ -209,7 +222,7 @@ function drawUtmGrid(
   scale: number
 ) {
   const centerLng = (bounds.west + bounds.east) / 2;
-  const zone = Math.floor((centerLng + 180) / 6) + 1;
+  const zone = getUtmZone(centerLng);
   const interval = getGridInterval(scale);
 
   // Convert bounds corners to UTM
@@ -330,8 +343,7 @@ function drawAttribution(
   // Scale text on left
   let scaleText = `1:${scale.toLocaleString("da-DK")}`;
   if (showUtmGrid) {
-    const centerLng = (bounds.west + bounds.east) / 2;
-    const zone = Math.floor((centerLng + 180) / 6) + 1;
+    const zone = getUtmZone((bounds.west + bounds.east) / 2);
     scaleText += ` | UTM zone ${zone}N (ETRS89)`;
   }
   pdf.text(scaleText, layout.marginMm, y);
@@ -380,48 +392,51 @@ async function generateMultiPagePdf({
     format: [layout.pageWidthMm, layout.pageHeightMm],
   });
 
-  for (let i = 0; i < cells.length; i++) {
-    const cell = cells[i];
-    printState.setGeneratingPage(i + 1);
+  try {
+    for (let i = 0; i < cells.length; i++) {
+      const cell = cells[i];
+      printState.setGeneratingPage(i + 1);
 
-    if (i > 0) {
-      pdf.addPage([layout.pageWidthMm, layout.pageHeightMm], orientation === "landscape" ? "landscape" : "portrait");
+      if (i > 0) {
+        pdf.addPage([layout.pageWidthMm, layout.pageHeightMm], orientation === "landscape" ? "landscape" : "portrait");
+      }
+
+      const imgData = await renderMapToImage({
+        bounds: cell.bounds,
+        canvasWidth: layout.canvasWidth,
+        canvasHeight: layout.canvasHeight,
+        style,
+        baseLayer,
+        overlays,
+        importedLayers,
+        drawnFeatures,
+        showUtmGrid,
+        scale,
+        bearing,
+      });
+
+      pdf.addImage(imgData, "JPEG", layout.marginMm, layout.marginMm, layout.mapWidthMm, layout.mapHeightMm);
+
+      if (showUtmGrid) {
+        drawUtmGrid(pdf, layout, cell.bounds, scale);
+      }
+
+      drawScaleBar(pdf, layout, scale);
+      drawNorthArrow(pdf, layout, bearing);
+
+      // Page label
+      pdf.setFontSize(8);
+      pdf.setTextColor(0);
+      pdf.text(`Side ${cell.label}`, layout.marginMm, layout.marginMm - 2);
+
+      drawAttribution(pdf, layout, scale, showUtmGrid, cell.bounds);
     }
-
-    const canvas = await renderMapToCanvas({
-      bounds: cell.bounds,
-      canvasWidth: layout.canvasWidth,
-      canvasHeight: layout.canvasHeight,
-      style,
-      baseLayer,
-      overlays,
-      importedLayers,
-      drawnFeatures,
-      showUtmGrid,
-      scale,
-      bearing,
-    });
-
-    const imgData = canvas.toDataURL("image/jpeg", 0.92);
-    pdf.addImage(imgData, "JPEG", layout.marginMm, layout.marginMm, layout.mapWidthMm, layout.mapHeightMm);
-
-    if (showUtmGrid) {
-      drawUtmGrid(pdf, layout, cell.bounds, scale);
-    }
-
-    drawScaleBar(pdf, layout, scale);
-    drawNorthArrow(pdf, layout, bearing);
-
-    // Page label
-    pdf.setFontSize(8);
-    pdf.setTextColor(0);
-    pdf.text(`Side ${cell.label}`, layout.marginMm, layout.marginMm - 2);
-
-    drawAttribution(pdf, layout, scale, showUtmGrid, cell.bounds);
+  } finally {
+    // Reset progress state even if a page render throws, so the UI does not
+    // stay stuck on "Side X af Y...".
+    printState.setGeneratingPage(0);
+    printState.setTotalPages(0);
   }
-
-  printState.setGeneratingPage(0);
-  printState.setTotalPages(0);
 
   // Record in print history
   useHistoryStore.getState().addEntry({
@@ -434,16 +449,5 @@ async function generateMultiPagePdf({
     baseLayer,
   });
 
-  const scaleStr = scale >= 1000 ? `${scale / 1000}k` : String(scale);
-  const timestamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "");
-  const filename = `kort_1${scaleStr}_${paperFormat}_${cells.length}sider_${timestamp}.pdf`;
-  const blob = pdf.output("blob");
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  downloadPdf(pdf, buildFilename(scale, paperFormat, cells.length));
 }

@@ -1,5 +1,7 @@
-const CACHE_NAME = "topoprint-v1";
-const TILE_CACHE = "topoprint-tiles-v1";
+// Bump these on any caching-logic change so activate() purges stale caches —
+// e.g. address-search responses that the previous version wrongly stored as tiles.
+const CACHE_NAME = "topoprint-v2";
+const TILE_CACHE = "topoprint-tiles-v2";
 const MAX_TILE_ENTRIES = 500;
 
 const APP_SHELL = ["/", "/offline.html"];
@@ -9,7 +11,9 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE_NAME)
-      .then((cache) => cache.addAll(APP_SHELL))
+      // Cache each resource individually so one failing entry (e.g. a 500
+      // mid-deploy) does not abort the whole install like cache.addAll would.
+      .then((cache) => Promise.allSettled(APP_SHELL.map((u) => cache.add(u))))
       .then(() => self.skipWaiting())
   );
 });
@@ -37,6 +41,20 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET requests
   if (event.request.method !== "GET") return;
 
+  // DAWA address/place search: network-first.
+  // Must be checked BEFORE the tile branch — DAWA and the tile services share
+  // the api.dataforsyningen.dk host, so distinguish them by path. Otherwise
+  // search responses get cached with the tile strategy and never revalidate.
+  if (
+    (url.hostname === "api.dataforsyningen.dk" &&
+      (url.pathname.startsWith("/adresser") ||
+        url.pathname.startsWith("/stednavne"))) ||
+    url.hostname === "dawa.aws.dk"
+  ) {
+    event.respondWith(networkFirst(event.request, 5 * 60));
+    return;
+  }
+
   // Map tiles: stale-while-revalidate
   if (
     url.hostname === "api.dataforsyningen.dk" ||
@@ -44,12 +62,6 @@ self.addEventListener("fetch", (event) => {
     url.hostname === "cdn.dataforsyningen.dk"
   ) {
     event.respondWith(tileStrategy(event.request));
-    return;
-  }
-
-  // DAWA API: network-first with short cache
-  if (url.hostname === "api.dataforsyningen.dk" || url.hostname === "dawa.aws.dk") {
-    event.respondWith(networkFirst(event.request, 5 * 60));
     return;
   }
 
