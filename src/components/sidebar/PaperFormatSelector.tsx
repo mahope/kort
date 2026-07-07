@@ -27,7 +27,7 @@ export function PaperFormatSelector() {
         label="Orientering"
         value={orientation}
         options={[
-          { value: "portrait", label: "Staende" },
+          { value: "portrait", label: "Stående" },
           { value: "landscape", label: "Liggende" },
         ]}
         onChange={(v) => setOrientation(v as Orientation)}
