@@ -82,14 +82,20 @@ export function BookmarksPanel() {
         const data = JSON.parse(text) as Bookmark[];
         if (Array.isArray(data)) {
           const store = useBookmarkStore.getState();
+          let imported = 0;
           for (const b of data) {
-            if (b.lng && b.lat && b.name) {
-              store.addBookmarkFull({
-                ...b,
-                id: crypto.randomUUID(),
-              });
+            // Validate by type so coordinates of exactly 0 aren't rejected.
+            if (typeof b.lng === "number" && typeof b.lat === "number" && b.name) {
+              store.addBookmarkFull({ ...b, id: crypto.randomUUID() });
+              imported++;
             }
           }
+          addToast(
+            imported > 0 ? "success" : "info",
+            imported > 0
+              ? `${imported} bogmærke${imported !== 1 ? "r" : ""} importeret`
+              : "Ingen gyldige bogmærker i filen"
+          );
         }
       } catch {
         addToast("error", "Kunne ikke importere bogmærker");
@@ -167,7 +173,8 @@ export function BookmarksPanel() {
               <button
                 type="button"
                 onClick={() => removeBookmark(b.id)}
-                className="text-text-muted hover:text-accent opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="Slet bogmærke"
+                className="text-text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

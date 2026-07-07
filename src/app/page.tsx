@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { LoadingOverlay } from "@/components/map/LoadingOverlay";
 import { MapControls } from "@/components/map/MapControls";
+import { CoordinateReadout } from "@/components/map/CoordinateReadout";
+import { KeyboardShortcuts } from "@/components/map/KeyboardShortcuts";
 import { UrlSync } from "@/components/map/UrlSync";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
 import { ToastContainer } from "@/components/ui/Toast";
@@ -39,9 +41,11 @@ export default function Home() {
       <main className="relative flex-1">
         <MapContainer />
         <MapControls />
+        <CoordinateReadout />
         <LoadingOverlay />
       </main>
       <UrlSync />
+      <KeyboardShortcuts />
       <ToastContainer />
     </div>
   );

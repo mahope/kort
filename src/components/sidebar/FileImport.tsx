@@ -47,50 +47,61 @@ export function FileImport() {
   const addToast = useUiStore((s) => s.addToast);
 
   const handleImport = useCallback(
-    async (file: File) => {
+    async (fileList: FileList | File[]) => {
+      const files = Array.from(fileList);
+      if (files.length === 0) return;
       setError(null);
       setIsLoading(true);
-      try {
-        const layer: ImportedLayer = await parseFile(file);
-        addLayer(layer);
-        addToast("success", `${file.name} importeret (${layer.geojson.features.length} features)`);
 
-        // Auto-zoom to imported data
-        const bbox = getBoundingBox(layer.geojson);
+      let lastLayer: ImportedLayer | null = null;
+      let successCount = 0;
+      const errors: string[] = [];
+
+      for (const file of files) {
+        try {
+          const layer = await parseFile(file);
+          addLayer(layer);
+          lastLayer = layer;
+          successCount++;
+        } catch (err) {
+          errors.push(`${file.name}: ${err instanceof Error ? err.message : "fejl"}`);
+        }
+      }
+      setIsLoading(false);
+
+      if (successCount > 0) {
+        addToast("success", `${successCount} fil${successCount !== 1 ? "er" : ""} importeret`);
+        // Auto-zoom to the last imported layer.
+        const bbox = lastLayer && getBoundingBox(lastLayer.geojson);
         if (bbox) {
           const centerLng = (bbox[0] + bbox[2]) / 2;
           const centerLat = (bbox[1] + bbox[3]) / 2;
-          // Estimate zoom from bbox size
-          const lngSpan = bbox[2] - bbox[0];
-          const latSpan = bbox[3] - bbox[1];
-          const maxSpan = Math.max(lngSpan, latSpan);
+          const maxSpan = Math.max(bbox[2] - bbox[0], bbox[3] - bbox[1]) || 0.01;
           const zoom = Math.max(6, Math.min(16, Math.floor(Math.log2(360 / maxSpan))));
           flyTo(centerLng, centerLat, zoom);
         }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Ukendt fejl ved import");
-      } finally {
-        setIsLoading(false);
+      }
+      if (errors.length > 0) {
+        setError(errors.join(" · "));
+        addToast("error", `Kunne ikke importere: ${errors[0]}`, 8000);
       }
     },
-    [addLayer, flyTo]
+    [addLayer, flyTo, addToast]
   );
 
   const onDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragging(false);
-      const file = e.dataTransfer.files[0];
-      if (file) handleImport(file);
+      if (e.dataTransfer.files.length) handleImport(e.dataTransfer.files);
     },
     [handleImport]
   );
 
   const onChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) handleImport(file);
-      // Reset input so same file can be re-imported
+      if (e.target.files?.length) handleImport(e.target.files);
+      // Reset input so the same file can be re-imported
       e.target.value = "";
     },
     [handleImport]
@@ -104,7 +115,7 @@ export function FileImport() {
         onDrop={onDrop}
         className={`border-2 border-dashed rounded-lg p-3 text-center transition-colors cursor-pointer ${
           isDragging
-            ? "border-blue-500 bg-blue-50"
+            ? "border-primary bg-primary/10"
             : "border-border hover:border-text-muted"
         }`}
         onClick={() => inputRef.current?.click()}
@@ -113,6 +124,7 @@ export function FileImport() {
           ref={inputRef}
           type="file"
           accept={ACCEPTED}
+          multiple
           onChange={onChange}
           className="hidden"
         />
@@ -133,7 +145,7 @@ export function FileImport() {
         )}
       </div>
       {error && (
-        <p className="text-xs text-red-500 mt-1">{error}</p>
+        <p className="text-xs text-danger mt-1">{error}</p>
       )}
     </div>
   );

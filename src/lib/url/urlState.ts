@@ -1,5 +1,10 @@
-import type { BaseLayer, MapStyle } from "@/types/map";
+import type { BaseLayer, MapStyle, OverlayId } from "@/types/map";
 import type { PaperFormat, Orientation, DpiOption } from "@/types/print";
+
+export interface UrlOverlay {
+  id: OverlayId;
+  opacity: number;
+}
 
 interface UrlState {
   lng?: number;
@@ -12,7 +17,23 @@ interface UrlState {
   paperFormat?: PaperFormat;
   orientation?: Orientation;
   dpi?: DpiOption;
+  overlays?: UrlOverlay[];
+  showUtmGrid?: boolean;
+  multiPage?: boolean;
+  gridCols?: number;
+  gridRows?: number;
 }
+
+const OVERLAY_CODES: Record<string, OverlayId> = {
+  co: "contours",
+  hs: "hillshade",
+  sn: "stednavne",
+  mk: "matrikel",
+};
+
+const OVERLAY_TO_CODE = Object.fromEntries(
+  Object.entries(OVERLAY_CODES).map(([k, v]) => [v, k])
+) as Record<OverlayId, string>;
 
 const BASE_LAYER_CODES: Record<string, BaseLayer> = {
   sk: "skaermkort",
@@ -64,6 +85,22 @@ export function serializeState(state: UrlState): string {
   }
   if (state.dpi) {
     params.set("d", String(state.dpi));
+  }
+  if (state.overlays && state.overlays.length > 0) {
+    params.set(
+      "ov",
+      state.overlays
+        .map((o) => `${OVERLAY_TO_CODE[o.id]}-${Math.round(o.opacity * 100)}`)
+        .join(",")
+    );
+  }
+  if (state.showUtmGrid) {
+    params.set("g", "1");
+  }
+  if (state.multiPage) {
+    params.set("mp", "1");
+    if (state.gridCols) params.set("gc", String(state.gridCols));
+    if (state.gridRows) params.set("gr", String(state.gridRows));
   }
 
   return params.toString();
@@ -128,6 +165,30 @@ export function deserializeState(search: string): UrlState {
   if (d) {
     const dpi = Number(d);
     if ([150, 200, 300].includes(dpi)) state.dpi = dpi as DpiOption;
+  }
+
+  const ov = params.get("ov");
+  if (ov) {
+    const overlays: UrlOverlay[] = [];
+    for (const token of ov.split(",")) {
+      const [code, pct] = token.split("-");
+      const id = OVERLAY_CODES[code];
+      if (!id) continue;
+      const parsed = pct !== undefined ? Number(pct) : 100;
+      const opacity = isNaN(parsed) ? 1 : Math.min(1, Math.max(0, parsed / 100));
+      overlays.push({ id, opacity });
+    }
+    if (overlays.length > 0) state.overlays = overlays;
+  }
+
+  if (params.get("g") === "1") state.showUtmGrid = true;
+
+  if (params.get("mp") === "1") {
+    state.multiPage = true;
+    const gc = Number(params.get("gc"));
+    if (gc >= 1 && gc <= 6) state.gridCols = gc;
+    const gr = Number(params.get("gr"));
+    if (gr >= 1 && gr <= 6) state.gridRows = gr;
   }
 
   return state;

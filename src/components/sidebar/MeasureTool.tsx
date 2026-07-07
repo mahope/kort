@@ -27,7 +27,6 @@ export function MeasureTool() {
   const [isActive, setIsActive] = useState(false);
   const setDrawMode = useDrawStore((s) => s.setMode);
   const features = useDrawStore((s) => s.features);
-  const activeDrawMode = useDrawStore((s) => s.activeMode);
 
   // When measure tool activates, set appropriate draw mode
   useEffect(() => {
@@ -92,13 +91,18 @@ export function MeasureTool() {
           onClick={toggleActive}
           className={`px-2 py-1 rounded text-xs border transition-colors ${
             isActive
-              ? "bg-blue-500 text-white border-blue-500"
+              ? "bg-primary text-on-primary border-primary"
               : "bg-surface text-foreground border-border hover:border-text-muted"
           }`}
         >
           {isActive ? "Stop" : "Start"}
         </button>
       </div>
+      {isActive && (
+        <p className="mt-1 text-[10px] text-text-muted">
+          Tegn en {mode === "distance" ? "linje" : "polygon"} på kortet for at måle
+        </p>
+      )}
 
       {measurements.length > 0 && (
         <div className="mt-2 space-y-0.5">

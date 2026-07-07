@@ -33,8 +33,10 @@ export function HistoryPanel() {
         </span>
         <button
           type="button"
-          onClick={clearAll}
-          className="text-[10px] text-accent hover:text-accent/80"
+          onClick={() => {
+            if (confirm("Ryd hele udskriftshistorikken?")) clearAll();
+          }}
+          className="text-[10px] text-danger hover:text-danger-hover"
         >
           Slet alle
         </button>

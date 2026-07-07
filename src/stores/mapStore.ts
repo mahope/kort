@@ -20,8 +20,10 @@ interface MapStore {
   setStyle: (style: MapStyle) => void;
   setBaseLayer: (baseLayer: BaseLayer) => void;
   toggleOverlay: (id: OverlayId) => void;
+  setOverlayEnabled: (id: OverlayId, enabled: boolean) => void;
   setOverlayOpacity: (id: OverlayId, opacity: number) => void;
   toggleUtmGrid: () => void;
+  setShowUtmGrid: (show: boolean) => void;
   flyTo: (lng: number, lat: number, zoom?: number) => void;
   clearFlyTo: () => void;
 }
@@ -48,6 +50,12 @@ export const useMapStore = create<MapStore>((set) => ({
         o.id === id ? { ...o, enabled: !o.enabled } : o
       ),
     })),
+  setOverlayEnabled: (id, enabled) =>
+    set((s) => ({
+      overlays: s.overlays.map((o) =>
+        o.id === id ? { ...o, enabled } : o
+      ),
+    })),
   setOverlayOpacity: (id, opacity) =>
     set((s) => ({
       overlays: s.overlays.map((o) =>
@@ -55,6 +63,7 @@ export const useMapStore = create<MapStore>((set) => ({
       ),
     })),
   toggleUtmGrid: () => set((s) => ({ showUtmGrid: !s.showUtmGrid })),
+  setShowUtmGrid: (showUtmGrid) => set({ showUtmGrid }),
   flyTo: (lng, lat, zoom = 14) => set({ flyToTarget: { lng, lat, zoom } }),
   clearFlyTo: () => set({ flyToTarget: null }),
 }));
