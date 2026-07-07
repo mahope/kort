@@ -41,6 +41,52 @@ describe("serializeState → deserializeState round-trip", () => {
   });
 });
 
+describe("overlays / UTM grid / multipage in URL", () => {
+  it("round-trips enabled overlays with opacity", () => {
+    const qs = serializeState({
+      overlays: [
+        { id: "contours", opacity: 1 },
+        { id: "hillshade", opacity: 0.5 },
+      ],
+    });
+    expect(qs).toContain("ov=");
+    const round = deserializeState(qs);
+    expect(round.overlays).toEqual([
+      { id: "contours", opacity: 1 },
+      { id: "hillshade", opacity: 0.5 },
+    ]);
+  });
+
+  it("omits the overlay param when none are enabled", () => {
+    expect(serializeState({ overlays: [] })).not.toContain("ov=");
+  });
+
+  it("ignores unknown overlay codes", () => {
+    expect(deserializeState("ov=zz-100").overlays).toBeUndefined();
+  });
+
+  it("round-trips the UTM grid flag", () => {
+    expect(serializeState({ showUtmGrid: true })).toContain("g=1");
+    expect(deserializeState("g=1").showUtmGrid).toBe(true);
+    expect(deserializeState("").showUtmGrid).toBeUndefined();
+  });
+
+  it("round-trips multipage grid settings", () => {
+    const qs = serializeState({ multiPage: true, gridCols: 3, gridRows: 2 });
+    const round = deserializeState(qs);
+    expect(round.multiPage).toBe(true);
+    expect(round.gridCols).toBe(3);
+    expect(round.gridRows).toBe(2);
+  });
+
+  it("ignores out-of-range grid dimensions", () => {
+    const round = deserializeState("mp=1&gc=99&gr=0");
+    expect(round.multiPage).toBe(true);
+    expect(round.gridCols).toBeUndefined();
+    expect(round.gridRows).toBeUndefined();
+  });
+});
+
 describe("deserializeState validation", () => {
   it("ignores an unknown base layer code", () => {
     expect(deserializeState("l=bogus").baseLayer).toBeUndefined();

@@ -36,6 +36,17 @@ export function UrlSync() {
     if (state.paperFormat) printStore.setPaperFormat(state.paperFormat);
     if (state.orientation) printStore.setOrientation(state.orientation);
     if (state.dpi) printStore.setDpi(state.dpi);
+
+    if (state.overlays) {
+      for (const o of state.overlays) {
+        mapStore.setOverlayEnabled(o.id, true);
+        mapStore.setOverlayOpacity(o.id, o.opacity);
+      }
+    }
+    if (state.showUtmGrid) mapStore.setShowUtmGrid(true);
+    if (state.multiPage) printStore.setMultiPage(true);
+    if (state.gridCols) printStore.setGridCols(state.gridCols);
+    if (state.gridRows) printStore.setGridRows(state.gridRows);
   }, []);
 
   // Sync stores to URL (debounced)
@@ -77,6 +88,13 @@ function updateUrl() {
     paperFormat: printState.paperFormat,
     orientation: printState.orientation,
     dpi: printState.dpi,
+    overlays: mapState.overlays
+      .filter((o) => o.enabled)
+      .map((o) => ({ id: o.id, opacity: o.opacity })),
+    showUtmGrid: mapState.showUtmGrid,
+    multiPage: printState.multiPage,
+    gridCols: printState.gridCols,
+    gridRows: printState.gridRows,
   });
 
   const newUrl = `${window.location.pathname}?${qs}`;

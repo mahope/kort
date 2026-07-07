@@ -27,9 +27,13 @@ const TERRA_MODE_MAP = {
 function DrawingToolsImpl() {
   const { current: mapInstance } = useMap();
   const drawRef = useRef<TerraDraw | null>(null);
+  // Suppress the change events fired while we push store state back into Terra
+  // Draw (undo/redo/style reload), so they don't re-enter the sync loop.
+  const reconcilingRef = useRef(false);
   const activeMode = useDrawStore((s) => s.activeMode);
   const setFeatures = useDrawStore((s) => s.setFeatures);
   const features = useDrawStore((s) => s.features);
+  const commitRevision = useDrawStore((s) => s.commitRevision);
 
   // Lazy init: only create Terra Draw when a mode is first activated
   const ensureDraw = useCallback(() => {
@@ -159,19 +163,30 @@ function DrawingToolsImpl() {
   // Sync features from Terra Draw on changes, preserving existing styles
   const syncFeatures = useCallback(() => {
     const draw = drawRef.current;
-    if (!draw) return;
+    if (!draw || reconcilingRef.current) return;
 
     const currentFeatures = useDrawStore.getState().features;
     const existingStyles = new Map(currentFeatures.map((f) => [f.id, f.style]));
+    // Preserve user-assigned names (Terra Draw's snapshot doesn't carry them).
+    const existingNames = new Map(
+      currentFeatures.map((f) => [f.id, f.geojson.properties?.name])
+    );
 
     const snapshot = draw.getSnapshot();
     const drawnFeatures: DrawnFeature[] = snapshot
       .filter((f) => f.properties?.mode !== "select")
-      .map((f) => ({
-        id: String(f.id),
-        geojson: f as unknown as GeoJSON.Feature,
-        style: existingStyles.get(String(f.id)) ?? { ...DRAW_DEFAULT_STYLE },
-      }));
+      .map((f) => {
+        const id = String(f.id);
+        const geojson = f as unknown as GeoJSON.Feature;
+        const name = existingNames.get(id);
+        return {
+          id,
+          geojson: name
+            ? { ...geojson, properties: { ...(geojson.properties ?? {}), name } }
+            : geojson,
+          style: existingStyles.get(id) ?? { ...DRAW_DEFAULT_STYLE },
+        };
+      });
 
     setFeatures(drawnFeatures);
   }, [setFeatures]);
@@ -214,6 +229,36 @@ function DrawingToolsImpl() {
       }
     }
   }, [features]);
+
+  // Undo/redo (and clearAll) bump commitRevision — push the store's features
+  // back into Terra Draw as the authoritative set. Guarded so the resulting
+  // change events don't corrupt the undo history.
+  const revisionInitRef = useRef(true);
+  useEffect(() => {
+    if (revisionInitRef.current) {
+      revisionInitRef.current = false;
+      return;
+    }
+    const draw = drawRef.current;
+    if (!draw) return;
+    reconcilingRef.current = true;
+    try {
+      draw.clear();
+      const feats = useDrawStore.getState().features;
+      if (feats.length > 0) {
+        draw.addFeatures(
+          feats.map((f) => f.geojson) as Parameters<typeof draw.addFeatures>[0]
+        );
+      }
+    } catch {
+      // Store state stays correct even if the visual reconcile fails.
+    } finally {
+      // Release after the synchronous change events have flushed.
+      setTimeout(() => {
+        reconcilingRef.current = false;
+      }, 0);
+    }
+  }, [commitRevision]);
 
   return null;
 }

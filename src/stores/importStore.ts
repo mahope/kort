@@ -1,4 +1,34 @@
 import { create } from "zustand";
+import { persist, createJSONStorage, type StateStorage } from "zustand/middleware";
+
+// localStorage is ~5 MB; imported GeoJSON can be far larger. Skip persisting
+// (rather than throw a quota error) when the serialized state gets too big.
+const MAX_PERSIST_BYTES = 4_000_000;
+
+const guardedStorage: StateStorage = {
+  getItem: (name) => {
+    try {
+      return localStorage.getItem(name);
+    } catch {
+      return null;
+    }
+  },
+  setItem: (name, value) => {
+    try {
+      if (value.length > MAX_PERSIST_BYTES) return;
+      localStorage.setItem(name, value);
+    } catch {
+      // Quota exceeded — leave the layers in memory only.
+    }
+  },
+  removeItem: (name) => {
+    try {
+      localStorage.removeItem(name);
+    } catch {
+      // ignore
+    }
+  },
+};
 
 export interface LayerStyle {
   lineColor: string;
@@ -24,22 +54,32 @@ interface ImportStore {
   updateLayerStyle: (id: string, style: Partial<LayerStyle>) => void;
 }
 
-export const useImportStore = create<ImportStore>((set) => ({
-  layers: [],
-  addLayer: (layer) =>
-    set((s) => ({ layers: [...s.layers, layer] })),
-  removeLayer: (id) =>
-    set((s) => ({ layers: s.layers.filter((l) => l.id !== id) })),
-  toggleLayerVisibility: (id) =>
-    set((s) => ({
-      layers: s.layers.map((l) =>
-        l.id === id ? { ...l, visible: !l.visible } : l
-      ),
-    })),
-  updateLayerStyle: (id, style) =>
-    set((s) => ({
-      layers: s.layers.map((l) =>
-        l.id === id ? { ...l, style: { ...l.style, ...style } } : l
-      ),
-    })),
-}));
+export const useImportStore = create<ImportStore>()(
+  persist(
+    (set) => ({
+      layers: [],
+      addLayer: (layer) =>
+        set((s) => ({ layers: [...s.layers, layer] })),
+      removeLayer: (id) =>
+        set((s) => ({ layers: s.layers.filter((l) => l.id !== id) })),
+      toggleLayerVisibility: (id) =>
+        set((s) => ({
+          layers: s.layers.map((l) =>
+            l.id === id ? { ...l, visible: !l.visible } : l
+          ),
+        })),
+      updateLayerStyle: (id, style) =>
+        set((s) => ({
+          layers: s.layers.map((l) =>
+            l.id === id ? { ...l, style: { ...l.style, ...style } } : l
+          ),
+        })),
+    }),
+    {
+      name: "kort-imports",
+      version: 1,
+      storage: createJSONStorage(() => guardedStorage),
+      partialize: (s) => ({ layers: s.layers }),
+    }
+  )
+);
