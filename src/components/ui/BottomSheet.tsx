@@ -41,10 +41,14 @@ export function BottomSheet({ children }: BottomSheetProps) {
   const startY = useRef(0);
   const startHeight = useRef(0);
   const didDrag = useRef(false);
+  // Mirror the drag flag into state: the render below reads it to disable the
+  // CSS height transition while dragging, and a ref change wouldn't re-render.
+  const [isDragging, setIsDragging] = useState(false);
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
       dragging.current = true;
+      setIsDragging(true);
       didDrag.current = false;
       startY.current = e.clientY;
       startHeight.current = height;
@@ -68,6 +72,7 @@ export function BottomSheet({ children }: BottomSheetProps) {
   const onPointerUp = useCallback(() => {
     const wasDragging = dragging.current;
     dragging.current = false;
+    setIsDragging(false);
 
     if (wasDragging && didDrag.current) {
       // Snap to nearest point
@@ -82,7 +87,7 @@ export function BottomSheet({ children }: BottomSheetProps) {
   return (
     <div
       className="fixed bottom-0 left-0 right-0 z-40 rounded-t-2xl bg-surface shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-[height] duration-200 ease-out"
-      style={{ height, transitionProperty: dragging.current ? "none" : "height" }}
+      style={{ height, transitionProperty: isDragging ? "none" : "height" }}
     >
       <div
         className="flex items-center justify-center py-2 cursor-grab active:cursor-grabbing touch-none"

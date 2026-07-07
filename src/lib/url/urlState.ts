@@ -91,12 +91,22 @@ export function deserializeState(search: string): UrlState {
 
   const l = params.get("l");
   if (l) {
-    state.baseLayer = BASE_LAYER_CODES[l] || (l as BaseLayer);
+    // Accept a short code (sk, of, ...) or a full value; ignore anything else
+    // so a manipulated URL can't inject an unknown layer id into the store.
+    if (BASE_LAYER_CODES[l]) {
+      state.baseLayer = BASE_LAYER_CODES[l];
+    } else if ((Object.values(BASE_LAYER_CODES) as string[]).includes(l)) {
+      state.baseLayer = l as BaseLayer;
+    }
   }
 
   const v = params.get("v");
   if (v) {
-    state.style = STYLE_CODES[v] || (v as MapStyle);
+    if (STYLE_CODES[v]) {
+      state.style = STYLE_CODES[v];
+    } else if ((Object.values(STYLE_CODES) as string[]).includes(v)) {
+      state.style = v as MapStyle;
+    }
   }
 
   const s = params.get("s");

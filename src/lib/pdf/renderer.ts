@@ -52,6 +52,7 @@ export async function renderMapToCanvas({
   container.style.height = `${canvasHeight}px`;
   document.body.appendChild(container);
 
+  let map: maplibregl.Map | undefined;
   try {
     const mapStyle = baseLayer === "skaermkort" ? MAP_STYLES[style].url : BLANK_STYLE;
 
@@ -99,7 +100,7 @@ export async function renderMapToCanvas({
       mapOptions.fitBoundsOptions = { padding: 0 };
     }
 
-    const map = new maplibregl.Map(mapOptions);
+    map = new maplibregl.Map(mapOptions);
 
     await waitForMapLoad(map);
 
@@ -225,9 +226,11 @@ export async function renderMapToCanvas({
     if (!ctx) throw new Error("Kunne ikke oprette 2D canvas-kontekst");
     ctx.drawImage(canvas, 0, 0);
 
-    map.remove();
     return resultCanvas;
   } finally {
+    // Always release the WebGL context, even if load/tile waits time out —
+    // otherwise repeated failures exhaust the browser's ~16 context limit.
+    map?.remove();
     document.body.removeChild(container);
   }
 }
@@ -247,14 +250,12 @@ function waitForMapLoad(map: maplibregl.Map): Promise<void> {
 
 function waitForTilesLoaded(map: maplibregl.Map): Promise<void> {
   return new Promise((resolve, reject) => {
-    let checkInterval: ReturnType<typeof setInterval>;
-
     const timeout = setTimeout(() => {
       clearInterval(checkInterval);
       reject(new Error("Tile-loading timeout (60s)"));
     }, 60000);
 
-    checkInterval = setInterval(() => {
+    const checkInterval = setInterval(() => {
       if (map.isStyleLoaded() && map.areTilesLoaded()) {
         clearInterval(checkInterval);
         // Extra delay for final render

@@ -1,6 +1,18 @@
 import type { SearchResult } from "@/types/map";
 
 const DAWA_BASE = "https://api.dataforsyningen.dk";
+const REQUEST_TIMEOUT_MS = 5000;
+
+/** fetch with an abort-based timeout so a hanging request can't spin forever. */
+async function fetchWithTimeout(url: string): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 export async function searchAddresses(query: string): Promise<SearchResult[]> {
   if (query.length < 2) return [];
@@ -31,7 +43,7 @@ interface DawaAddress {
 
 async function fetchAddresses(query: string): Promise<SearchResult[]> {
   const url = `${DAWA_BASE}/adresser/autocomplete?q=${encodeURIComponent(query)}&per_side=5`;
-  const res = await fetch(url);
+  const res = await fetchWithTimeout(url);
   if (!res.ok) return [];
 
   const data: DawaAddress[] = await res.json();
@@ -56,7 +68,7 @@ interface DawaPlace {
 
 async function fetchPlaces(query: string): Promise<SearchResult[]> {
   const url = `${DAWA_BASE}/stednavne2/autocomplete?q=${encodeURIComponent(query)}&per_side=5`;
-  const res = await fetch(url);
+  const res = await fetchWithTimeout(url);
   if (!res.ok) return [];
 
   const data: DawaPlace[] = await res.json();

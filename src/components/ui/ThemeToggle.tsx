@@ -54,11 +54,18 @@ export function ThemeToggle() {
   }, [theme]);
 
   return (
-    <div className="flex gap-0.5 rounded-lg bg-surface-secondary p-0.5">
+    <div
+      role="radiogroup"
+      aria-label="Farvetema"
+      className="flex gap-0.5 rounded-lg bg-surface-secondary p-0.5"
+    >
       {THEMES.map((t) => (
         <button
           key={t.value}
           type="button"
+          role="radio"
+          aria-checked={theme === t.value}
+          aria-label={t.label}
           onClick={() => setTheme(t.value)}
           className={`flex items-center gap-1 rounded-md px-2 py-1 text-[10px] transition-colors ${
             theme === t.value
@@ -67,7 +74,7 @@ export function ThemeToggle() {
           }`}
           title={t.label}
         >
-          {t.icon}
+          <span aria-hidden="true">{t.icon}</span>
         </button>
       ))}
     </div>

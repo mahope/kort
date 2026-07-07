@@ -102,7 +102,7 @@ export function SearchBar() {
   return (
     <div ref={containerRef} className="relative">
       <label htmlFor="search-input" className="block text-sm font-medium mb-1">
-        Adressesogning
+        Adressesøgning
       </label>
       <div className="relative">
         <input
@@ -117,7 +117,7 @@ export function SearchBar() {
           onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => hasSearched && setIsOpen(true)}
-          placeholder="Sog efter adresse eller stednavn..."
+          placeholder="Søg efter adresse eller stednavn..."
           className="w-full rounded-lg border border-border px-3 py-2 pr-8 text-sm bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
         {isLoading && (
