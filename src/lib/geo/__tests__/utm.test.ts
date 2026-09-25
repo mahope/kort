@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
   latlngToUtm,
   utmToLatlng,
-  getGridInterval,
   getUtmZone,
   formatUtmCoord,
 } from "../utm";
@@ -65,23 +64,6 @@ describe("getUtmZone", () => {
 
   it("maps Bornholm longitudes to zone 33", () => {
     expect(getUtmZone(15)).toBe(33);
-  });
-});
-
-describe("getGridInterval", () => {
-  it("returns coarser grids for smaller scales", () => {
-    expect(getGridInterval(25000)).toBe(1000);
-    expect(getGridInterval(50000)).toBe(5000);
-    expect(getGridInterval(100000)).toBe(10000);
-    expect(getGridInterval(500000)).toBe(50000);
-  });
-
-  it("is monotonically non-decreasing as scale grows", () => {
-    const scales = [10000, 25000, 50000, 100000, 250000, 500000];
-    const intervals = scales.map(getGridInterval);
-    for (let i = 1; i < intervals.length; i++) {
-      expect(intervals[i]).toBeGreaterThanOrEqual(intervals[i - 1]);
-    }
   });
 });
 

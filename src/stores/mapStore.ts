@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { MapViewState, MapStyle, BaseLayer, OverlayId, OverlayState } from "@/types/map";
 import { DENMARK_CENTER, DEFAULT_ZOOM, DEFAULT_STYLE } from "@/lib/map/styles";
+import type { GridSpacing, GridLabelFormat, UtmZoneMode } from "@/lib/geo/utmGrid";
 
 const DEFAULT_OVERLAYS: OverlayState[] = [
   { id: "contours", enabled: false, opacity: 1 },
@@ -15,6 +16,10 @@ interface MapStore {
   baseLayer: BaseLayer;
   overlays: OverlayState[];
   showUtmGrid: boolean;
+  gridSpacing: GridSpacing;
+  showGridLabels: boolean;
+  gridLabelFormat: GridLabelFormat;
+  utmZoneMode: UtmZoneMode;
   flyToTarget: { lng: number; lat: number; zoom: number } | null;
   setViewState: (viewState: MapViewState) => void;
   setStyle: (style: MapStyle) => void;
@@ -24,6 +29,10 @@ interface MapStore {
   setOverlayOpacity: (id: OverlayId, opacity: number) => void;
   toggleUtmGrid: () => void;
   setShowUtmGrid: (show: boolean) => void;
+  setGridSpacing: (spacing: GridSpacing) => void;
+  setShowGridLabels: (show: boolean) => void;
+  setGridLabelFormat: (format: GridLabelFormat) => void;
+  setUtmZoneMode: (mode: UtmZoneMode) => void;
   flyTo: (lng: number, lat: number, zoom?: number) => void;
   clearFlyTo: () => void;
 }
@@ -40,6 +49,10 @@ export const useMapStore = create<MapStore>((set) => ({
   baseLayer: "dtk25",
   overlays: DEFAULT_OVERLAYS,
   showUtmGrid: false,
+  gridSpacing: "auto",
+  showGridLabels: true,
+  gridLabelFormat: "short",
+  utmZoneMode: "dk",
   flyToTarget: null,
   setViewState: (viewState) => set({ viewState }),
   setStyle: (style) => set({ style }),
@@ -64,6 +77,10 @@ export const useMapStore = create<MapStore>((set) => ({
     })),
   toggleUtmGrid: () => set((s) => ({ showUtmGrid: !s.showUtmGrid })),
   setShowUtmGrid: (showUtmGrid) => set({ showUtmGrid }),
+  setGridSpacing: (gridSpacing) => set({ gridSpacing }),
+  setShowGridLabels: (showGridLabels) => set({ showGridLabels }),
+  setGridLabelFormat: (gridLabelFormat) => set({ gridLabelFormat }),
+  setUtmZoneMode: (utmZoneMode) => set({ utmZoneMode }),
   flyTo: (lng, lat, zoom = 14) => set({ flyToTarget: { lng, lat, zoom } }),
   clearFlyTo: () => set({ flyToTarget: null }),
 }));

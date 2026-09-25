@@ -1,5 +1,6 @@
 import type { BaseLayer, MapStyle, OverlayId } from "@/types/map";
 import type { PaperFormat, Orientation, DpiOption } from "@/types/print";
+import { isGridSpacing, type GridSpacing, type GridLabelFormat, type UtmZoneMode } from "@/lib/geo/utmGrid";
 
 export interface UrlOverlay {
   id: OverlayId;
@@ -19,6 +20,11 @@ interface UrlState {
   dpi?: DpiOption;
   overlays?: UrlOverlay[];
   showUtmGrid?: boolean;
+  /** Grid options — only serialized while the grid is on. */
+  gridSpacing?: GridSpacing;
+  showGridLabels?: boolean;
+  gridLabelFormat?: GridLabelFormat;
+  utmZoneMode?: UtmZoneMode;
   multiPage?: boolean;
   gridCols?: number;
   gridRows?: number;
@@ -96,6 +102,11 @@ export function serializeState(state: UrlState): string {
   }
   if (state.showUtmGrid) {
     params.set("g", "1");
+    // Defaults (auto / labels on / short / dk) are left out to keep links short.
+    if (state.gridSpacing && state.gridSpacing !== "auto") params.set("gs", String(state.gridSpacing));
+    if (state.showGridLabels === false) params.set("gl", "0");
+    if (state.gridLabelFormat === "full") params.set("gf", "f");
+    if (state.utmZoneMode === "std") params.set("gz", "s");
   }
   if (state.multiPage) {
     params.set("mp", "1");
@@ -182,6 +193,15 @@ export function deserializeState(search: string): UrlState {
   }
 
   if (params.get("g") === "1") state.showUtmGrid = true;
+  const gs = params.get("gs");
+  if (gs !== null) {
+    const n = Number(gs);
+    if (isGridSpacing(n)) state.gridSpacing = n;
+    else if (gs === "a") state.gridSpacing = "auto";
+  }
+  if (params.get("gl") === "0") state.showGridLabels = false;
+  if (params.get("gf") === "f") state.gridLabelFormat = "full";
+  if (params.get("gz") === "s") state.utmZoneMode = "std";
 
   if (params.get("mp") === "1") {
     state.multiPage = true;

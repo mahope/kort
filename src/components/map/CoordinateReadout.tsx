@@ -2,7 +2,8 @@
 
 import { useMapStore } from "@/stores/mapStore";
 import { useUiStore } from "@/stores/uiStore";
-import { latlngToUtm, getUtmZone } from "@/lib/geo/utm";
+import { latlngToUtm } from "@/lib/geo/utm";
+import { resolveUtmZone } from "@/lib/geo/utmGrid";
 
 /**
  * Live readout of the map-centre coordinates in both UTM (ETRS89 / zone 32N)
@@ -11,9 +12,11 @@ import { latlngToUtm, getUtmZone } from "@/lib/geo/utm";
 export function CoordinateReadout() {
   const longitude = useMapStore((s) => s.viewState.longitude);
   const latitude = useMapStore((s) => s.viewState.latitude);
+  const zoneMode = useMapStore((s) => s.utmZoneMode);
   const addToast = useUiStore((s) => s.addToast);
 
-  const zone = getUtmZone(longitude);
+  // Same zone as the grid, so the readout matches the grid labels (zone 32 on Bornholm by default).
+  const zone = resolveUtmZone(longitude, latitude, zoneMode);
   const utm = latlngToUtm(latitude, longitude, zone);
   const wgs = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
 

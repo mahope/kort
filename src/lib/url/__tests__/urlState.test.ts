@@ -71,6 +71,35 @@ describe("overlays / UTM grid / multipage in URL", () => {
     expect(deserializeState("").showUtmGrid).toBeUndefined();
   });
 
+  it("round-trips UTM grid options (spacing, labels, format, zone)", () => {
+    const qs = serializeState({
+      showUtmGrid: true,
+      gridSpacing: 1000,
+      showGridLabels: false,
+      gridLabelFormat: "full",
+      utmZoneMode: "std",
+    });
+    const round = deserializeState(qs);
+    expect(round.gridSpacing).toBe(1000);
+    expect(round.showGridLabels).toBe(false);
+    expect(round.gridLabelFormat).toBe("full");
+    expect(round.utmZoneMode).toBe("std");
+  });
+
+  it("keeps grid defaults out of the URL and ignores bad spacings", () => {
+    const qs = serializeState({
+      showUtmGrid: true,
+      gridSpacing: "auto",
+      showGridLabels: true,
+      gridLabelFormat: "short",
+      utmZoneMode: "dk",
+    });
+    expect(qs).toBe("g=1");
+    expect(serializeState({ showUtmGrid: false, gridSpacing: 1000 })).not.toContain("gs=");
+    expect(deserializeState("g=1&gs=1234").gridSpacing).toBeUndefined();
+    expect(deserializeState("g=1&gs=100").gridSpacing).toBe(100);
+  });
+
   it("round-trips multipage grid settings", () => {
     const qs = serializeState({ multiPage: true, gridCols: 3, gridRows: 2 });
     const round = deserializeState(qs);

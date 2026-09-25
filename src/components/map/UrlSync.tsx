@@ -44,6 +44,10 @@ export function UrlSync() {
       }
     }
     if (state.showUtmGrid) mapStore.setShowUtmGrid(true);
+    if (state.gridSpacing) mapStore.setGridSpacing(state.gridSpacing);
+    if (state.showGridLabels === false) mapStore.setShowGridLabels(false);
+    if (state.gridLabelFormat) mapStore.setGridLabelFormat(state.gridLabelFormat);
+    if (state.utmZoneMode) mapStore.setUtmZoneMode(state.utmZoneMode);
     if (state.multiPage) printStore.setMultiPage(true);
     if (state.gridCols) printStore.setGridCols(state.gridCols);
     if (state.gridRows) printStore.setGridRows(state.gridRows);
@@ -92,6 +96,10 @@ function updateUrl() {
       .filter((o) => o.enabled)
       .map((o) => ({ id: o.id, opacity: o.opacity })),
     showUtmGrid: mapState.showUtmGrid,
+    gridSpacing: mapState.gridSpacing,
+    showGridLabels: mapState.showGridLabels,
+    gridLabelFormat: mapState.gridLabelFormat,
+    utmZoneMode: mapState.utmZoneMode,
     multiPage: printState.multiPage,
     gridCols: printState.gridCols,
     gridRows: printState.gridRows,

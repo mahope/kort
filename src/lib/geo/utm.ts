@@ -146,18 +146,6 @@ export function utmToLatlng(
 }
 
 /**
- * Get a "nice" UTM grid interval in meters for a given map scale.
- */
-export function getGridInterval(scale: number): number {
-  if (scale <= 10000) return 1000;      // 1 km grid
-  if (scale <= 25000) return 1000;      // 1 km grid
-  if (scale <= 50000) return 5000;      // 5 km grid
-  if (scale <= 100000) return 10000;    // 10 km grid
-  if (scale <= 250000) return 25000;    // 25 km grid
-  return 50000;                          // 50 km grid
-}
-
-/**
  * Format UTM coordinate for display.
  * Shows full easting/northing truncated to km.
  */

@@ -81,15 +81,14 @@ export async function renderMapToImage({
 
     if (bearing !== 0) {
       // With bearing, use center/zoom instead of bounds
-      // Calculate zoom from scale: at equator, 1 tile (256px) = 40075016.686m / 2^zoom
-      // At a given latitude, ground resolution = (cos(lat) * 40075016.686) / (256 * 2^zoom)
-      // We need: canvasWidth px = groundWidth m, so zoom = log2(cos(lat) * 40075016.686 * canvasWidth / (256 * groundWidth))
+      // MapLibre uses 512 px tiles: ground resolution = (cos(lat) * 40075016.686) / (512 * 2^zoom)
+      // We need: canvasWidth px = groundWidth m, so zoom = log2(cos(lat) * 40075016.686 * canvasWidth / (512 * groundWidth))
       const groundWidthM = bounds.east - bounds.west;
       const latRad = (centerLat * Math.PI) / 180;
       const metersPerDegreeLng = 111320 * Math.cos(latRad);
       const groundWidthMeters = groundWidthM * metersPerDegreeLng;
       const groundResolution = groundWidthMeters / canvasWidth; // meters per pixel
-      const zoom = Math.log2((Math.cos(latRad) * 40075016.686) / (256 * groundResolution));
+      const zoom = Math.log2((Math.cos(latRad) * 40075016.686) / (512 * groundResolution));
 
       mapOptions.center = [centerLng, centerLat];
       mapOptions.zoom = zoom;
