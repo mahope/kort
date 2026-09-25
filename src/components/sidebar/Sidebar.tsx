@@ -22,11 +22,11 @@ import { ElevationProfile } from "./ElevationProfile";
 import { BookmarksPanel } from "./BookmarksPanel";
 import { HistoryPanel } from "./HistoryPanel";
 import { ShareButton } from "./ShareButton";
+import { UtmGridSettings } from "./UtmGridSettings";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useIsMobile } from "@/lib/hooks/useIsMobile";
 import { useUiStore } from "@/stores/uiStore";
-import { useMapStore } from "@/stores/mapStore";
 
 function CollapsibleSection({
   title,
@@ -60,23 +60,6 @@ function CollapsibleSection({
       </button>
       {isOpen && <div className="mt-2 space-y-3">{children}</div>}
     </div>
-  );
-}
-
-function UtmGridToggle() {
-  const showUtmGrid = useMapStore((s) => s.showUtmGrid);
-  const toggleUtmGrid = useMapStore((s) => s.toggleUtmGrid);
-
-  return (
-    <label className="flex items-center gap-2 cursor-pointer">
-      <input
-        type="checkbox"
-        checked={showUtmGrid}
-        onChange={toggleUtmGrid}
-        className="accent-primary"
-      />
-      <span className="text-sm">UTM-gitter</span>
-    </label>
   );
 }
 
@@ -142,7 +125,7 @@ function SidebarContent() {
 
       <LayerSelector />
 
-      <UtmGridToggle />
+      <UtmGridSettings />
 
       <ScaleSelector />
       <PaperFormatSelector />
