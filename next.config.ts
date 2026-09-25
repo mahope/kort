@@ -37,6 +37,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // The place-name index is read with fs at runtime; make sure it is copied
+  // into the standalone output (and thus the Docker image).
+  outputFileTracingIncludes: {
+    "/api/stednavne": ["./data/stednavne.tsv.gz"],
+  },
   images: {
     remotePatterns: [
       {

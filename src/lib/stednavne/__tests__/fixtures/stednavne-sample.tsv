@@ -1,0 +1,26 @@
+#hovedtyper	Naturareal	Fortidsminde	Andentopografi punkt	Urentfarvand	Bebyggelse	Landskabsform	Farvand	Vandløb	Standsningssted	Sø	Bygning	Andentopografi flade	Idraetsanlæg	Vej	Terrænkontur	Havnebassin	Begravelsesplads	Seværdighed	Friluftsbad	Campingplads	Lufthavn	Restriktionsareal	Navigationsanlaeg	Jernbane
+#undertyper	parkAnlæg	gravhøj	bro	voldVoldsted	eng	skovPlantage	agerMark	hede	moseSump	grænsestenGrænsepæl	undersøiskGrund	spredtBebyggelse	by	bydel	sommerhusområde	bakke	dal	odde	pynt	løb	bugt	vandløb	tog	sø	gård	hus	museumSamling	rådhus	hotel	andenBygning	landsdel	udsigtspunkt	stadion	vejbro	skydebane	dæmning	trafikhavn	kristen	hal	efterskoleUngdomsskole	andenSeværdighed	privatskoleFriskole	folkeskole	kommunekontor	sandKlit	vandrerhjem	runddysse	sti	nåletræ	løvtræ	kursuscenter	specialskole	dysse	kirkeAndenKristen	kraftvarmeværk	fængsel	uddannelsescenter	golfbane	daginstitution	sten	klippeIOverfladen	hav	strand	industriområde	motorbane	hospital	halvø	ruin	jættestue	langdysse	vej	kilde	tomt	boplads	skanse	runesten	fæstningsanlæg	skibssætning	fundsted	historiskMindeHistoriskAnlæg	helleristning	sund	vikingeborg	køkkenmøding	bautasten	oldtidsvej	røse	oldtidsminde	oldtidsager	hellekiste	batteri	krigergrav	Campingplads	bredning	fjord	nor	sejlløb	marsk	blomsterpark	tørtVedLavvande	botaniskHave	arboret	flyveplads	mindreLufthavn	landingsplads	størreLufthavn	svæveflyveplads	heliport	reservat	naturpark	nationalpark	fyrtårn	fyr	båke	motocrossbane	hestevæddeløbsbane	goKartbane	hundevæddeløbsbane	cykelbane	land	sommerhusområdedel	rastepladsUdenService	rastepladsMedService	veteranjernbane	jernbanetunnel	ø	højBanke	højdedrag	næs	tange	øgruppe	skræntNaturlig	slugt	hage	klint	lavning	ås	hule	skær	kløft	vindmøllepark	stenbrud	køretekniskAnlæg	sluse	vejkryds	udsigtstårn	mindesten	gravsted	motorvejskryds	ledLåge	brønd	varde	vandfald	dige	fiskerihavn	lystbådehavn	zoologiskHave	forlystelsespark	dyrepark	frilandsmuseum	observatorium	andenReligion	ebbevej	herregård	kirkeProtestantisk	vandmølle	vejrmølle	slot	feriecenter	akvarium	vandkraftværk	friluftsgård	universitet	fagskole	terrarium	folkehøjskole	gymnasium	turistbureau	søredningsstation	proffesionshøjskole	synagoge	moske	forskningscenter	regionsgård	terminal	vejtunnel	kolonihave	vejstrækning	skadestue	overskylledeSten	jødisk	muslimsk	plads	skovvej	mindeAndet	mindelund
+#kommuner	København	Skive	Viborg	Halsnæs	Aabenraa	Brønderslev	Thisted	Billund	Lemvig	Herning	Fredericia	Middelfart	Horsens	Silkeborg	Rebild	Langeland	Assens	Syddjurs	Frederikshavn	Lolland	Ringsted	Roskilde	Lejre	Høje-Taastrup	Herlev	Varde	Holstebro	Sønderborg	Haderslev	Ikast-Brande	Vesthimmerlands	Ærø	Faaborg-Midtfyn	Aarhus	Hjørring	Odsherred	Kalundborg	Faxe	Jammerbugt	Vejle	Favrskov	Aalborg	Holbæk	Lyngby-Taarbæk	Kerteminde	Tårnby	Egedal	Struer	Morsø	Hedensted	Kolding	Odense	Nordfyns	Randers	Sorø	Slagelse	Guldborgsund	Næstved	Furesø	Greve	Allerød	Gribskov	Bornholm	Esbjerg	Stevns	Gentofte	Skanderborg	Vejen	Tønder	Nyborg	Vordingborg	Svendborg	Albertslund	Hørsholm	Køge	Læsø	Hillerød	Brøndby	Frederiksberg	Samsø	Rødovre	Christiansø	Mariagerfjord	Helsingør	Gladsaxe	Ishøj	Norddjurs	Vallensbæk	Ringkøbing-Skjern	Odder	Ballerup	Solrød	Frederikssund	Rudersdal	Fredensborg	Dragør	Hvidovre	Fanø	Glostrup
+Grenen	0	7	13	9.53217	56.01435	10	1
+Rold Skov	0	5	12	9.90465	55.81908	11	1
+Rold Skov	0	5	14	9.82769	56.80449	15	1
+Skagen	0	6	55	11.20172	55.19028	10	1
+Skagen Fyr	22	111	18	10.63019	57.73550	0	1
+Grenen	4	12	82	9.92174	56.72030	9	1
+Aabenraa	4	12	4	9.41423	55.04539	13	1
+Ry	4	12	66	9.77318	56.08692	12	1
+Rold	4	12	82	9.81476	56.77332	10	1
+Rold	4	11	16	10.08812	55.42165	12	1
+Rold	4	11	89	10.13771	55.99614	11	1
+Skagen	4	12	18	10.57758	57.72384	13	1
+Himmelbjerget	5	15	68	8.84627	54.96373	6	1
+Grenen	5	128	25	8.27231	55.53276	9	1
+Himmelbjerget	5	15	66	9.68545	56.10405	9	1
+Grenen	5	17	18	10.64187	57.74519	11	1
+Himmelbjerg	5	15	59	12.25142	55.56540	6	1
+Himmelbjerg	5	15	62	15.07925	55.14649	8	1
+Grenen	10	24	88	8.56380	56.10283	4	1
+Rold	10	24	50	9.33952	55.49324	5	1
+Grenen	10	24	5	10.16912	57.32798	5	1
+Skagen	10	24	5	9.99823	57.29059	5	1
+Hotel Himmelbjerget	10	28	66	9.68819	56.10317	6	1
