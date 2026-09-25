@@ -15,7 +15,7 @@ Gratis webapplikation til udskrivning af danske topografiske kort som PDF.
 
 - Kortdata: Dataforsyningens vector tiles (EPSG:3857), gratis token
 - PDF: Client-side med skjult MapLibre-instans ved fuld target-opløsning
-- Søgning: Adressevælger (adresser, KDS – erstatter nedlagte DAWA) + Stednavne2 (stednavne). Adressevælger kræver token og returnerer EPSG:25832-koordinater, som konverteres til WGS84
+- Søgning: Adressevælger (adresser, KDS – erstatter nedlagte DAWA) + egen `/api/stednavne` over et Danske Stednavne-snapshot (`data/stednavne.tsv.gz`, DAWA/stednavne2 lukker 1/10-2026). Adressevælger kræver token og returnerer EPSG:25832-koordinater, som konverteres til WGS84
 
 ## Kommandoer
 

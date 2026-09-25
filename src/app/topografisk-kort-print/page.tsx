@@ -229,14 +229,23 @@ export default function LandingPage() {
             </a>{" "}
             (Klimadatastyrelsen). Det inkluderer topografiske skærmkort, ortofoto,
             højdekurver, matrikelskel og stednavne. Alle data er frie offentlige
-            geodata. Adressesøgning drives af{" "}
+            geodata. Adressesøgningen bruger Klimadatastyrelsens{" "}
             <a
-              href="https://dawadocs.dataforsyningen.dk/"
+              href="https://confluence.sdfi.dk/pages/viewpage.action?pageId=234782998"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:text-primary-hover underline underline-offset-2"
             >
-              DAWA API
+              Adressevælger
+            </a>
+            , og stednavnesøgningen bygger på registret{" "}
+            <a
+              href="https://www.klimadatastyrelsen.dk/data/danske-stednavne"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:text-primary-hover underline underline-offset-2"
+            >
+              Danske Stednavne
             </a>
             .
           </p>

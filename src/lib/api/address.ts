@@ -11,9 +11,11 @@ const ADRESSEVAELGER_BASE = "https://adressevaelger.dk";
 const ADRESSEVAELGER_TOKEN =
   process.env.NEXT_PUBLIC_ADRESSEVAELGER_TOKEN || "adressevaelger123";
 
-// Place-name search (lakes, hills, forests, ...) stays on the separate Danske
-// Stednavne service, which already returns WGS84 coordinates.
-const STEDNAVNE_BASE = "https://api.dataforsyningen.dk";
+// Place-name search (lakes, hills, forests, ...) goes through our own
+// /api/stednavne route, which searches a bundled Danske Stednavne snapshot
+// and returns WGS84 SearchResults. DAWA's stednavne2 closes 1 Oct 2026.
+const STEDNAVNE_ENDPOINT = "/api/stednavne";
+const STEDNAVNE_MAX_QUERY = 60;
 
 // EPSG:25832 covers all of Denmark (Bornholm included) in UTM zone 32.
 const DK_UTM_ZONE = 32;
@@ -90,36 +92,23 @@ async function fetchAdressevaelger(query: string): Promise<SearchResult[]> {
   });
 }
 
-interface DawaPlace {
-  navn: string;
-  sted: {
-    id: string;
-    undertype: string;
-    visueltcenter: [number, number];
-    kommuner?: Array<{ navn: string }>;
-  };
-}
-
-async function fetchPlaces(query: string): Promise<SearchResult[]> {
-  const url = `${STEDNAVNE_BASE}/stednavne2/autocomplete?q=${encodeURIComponent(
-    query
-  )}&per_side=5`;
-  const res = await fetchWithTimeout(url);
+export async function fetchPlaces(query: string): Promise<SearchResult[]> {
+  const q = query.trim();
+  if (q.length < 2 || q.length > STEDNAVNE_MAX_QUERY) return [];
+  const res = await fetchWithTimeout(
+    `${STEDNAVNE_ENDPOINT}?q=${encodeURIComponent(q)}`
+  );
   if (!res.ok) return [];
 
-  const data: DawaPlace[] = await res.json();
-  return data.map((item) => ({
-    id: item.sted.id,
-    text: item.navn,
-    description: [item.sted.undertype, item.sted.kommuner?.[0]?.navn]
-      .filter(Boolean)
-      .join(", "),
-    coordinates: [item.sted.visueltcenter[0], item.sted.visueltcenter[1]] as [
-      number,
-      number
-    ],
-    type: "place" as const,
-  }));
+  const data: unknown = await res.json();
+  if (!Array.isArray(data)) return [];
+  return data.filter(
+    (r): r is SearchResult =>
+      typeof r?.id === "string" &&
+      typeof r?.text === "string" &&
+      Array.isArray(r?.coordinates) &&
+      r.coordinates.length === 2
+  );
 }
 
 /**

@@ -24,7 +24,7 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 - **Multi-page print** - Udskriv store områder over flere sider
 - **PDF-generering** - Client-side PDF med målestok-lineal, nordpil og attribution
 - **Kortrotation** - Drej kortet til en valgfri bearing/retning
-- **Adressesøgning** - Søg efter adresser og stednavne via DAWA API
+- **Adressesøgning** - Søg efter adresser (Adressevælger) og stednavne (Danske Stednavne)
 - **Bogmærker & historik** - Gem dine yndlingssteder og se tidligere udskrifter
 - **Simpel/avanceret tilstand** - Overskuelig for nye brugere, med alle funktioner tilgængelige
 - **Mørkt tema** - Light, dark og system-følgende tema
@@ -50,7 +50,8 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 ## Datakilder
 
 - **Kortdata:** [Dataforsyningen](https://dataforsyningen.dk/) (Klimadatastyrelsen) - Vector tiles i EPSG:3857
-- **Adressesøgning:** [DAWA API](https://dawadocs.dataforsyningen.dk/) - Adresser og stednavne
+- **Adressesøgning:** [Adressevælger](https://confluence.sdfi.dk/pages/viewpage.action?pageId=234782998) (Klimadatastyrelsen) - adresser og veje, EPSG:25832 konverteres til WGS84
+- **Stednavne:** [Danske Stednavne](https://www.klimadatastyrelsen.dk/data/danske-stednavne) (Klimadatastyrelsen) - snapshot i `data/stednavne.tsv.gz`, søges server-side via `/api/stednavne`
 - Alle data er frie offentlige geodata under dansk lovgivning
 
 ## Kom i gang
@@ -120,13 +121,14 @@ src/
 ├── components/
 │   ├── map/              # MapContainer, PrintFrame, UtmGrid, MapControls
 │   ├── sidebar/          # Sidebar, LayerSelector, OverlaySelector, ScaleSelector
-│   ├── search/           # SearchBar (DAWA autocomplete)
+│   ├── search/           # SearchBar (adresse- og stednavnesøgning)
 │   ├── print/            # PrintButton
 │   └── ui/               # Select, Toggle, BottomSheet, ThemeToggle
 ├── lib/
 │   ├── map/              # Map styles og konfiguration
 │   ├── pdf/              # PDF layout, renderer og generator
-│   ├── api/              # DAWA API klient
+│   ├── api/              # Søgeklient (Adressevælger + /api/stednavne)
+│   ├── stednavne/        # Stednavne-indeks, søgning og rate-limit
 │   ├── geo/              # Geometriske beregninger, UTM
 │   └── hooks/            # Custom React hooks
 ├── stores/               # Zustand stores (map, print, ui, import, draw, history)
@@ -138,7 +140,7 @@ src/
 
 - **Kort:** Dataforsyningens vector tiles i Web Mercator (EPSG:3857) renderes direkte i MapLibre GL JS - ingen reprojektion nødvendig
 - **PDF:** En skjult MapLibre-instans oprettes ved fuld target-opløsning (300 DPI), renderer tiles, og eksporterer som JPEG til jsPDF
-- **Søgning:** Parallel fetch fra DAWA adresse- og stednavne-autocomplete endpoints
+- **Søgning:** Parallel fetch fra Adressevælger (adresser) og appens egen `/api/stednavne` (stednavne). DAWA lukker 1. oktober 2026, og der findes ingen officiel live-afløser med fritekstsøgning i stednavne: Gsearch står på Klimadatastyrelsens lukkeliste, og Datafordelerens DS-GraphQL kan kun slå eksakte navne op. Registret Danske Stednavne er ikke opdateret siden september 2025, så et snapshot er lige så aktuelt. Indekset genbygges med `node scripts/build-stednavne-index.mjs <stednavne2.json>`
 - **State:** Zustand stores for kort-state, print-indstillinger og UI-state med localStorage persistence
 
 ## Lavet af
