@@ -69,7 +69,13 @@ export default function LandingPage() {
       />
 
       {/* Hero */}
-      <header className="bg-gradient-to-b from-primary/5 to-background">
+      <header
+        className={
+          getBrand().id === "mahoje"
+            ? "bg-surface-secondary border-b border-border"
+            : "bg-gradient-to-b from-primary/5 to-background"
+        }
+      >
         <div className="mx-auto max-w-3xl px-6 py-16 text-center">
           <h1 className="text-4xl font-bold mb-4">
             Udskriv topografiske kort som PDF

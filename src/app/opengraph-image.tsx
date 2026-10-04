@@ -1,13 +1,116 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { getBrand } from "@/config/brand";
 
-export const runtime = "edge";
+// Renderes ved build (statisk), så skrifterne læses fra kildetræet.
+export const dynamic = "force-static";
 export const alt = `${getBrand().siteName} - Gratis Topografisk Kortudskrivning`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default function OgImage() {
+const CONTOURS = [
+  { rx: 330, ry: 230 },
+  { rx: 270, ry: 186 },
+  { rx: 210, ry: 144 },
+  { rx: 150, ry: 102 },
+  { rx: 92, ry: 62 },
+];
+
+async function mahojeOgImage() {
+  const fontDir = join(process.cwd(), "src/fonts/og");
+  const [brygada, brygadaSemi, schibsted] = await Promise.all([
+    readFile(join(fontDir, "Brygada1918-Regular.ttf")),
+    readFile(join(fontDir, "Brygada1918-SemiBold.ttf")),
+    readFile(join(fontDir, "SchibstedGrotesk-Regular.ttf")),
+  ]);
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          background: "#f5f3ee",
+          padding: "72px 80px",
+          position: "relative",
+          fontFamily: "Schibsted Grotesk",
+          color: "#15181c",
+        }}
+      >
+        {/* Højdekurver: kortets eget motiv, holdt i stregfarven. */}
+        <svg
+          viewBox="0 0 1200 630"
+          style={{ position: "absolute", top: 0, left: 0, width: 1200, height: 630 }}
+        >
+          <g fill="none" stroke="#d9d6cd" strokeWidth="2">
+            {CONTOURS.map((c, i) => (
+              <ellipse key={i} cx={1090 - i * 6} cy={330 - i * 8} rx={c.rx} ry={c.ry} />
+            ))}
+          </g>
+        </svg>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <svg viewBox="0 0 512 512" width="56" height="56">
+            <polyline
+              points="62,400 182,168 262,284 342,118 452,400"
+              fill="none"
+              stroke="#15181c"
+              strokeWidth="46"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <div style={{ fontFamily: "Brygada 1918", fontWeight: 600, fontSize: 52, letterSpacing: "-0.01em" }}>
+            Mahoje
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", maxWidth: 820 }}>
+          <div
+            style={{
+              fontFamily: "Brygada 1918",
+              fontSize: 96,
+              lineHeight: 1.04,
+              letterSpacing: "-0.025em",
+            }}
+          >
+            Topografiske kort
+          </div>
+          <div style={{ fontSize: 34, lineHeight: 1.35, color: "#41454c", marginTop: 24 }}>
+            Vælg målestok og papirformat, og hent kortet som PDF. Gratis og uden login.
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            borderTop: "2px solid #15181c",
+            paddingTop: 18,
+            fontSize: 28,
+            width: 360,
+          }}
+        >
+          kort.mahoje.dk
+        </div>
+      </div>
+    ),
+    {
+      ...size,
+      fonts: [
+        { name: "Brygada 1918", data: brygada, weight: 400, style: "normal" },
+        { name: "Brygada 1918", data: brygadaSemi, weight: 600, style: "normal" },
+        { name: "Schibsted Grotesk", data: schibsted, weight: 400, style: "normal" },
+      ],
+    }
+  );
+}
+
+export default async function OgImage() {
   const brand = getBrand();
+  if (brand.id === "mahoje") return mahojeOgImage();
   return new ImageResponse(
     (
       <div

@@ -25,6 +25,7 @@ import { ShareButton } from "./ShareButton";
 import { UtmGridSettings } from "./UtmGridSettings";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { MahojeWordmark } from "@/components/ui/MahojeWordmark";
 import { useIsMobile } from "@/lib/hooks/useIsMobile";
 import { useUiStore } from "@/stores/uiStore";
 
@@ -45,7 +46,7 @@ function CollapsibleSection({
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between py-1"
       >
-        <span className="text-xs font-semibold text-text-muted uppercase tracking-wide">
+        <span className="text-xs font-semibold text-text-muted">
           {title}
         </span>
         <svg
@@ -106,6 +107,19 @@ function SidebarContent() {
 
   return (
     <div className="space-y-4">
+      {brand.id === "mahoje" ? (
+        <div className="border-b border-border pb-3 md:pb-4">
+          <a
+            href={brand.credit.url}
+            className="inline-flex text-[19px] text-foreground hover:text-text-secondary transition-colors"
+            aria-label="Mahoje, til mahoje.dk"
+          >
+            <MahojeWordmark />
+          </a>
+          <h1 className="mt-3 text-[22px] md:mt-4 md:text-[26px] text-foreground">Topografiske kort</h1>
+          <p className="mt-1 text-sm text-text-secondary">{brand.tagline}</p>
+        </div>
+      ) : (
       <div>
         <h1 className="text-lg font-bold">{brand.siteName}</h1>
         <p className="text-xs text-text-secondary">{brand.tagline}</p>
@@ -120,6 +134,7 @@ function SidebarContent() {
           </a>
         )}
       </div>
+      )}
 
       <SearchBar />
 
@@ -180,10 +195,18 @@ function SidebarContent() {
       )}
 
       <div className="flex items-center justify-between mt-4">
-        <div className="flex items-center gap-2 text-[10px] text-text-muted">
+        <div className="flex items-center gap-2 text-xs text-text-muted">
           <span>Kortdata &copy; Klimadatastyrelsen</span>
           <span>&middot;</span>
           <a href="/om" className="hover:text-text-secondary underline underline-offset-2">Om</a>
+          {brand.id === "mahoje" && (
+            <>
+              <span>&middot;</span>
+              <a href={brand.credit.url} className="hover:text-text-secondary underline underline-offset-2">
+                mahoje.dk
+              </a>
+            </>
+          )}
         </div>
         <ThemeToggle />
       </div>

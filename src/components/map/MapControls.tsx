@@ -59,7 +59,7 @@ export function MapControls() {
         <div className="mt-2 w-64 max-h-[70vh] overflow-y-auto rounded-lg bg-surface/95 p-3 shadow-lg backdrop-blur-sm">
           {/* Base layer */}
           <div className="mb-3">
-            <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Basiskort</h3>
+            <h3 className="text-xs font-semibold text-text-secondary mb-2">Basiskort</h3>
             <div className="space-y-1">
               {BASE_LAYERS.map((layer) => (
                 <div key={layer.value}>
@@ -98,7 +98,7 @@ export function MapControls() {
 
           {/* Overlays */}
           <div className="border-t border-border pt-3">
-            <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">Ekstra lag</h3>
+            <h3 className="text-xs font-semibold text-text-secondary mb-2">Ekstra lag</h3>
             <div className="space-y-2">
               {overlays.map((overlay) => (
                 <div key={overlay.id}>

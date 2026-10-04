@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Analytics } from "@/components/Analytics";
 import { getBrand, resolveBrandId } from "@/config/brand";
+import { brygada, schibsted } from "@/lib/fonts";
 import "./globals.css";
 
 const brand = getBrand();
@@ -45,7 +46,14 @@ export default function RootLayout({
 }>) {
   const brandId = resolveBrandId(process.env.NEXT_PUBLIC_BRAND);
   return (
-    <html lang="da" data-brand={brandId} suppressHydrationWarning>
+    <html
+      lang="da"
+      data-brand={brandId}
+      className={
+        brandId === "mahoje" ? `${brygada.variable} ${schibsted.variable}` : undefined
+      }
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <meta name="theme-color" content={brand.themeColor} />

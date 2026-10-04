@@ -49,7 +49,7 @@ const BRANDS: Record<BrandId, Brand> = {
       wordmark: "",
       favicon: "/icon.svg",
     },
-    themeColor: "#2563eb",
+    themeColor: "#ffffff",
     analyticsDomain: "kort.mahoje.dk",
     og: {
       title: "Kort.mahoje.dk",
