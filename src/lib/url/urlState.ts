@@ -1,4 +1,5 @@
 import type { BaseLayer, MapStyle, OverlayId } from "@/types/map";
+import type { GridSystem } from "@/lib/geo/coordinates";
 import type { PaperFormat, Orientation, DpiOption } from "@/types/print";
 import { isGridSpacing, type GridSpacing, type GridLabelFormat, type UtmZoneMode } from "@/lib/geo/utmGrid";
 
@@ -20,6 +21,7 @@ interface UrlState {
   dpi?: DpiOption;
   overlays?: UrlOverlay[];
   showUtmGrid?: boolean;
+  gridSystem?: GridSystem;
   /** Grid options — only serialized while the grid is on. */
   gridSpacing?: GridSpacing;
   showGridLabels?: boolean;
@@ -67,6 +69,7 @@ const STYLE_TO_CODE: Record<MapStyle, string> = Object.fromEntries(
 
 export function serializeState(state: UrlState): string {
   const params = new URLSearchParams();
+  if (state.gridSystem) params.set("cs", state.gridSystem);
 
   if (state.lng !== undefined && state.lat !== undefined && state.zoom !== undefined) {
     params.set("c", `${state.lat.toFixed(5)},${state.lng.toFixed(5)},${state.zoom.toFixed(1)}`);
@@ -120,6 +123,9 @@ export function serializeState(state: UrlState): string {
 export function deserializeState(search: string): UrlState {
   const params = new URLSearchParams(search);
   const state: UrlState = {};
+  const cs = params.get("cs");
+  if (cs === "utm" || cs === "mgrs") state.gridSystem = cs;
+  else if (params.get("g") === "1") state.gridSystem = "utm";
 
   const c = params.get("c");
   if (c) {

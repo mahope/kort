@@ -22,7 +22,7 @@ export function latlngToUtm(
   lng: number,
   forceZone?: number
 ): { easting: number; northing: number; zone: number } {
-  const zone = forceZone ?? Math.floor((lng + 180) / 6) + 1;
+  const zone = forceZone ?? getUtmZone(lng, lat);
   const centralMeridian = (zone - 1) * 6 - 180 + 3;
 
   const latRad = (lat * Math.PI) / 180;
@@ -156,6 +156,13 @@ export function formatUtmCoord(value: number): string {
 /**
  * Determine UTM zone for a longitude. Denmark is zone 32 (6-12°E).
  */
-export function getUtmZone(lng: number): number {
-  return Math.floor((lng + 180) / 6) + 1;
+export function getUtmZone(lng: number, lat?: number): number {
+  if (lat !== undefined && lat >= 56 && lat < 64 && lng >= 3 && lng < 12) return 32;
+  if (lat !== undefined && lat >= 72 && lat < 84 && lng >= 0 && lng < 42) {
+    if (lng < 9) return 31;
+    if (lng < 21) return 33;
+    if (lng < 33) return 35;
+    return 37;
+  }
+  return Math.min(60, Math.max(1, Math.floor((lng + 180) / 6) + 1));
 }

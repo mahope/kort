@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type { GridSystem } from "@/lib/geo/coordinates";
 import type { MapViewState, MapStyle, BaseLayer, OverlayId, OverlayState } from "@/types/map";
 import { DENMARK_CENTER, DEFAULT_ZOOM, DEFAULT_STYLE } from "@/lib/map/styles";
 import type { GridSpacing, GridLabelFormat, UtmZoneMode } from "@/lib/geo/utmGrid";
@@ -16,6 +18,8 @@ interface MapStore {
   baseLayer: BaseLayer;
   overlays: OverlayState[];
   showUtmGrid: boolean;
+  gridSystem: GridSystem;
+  setGridSystem: (system: GridSystem) => void;
   gridSpacing: GridSpacing;
   showGridLabels: boolean;
   gridLabelFormat: GridLabelFormat;
@@ -37,7 +41,7 @@ interface MapStore {
   clearFlyTo: () => void;
 }
 
-export const useMapStore = create<MapStore>((set) => ({
+export const useMapStore = create<MapStore>()(persist((set) => ({
   viewState: {
     longitude: DENMARK_CENTER[0],
     latitude: DENMARK_CENTER[1],
@@ -49,6 +53,8 @@ export const useMapStore = create<MapStore>((set) => ({
   baseLayer: "dtk25",
   overlays: DEFAULT_OVERLAYS,
   showUtmGrid: false,
+  gridSystem: "utm",
+  setGridSystem: (gridSystem) => set({ gridSystem }),
   gridSpacing: "auto",
   showGridLabels: true,
   gridLabelFormat: "short",
@@ -83,4 +89,4 @@ export const useMapStore = create<MapStore>((set) => ({
   setUtmZoneMode: (utmZoneMode) => set({ utmZoneMode }),
   flyTo: (lng, lat, zoom = 14) => set({ flyToTarget: { lng, lat, zoom } }),
   clearFlyTo: () => set({ flyToTarget: null }),
-}));
+}), { name: "kort-grid", partialize: (s) => ({ gridSystem: s.gridSystem }) }));

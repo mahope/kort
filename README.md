@@ -156,3 +156,22 @@ MIT
 ## Attribution
 
 Kortdata leveres af [Klimadatastyrelsen](https://www.klimadatastyrelsen.dk/) via [Dataforsyningen](https://dataforsyningen.dk/).
+
+## Coordinate grids and point coordinates
+
+Enable **Koordinatgitter**, then choose **UTM** or **MGRS · WGS84**.
+MGRS uses standard UTM zones (32 west of 12°E, 33 east of it, including
+Copenhagen and Bornholm). Grid lines are clipped at zone boundaries on screen
+and in single/multi-page PDFs. The existing Danish UTM zone-32 convention is
+still available explicitly. Grid spacing, density guards and heavier 10 km
+lines work in both systems. Edge labels include the MGRS 100 km square letters
+and the kilometre digits within that square.
+
+The system choice is stored in localStorage and shared in the `cs=utm|mgrs`
+URL parameter. Old `g=1` links still select UTM. Open **Koordinat ved sigtekorset**
+and pan the map to read/copy the same centre point as MGRS (1 m and 10 m),
+standard-zone UTM and decimal latitude/longitude. This also works on mobile.
+The displayed precision describes the coordinate format, not GPS/map accuracy.
+
+MGRS conversion uses pinned `mgrs@2.2.0` from proj4js. Reference tests compare
+Rådhuspladsen and Rønne against GeographicLib GeoConvert (WGS84, standard zone).
