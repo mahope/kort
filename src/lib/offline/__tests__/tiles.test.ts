@@ -13,7 +13,7 @@ import {
   lngLatToTile,
 } from "../tiles";
 import { groundExtentToBounds, calculatePrintArea } from "@/lib/geo/calculations";
-import { DTK25_SCREEN_TILES_URL } from "@/lib/map/sources";
+import { getRasterBaseLayers } from "@/lib/map/sources";
 
 describe("offline tiles", () => {
   it("maps lng/lat to the known tile", () => {
@@ -32,7 +32,7 @@ describe("offline tiles", () => {
   });
 
   it("expands the DTK25 screen template to a JPEG WMS url", () => {
-    const url = expandTileUrl(DTK25_SCREEN_TILES_URL, { z: 13, x: 4390, y: 2560 });
+    const url = expandTileUrl(getRasterBaseLayers("screen").dtk25.tiles[0], { z: 13, x: 4390, y: 2560 });
     expect(url).toContain("FORMAT=image/jpeg");
     expect(url).toContain("TRANSPARENT=FALSE");
     expect(url).not.toContain("{");

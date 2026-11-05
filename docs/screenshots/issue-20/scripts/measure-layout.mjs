@@ -6,7 +6,6 @@ const AxeSource = fs.readFileSync(require.resolve("axe-core/axe.min.js"), "utf8"
 const [base, label, shotDir] = process.argv.slice(2);
 fs.mkdirSync(shotDir, { recursive: true });
 const b = await chromium.launch();
-const SC = "aside [data-sheet-scroll], aside.overflow-y-auto";
 const HANDLE = "aside [data-sheet-handle], .fixed.bottom-0 > div.cursor-grab";
 const newPage = async (w, h, mobile = true) => {
   const c = await b.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile, deviceScaleFactor: 1 });

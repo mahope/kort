@@ -110,6 +110,10 @@ npm run build         # produktionsbuild
 `typecheck` bruger TypeScript 7 (pakken `typescript7`). Next og typescript-eslint
 bruger stadig TypeScript 6 (`typescript`), og `npm run build` typetjekker med den.
 `lint:fast` dækker ikke alle `eslint-config-next`-regler og erstatter ikke `npm run lint`.
+
+Ubrugt kode måles med `npx knip@6.44.1` (kør uden for repoet, ingen pakke). `knip.json` ignorerer
+de dokumenterede falske positiver: `public/sw.js` (statisk fil, registreres i browseren),
+`scripts/**` (manuelle scripts), `tests/e2e/**` og `docs/screenshots/**`.
 Sikkerhedspolitik for afhængigheder: [docs/dependency-security.md](docs/dependency-security.md).
 
 ## CI

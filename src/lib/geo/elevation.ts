@@ -1,6 +1,6 @@
 import { calculateDistance } from "./measure";
 
-export interface ElevationPoint {
+interface ElevationPoint {
   /** Cumulative 2D distance from the start, in metres. */
   dist: number;
   /** Elevation in metres. */

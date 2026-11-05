@@ -2,8 +2,6 @@ export type PaperFormat = "A5" | "A4" | "A3" | "A2";
 
 export type Orientation = "portrait" | "landscape";
 
-export type ScalePreset = 10000 | 25000 | 50000 | 100000 | 250000 | 500000;
-
 export type DpiOption = 150 | 200 | 300;
 
 export interface PrintArea {

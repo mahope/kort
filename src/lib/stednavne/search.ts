@@ -8,7 +8,7 @@ import type { SearchResult } from "@/types/map";
 export const QUERY_MIN_LENGTH = 2;
 export const QUERY_MAX_LENGTH = 60;
 
-export interface StednavnEntry {
+interface StednavnEntry {
   /** Row number in the index; stable within one index build. */
   row: number;
   name: string;
@@ -203,7 +203,7 @@ function contextMatches(
   return [...hits].map(([entry, distance]) => ({ entry, distance }));
 }
 
-export function toSearchResult(e: StednavnEntry): SearchResult {
+function toSearchResult(e: StednavnEntry): SearchResult {
   return {
     id: `stednavn-${e.row}`,
     text: e.name,

@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import type { PaperFormat, Orientation, DpiOption, PrintFrameBounds, PageCell } from "@/types/print";
+import type { PaperFormat, Orientation, DpiOption, PrintFrameBounds } from "@/types/print";
 import type { MapStyle, BaseLayer, OverlayState } from "@/types/map";
 import type { PdfLayout } from "@/types/print";
 import { useMapStore } from "@/stores/mapStore";
@@ -108,8 +108,6 @@ export async function generatePdf({
     overlays,
     importedLayers,
     drawnFeatures,
-    showUtmGrid,
-    scale,
     bearing,
   }));
 
@@ -532,8 +530,6 @@ async function generateMultiPagePdf({
         overlays,
         importedLayers,
         drawnFeatures,
-        showUtmGrid,
-        scale,
         bearing,
       });
 

@@ -5,7 +5,7 @@ import { DENMARK_BOUNDS } from "@/lib/map/styles";
 import { MIN_CUSTOM_SCALE, MAX_CUSTOM_SCALE } from "@/constants/scales";
 import { isGridSpacing, type GridSpacing, type GridLabelFormat, type UtmZoneMode } from "@/lib/geo/utmGrid";
 
-export interface UrlOverlay {
+interface UrlOverlay {
   id: OverlayId;
   opacity: number;
 }

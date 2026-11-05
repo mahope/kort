@@ -49,7 +49,6 @@ export function calculateArea(coords: [number, number][]): number {
     const k = (i + 2) % n;
 
     const lam1 = toRad(coords[i][0]);
-    const lam2 = toRad(coords[j][0]);
     const lam3 = toRad(coords[k][0]);
     const phi2 = toRad(coords[j][1]);
 

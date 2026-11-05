@@ -9,13 +9,7 @@ const b = await chromium.launch();
 const out = [];
 const HANDLE = ".fixed.bottom-0 > div.cursor-grab, aside [data-sheet-handle]";
 
-async function sheetH(p) {
-  return p.evaluate(() => {
-    const s = document.querySelector(".fixed.bottom-0.z-40, aside.fixed");
-    return s ? Math.round(s.getBoundingClientRect().height) : null;
-  });
-}
-async function setPos(p, pos, vh) {
+async function setPos(p, pos) {
   // reload gives mid; tap toggles min; drag to top gives max
   const h = await p.locator(HANDLE).first().boundingBox();
   const x = h.x + h.width / 2, y = h.y + h.height / 2;

@@ -5,18 +5,19 @@ import { configureMaplibreWorker } from "@/lib/map/workerUrl";
 import type { ImportedLayer } from "@/stores/importStore";
 import type { DrawnFeature } from "@/stores/drawStore";
 import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
-import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
-import type { RasterSourceConfig } from "@/lib/map/sources";
+import { BLANK_STYLE, getRasterBaseLayers, OVERLAY_SOURCES } from "@/lib/map/sources";
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
 import { timed } from "./timing";
 
+const PRINT_RASTER_BASE_LAYERS = getRasterBaseLayers("print");
+
 // JPEG quality for the rendered map image embedded in the PDF.
-export const MAP_JPEG_QUALITY = 0.92;
+const MAP_JPEG_QUALITY = 0.92;
 
 // Failed tiles are retried this many times, with a growing pause, before the
 // render is aborted.
 export const TILE_RETRIES = 2;
-export const TILE_RETRY_PAUSE_MS = 1000;
+const TILE_RETRY_PAUSE_MS = 1000;
 
 // PDFs are rendered at print resolution from DTK25's print tiles, which the
 // offline area cache (screen tiles at zoom 12-16) does not hold. Offline PDF is
@@ -39,7 +40,7 @@ interface FailedTile {
 }
 
 /** Called whenever the number of requested or loaded map tiles changes. */
-export type TileProgress = (loaded: number, total: number) => void;
+type TileProgress = (loaded: number, total: number) => void;
 
 type TileEvent = { sourceId?: string; dataType?: string; tile?: { tileID?: { key?: number | string } } };
 
@@ -115,8 +116,6 @@ interface RenderOptions {
   overlays: OverlayState[];
   importedLayers?: ImportedLayer[];
   drawnFeatures?: DrawnFeature[];
-  showUtmGrid?: boolean;
-  scale?: number;
   bearing?: number;
   onTileProgress?: TileProgress;
 }
@@ -131,8 +130,6 @@ export async function renderMapToImage({
   overlays,
   importedLayers = [],
   drawnFeatures = [],
-  showUtmGrid = false,
-  scale = 25000,
   bearing = 0,
   onTileProgress,
 }: RenderOptions): Promise<Uint8Array> {
@@ -155,14 +152,6 @@ export async function renderMapToImage({
   let map: maplibregl.Map | undefined;
   try {
     const mapStyle = baseLayer === "skaermkort" ? MAP_STYLES[style].url : BLANK_STYLE;
-
-    const RASTER_BASE_LAYERS: Record<string, RasterSourceConfig> = {
-      ortofoto: ORTOFOTO_SOURCE,
-      dtk25: DTK25_SOURCE,
-      osm: OSM_SOURCE,
-      historisk_hoeje: HISTORISK_HOEJE_SOURCE,
-      historisk_lave: HISTORISK_LAVE_SOURCE,
-    };
 
     const centerLng = (bounds.west + bounds.east) / 2;
     const centerLat = (bounds.north + bounds.south) / 2;
@@ -207,7 +196,7 @@ export async function renderMapToImage({
     await waitForMapLoad(map);
 
     // Add raster base layer if not skaermkort
-    const rasterSource = RASTER_BASE_LAYERS[baseLayer];
+    const rasterSource = PRINT_RASTER_BASE_LAYERS[baseLayer];
     if (rasterSource) {
       map.addSource(`base-${baseLayer}`, {
         type: "raster",
@@ -355,7 +344,7 @@ export async function renderMapToImage({
 // Reading pixels back while the GPU still has the render queued blocks the main
 // thread until it is done (seconds with software WebGL). Fence the queue and poll
 // instead, so the page stays responsive and the readback that follows is quick.
-export const GPU_WAIT_TIMEOUT_MS = 60000;
+const GPU_WAIT_TIMEOUT_MS = 60000;
 const GPU_POLL_MS = 20;
 
 async function waitForGpu(canvas: HTMLCanvasElement): Promise<void> {
