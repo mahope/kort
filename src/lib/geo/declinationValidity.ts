@@ -37,7 +37,7 @@ export function wmmStatus(date: Date = new Date()): WmmStatus {
 export function wmmStatusNote(status: WmmStatus): string | null {
   switch (status) {
     case "expiring":
-      return `${WMM_MODEL} udløber ${WMM_VALID_UNTIL} – misvisningen bliver mindre præcis.`;
+      return `${WMM_MODEL} udløber ${WMM_VALID_UNTIL}. Misvisningen bliver mindre præcis.`;
     case "expired":
     case "not-yet":
       return `${WMM_MODEL} er ikke gyldig i dag, så misvisningen vises ikke.`;

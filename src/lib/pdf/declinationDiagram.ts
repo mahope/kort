@@ -5,7 +5,7 @@ import {
   magneticDeclination,
   meridianConvergence,
 } from "@/lib/geo/declination";
-import { WMM_MODEL } from "@/lib/geo/declinationValidity";
+import { WMM_MODEL, decimalYear, isWithinWmmValidity } from "@/lib/geo/declinationValidity";
 
 /** Box size and inset from the map corner (mm). Bottom-right, away from scale bar (left) and north arrow (top right). */
 export const DECLINATION_BOX = { widthMm: 54, heightMm: 25, insetMm: 3 } as const;
@@ -25,16 +25,12 @@ export function computeDeclinationInfo(
   zone: number | null,
   date: Date = new Date()
 ): DeclinationInfo | null {
-  try {
-    return {
-      declination: magneticDeclination(lat, lng, date),
-      convergence: zone === null ? null : meridianConvergence(lat, lng, zone),
-      year: date.getUTCFullYear(),
-    };
-  } catch (e) {
-    if (e instanceof RangeError) return null; // model out of validity
-    throw e;
-  }
+  if (!isWithinWmmValidity(decimalYear(date))) return null;
+  return {
+    declination: magneticDeclination(lat, lng, date),
+    convergence: zone === null ? null : meridianConvergence(lat, lng, zone),
+    year: date.getUTCFullYear(),
+  };
 }
 
 /** Rectangle of the diagram box in page millimetres (inside the map area, bottom-right). */
@@ -81,8 +77,11 @@ export function drawDeclinationDiagram(
   const minY = Math.min(...pts.map((q) => q.y)) - pad;
   const maxY = Math.max(...pts.map((q) => q.y)) + pad;
   const area = { left: box.left + 1.5, right: box.left + 19.5, top: box.top + 1.5, bottom: box.bottom - 5.5 };
-  const ox = Math.min(Math.max(area.left - minX + (area.right - area.left - (maxX - minX)) / 2, area.left - minX), area.right - maxX);
-  const oy = Math.min(Math.max(area.top - minY + (area.bottom - area.top - (maxY - minY)) / 2, area.top - minY), area.bottom - maxY);
+  // Centre the drawing in the area, then clamp so it never crosses the area edges.
+  const place = (lo: number, hi: number, min: number, max: number) =>
+    Math.min(Math.max(lo - min + (hi - lo - (max - min)) / 2, lo - min), hi - max);
+  const ox = place(area.left, area.right, minX, maxX);
+  const oy = place(area.top, area.bottom, minY, maxY);
   const tipOf = (deg: number, len = L) => {
     const d = dir(deg);
     return { x: ox + d.x * len, y: oy + d.y * len };

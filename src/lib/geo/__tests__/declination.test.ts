@@ -104,6 +104,9 @@ describe("model validity window", () => {
     expect(at(2026, 11, 5)).toBe("ok");
     expect(at(2029, 6, 30)).toBe("ok");
     expect(at(2029, 7, 3)).toBe("expiring");
+    // 2029.5 is 2029-07-02 12:00 UTC (182.5 days into a 365-day year).
+    expect(wmmStatus(new Date(Date.UTC(2029, 6, 2, 11, 59)))).toBe("ok");
+    expect(wmmStatus(new Date(Date.UTC(2029, 6, 2, 12, 0)))).toBe("expiring");
     expect(at(2029, 12, 31)).toBe("expiring");
     expect(at(2030, 1, 1)).toBe("expired");
   });

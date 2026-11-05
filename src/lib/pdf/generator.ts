@@ -476,12 +476,12 @@ export function drawAttribution(
 type DeclinationDiagram = typeof import("./declinationDiagram");
 
 /** Loads the declination model on demand, and only when the diagram is switched on. */
-async function loadDeclinationDiagram(): Promise<DeclinationDiagram | null> {
+export async function loadDeclinationDiagram(): Promise<DeclinationDiagram | null> {
   return usePrintStore.getState().showDeclination ? import("./declinationDiagram") : null;
 }
 
 /** Misvisning diagram for the frame centre; grid north only when a UTM/MGRS grid is on. */
-function drawDeclination(
+export function drawDeclination(
   diagram: DeclinationDiagram | null,
   pdf: jsPDF,
   layout: PdfLayout,

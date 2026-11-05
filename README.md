@@ -208,7 +208,7 @@ Misvisningen (vinklen mellem retvisende og magnetisk nord) beregnes i browseren 
 
 - **Kilde:** NOAA/NCEI og British Geological Survey, [WMM2025COF.zip](https://www.ncei.noaa.gov/sites/default/files/2025-01/WMM2025COF.zip). En uændret kopi af `WMM.COF` ligger i `data/wmm/WMM2025.COF`, og koefficienterne i `src/lib/geo/declination.ts` er overført derfra.
 - **Licens:** WMM er udgivet af den amerikanske stat (NOAA) og er offentligt domæne. Ingen npm-pakke og ingen ekstern tjeneste bruges.
-- **Gyldighed:** 1/1-2025 til 1/1-2030. Fra 2/7-2029 (de sidste seks måneder) viser appen en advarsel om, at modellen snart udløber. Fra 1/1-2030 vises misvisningen hverken på kortet eller i PDF'en, før `declination.ts` og `data/wmm/` er opdateret med WMM2030 (udgives ved udgangen af 2029).
+- **Gyldighed:** 1/1-2025 til 1/1-2030. Fra 2/7-2029 kl. 12 UTC (de sidste seks måneder) viser appen en advarsel om, at modellen snart udløber. Fra 1/1-2030 vises misvisningen hverken på kortet eller i PDF'en, før `declination.ts` og `data/wmm/` er opdateret med WMM2030 (udgives ved udgangen af 2029).
 - **Kontrol:** `src/lib/geo/__tests__/declination.test.ts` sammenligner med NOAA's officielle testværdier (`WMM2025_TEST_VALUES.txt`, afvigelse under 0,02°), kontrollerer at koefficienterne er identiske med `WMM.COF`, og tester datogrænserne.
 - **Visning:** "Koordinat ved sigtekorset" viser misvisningen for kortets midte. Diagrammet i PDF'en (nederst til højre i kortet, kan slås fra i sidepanelet under gitterindstillingerne) tegner retvisende nord, magnetisk nord og, når gitteret er slået til, gitternord (meridiankonvergens).
 - **Ydelse:** Beregningen hentes først, når den skal bruges (dynamisk import), og ligger ikke i den første bundle.
