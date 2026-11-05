@@ -1,0 +1,23 @@
+HEAD headers: {
+  'cache-control': 'public, max-age=86400',
+  etag: '"33031766-1793882236646"',
+  'accept-ranges': 'bytes',
+  'content-length': '33031766',
+  'content-type': 'application/octet-stream'
+}
+Range 0-16383 -> 206 bytes 0-16383/33031766 16384 bytes
+PMTiles z14 viewport 6x4 COLD (new instance, no cache): tiles=24 first=8.5ms total=29.5ms rangeRequests=25 wireBytes=419673 tileBytes(decompressed)=514298
+PMTiles z14 viewport 6x4 cold #2: tiles=24 first=1.5ms total=19.5ms rangeRequests=25 wireBytes=419673 tileBytes(decompressed)=514298
+PMTiles z14 viewport 6x4 WARM (header+dirs cached in instance): tiles=24 first=0.6ms total=14.2ms rangeRequests=24 wireBytes=403289 tileBytes(decompressed)=514298
+PMTiles z15 viewport 6x4 with warm dirs: tiles=24 first=0.7ms total=15.5ms rangeRequests=24 wireBytes=452394 tileBytes(decompressed)=818466
+PMTiles ALL tiles z10-15 in bbox (sequential): tiles=5767 first=4.4ms total=1620.4ms rangeRequests=5768 wireBytes=32239743 tileBytes(decompressed)=48411588
+browser: map loaded = true after ~ 1208 ms (incl. page load, polling 500ms)
+browser range requests: 13 wire bytes: 282572
+206 bytes=0-16383 16384
+206 bytes=14104681-14140808 36128
+206 bytes=11200789-11231457 30669
+206 bytes=14081047-14104680 23634
+206 bytes=14196983-14219316 22334
+206 bytes=11231458-11248210 16753
+206 bytes=11180131-11200788 20658
+206 bytes=14140809-14161218 20410
