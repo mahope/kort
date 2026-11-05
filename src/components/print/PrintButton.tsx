@@ -1,13 +1,24 @@
 "use client";
 
+import { useState } from "react";
 import { usePrintStore } from "@/stores/printStore";
 import { trackEvent } from "@/lib/analytics";
 import { useUiStore } from "@/stores/uiStore";
+import type { PdfProgress } from "@/lib/pdf/generator";
+
+function progressText(progress: PdfProgress | null, page: number, totalPages: number): string {
+  const pagePrefix = page > 0 ? `Side ${page} af ${totalPages}: ` : "";
+  if (!progress) return page > 0 ? `Side ${page} af ${totalPages}...` : "Genererer PDF...";
+  if (progress.stage === "assemble") return `${pagePrefix}samler PDF...`;
+  if (progress.tilesTotal === 0) return `${pagePrefix}henter kort...`;
+  return `${pagePrefix}${progress.tilesLoaded} af ${progress.tilesTotal} kortfliser`;
+}
 
 export function PrintButton() {
   const { frameBounds, scale, paperFormat, orientation, dpi, isGenerating, setIsGenerating, generatingPage, totalPages } =
     usePrintStore();
   const addToast = useUiStore((s) => s.addToast);
+  const [progress, setProgress] = useState<PdfProgress | null>(null);
 
   const handleClick = async () => {
     if (!frameBounds || isGenerating) return;
@@ -15,13 +26,14 @@ export function PrintButton() {
     try {
       // jsPDF (~160 KB gz) is only fetched when the user actually downloads.
       const { generatePdf } = await import("@/lib/pdf/generator");
-      await generatePdf({ bounds: frameBounds, scale, paperFormat, orientation, dpi });
+      await generatePdf({ bounds: frameBounds, scale, paperFormat, orientation, dpi, onProgress: setProgress });
       trackEvent("PDF Download", { scale: `1:${scale}`, format: paperFormat, orientation });
       addToast("success", "PDF downloadet!");
     } catch (err) {
       addToast("error", `Fejl ved PDF-generering: ${err instanceof Error ? err.message : "Ukendt fejl"}`, 8000);
     } finally {
       setIsGenerating(false);
+      setProgress(null);
     }
   };
 
@@ -53,7 +65,7 @@ export function PrintButton() {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
               />
             </svg>
-            {generatingPage > 0 ? `Side ${generatingPage} af ${totalPages}...` : "Genererer PDF..."}
+            <span role="status">{progressText(progress, generatingPage, totalPages)}</span>
           </>
         ) : (
           <>

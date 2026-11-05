@@ -8,7 +8,7 @@ import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
 import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
 import type { RasterSourceConfig } from "@/lib/map/sources";
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
-import { timed } from "./timing";
+import { timed, yieldToMain } from "./timing";
 
 // JPEG quality for the rendered map image embedded in the PDF.
 export const MAP_JPEG_QUALITY = 0.92;
@@ -34,6 +34,9 @@ interface FailedTile {
   tileKey: number | string | undefined;
 }
 
+/** Called whenever the number of requested or loaded map tiles changes. */
+export type TileProgress = (loaded: number, total: number) => void;
+
 type TileEvent = { sourceId?: string; dataType?: string; tile?: { tileID?: { key?: number | string } } };
 
 /** Tracks tiles that errored and have not (yet) loaded successfully. */
@@ -53,6 +56,27 @@ function trackFailedTiles(map: maplibregl.Map) {
     }
   });
   return failed;
+}
+
+/** Counts distinct tiles that started loading and those that arrived, to drive the progress display. */
+function trackTileProgress(map: maplibregl.Map, onProgress: TileProgress) {
+  const requested = new Set<string>();
+  const loaded = new Set<string>();
+  const key = (ev: TileEvent) => `${ev.sourceId}/${ev.tile?.tileID?.key}`;
+  map.on("dataloading", (e) => {
+    const ev = e as unknown as TileEvent;
+    if (ev.dataType !== "source" || !ev.tile || !ev.sourceId) return;
+    requested.add(key(ev));
+    onProgress(loaded.size, requested.size);
+  });
+  map.on("data", (e) => {
+    const ev = e as unknown as TileEvent;
+    if (ev.dataType !== "source" || !ev.tile || !ev.sourceId) return;
+    const k = key(ev);
+    requested.add(k);
+    loaded.add(k);
+    onProgress(loaded.size, requested.size);
+  });
 }
 
 // MapLibre has no public retry for errored tiles, and TileManager.reload()
@@ -90,8 +114,10 @@ interface RenderOptions {
   showUtmGrid?: boolean;
   scale?: number;
   bearing?: number;
+  onTileProgress?: TileProgress;
 }
 
+/** Renders the map at target resolution and returns it as JPEG bytes. */
 export async function renderMapToImage({
   bounds,
   canvasWidth,
@@ -104,7 +130,8 @@ export async function renderMapToImage({
   showUtmGrid = false,
   scale = 25000,
   bearing = 0,
-}: RenderOptions): Promise<string> {
+  onTileProgress,
+}: RenderOptions): Promise<Uint8Array> {
   if (isOffline()) throw new Error(OFFLINE_MESSAGE);
 
   const maxSize = getMaxCanvasSize();
@@ -171,6 +198,7 @@ export async function renderMapToImage({
     configureMaplibreWorker();
     map = new maplibregl.Map(mapOptions);
     const failedTiles = trackFailedTiles(map);
+    if (onTileProgress) trackTileProgress(map, onTileProgress);
 
     await waitForMapLoad(map);
 
@@ -308,15 +336,22 @@ export async function renderMapToImage({
     }
 
     // Encode straight from the map's own canvas (preserveDrawingBuffer keeps it
-    // valid) before cleanup — avoids cloning the full-resolution canvas a second
-    // time, which roughly halves peak memory for large formats.
-    return await timed("encode", () => canvas.toDataURL("image/jpeg", MAP_JPEG_QUALITY));
+    // valid) before cleanup. toBlob encodes off the main thread, unlike
+    // toDataURL, which blocked the page for the whole encode.
+    await yieldToMain();
+    return await timed("encode", () => encodeJpeg(canvas));
   } finally {
     // Always release the WebGL context, even if load/tile waits time out —
     // otherwise repeated failures exhaust the browser's ~16 context limit.
     map?.remove();
     document.body.removeChild(container);
   }
+}
+
+async function encodeJpeg(canvas: HTMLCanvasElement): Promise<Uint8Array> {
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", MAP_JPEG_QUALITY));
+  if (!blob) throw new Error("Kortbilledet kunne ikke gemmes som JPEG. Prøv igen med lavere opløsning.");
+  return new Uint8Array(await blob.arrayBuffer());
 }
 
 function waitForMapLoad(map: maplibregl.Map): Promise<void> {

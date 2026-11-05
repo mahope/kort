@@ -11,6 +11,8 @@ const ctl = {
   failOnReload: [] as string[], // tile keys that still fail after a retry
   reloads: 0,
   maxSize: 8192,
+  blob: true,
+  tiles: [] as string[], // tile keys that load fine (for progress counting)
 };
 
 class FakeMap {
@@ -30,6 +32,8 @@ class FakeMap {
   constructor() {
     setTimeout(() => {
       for (const key of ctl.failOnLoad) this.emit("error", { sourceId: "src", tile: { tileID: { key } } });
+      for (const key of ctl.tiles) this.emit("dataloading", { dataType: "source", sourceId: "src", tile: { tileID: { key } } });
+      for (const key of ctl.tiles) this.emit("data", { dataType: "source", sourceId: "src", tile: { tileID: { key } } });
       this.emit("load", {});
     }, 0);
   }
@@ -45,7 +49,7 @@ class FakeMap {
   addLayer() {}
   remove() {}
   getCanvas() {
-    return { width: ctl.canvasW, height: ctl.canvasH, toDataURL: () => "data:image/jpeg;base64,AAAA" };
+    return { width: ctl.canvasW, height: ctl.canvasH, toBlob: (cb: (b: Blob | null) => void) => cb(ctl.blob ? new Blob([new Uint8Array([1, 2, 3])]) : null) };
   }
 }
 
@@ -79,20 +83,20 @@ async function run(opts = base) {
 
 beforeEach(() => {
   vi.useFakeTimers();
-  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], reloads: 0, maxSize: 8192 });
+  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], reloads: 0, maxSize: 8192, blob: true, tiles: [] });
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
 });
 afterEach(() => vi.useRealTimers());
 
 describe("renderMapToImage tile errors", () => {
   it("returns the image when no tile fails", async () => {
-    expect(await run()).toEqual({ v: "data:image/jpeg;base64,AAAA" });
+    expect(await run()).toEqual({ v: new Uint8Array([1, 2, 3]) });
     expect(ctl.reloads).toBe(0);
   });
 
   it("retries failed tiles and succeeds when the retry works", async () => {
     ctl.failOnLoad = ["1", "2"];
-    expect(await run()).toEqual({ v: "data:image/jpeg;base64,AAAA" });
+    expect(await run()).toEqual({ v: new Uint8Array([1, 2, 3]) });
     expect(ctl.reloads).toBe(2);
   });
 
@@ -112,6 +116,21 @@ describe("renderMapToImage tile errors", () => {
 
   it("does not count errors without a tile (style, glyphs)", async () => {
     expect(await run()).toHaveProperty("v");
+  });
+});
+
+describe("renderMapToImage progress and encoding", () => {
+  it("reports requested and loaded tile counts", async () => {
+    ctl.tiles = ["1", "2", "3"];
+    const calls: Array<[number, number]> = [];
+    await run({ ...base, onTileProgress: (loaded, total) => calls.push([loaded, total]) });
+    expect(calls[0]).toEqual([0, 1]);
+    expect(calls[calls.length - 1]).toEqual([3, 3]);
+  });
+
+  it("throws a clear error when the browser cannot encode the canvas", async () => {
+    ctl.blob = false;
+    expect(((await run()) as { error: Error }).error.message).toContain("kunne ikke gemmes som JPEG");
   });
 });
 
