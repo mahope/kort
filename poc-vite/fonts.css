@@ -1,0 +1,17 @@
+/* Replaces next/font/local in src/lib/fonts.ts (mahoje brand). */
+@font-face {
+  font-family: "Brygada 1918";
+  src: url("../src/fonts/brygada-1918-latin.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Schibsted Grotesk";
+  src: url("../src/fonts/schibsted-grotesk-latin.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+}
+html.font-vars {
+  --font-brygada: "Brygada 1918";
+  --font-schibsted: "Schibsted Grotesk";
+}

@@ -46,3 +46,6 @@ next-env.d.ts
 # planning docs
 PLAN.md
 PRD.md
+
+# vite poc (issue #40)
+/poc-vite/dist/
