@@ -161,3 +161,70 @@ describe("coordinate system links", () => {
     expect(deserializeState("?cs=invalid").gridSystem).toBeUndefined();
   });
 });
+
+describe("deserializeState validation of numeric params", () => {
+  const view = (qs: string) => {
+    const s = deserializeState(qs);
+    return { lat: s.lat, lng: s.lng, zoom: s.zoom };
+  };
+  const none = { lat: undefined, lng: undefined, zoom: undefined };
+
+  it("accepts a valid view", () => {
+    expect(view("c=56,10,13")).toEqual({ lat: 56, lng: 10, zoom: 13 });
+  });
+  it("drops latitude 999", () => {
+    expect(view("c=999,10,13")).toEqual(none);
+  });
+  it("drops Infinity coordinates", () => {
+    expect(view("c=Infinity,10,5")).toEqual(none);
+    expect(view("c=56,-Infinity,5")).toEqual(none);
+    expect(view("c=56,10,Infinity")).toEqual(none);
+  });
+  it("drops zoom 99 and negative zoom", () => {
+    expect(view("c=56,10,99")).toEqual(none);
+    expect(view("c=56,10,-5")).toEqual(none);
+  });
+  it("accepts zoom boundaries 0 and 22", () => {
+    expect(view("c=56,10,0").zoom).toBe(0);
+    expect(view("c=56,10,22").zoom).toBe(22);
+    expect(view("c=56,10,22.1")).toEqual(none);
+  });
+  it("drops longitude beyond 180 and latitude beyond 90", () => {
+    expect(view("c=56,181,5")).toEqual(none);
+    expect(view("c=91,10,5")).toEqual(none);
+    expect(view("c=-91,10,5")).toEqual(none);
+  });
+  it("drops coordinates outside the map's maxBounds", () => {
+    expect(view("c=-33.9,18.4,10")).toEqual(none);
+  });
+  it("drops empty or non-numeric parts", () => {
+    expect(view("c=56,,5")).toEqual(none);
+    expect(view("c=56,10,abc")).toEqual(none);
+  });
+  it("rejects scale 1, 0.0001, 1e12, Infinity and negatives", () => {
+    for (const s of ["1", "0.0001", "1e12", "Infinity", "-25000", "0"]) {
+      expect(deserializeState(`s=${s}`).scale).toBeUndefined();
+    }
+  });
+  it("accepts presets and custom scale boundaries", () => {
+    for (const s of [10000, 25000, 500000, 1000, 1000000]) {
+      expect(deserializeState(`s=${s}`).scale).toBe(s);
+    }
+  });
+  it("drops non-finite bearing", () => {
+    expect(deserializeState("b=Infinity").bearing).toBeUndefined();
+    expect(deserializeState("b=abc").bearing).toBeUndefined();
+  });
+  it("normalizes huge bearing into [-180, 180]", () => {
+    const b = deserializeState("b=1e9").bearing!;
+    expect(b).toBeGreaterThanOrEqual(-180);
+    expect(b).toBeLessThanOrEqual(180);
+  });
+  it("normalizes bearing 190, -190, 360 and keeps 180", () => {
+    expect(deserializeState("b=190").bearing).toBe(-170);
+    expect(deserializeState("b=-190").bearing).toBe(170);
+    expect(deserializeState("b=360").bearing).toBe(0);
+    expect(deserializeState("b=180").bearing).toBe(180);
+    expect(deserializeState("b=-180").bearing).toBe(-180);
+  });
+});
