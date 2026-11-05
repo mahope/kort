@@ -82,6 +82,21 @@ try {
     `hashed JS and CSS cached (${cached.length} entries)`
   );
 
+  // Deploy simulation: an old build's file plus a stale build signature must be
+  // pruned on the next online visit of the shell.
+  await page.evaluate(async () => {
+    const cache = await caches.open("topoprint-v3");
+    await cache.put("/_next/static/old-build/old.js", new Response("old"));
+    await cache.put("/__build-assets", new Response("[]"));
+  });
+  await page.goto(BASE);
+  await page.waitForTimeout(1500);
+  const pruned = await page.evaluate(async () => {
+    const cache = await caches.open("topoprint-v3");
+    return !(await cache.match("/_next/static/old-build/old.js"));
+  });
+  check(pruned, "old build's static files pruned after a deploy-like change");
+
   // Tile cache: 100 distinct tiles, then the same 100 again.
   const tileUrl = (n) => `https://api.dataforsyningen.dk/test_tiles/${n}.pbf?x=1`;
   const fetchTiles = () =>
@@ -93,6 +108,32 @@ try {
   await fetchTiles();
   const warm = tileHits - cold;
   check(warm <= 10, `warm tile load hit the network ${warm}/100 times (max 10)`);
+
+  // Revalidation: a tile stamped >24 h ago is served from cache but refetched
+  // once; a fresh one is not refetched. Seeded directly in the tile cache.
+  const seed = (url, ageMs) =>
+    page.evaluate(
+      async ([u, age]) => {
+        const cache = await caches.open("topoprint-tiles-v3");
+        await cache.put(
+          u,
+          new Response("seeded", {
+            headers: { "x-sw-fetched-at": String(Date.now() - age) },
+          })
+        );
+      },
+      [url, ageMs]
+    );
+  const staleUrl = "https://api.dataforsyningen.dk/test_tiles/stale.pbf?x=1";
+  const freshUrl = "https://api.dataforsyningen.dk/test_tiles/fresh.pbf?x=1";
+  await seed(staleUrl, 25 * 60 * 60 * 1000);
+  await seed(freshUrl, 60 * 1000);
+  const before = tileHits;
+  const body = await page.evaluate((u) => fetch(u).then((r) => r.text()), staleUrl);
+  await page.evaluate((u) => fetch(u).then((r) => r.text()), freshUrl);
+  await page.waitForTimeout(500);
+  check(body === "seeded", "stale tile is still served from cache");
+  check(tileHits - before === 1, `only the stale tile revalidated (${tileHits - before} network hits, expected 1)`);
 
   const failed = [];
   page.on("requestfailed", (r) => {
@@ -111,7 +152,7 @@ try {
     "offline banner shown"
   );
   await page.goto(`${BASE}/om`);
-  check(!(await page.title()).startsWith("Offline"), "offline: /om opens from cache");
+  check((await page.title()).startsWith("Om "), "offline: /om opens from cache");
   await page.goto(`${BASE}/?lat=55.7&lng=12.4&z=10`);
   await page.waitForSelector("canvas", { timeout: 15000 });
   check(true, "offline: deep link opens app shell");

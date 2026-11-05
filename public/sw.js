@@ -10,6 +10,9 @@ const TILE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const FETCHED_AT_HEADER = "x-sw-fetched-at";
 
 const APP_SHELL = ["/", "/om", "/offline.html", "/icon.svg"];
+const STATIC_PREFIX = "/_next/static/";
+// Cache entry listing the /_next/static/ files the current build's shell uses.
+const BUILD_KEY = "/__build-assets";
 
 // Install: pre-cache app shell
 self.addEventListener("install", (event) => {
@@ -21,7 +24,9 @@ self.addEventListener("install", (event) => {
       .then((cache) =>
         Promise.allSettled([
           ...APP_SHELL.map((u) => cache.add(u)),
-          precacheStaticAssets(cache),
+          fetch("/")
+            .then((r) => r.text())
+            .then((html) => syncStaticAssets(cache, html)),
         ])
       )
       .then(() => self.skipWaiting())
@@ -40,6 +45,8 @@ self.addEventListener("activate", (event) => {
             .map((key) => caches.delete(key))
         )
       )
+      .then(() => caches.open(TILE_CACHE))
+      .then((cache) => trimCache(cache, MAX_TILE_ENTRIES))
       .then(() => self.clients.claim())
   );
 });
@@ -78,7 +85,7 @@ self.addEventListener("fetch", (event) => {
   // App navigation: network-first, then the cached page, and only then the
   // offline page. ignoreSearch lets deep links (?lat=...) use the cached shell.
   if (event.request.mode === "navigate") {
-    event.respondWith(navigationStrategy(event.request, url));
+    event.respondWith(navigationStrategy(event, url));
     return;
   }
 
@@ -99,13 +106,22 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
-async function navigationStrategy(request, url) {
+async function navigationStrategy(event, url) {
+  const request = event.request;
   try {
     const response = await fetch(request);
     if (response.ok && url.origin === self.location.origin) {
       const cache = await caches.open(CACHE_NAME);
       // Query strings (deep links) share the page's entry.
       cache.put(url.pathname, response.clone());
+      // sw.js is byte-identical across deploys and so never reinstalls: every
+      // online visit of the shell re-syncs the build's static assets instead.
+      if (url.pathname === "/") {
+        const html = response.clone().text();
+        event.waitUntil(
+          html.then((text) => syncStaticAssets(cache, text)).catch(() => null)
+        );
+      }
     }
     return response;
   } catch {
@@ -119,12 +135,14 @@ async function navigationStrategy(request, url) {
 }
 
 // Hashed build assets are only requested before the worker controls the page
-// on first visit, so fetch them from the shell HTML (and its CSS) at install.
-async function precacheStaticAssets(cache) {
-  const html = await (await fetch("/")).text();
+// on first visit, so fetch them from the shell HTML (and its CSS). When the set
+// differs from the one stored last time (a new deploy), drop the old build's
+// files so the cache doesn't grow by one bundle generation per deploy.
+async function syncStaticAssets(cache, html) {
   const found = new Set(
     html.match(/\/_next\/static\/[^"'\\\s)<>]+/g) || []
   );
+  if (found.size === 0) return;
   const css = [...found].filter((u) => u.endsWith(".css"));
   for (const href of css) {
     try {
@@ -135,6 +153,23 @@ async function precacheStaticAssets(cache) {
     } catch {}
   }
   await Promise.allSettled([...found].map((u) => cache.add(u)));
+
+  const signature = JSON.stringify([...found].sort());
+  const previous = await cache.match(BUILD_KEY);
+  if (previous && (await previous.text()) === signature) return;
+  const keys = await cache.keys();
+  await Promise.all(
+    keys
+      .filter((req) => {
+        const u = new URL(req.url);
+        return (
+          u.pathname.startsWith(STATIC_PREFIX) &&
+          !found.has(u.pathname + u.search)
+        );
+      })
+      .map((req) => cache.delete(req))
+  );
+  await cache.put(BUILD_KEY, new Response(signature));
 }
 
 // The page reports the same-origin assets it loaded (fonts, lazy chunks).
@@ -145,7 +180,16 @@ self.addEventListener("message", (event) => {
     caches.open(CACHE_NAME).then((cache) =>
       Promise.allSettled(
         data.urls
-          .filter((u) => typeof u === "string" && u.startsWith("/_next/static/"))
+          .map((u) => {
+            if (typeof u !== "string") return null;
+            // Resolve first: "/_next/static/../x" must not slip past the prefix.
+            const parsed = new URL(u, self.location.origin);
+            return parsed.origin === self.location.origin &&
+              parsed.pathname.startsWith(STATIC_PREFIX)
+              ? parsed.pathname + parsed.search
+              : null;
+          })
+          .filter(Boolean)
           .map(async (u) => {
             if (!(await cache.match(u))) await cache.add(u);
           })
@@ -161,7 +205,7 @@ async function tileStrategy(request, event) {
 
   if (cached) {
     const fetchedAt = Number(cached.headers.get(FETCHED_AT_HEADER)) || 0;
-    if (Date.now() - fetchedAt > TILE_MAX_AGE_MS) {
+    if (navigator.onLine && Date.now() - fetchedAt > TILE_MAX_AGE_MS) {
       event.waitUntil(fetchAndStoreTile(cache, request).catch(() => null));
     }
     return cached;
