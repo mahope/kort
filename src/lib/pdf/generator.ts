@@ -348,11 +348,19 @@ function drawGridLabels(
   };
 
   // Shrink the font if the widest possible northing label would not fit the side margin.
-  const widest = opts.system === "mgrs" ? { prefix: "WW ", main: spacing < 1000 ? "99,9" : "99" } : formatGridLabel(spacing < 1000 ? 6999900 : 6999000, opts.labelFormat);
+  const widest = opts.system === "mgrs" ? { prefix: "", main: spacing < 1000 ? "WW 99,9" : "WW 99" } : formatGridLabel(spacing < 1000 ? 6999900 : 6999000, opts.labelFormat);
   const w1 = measure(widest, 1);
   const k = Math.min(1, (marginMm - 2) / (w1.wp + w1.wm));
 
   const drawLabel = (l: FormattedLabel, x: number, baseline: number, align: "center" | "left" | "right") => {
+    if (opts.system === "mgrs") {
+      const [zone, square] = l.prefix.trim().split(" ");
+      pdf.setFontSize(5);
+      pdf.text(zone, x, baseline - 2.2, { align });
+      pdf.setFontSize(LABEL_PT * k);
+      pdf.text(`${square} ${l.main}`, x, baseline, { align });
+      return;
+    }
     const { wp, wm } = measure(l, k);
     const w = wp + wm;
     const x0 = align === "center" ? x - w / 2 : align === "right" ? x - w : x;
@@ -366,7 +374,7 @@ function drawGridLabels(
 
   const capMm = LABEL_PT * k * PT_TO_MM * 0.72;
   const hGap = (w1.wp + w1.wm) * k + 2; // labels side by side (top/bottom)
-  const vGap = capMm + 2.5; // labels stacked (left/right)
+  const vGap = opts.system === "mgrs" ? capMm + 4 : capMm + 2.5;
 
   interface Edge {
     from: [number, number];
@@ -522,8 +530,7 @@ async function generateMultiPagePdf({
 
       let gridInfo: GridInfo | null = null;
       if (showUtmGrid) {
-        // One zone for all pages (from the overall centre) so sheets line up.
-        const opts = gridOptionsFromStore(mapState.viewState.longitude, mapState.viewState.latitude, bearing);
+        const opts = gridOptionsFromStore((cell.bounds.west + cell.bounds.east) / 2, (cell.bounds.south + cell.bounds.north) / 2, bearing);
         opts.reserveTopLeftMm = pageLabelMm;
         gridInfo = { system: opts.system, square: opts.square, zone: opts.zone, spacing: drawUtmGrid(pdf, layout, cell.bounds, scale, opts) };
       }

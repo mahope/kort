@@ -29,6 +29,7 @@ interface ViewInfo {
   bounds: LngLatBounds;
   zone: number;
   mpp: number;
+  square: string;
 }
 
 function readView(map: MaplibreMap, zoneMode: "dk" | "std"): ViewInfo {
@@ -46,6 +47,7 @@ function readView(map: MaplibreMap, zoneMode: "dk" | "std"): ViewInfo {
     },
     zone: resolveUtmZone(c.lng, c.lat, zoneMode),
     mpp: metersPerPixel(c.lat, map.getZoom()),
+    square: mgrsSquare(c.lat, c.lng),
   };
 }
 
@@ -131,7 +133,7 @@ function UtmGridImpl() {
       <GridBadge
         zone={view.zone}
         system={system}
-        square={mgrsSquare(useMapStore.getState().viewState.latitude, useMapStore.getState().viewState.longitude)}
+        square={view.square}
         spacing={spacing}
         requested={resolved?.requested ?? null}
         coarsened={resolved?.coarsened ?? false}
@@ -173,7 +175,7 @@ function GridEdgeLabels({
       const w = el.clientWidth;
       const h = el.clientHeight;
       if (!w || !h) return;
-      const topGap = system === "mgrs" ? 66 : 72;
+      const topGap = system === "mgrs" ? 92 : 72;
       const leftGap = 24;
       const project = (lng: number, lat: number) => map.project([lng, lat]);
       const top = dropOverlapping(

@@ -81,10 +81,11 @@ export function gridIntersections(
         // Choose the square just above/right of a 100 km boundary, rather than
         // letting inverse-projection roundoff select the preceding square.
         const lat = p[1] + (q[1] - p[1]) * u + 1e-7;
-        const lng = p[0] + (q[0] - p[0]) * u + 1e-7;
+        const rawLng = p[0] + (q[0] - p[0]) * u;
+        const lng = rawLng + (getUtmZone(rawLng + 1e-7, lat) === line.zone ? 1e-7 : -1e-7);
         const square = mgrsSquare(lat, lng);
         const principal = formatGridLabel(line.value, "short").main;
-        label = { prefix: `${square.split(" ")[1]} `, main: principal };
+        label = { prefix: `${square} `, main: principal };
       }
       out.push({ t: t * length, label });
     }
