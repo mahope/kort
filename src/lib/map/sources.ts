@@ -27,6 +27,15 @@ export const DTK25_TILES_URL =
   `&BBOX={bbox-epsg-3857}`;
 
 /**
+ * DTK 25 for on-screen use: the layer is opaque, so JPEG is 7-13x smaller than
+ * PNG. The PDF renderer keeps using DTK25_TILES_URL (PNG) for full quality.
+ */
+export const DTK25_SCREEN_TILES_URL = DTK25_TILES_URL.replace(
+  "TRANSPARENT=TRUE&FORMAT=image/png",
+  "TRANSPARENT=FALSE&FORMAT=image/jpeg"
+);
+
+/**
  * Høje Målebordsblade (1842-1899) WMS tile URL.
  */
 export const HISTORISK_HOEJE_TILES_URL =
@@ -129,6 +138,11 @@ export const DTK25_SOURCE: RasterSourceConfig = {
   tiles: [DTK25_TILES_URL],
   tileSize: 256,
   attribution: "&copy; Klimadatastyrelsen (DTK25)",
+};
+
+export const DTK25_SCREEN_SOURCE: RasterSourceConfig = {
+  ...DTK25_SOURCE,
+  tiles: [DTK25_SCREEN_TILES_URL],
 };
 
 export const OSM_SOURCE: RasterSourceConfig = {
