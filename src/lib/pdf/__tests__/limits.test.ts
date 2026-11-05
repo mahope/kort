@@ -24,6 +24,15 @@ describe("effectiveDpi", () => {
   it("keeps A2/300 at 8192", () => {
     expect(effectiveDpi("A2", "portrait", 300, 8192)).toBe(300);
   });
+  it("returns a DPI whose canvas fits for every format and loft", () => {
+    for (const format of ["A5", "A4", "A3", "A2"] as const) {
+      for (const max of [2048, 3000, 4096, 5000, 8192]) {
+        const dpi = effectiveDpi(format, "portrait", 300, max);
+        const l = calculatePdfLayout(format, "portrait", dpi);
+        expect(Math.max(l.canvasWidth, l.canvasHeight)).toBeLessThanOrEqual(max);
+      }
+    }
+  });
   it("returns a DPI whose canvas fits", () => {
     const dpi = effectiveDpi("A2", "portrait", 300, 4096);
     const l = calculatePdfLayout("A2", "portrait", dpi);

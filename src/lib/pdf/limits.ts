@@ -42,7 +42,14 @@ export function effectiveDpi(
   const { canvasWidth, canvasHeight } = calculatePdfLayout(format, orientation, requestedDpi);
   const longest = Math.max(canvasWidth, canvasHeight);
   if (longest <= maxSize) return requestedDpi;
-  return Math.floor((requestedDpi * maxSize) / longest);
+  // Pixel sizes are rounded by the layout, so step down until the canvas fits.
+  let dpi = Math.floor((requestedDpi * maxSize) / longest);
+  while (dpi > 1) {
+    const l = calculatePdfLayout(format, orientation, dpi);
+    if (Math.max(l.canvasWidth, l.canvasHeight) <= maxSize) break;
+    dpi--;
+  }
+  return dpi;
 }
 
 /** Find the paper format and DPI a canvas size was derived from, if any. */
