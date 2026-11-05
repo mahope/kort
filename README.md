@@ -32,6 +32,7 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 - **Mørkt tema** - Light, dark og system-følgende tema
 - **Responsivt design** - Desktop sidebar + mobil bottom sheet med snap-points
 - **PWA** - Installerbar som app, virker offline med cached tiles
+- **Gem området offline** - Under Avanceret kan printrammen (zoom 12-16 plus kant) gemmes, så kortet kan panoreres og zoomes uden net. PDF-generering kræver stadig internet. Se `docs/offline-tests.md`
 - **Del-funktion** - Del et kortudsnit via URL
 - **Ingen login** - Ingen konto, ingen tracking, ingen cookies
 
