@@ -29,6 +29,11 @@ const server = http.createServer((req, res) => {
     if (m) {
       if (m[1] === "") { start = Math.max(0, st.size - Number(m[2])); }
       else { start = Number(m[1]); if (m[2] !== "") end = Math.min(end, Number(m[2])); }
+      if (!(start <= end) || start >= st.size) {
+        res.statusCode = 416;
+        res.setHeader("Content-Range", `bytes */${st.size}`);
+        return res.end();
+      }
       code = 206;
       res.setHeader("Content-Range", `bytes ${start}-${end}/${st.size}`);
     }

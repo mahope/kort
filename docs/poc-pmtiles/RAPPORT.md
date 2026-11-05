@@ -25,6 +25,8 @@ Ikke fundet/ikke undersøgt: om DTK25 kan hentes som filer (GeoTIFF) fra Datafor
 
 **Kilden til PoC-pakken:** Protomaps' daglige basemap-build (`https://build.protomaps.com/20261103.pmtiles`, OSM-data, ODbL, schema "Protomaps Basemap" 4.15.2). Attribution "© OpenStreetMap" er indbygget i arkivets metadata og vist i testsiden. Kun de ønskede fliser er hentet med `pmtiles extract` (HTTP range, 2 tråde, 51 requests, 35 MB). OSM-vektordata er ikke et DTK25-kort og ligner det ikke: det er et andet produkt.
 
+**OSM-udtræk og ODbL (gælder, hvis pakken lægges på en offentlig server).** Pakken er en afledt database af OpenStreetMap-data. Efter ODbL 1.0 skal (1) OSM krediteres synligt ("© OpenStreetMap contributors") med link til ophavsretssiden/licensen, (2) en offentligt brugt afledt *database* (her selve PMTiles-filen) udbydes under ODbL (share-alike), og den må ikke begrænses teknisk så andre ikke kan bruge den, og (3) det skal fremgå, at data er under ODbL, og licensen skal kunne findes. Et *produceret kort* (fx den udskrevne PDF) er et Produced Work og kræver kun attribution, ikke share-alike. Protomaps' build-filer er ikke en tjeneste med SLA, og jeg har ikke læst særlige brugsvilkår for `build.protomaps.com`; den må ikke bruges som produktionskilde i driftsmængde, men bygges selv (planetiler/OSM-extract) ved en reel løsning. **Jeg er ikke jurist; ODbL-forpligtelserne for en offentlig fil og Protomaps' vilkår bør afklares, før noget lægges på R2 eller CDN.** Kilder: [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/), [OSM copyright](https://www.openstreetmap.org/copyright). Dette er ikke gennemlæst på ny i dag, men vurderet fra min viden om licensen.
+
 ## 2. Pakken og byggetid
 
 Kommando (go-pmtiles v1.31.2):
@@ -53,20 +55,20 @@ Byggetid 16 s. Resultat `nsj-vector.pmtiles`: **33,0 MB** (33.031.766 bytes), 5.
 
 ## 3. Målinger
 
-Alt kørt på agent-worker mod localhost. Serveren er `docs/poc-pmtiles/serve.mjs` (Range, ETag, `Cache-Control: public, max-age=86400`). **Tallene er loopback og siger intet om CDN-latens**; de viser antal requests og bytes, ikke netværkstid.
+Alt kørt på agent-worker mod localhost. Tallene i tabellen er `measure-output.txt` (én kørsel; ms-tal varierer mellem kørsler). Serveren er `docs/poc-pmtiles/serve.mjs` (Range, ETag, `Cache-Control: public, max-age=86400`). **Tallene er loopback og siger intet om CDN-latens**; de viser antal requests og bytes, ikke netværkstid. **PMTiles- og WMS-kolonnen er derfor ikke sammenlignelige på tid** (localhost mod internettet). Sammenligningen holder kun for antal requests, bytes pr. flise og svarheaders. Cache-headerne i PMTiles-kolonnen er dem, min egen testserver sætter, ikke en måling af en CDN. WMS er hverken målt cold/warm eller for 24 fliser.
 
 | Mål | PMTiles (lokalt) | Live WMS DTK25 (20 kald, 0,7 s mellemrum, sekventielt) |
 |---|---|---|
-| Første flise | 12,6 ms (cold, inkl. header og rodmappe) | 150 til 300 ms (typisk, én udløber 1.673 ms) |
-| 24 fliser (6x4 z14), cold | 32 ms, 25 requests, 420 KB på tråden | ikke målt (kun 9 fliser) |
-| 24 fliser, warm (header og mapper cachet) | 16 ms, 24 requests, 403 KB | ikke målt. Ingen cache-headers, så hvert kald går igen. |
-| Hele udsnittet z10-15 (5.767 fliser) | 1,5 s, 5.768 requests, 32,2 MB | ikke målt (bevidst, ingen belastning) |
+| Første flise | 8,5 ms (cold, inkl. header og rodmappe; 1,5 ms i anden cold-kørsel) | 150 til 300 ms (typisk, én udløber 1.673 ms) |
+| 24 fliser (6x4 z14), cold | 29,5 ms (anden kørsel 19,5 ms), 25 requests, 420 KB på tråden | ikke målt (kun 9 fliser) |
+| 24 fliser, warm (header og mapper cachet) | 14,2 ms, 24 requests, 403 KB | ikke målt. Ingen cache-headers, så hvert kald går igen. |
+| Hele udsnittet z10-15 (5.767 fliser) | 1,6 s, 5.768 requests, 32,2 MB | ikke målt (bevidst, ingen belastning) |
 | Størrelse pr. flise | vektor z14: gns. 7 KB gz over hele udsnittet, ca. 17 KB i bymidten (viewport-målingen) | PNG 130 til 183 KB (gns. 166 KB), JPEG 19 til 28 KB (gns. 25 KB) |
 | Svarheaders | `Accept-Ranges: bytes`, `ETag`, `Cache-Control` (sat af min server) | **ingen** `Cache-Control`, `ETag`, `Last-Modified` eller `Accept-Ranges` |
 
 Ni z14-fliser i træk fra WMS: PNG 3,3 s i alt (1,6 s uden udløberen), JPEG ca. 0,1 s hver. JPEG er 6,6 gange mindre end PNG for samme flise (bekræfter #26).
 
-**Browser (Chrome headless, localhost, side `/poc-pmtiles?z=14`):** kortet er færdigindlæst efter ca. 1,2 s inkl. sideindlæsning (poll hvert 500 ms), 13 range requests, 282 KB. Skærmbillede: `screenshot-hilleroed-z14.png` (Hillerød, z14, rigtigt vektorkort med veje, bygninger, vand). Prøvet først med `--screenshot` og `--virtual-time-budget`: tog billedet før fliserne kom. Løst med råt CDP i stedet. Playwright 1.64.1 og Lighthouse findes ikke i `~/dev/data/audit-2026-11-05/tools` (mappen findes ikke på agent-worker), og `~/dev/pw-chrome.sh` mangler. Jeg brugte systemets `google-chrome` mod localhost. Lighthouse er ikke kørt.
+**Browser (Chrome headless, localhost, side `/poc-pmtiles?z=14`):** kortet er færdigindlæst efter ca. 1,2 s inkl. sideindlæsning (poll hvert 500 ms), 13 range requests, 282 KB. Skærmbillede: `screenshot-hilleroed-z14.png` (ligger i `~/dev/data/poc-pmtiles/`, ikke i git) (Hillerød, z14, rigtigt vektorkort med veje, bygninger, vand). Prøvet først med `--screenshot` og `--virtual-time-budget`: tog billedet før fliserne kom. Løst med råt CDP i stedet. Playwright 1.64.1 og Lighthouse findes ikke i `~/dev/data/audit-2026-11-05/tools` (mappen findes ikke på agent-worker), og `~/dev/pw-chrome.sh` mangler. Jeg brugte systemets `google-chrome` mod localhost. Lighthouse er ikke kørt.
 
 **Sådan arbejder `pmtiles://`:** første request er `Range: bytes=0-16383` (header + rodmappe, 206). Derefter ét range-request pr. flise (typisk 15 til 36 KB i vektor), og ved behov en mappe-request. Fliserne i filen ligger i Hilbert-rækkefølge, så naboer ligger tæt. Mapper caches i `PMTiles`-instansen, så warm-kørslen sparer ét request. Kræver server med `Accept-Ranges`, `Content-Range` og, ved cross-origin, CORS med `Range`-header (og `ETag` eksponeret, så biblioteket opdager at filen er skiftet). På Cloudflare R2 og Bunny er det indbygget.
 
@@ -82,7 +84,7 @@ Antagelser: Danmark ca. 43.000 km² land. En z14-flise ved 56°N dækker ca. 1,8
 
 | Lag | Antagelse | Størrelse DK | Sikkerhed |
 |---|---|---|---|
-| Vektor (OSM/Protomaps) z0-15 | 33 MB / 1.940 km² = 17 KB/km² (hav inkluderet i nævneren) | ca. **0,7 til 1,5 GB** | Middel. Byer er tungere end Nordsjælland. Protomaps' eget DK-udtræk bekræfter størrelsesordenen, men er ikke målt her. |
+| Vektor (OSM/Protomaps) z0-15 | 33 MB / 1.940 km² = 17 KB/km² er regnet med hav i nævneren. Skønnet landandel i udsnittet er ca. 65 % (ikke målt), dvs. ca. 25 KB/km² land. | ca. **1 til 2,5 GB** (midt ca. 1,1 GB ved 25 KB/km² x 43.000 km²; øvre ende ved dobbelt tæthed, fx byer) | Lav til middel. Landandelen er et skøn, og Nordsjælland er tættere bebygget end landsgennemsnittet. Ikke målt for et landsdækkende udtræk. |
 | Dataforsyningens Skærmkort (vektor) | ikke målt (kun 1 stikprøve ville kræve token-brug), forventes som OSM-vektor | ca. 1 til 3 GB | Lav |
 | DTK25 JPEG, 256 px, z7-16 | ca. 491.000 fliser (z16: 368k, z15: 92k, z14: 23k, resten <10k) x 25 KB (målt på 9+1 fliser) | ca. **12 GB** (10 til 17 GB) | Middel. Havfliser sparet, byområder tungere. |
 | DTK25 PNG | x 6,6 | ca. 80 GB | Middel |
@@ -129,7 +131,7 @@ Foreslået flow:
 
 **Anbefaling: C, men i to trin, og kun hvis licens og filadgang bekræftes.**
 
-- Vektor/Skærmkort-pakken (afsnit 2-3) virker og er lille (ca. 1 til 3 GB for hele landet). Her giver egen hosting klar gevinst: cache-headers, få requests, mulig offline, uafhængighed af WMS-nedlukninger. Hosting koster få dollar pr. måned. Det er et lavt-risiko første skridt.
+- Vektor/Skærmkort-pakken (afsnit 2-3) virker og er lille (ca. 1 til 3 GB for hele landet, usikkert). Her giver egen hosting en gevinst *hvis* OSM-stilen er acceptabel for brugerne som erstatning for DTK25 (den ligner ikke et topografisk kort, og appens formål er topografisk print): cache-headers, få requests, mulig offline, uafhængighed af WMS-nedlukninger. Hosting koster få dollar pr. måned. Det er et lavt-risiko første skridt.
 - DTK25 som JPEG-pyramide z7-16 er realistisk i størrelse (ca. 12 GB, under $1/md. på R2). Men den kræver, at råfiler kan hentes (ikke WMS-høst), og et opdateringsprojekt. Indtil det er afklaret er **A** (WMS + JPEG + service worker-cache, #26 og #36) den billigste vej til hurtigere og offline-kapabelt kort uden egen infrastruktur.
 - Ortofoto ikke i egen pyramide.
 
