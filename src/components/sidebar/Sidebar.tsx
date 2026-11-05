@@ -23,6 +23,7 @@ import { BookmarksPanel } from "./BookmarksPanel";
 import { HistoryPanel } from "./HistoryPanel";
 import { ShareButton } from "./ShareButton";
 import { UtmGridSettings } from "./UtmGridSettings";
+import { OfflinePanel } from "./OfflinePanel";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { MahojeWordmark } from "@/components/ui/MahojeWordmark";
@@ -175,6 +176,10 @@ function SidebarContent() {
             <BearingSelector />
             <DpiSelector />
             <MultiPageSelector />
+          </CollapsibleSection>
+
+          <CollapsibleSection title="Offline" defaultOpen={false}>
+            <OfflinePanel />
           </CollapsibleSection>
 
           <ShareButton />

@@ -18,7 +18,11 @@ export const MAP_JPEG_QUALITY = 0.92;
 export const TILE_RETRIES = 2;
 export const TILE_RETRY_PAUSE_MS = 1000;
 
-const OFFLINE_MESSAGE = "Du er offline: kortet kan ikke hentes";
+// PDFs are rendered at print resolution from DTK25's print tiles, which the
+// offline area cache (screen tiles at zoom 12-16) does not hold. Offline PDF is
+// deliberately unsupported; the message says so instead of failing on tiles.
+const OFFLINE_MESSAGE =
+  "Du er offline: PDF kræver internet, også for gemte områder. Gemte områder virker kun i kortvisningen";
 
 function isOffline(): boolean {
   return typeof navigator !== "undefined" && navigator.onLine === false;
