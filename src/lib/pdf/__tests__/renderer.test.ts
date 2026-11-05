@@ -146,6 +146,17 @@ describe("renderMapToImage progress and encoding", () => {
     expect(ctl.gpuCalls).toEqual(["fence", "flush", "wait", "wait", "wait", "wait", "delete"]);
   });
 
+  it("stops polling the GPU fence when the tab is hidden", async () => {
+    ctl.gpuBusyPolls = 3;
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+    try {
+      expect(await run()).toHaveProperty("v");
+    } finally {
+      delete (document as unknown as { hidden?: boolean }).hidden;
+    }
+    expect(ctl.gpuCalls).toEqual(["fence", "flush", "delete"]);
+  });
+
   it("throws a clear error when the browser cannot encode the canvas", async () => {
     ctl.blob = false;
     expect(((await run()) as { error: Error }).error.message).toContain("kunne ikke gemmes som JPEG");

@@ -361,10 +361,14 @@ async function waitForGpu(canvas: HTMLCanvasElement): Promise<void> {
   if (!gl || !sync) return;
   gl.flush();
   try {
+    // Hidden tabs throttle timers to ~1 s, so polling would stretch the render.
+    // Nobody sees a frozen page there, so let the readback block instead.
+    if (typeof document !== "undefined" && document.hidden) return;
     const deadline = performance.now() + GPU_WAIT_TIMEOUT_MS;
     while (performance.now() < deadline) {
       const status = gl.clientWaitSync(sync, 0, 0);
       if (status !== gl.TIMEOUT_EXPIRED) return;
+      if (document.hidden) return;
       await sleep(GPU_POLL_MS);
     }
   } finally {

@@ -14,6 +14,15 @@ function progressText(progress: PdfProgress | null, page: number, totalPages: nu
   return `${pagePrefix}${progress.tilesLoaded} af ${progress.tilesTotal} kortfliser`;
 }
 
+// Screen readers get a coarse update (every 10th tile) instead of one per tile.
+function liveText(progress: PdfProgress | null, page: number, totalPages: number): string {
+  if (progress && progress.stage !== "assemble" && progress.tilesTotal > 0) {
+    const coarse = { ...progress, tilesLoaded: Math.floor(progress.tilesLoaded / 10) * 10 };
+    return progressText(coarse, page, totalPages);
+  }
+  return progressText(progress, page, totalPages);
+}
+
 export function PrintButton() {
   const { frameBounds, scale, paperFormat, orientation, dpi, isGenerating, setIsGenerating, generatingPage, totalPages } =
     usePrintStore();
@@ -65,7 +74,8 @@ export function PrintButton() {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
               />
             </svg>
-            <span role="status">{progressText(progress, generatingPage, totalPages)}</span>
+            <span aria-hidden="true">{progressText(progress, generatingPage, totalPages)}</span>
+            <span role="status" className="sr-only">{liveText(progress, generatingPage, totalPages)}</span>
           </>
         ) : (
           <>
