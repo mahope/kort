@@ -79,4 +79,16 @@ describe("downloadTiles", () => {
     expect(calls).toHaveLength(1);
     expect(res.rateLimited).toBe(true);
   });
+
+  it("counts tiles never sent after a throttle as failed", async () => {
+    const send: WorkerSend = async (m) => {
+      const batch = m.urls as string[];
+      return { stored: batch.slice(0, 5).map((url) => ({ url, bytes: 1 })), failed: batch.slice(5), rateLimited: true };
+    };
+    const res = await downloadTiles(urls, { cancelled: () => false, paused: () => false }, () => {}, send);
+    expect(res.done).toBe(5);
+    expect(res.failed).toBe(25);
+    expect(res.done + res.failed).toBe(res.total);
+    expect(res.failedUrls).toEqual(urls.slice(5));
+  });
 });

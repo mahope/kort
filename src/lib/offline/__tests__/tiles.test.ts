@@ -8,6 +8,7 @@ import {
   padBounds,
   offlineLayerIds,
   checkStart,
+  confirmReason,
   estimateBytes,
   lngLatToTile,
 } from "../tiles";
@@ -72,6 +73,13 @@ describe("offline tiles", () => {
     expect(checkStart(400, 50e6, 10e6).exceedsQuota).toBe(true);
     expect(checkStart(400, 50e6, null).exceedsQuota).toBe(false);
     expect(checkStart(20001, 1, null).tooLarge).toBe(true);
+  });
+
+  it("names both thresholds when both are crossed", () => {
+    const big = 101 * 1024 * 1024;
+    expect(confirmReason(2001, 1)).toBe("over 2.000 fliser");
+    expect(confirmReason(10, big)).toBe("over 100 MB");
+    expect(confirmReason(2001, big)).toBe("over 2.000 fliser og over 100 MB");
   });
 
   it("pads the frame so the edges of the map are covered", () => {

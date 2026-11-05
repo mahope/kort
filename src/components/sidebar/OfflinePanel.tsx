@@ -12,12 +12,12 @@ import {
   formatBytes,
   isBaseLayerSaveable,
   offlineLayerIds,
-  offlineCacheKey,
   OFFLINE_MAX_ZOOM,
   OFFLINE_MIN_ZOOM,
-  CONFIRM_TILE_COUNT,
+  confirmReason,
   MAX_TILE_COUNT,
 } from "@/lib/offline/tiles";
+import { findMissingAreas, OFFLINE_CACHE_NAME } from "@/lib/offline/areas";
 import { deleteTiles, downloadTiles, type DownloadProgress } from "@/lib/offline/download";
 
 const LAYER_LABELS: Record<string, string> = {
@@ -59,17 +59,12 @@ export function OfflinePanel() {
     if (typeof caches === "undefined") return;
     let alive = true;
     (async () => {
-      const cache = await caches.open("topoprint-offline-v1");
-      for (const area of useOfflineStore.getState().areas) {
-        const urls = areaTileUrls(area.bounds, area.layerIds);
-        const sample = [urls[0], urls[Math.floor(urls.length / 2)], urls[urls.length - 1]];
-        const hits = await Promise.all(
-          sample.map((u) => (u ? cache.match(offlineCacheKey(u)) : undefined))
-        );
-        if (alive && hits.every((h) => !h)) {
-          removeArea(area.id);
-          addToast("info", "Et gemt område er ikke længere i browserens lager og er fjernet fra listen");
-        }
+      const cache = await caches.open(OFFLINE_CACHE_NAME);
+      const missing = await findMissingAreas(useOfflineStore.getState().areas, cache);
+      if (!alive) return;
+      for (const id of missing) removeArea(id);
+      if (missing.length > 0) {
+        addToast("info", "Et gemt område er ikke længere i browserens lager og er fjernet fra listen");
       }
     })().catch(() => undefined);
     return () => {
@@ -234,8 +229,8 @@ export function OfflinePanel() {
             className="mt-0.5 accent-primary"
           />
           <span>
-            Jeg vil hente {urls.length > CONFIRM_TILE_COUNT ? `mere end ${CONFIRM_TILE_COUNT.toLocaleString("da-DK")} fliser` : "over 100 MB"} (
-            {urls.length.toLocaleString("da-DK")} fliser, ca. {formatBytes(estimated)})
+            Jeg vil hente {urls.length.toLocaleString("da-DK")} fliser, ca. {formatBytes(estimated)}
+            {" "}({confirmReason(urls.length, estimated)})
           </span>
         </label>
       )}
@@ -313,7 +308,8 @@ export function OfflinePanel() {
         </ul>
       )}
       <p className="text-[10px] text-text-muted">
-        Fliserne hentes højst seks ad gangen fra Dataforsyningen og bruges af kortet uden net.
+        Fliserne hentes højst seks ad gangen fra Dataforsyningen og bruges af kortet uden net. PDF kræver
+        stadig internet.
       </p>
     </div>
   );

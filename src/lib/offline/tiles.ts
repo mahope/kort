@@ -187,3 +187,11 @@ export function checkStart(
     exceedsQuota: availableBytes !== null && estimatedBytes > availableBytes * 0.9,
   };
 }
+
+/** Names every confirmation threshold the plan crosses, not just the first. */
+export function confirmReason(tileCount: number, estimatedBytes: number): string {
+  const reasons: string[] = [];
+  if (tileCount > CONFIRM_TILE_COUNT) reasons.push(`over ${CONFIRM_TILE_COUNT.toLocaleString("da-DK")} fliser`);
+  if (estimatedBytes > CONFIRM_BYTES) reasons.push("over 100 MB");
+  return reasons.join(" og ");
+}

@@ -4,7 +4,7 @@ const CACHE_NAME = "topoprint-v3";
 const TILE_CACHE = "topoprint-tiles-v3";
 // Areas saved on purpose ("Gem området"). Kept apart from TILE_CACHE so the
 // 3,000-entry trim never evicts them, and never revalidated: the user chose them.
-const OFFLINE_CACHE = "topoprint-offline-v1";
+const OFFLINE_CACHE = "topoprint-offline-v2";
 // Keep in sync with OFFLINE_CONCURRENCY / hosts in src/lib/offline/tiles.ts
 // (the worker is plain JS and cannot import it).
 const OFFLINE_CONCURRENCY = 6;

@@ -73,7 +73,7 @@ try {
   const planned = Number(summary.match(/([\d.]+) fliser/)[1].replace(/\./g, ""));
 
   const offlineCount = () =>
-    page.evaluate(async () => (await (await caches.open("topoprint-offline-v1")).keys()).length);
+    page.evaluate(async () => (await (await caches.open("topoprint-offline-v2")).keys()).length);
 
   // --- Cancel: slow server, abort midway, partial tiles are removed.
   delayMs = 150;

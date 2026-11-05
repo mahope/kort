@@ -90,6 +90,10 @@ export async function downloadTiles(
     onProgress({ done: result.done, failed: result.failed, total: result.total, bytes: result.bytes });
     if (reply.rateLimited) {
       result.rateLimited = true;
+      // Batches never sent are missing too: count them, or the list lies.
+      result.failedUrls.push(...urls.slice(i + batchSize));
+      result.failed = result.failedUrls.length;
+      onProgress({ done: result.done, failed: result.failed, total: result.total, bytes: result.bytes });
       break;
     }
   }
