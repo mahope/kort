@@ -75,4 +75,13 @@ describe("SearchBar keyboard flow", () => {
     await press(input, "Escape");
     expect(host.querySelector("[role=listbox]")).toBeNull();
   });
+
+  it("selects a result on mouse/tap", async () => {
+    await openResults();
+    const opt = host.querySelectorAll("[role=option]")[1];
+    await act(async () => {
+      opt.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    });
+    expect(flyTo).toHaveBeenCalledWith(11, 56);
+  });
 });

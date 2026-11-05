@@ -60,8 +60,8 @@ export function MapControls() {
         <div className="mt-2 w-64 max-h-[70vh] overflow-y-auto rounded-lg bg-surface/95 p-3 shadow-lg backdrop-blur-sm">
           {/* Base layer */}
           <div className="mb-3">
-            <h2 className="text-xs font-semibold text-text-secondary mb-2">Basiskort</h2>
-            <div className="space-y-1">
+            <h2 id="map-baseLayer-label" className="text-xs font-semibold text-text-secondary mb-2">Basiskort</h2>
+            <div role="radiogroup" aria-labelledby="map-baseLayer-label" className="space-y-1">
               {BASE_LAYERS.map((layer) => (
                 <div key={layer.value}>
                   <label className="flex items-center gap-2 cursor-pointer pointer-coarse:min-h-11">

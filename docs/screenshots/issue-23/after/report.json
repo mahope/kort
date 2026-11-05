@@ -135,8 +135,7 @@
    "button[button] \"Find min position\" 40x40"
   ],
   "axe": [
-   "region(9)",
-   "target-size(1):.maplibregl-ctrl-zoom-in"
+   "region(9)"
   ]
  },
  {
@@ -163,8 +162,7 @@
    "button[button] \"Find min position\" 40x40"
   ],
   "axe": [
-   "region(10)",
-   "target-size(1):.maplibregl-ctrl-zoom-in"
+   "region(10)"
   ]
  },
  {
@@ -199,8 +197,7 @@
    "button[button] \"Find min position\" 40x40"
   ],
   "axe": [
-   "region(13)",
-   "target-size(1):.maplibregl-ctrl-zoom-in"
+   "region(13)"
   ]
  },
  {
@@ -235,8 +232,7 @@
    "button[button] \"Find min position\" 40x40"
   ],
   "axe": [
-   "region(13)",
-   "target-size(1):.maplibregl-ctrl-zoom-in"
+   "region(13)"
   ]
  },
  {
