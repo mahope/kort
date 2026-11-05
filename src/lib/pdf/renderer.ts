@@ -27,18 +27,25 @@ function missingTilesMessage(count: number): string {
   return `${tiles}, så PDF'en ville have huller i kortet. Prøv igen.`;
 }
 
+interface FailedTile {
+  sourceId: string;
+  tileKey: number | string | undefined;
+}
+
+type TileEvent = { sourceId?: string; dataType?: string; tile?: { tileID?: { key?: number | string } } };
+
 /** Tracks tiles that errored and have not (yet) loaded successfully. */
 function trackFailedTiles(map: maplibregl.Map) {
-  const failed = new Map<string, string>(); // tile key -> source id
+  const failed = new Map<string, FailedTile>();
   let anonymous = 0;
   map.on("error", (e) => {
-    const ev = e as unknown as { sourceId?: string; tile?: { tileID?: { key?: number | string } } };
+    const ev = e as unknown as TileEvent;
     if (!ev.tile || !ev.sourceId) return; // style/glyph errors are not tile errors
-    const key = `${ev.sourceId}/${ev.tile.tileID?.key ?? `anon${anonymous++}`}`;
-    failed.set(key, ev.sourceId);
+    const tileKey = ev.tile.tileID?.key;
+    failed.set(`${ev.sourceId}/${tileKey ?? `anon${anonymous++}`}`, { sourceId: ev.sourceId, tileKey });
   });
   map.on("data", (e) => {
-    const ev = e as unknown as { dataType?: string; sourceId?: string; tile?: { tileID?: { key?: number | string } } };
+    const ev = e as unknown as TileEvent;
     if (ev.dataType === "source" && ev.tile && ev.sourceId) {
       failed.delete(`${ev.sourceId}/${ev.tile.tileID?.key}`);
     }
@@ -46,9 +53,15 @@ function trackFailedTiles(map: maplibregl.Map) {
   return failed;
 }
 
-function reloadSources(map: maplibregl.Map, sourceIds: Iterable<string>) {
-  const style = (map as unknown as { style?: { _reloadSource?: (id: string) => void } }).style;
-  for (const id of new Set(sourceIds)) style?._reloadSource?.(id);
+// MapLibre has no public retry for errored tiles, and TileManager.reload()
+// deliberately skips them. Re-request each failed tile as "expired", which
+// makes both raster and vector sources fetch it from scratch.
+function retryTiles(map: maplibregl.Map, tiles: Iterable<FailedTile>) {
+  type Manager = { _reloadTile?: (id: number | string, state: string) => unknown };
+  const managers = (map as unknown as { style?: { tileManagers?: Record<string, Manager> } }).style?.tileManagers;
+  for (const { sourceId, tileKey } of tiles) {
+    if (tileKey !== undefined) managers?.[sourceId]?._reloadTile?.(tileKey, "expired");
+  }
 }
 
 function sleep(ms: number) {
@@ -272,7 +285,7 @@ export async function renderMapToImage({
     for (let attempt = 1; failedTiles.size > 0 && attempt <= TILE_RETRIES; attempt++) {
       if (isOffline()) break;
       await sleep(TILE_RETRY_PAUSE_MS * attempt);
-      reloadSources(map, failedTiles.values());
+      retryTiles(map, failedTiles.values());
       await waitForTilesLoaded(map);
     }
     if (failedTiles.size > 0) {

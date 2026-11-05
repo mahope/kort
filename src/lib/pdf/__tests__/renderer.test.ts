@@ -17,12 +17,14 @@ class FakeMap {
   handlers: Record<string, Handler[]> = {};
   loadedTiles = false;
   style = {
-    _reloadSource: () => {
-      ctl.reloads++;
-      for (const key of ctl.failOnReload) this.emit("error", { sourceId: "src", tile: { tileID: { key } } });
-      for (const key of ctl.failOnLoad.filter((k) => !ctl.failOnReload.includes(k))) {
-        this.emit("data", { dataType: "source", sourceId: "src", tile: { tileID: { key } } });
-      }
+    tileManagers: {
+      src: {
+        _reloadTile: (key: string) => {
+          ctl.reloads++;
+          if (ctl.failOnReload.includes(key)) this.emit("error", { sourceId: "src", tile: { tileID: { key } } });
+          else this.emit("data", { dataType: "source", sourceId: "src", tile: { tileID: { key } } });
+        },
+      },
     },
   };
   constructor() {
@@ -91,14 +93,14 @@ describe("renderMapToImage tile errors", () => {
   it("retries failed tiles and succeeds when the retry works", async () => {
     ctl.failOnLoad = ["1", "2"];
     expect(await run()).toEqual({ v: "data:image/jpeg;base64,AAAA" });
-    expect(ctl.reloads).toBe(1);
+    expect(ctl.reloads).toBe(2);
   });
 
   it("throws with the number of missing tiles after retries are exhausted", async () => {
     ctl.failOnLoad = ["1", "2", "3"];
     ctl.failOnReload = ["1", "2", "3"];
     const r = await run();
-    expect(ctl.reloads).toBe(TILE_RETRIES);
+    expect(ctl.reloads).toBe(3 * TILE_RETRIES);
     expect((r as { error: Error }).error.message).toBe("3 kortfliser mangler, så PDF'en ville have huller i kortet. Prøv igen.");
   });
 
