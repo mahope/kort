@@ -136,10 +136,12 @@ export async function generatePdf({
   }
 
   // Draw decorations
+  const declinationDiagram = await loadDeclinationDiagram();
   drawScaleBar(pdf, layout, scale);
   drawNorthArrow(pdf, layout, bearing);
   drawControlLine(pdf, layout);
   drawAttribution(pdf, layout, scale, gridInfo);
+  drawDeclination(declinationDiagram, pdf, layout, bounds, gridInfo, bearing);
 
   // Record in print history
   useHistoryStore.getState().addEntry({
@@ -471,6 +473,31 @@ export function drawAttribution(
   });
 }
 
+type DeclinationDiagram = typeof import("./declinationDiagram");
+
+/** Loads the declination model on demand, and only when the diagram is switched on. */
+export async function loadDeclinationDiagram(): Promise<DeclinationDiagram | null> {
+  return usePrintStore.getState().showDeclination ? import("./declinationDiagram") : null;
+}
+
+/** Misvisning diagram for the frame centre; grid north only when a UTM/MGRS grid is on. */
+export function drawDeclination(
+  diagram: DeclinationDiagram | null,
+  pdf: jsPDF,
+  layout: PdfLayout,
+  bounds: PrintFrameBounds,
+  gridInfo: GridInfo | null,
+  bearing: number
+) {
+  if (!diagram) return;
+  const info = diagram.computeDeclinationInfo(
+    (bounds.north + bounds.south) / 2,
+    (bounds.west + bounds.east) / 2,
+    gridInfo ? gridInfo.zone : null
+  );
+  if (info) diagram.drawDeclinationDiagram(pdf, layout, info, bearing);
+}
+
 async function generateMultiPagePdf({
   scale,
   paperFormat,
@@ -510,7 +537,9 @@ async function generateMultiPagePdf({
   });
   applyPrintPreferences(pdf);
 
+  let declinationDiagram: DeclinationDiagram | null = null;
   try {
+    declinationDiagram = await loadDeclinationDiagram();
     for (let i = 0; i < cells.length; i++) {
       const cell = cells[i];
       printState.setGeneratingPage(i + 1);
@@ -557,6 +586,7 @@ async function generateMultiPagePdf({
       drawControlLine(pdf, layout);
 
       drawAttribution(pdf, layout, scale, gridInfo);
+      drawDeclination(declinationDiagram, pdf, layout, cell.bounds, gridInfo, bearing);
     }
   } finally {
     // Reset progress state even if a page render throws, so the UI does not
