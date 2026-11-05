@@ -9,14 +9,15 @@
     .container { text-align: center; padding: 2rem; }
     h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
     p { color: #64748b; }
-    button { margin-top: 1rem; padding: 0.5rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-size: 0.875rem; }
+    a, button { display: inline-block; text-decoration: none; margin: 0 0.25rem; margin-top: 1rem; padding: 0.5rem 1.5rem; background: #2563eb; color: white; border: none; border-radius: 0.5rem; cursor: pointer; font-size: 0.875rem; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Du er offline</h1>
-    <p>Kortprinteren kræver en internetforbindelse for at indlæse kortdata.</p>
-    <p>Allerede indlæste kort-tiles er stadig tilgængelige.</p>
+    <p>Denne side er ikke gemt på din enhed, og der er ingen internetforbindelse.</p>
+    <p>Sider og kortfliser, du allerede har besøgt, virker stadig offline. Åbn forsiden for at fortsætte.</p>
+    <a href="/">Gå til forsiden</a>
     <button onclick="location.reload()">Prøv igen</button>
   </div>
 </body>

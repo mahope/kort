@@ -1,10 +1,18 @@
 // Bump these on any caching-logic change so activate() purges stale caches —
 // e.g. address-search responses that the previous version wrongly stored as tiles.
-const CACHE_NAME = "topoprint-v2";
-const TILE_CACHE = "topoprint-tiles-v2";
-const MAX_TILE_ENTRIES = 500;
+const CACHE_NAME = "topoprint-v3";
+const TILE_CACHE = "topoprint-tiles-v3";
+// One A4 print at 300 dpi needs 88-98 tiles, so 3,000 covers roughly 30 prints
+// or a long browsing session while staying within a few hundred MB.
+const MAX_TILE_ENTRIES = 3000;
+// Cached tiles are revalidated at most once per this interval.
+const TILE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const FETCHED_AT_HEADER = "x-sw-fetched-at";
 
-const APP_SHELL = ["/", "/offline.html"];
+const APP_SHELL = ["/", "/om", "/offline.html", "/icon.svg"];
+const STATIC_PREFIX = "/_next/static/";
+// Cache entry listing the /_next/static/ files the current build's shell uses.
+const BUILD_KEY = "/__build-assets";
 
 // Install: pre-cache app shell
 self.addEventListener("install", (event) => {
@@ -13,7 +21,14 @@ self.addEventListener("install", (event) => {
       .open(CACHE_NAME)
       // Cache each resource individually so one failing entry (e.g. a 500
       // mid-deploy) does not abort the whole install like cache.addAll would.
-      .then((cache) => Promise.allSettled(APP_SHELL.map((u) => cache.add(u))))
+      .then((cache) =>
+        Promise.allSettled([
+          ...APP_SHELL.map((u) => cache.add(u)),
+          fetch("/")
+            .then((r) => r.text())
+            .then((html) => syncStaticAssets(cache, html)),
+        ])
+      )
       .then(() => self.skipWaiting())
   );
 });
@@ -30,6 +45,8 @@ self.addEventListener("activate", (event) => {
             .map((key) => caches.delete(key))
         )
       )
+      .then(() => caches.open(TILE_CACHE))
+      .then((cache) => trimCache(cache, MAX_TILE_ENTRIES))
       .then(() => self.clients.claim())
   );
 });
@@ -51,27 +68,24 @@ self.addEventListener("fetch", (event) => {
         url.pathname.startsWith("/stednavne"))) ||
     url.hostname === "dawa.aws.dk"
   ) {
-    event.respondWith(networkFirst(event.request, 5 * 60));
+    event.respondWith(networkFirst(event.request));
     return;
   }
 
-  // Map tiles: stale-while-revalidate
+  // Map tiles: cache-first, revalidated at most once per 24 h
   if (
     url.hostname === "api.dataforsyningen.dk" ||
     url.hostname === "tile.openstreetmap.org" ||
     url.hostname === "cdn.dataforsyningen.dk"
   ) {
-    event.respondWith(tileStrategy(event.request));
+    event.respondWith(tileStrategy(event.request, event));
     return;
   }
 
-  // App navigation: network-first with cache fallback
+  // App navigation: network-first, then the cached page, and only then the
+  // offline page. ignoreSearch lets deep links (?lat=...) use the cached shell.
   if (event.request.mode === "navigate") {
-    event.respondWith(
-      fetch(event.request).catch(() =>
-        caches.match("/offline.html").then((r) => r || caches.match("/"))
-      )
-    );
+    event.respondWith(navigationStrategy(event, url));
     return;
   }
 
@@ -83,23 +97,146 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(cacheFirst(event.request));
     return;
   }
+
+  // Other same-origin files (icons, manifest): serve precached copies, else network.
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      caches.match(event.request).then((r) => r || fetch(event.request))
+    );
+  }
 });
 
-async function tileStrategy(request) {
+async function navigationStrategy(event, url) {
+  const request = event.request;
+  try {
+    const response = await fetch(request);
+    if (response.ok && url.origin === self.location.origin) {
+      const cache = await caches.open(CACHE_NAME);
+      // Query strings (deep links) share the page's entry.
+      cache.put(url.pathname, response.clone());
+      // sw.js is byte-identical across deploys and so never reinstalls: every
+      // online visit of the shell re-syncs the build's static assets instead.
+      if (url.pathname === "/") {
+        const html = response.clone().text();
+        event.waitUntil(
+          html.then((text) => syncStaticAssets(cache, text)).catch(() => null)
+        );
+      }
+    }
+    return response;
+  } catch {
+    const cached = await caches.match(url.pathname, { ignoreSearch: true });
+    return (
+      cached ||
+      (await caches.match("/offline.html")) ||
+      new Response("Offline", { status: 503 })
+    );
+  }
+}
+
+// Hashed build assets are only requested before the worker controls the page
+// on first visit, so fetch them from the shell HTML (and its CSS). When the set
+// differs from the one stored last time (a new deploy), drop the old build's
+// files so the cache doesn't grow by one bundle generation per deploy.
+async function syncStaticAssets(cache, html) {
+  const found = new Set(
+    html.match(/\/_next\/static\/[^"'\\\s)<>]+/g) || []
+  );
+  if (found.size === 0) return;
+  const css = [...found].filter((u) => u.endsWith(".css"));
+  for (const href of css) {
+    try {
+      const text = await (await fetch(href)).text();
+      for (const m of text.match(/\/_next\/static\/media\/[^"')\s]+/g) || []) {
+        found.add(m);
+      }
+    } catch {}
+  }
+  await Promise.allSettled([...found].map((u) => cache.add(u)));
+
+  const signature = JSON.stringify([...found].sort());
+  const previous = await cache.match(BUILD_KEY);
+  if (previous && (await previous.text()) === signature) return;
+  const keys = await cache.keys();
+  await Promise.all(
+    keys
+      .filter((req) => {
+        const u = new URL(req.url);
+        return (
+          u.pathname.startsWith(STATIC_PREFIX) &&
+          !found.has(u.pathname + u.search)
+        );
+      })
+      .map((req) => cache.delete(req))
+  );
+  await cache.put(BUILD_KEY, new Response(signature));
+}
+
+// The page reports the same-origin assets it loaded (fonts, lazy chunks).
+self.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.type !== "CACHE_URLS" || !Array.isArray(data.urls)) return;
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.allSettled(
+        data.urls
+          .map((u) => {
+            if (typeof u !== "string") return null;
+            // Resolve first: "/_next/static/../x" must not slip past the prefix.
+            const parsed = new URL(u, self.location.origin);
+            return parsed.origin === self.location.origin &&
+              parsed.pathname.startsWith(STATIC_PREFIX)
+              ? parsed.pathname + parsed.search
+              : null;
+          })
+          .filter(Boolean)
+          .map(async (u) => {
+            if (!(await cache.match(u))) await cache.add(u);
+          })
+      )
+    )
+  );
+});
+
+// Cache-first; entries older than 24 h are refreshed in the background.
+async function tileStrategy(request, event) {
   const cache = await caches.open(TILE_CACHE);
   const cached = await cache.match(request);
 
-  const fetchPromise = fetch(request)
-    .then((response) => {
-      if (response.ok) {
-        cache.put(request, response.clone());
-        trimCache(cache, MAX_TILE_ENTRIES);
-      }
-      return response;
-    })
-    .catch(() => null);
+  if (cached) {
+    const fetchedAt = Number(cached.headers.get(FETCHED_AT_HEADER)) || 0;
+    if (navigator.onLine && Date.now() - fetchedAt > TILE_MAX_AGE_MS) {
+      event.waitUntil(fetchAndStoreTile(cache, request).catch(() => null));
+    }
+    return cached;
+  }
 
-  return cached || (await fetchPromise) || new Response("Tile unavailable", { status: 503 });
+  try {
+    return await fetchAndStoreTile(cache, request);
+  } catch {
+    return new Response("Tile unavailable", { status: 503 });
+  }
+}
+
+let tilesSinceTrim = 0;
+
+async function fetchAndStoreTile(cache, request) {
+  const response = await fetch(request);
+  if (response.ok) {
+    const headers = new Headers(response.headers);
+    headers.set(FETCHED_AT_HEADER, String(Date.now()));
+    const stamped = new Response(await response.clone().blob(), {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+    await cache.put(request, stamped);
+    if (++tilesSinceTrim >= 50) {
+      tilesSinceTrim = 0;
+      await trimCache(cache, MAX_TILE_ENTRIES);
+    }
+  }
+  return response;
 }
 
 async function cacheFirst(request) {
@@ -114,7 +251,7 @@ async function cacheFirst(request) {
   return response;
 }
 
-async function networkFirst(request, maxAgeSec) {
+async function networkFirst(request) {
   try {
     const response = await fetch(request);
     if (response.ok) {

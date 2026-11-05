@@ -3,7 +3,8 @@ import { useUiStore } from "@/stores/uiStore";
 export function registerServiceWorker() {
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
-  window.addEventListener("load", () => {
+  // Called from a React effect, which usually runs after `load` has fired.
+  const start = () => {
     navigator.serviceWorker
       .register("/sw.js")
       .then((registration) => {
@@ -31,5 +32,22 @@ export function registerServiceWorker() {
       .catch((err) => {
         console.warn("SW registration failed:", err);
       });
-  });
+
+    // Let the worker cache the hashed assets (incl. fonts) this page loaded.
+    navigator.serviceWorker.ready.then((reg) => {
+      const urls = performance
+        .getEntriesByType("resource")
+        .map((e) => new URL(e.name))
+        .filter(
+          (u) =>
+            u.origin === location.origin &&
+            u.pathname.startsWith("/_next/static/")
+        )
+        .map((u) => u.pathname + u.search);
+      reg.active?.postMessage({ type: "CACHE_URLS", urls });
+    });
+  };
+
+  if (document.readyState === "complete") start();
+  else window.addEventListener("load", start, { once: true });
 }
