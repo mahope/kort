@@ -9,4 +9,5 @@ for (let i = 1; i <= 3; i++) {
   const j = JSON.parse(fs.readFileSync(f, "utf8"));
   vals.push({ cls: j.audits["cumulative-layout-shift"].numericValue, perf: j.categories.performance.score });
 }
-console.log("LH", JSON.stringify(vals), "median CLS", vals.map((v) => v.cls).sort()[1]);
+console.log("LH", JSON.stringify(vals), "median CLS", vals.map((v) => v.cls).sort((a, b) => a - b)[1]);
+fs.writeFileSync(new URL("../after-lighthouse.json", import.meta.url), JSON.stringify({ lighthouse: "13.6.0", runs: vals, medianCls: vals.map((v) => v.cls).sort((a, b) => a - b)[1] }, null, 2) + "\n");

@@ -42,6 +42,7 @@ export function BottomSheet({ children, footer }: BottomSheetProps) {
   const startY = useRef(0);
   const startHeight = useRef(0);
   const didDrag = useRef(false);
+  const lastDragHeight = useRef<number | null>(null);
   const sheetRef = useRef<HTMLElement>(null);
 
   const height = dragHeight !== null ? `${dragHeight}px` : `var(--sheet-${position})`;
@@ -67,17 +68,19 @@ export function BottomSheet({ children, footer }: BottomSheetProps) {
     didDrag.current = true;
     const maxHeight = window.innerHeight * SNAP_MAX_FRAC;
     const delta = startY.current - e.clientY;
-    setDragHeight(Math.max(SNAP_MIN_PX, Math.min(maxHeight, startHeight.current + delta)));
+    const next = Math.max(SNAP_MIN_PX, Math.min(maxHeight, startHeight.current + delta));
+    lastDragHeight.current = next;
+    setDragHeight(next);
   }, []);
 
   const onPointerUp = useCallback(() => {
     if (!dragging.current) return;
     dragging.current = false;
     if (didDrag.current) {
-      setDragHeight((h) => {
-        if (h !== null) setPosition(nearestPosition(h));
-        return null;
-      });
+      const h = lastDragHeight.current;
+      if (h !== null) setPosition(nearestPosition(h));
+      lastDragHeight.current = null;
+      setDragHeight(null);
     } else {
       // Tap: toggle between minimized and mid
       setPosition((p) => (p === "min" ? "mid" : "min"));
@@ -89,7 +92,7 @@ export function BottomSheet({ children, footer }: BottomSheetProps) {
       ref={sheetRef}
       aria-label="Kortindstillinger"
       data-dragging={dragHeight !== null}
-      className="fixed inset-x-0 bottom-0 z-40 flex flex-col max-md:h-[var(--sheet-h)] rounded-t-2xl bg-surface shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-[height] duration-200 ease-out data-[dragging=true]:transition-none md:static md:w-80 md:shrink-0 md:rounded-none md:border-r md:border-sidebar-border md:bg-sidebar-bg md:shadow-none"
+      className="fixed inset-x-0 bottom-0 z-40 flex flex-col max-md:h-[var(--sheet-h)] rounded-t-2xl max-md:pr-[env(safe-area-inset-right)] max-md:pl-[env(safe-area-inset-left)] bg-surface shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-[height] duration-200 ease-out data-[dragging=true]:transition-none md:static md:w-80 md:shrink-0 md:rounded-none md:border-r md:border-sidebar-border md:bg-sidebar-bg md:shadow-none"
     >
       <div
         data-sheet-handle
@@ -97,6 +100,7 @@ export function BottomSheet({ children, footer }: BottomSheetProps) {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
       >
         <div className="h-1 w-10 rounded-full bg-text-muted" />
       </div>

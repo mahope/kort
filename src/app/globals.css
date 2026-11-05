@@ -213,3 +213,8 @@ body {
   bottom: var(--sheet-offset);
   transition: bottom 200ms ease-out;
 }
+/* No lag behind the finger while the sheet is being dragged */
+html:has(aside[data-dragging="true"]) .maplibregl-ctrl-bottom-left,
+html:has(aside[data-dragging="true"]) .maplibregl-ctrl-bottom-right {
+  transition: none;
+}
