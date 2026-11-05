@@ -53,7 +53,7 @@ class FakeMap {
   return { ctl, FakeMap };
 });
 
-vi.mock("maplibre-gl", () => ({ default: { Map: FakeMap }, Map: FakeMap }));
+vi.mock("maplibre-gl", () => ({ default: { Map: FakeMap }, Map: FakeMap, setWorkerUrl: () => {} }));
 vi.mock("../limits", async (orig) => ({
   ...(await orig<typeof import("../limits")>()),
   getMaxCanvasSize: () => ctl.maxSize,
