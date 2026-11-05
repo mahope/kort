@@ -20,12 +20,12 @@ export function OverlaySelector() {
       <div className="space-y-2">
         {overlays.map((overlay) => (
           <div key={overlay.id}>
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-2 cursor-pointer pointer-coarse:min-h-11">
               <input
                 type="checkbox"
                 checked={overlay.enabled}
                 onChange={() => toggleOverlay(overlay.id)}
-                className="accent-primary"
+                className="accent-primary pointer-coarse:h-5 pointer-coarse:w-5"
               />
               <span className="text-sm">{OVERLAY_LABELS[overlay.id]}</span>
             </label>
@@ -34,6 +34,7 @@ export function OverlaySelector() {
                 <span className="text-xs text-text-muted">Gennemsigtighed</span>
                 <input
                   type="range"
+                  aria-label={`Gennemsigtighed: ${OVERLAY_LABELS[overlay.id]}`}
                   min={0}
                   max={1}
                   step={0.05}
@@ -41,7 +42,7 @@ export function OverlaySelector() {
                   onChange={(e) =>
                     setOverlayOpacity(overlay.id, Number(e.target.value))
                   }
-                  className="flex-1 h-1 accent-primary"
+                  className="flex-1 h-1 pointer-coarse:h-11 accent-primary"
                 />
                 <span className="text-xs text-text-secondary w-8 text-right">
                   {Math.round(overlay.opacity * 100)}%

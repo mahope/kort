@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { usePrintStore } from "@/stores/printStore";
 import { SCALE_PRESETS, MIN_CUSTOM_SCALE, MAX_CUSTOM_SCALE } from "@/constants/scales";
 
@@ -12,6 +12,7 @@ export function ScaleSelector() {
   const [isCustom, setIsCustom] = useState(false);
   const [customInput, setCustomInput] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const selectId = useId();
 
   const isPreset = SCALE_PRESETS.some((p) => p.value === scale);
 
@@ -45,11 +46,12 @@ export function ScaleSelector() {
 
   return (
     <div>
-      <label className="block text-sm font-medium mb-1">Målestok</label>
+      <label htmlFor={selectId} className="block text-sm font-medium mb-1">Målestok</label>
       <select
+        id={selectId}
         value={selectValue}
         onChange={(e) => handleSelectChange(e.target.value)}
-        className="w-full rounded-lg border border-border px-3 py-2 text-sm bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+        className="w-full rounded-lg border border-border px-3 py-2 text-sm pointer-coarse:min-h-11 pointer-coarse:text-base bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
       >
         {SCALE_PRESETS.map((s) => (
           <option key={s.value} value={String(s.value)}>
@@ -64,6 +66,7 @@ export function ScaleSelector() {
           <div className="flex items-center gap-1">
             <span className="text-sm text-text-secondary">1:</span>
             <input
+              aria-label="Brugerdefineret målestok (nævner)"
               type="text"
               inputMode="numeric"
               value={customInput || (!isPreset ? String(scale) : "")}
@@ -74,7 +77,7 @@ export function ScaleSelector() {
               onBlur={handleCustomSubmit}
               onKeyDown={handleKeyDown}
               placeholder="f.eks. 15000"
-              className="flex-1 rounded-lg border border-border px-3 py-1.5 text-sm bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="flex-1 rounded-lg border border-border px-3 py-1.5 text-sm pointer-coarse:min-h-11 pointer-coarse:text-base bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
           {error && (
