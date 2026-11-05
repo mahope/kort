@@ -39,8 +39,13 @@ const RASTER_BASE_LAYERS: Record<string, typeof ORTOFOTO_SOURCE> = {
 };
 
 export function MapContainer() {
-  preconnect("https://api.dataforsyningen.dk");
-  preconnect("https://cdn.dataforsyningen.dk");
+  // MapLibre fetches tiles/style with CORS, so the connection must be opened
+  // with crossOrigin to be reused. Runs in an effect: this component is
+  // ssr:false, so there is no server render to hoist the hint into anyway.
+  useEffect(() => {
+    preconnect("https://api.dataforsyningen.dk", { crossOrigin: "anonymous" });
+    preconnect("https://cdn.dataforsyningen.dk", { crossOrigin: "anonymous" });
+  }, []);
   const mapRef = useRef<MapRef>(null);
   const viewState = useMapStore((s) => s.viewState);
   const setViewState = useMapStore((s) => s.setViewState);
