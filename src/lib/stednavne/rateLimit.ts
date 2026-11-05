@@ -24,9 +24,15 @@ export function createRateLimiter({
       const t = now();
       let w = windows.get(key);
       if (!w || t >= w.resetAt) {
+        // Re-insert so Map order stays sorted by resetAt (oldest window first).
+        windows.delete(key);
         if (windows.size >= maxKeys) {
           for (const [k, v] of windows) if (t >= v.resetAt) windows.delete(k);
-          if (windows.size >= maxKeys) windows.clear();
+          // Still full: drop only the oldest windows, keep recent ones active.
+          for (const k of windows.keys()) {
+            if (windows.size < maxKeys) break;
+            windows.delete(k);
+          }
         }
         w = { count: 0, resetAt: t + windowMs };
         windows.set(key, w);
