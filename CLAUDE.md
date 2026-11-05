@@ -5,7 +5,7 @@ Gratis webapplikation til udskrivning af danske topografiske kort som PDF.
 ## Tech Stack
 
 - **Next.js 16** (App Router, Turbopack) + **React 19** + **TypeScript 5.7**
-- **MapLibre GL JS 5** via react-map-gl for interaktivt kort
+- **MapLibre GL JS 6** via react-map-gl for interaktivt kort
 - **Tailwind CSS 4.2** (CSS-first config i globals.css)
 - **Zustand 5** for state management
 - **jsPDF 4** for client-side PDF-generering
@@ -22,7 +22,9 @@ Gratis webapplikation til udskrivning af danske topografiske kort som PDF.
 - `npm run dev` - Start dev server
 - `npm run build` - Production build
 - `npx vitest run` - Kør tests
-- `npx tsc --noEmit` - Type-check
+- `npm run typecheck` - Type-check med TypeScript 7 (native, pakken `typescript7`); Next og ESLint bruger stadig `typescript` 6
+- `npm run lint` - ESLint (autoritet); `npm run lint:fast` - oxlint som hurtigt forhåndstjek (dækker ikke alle regler)
+- Afhængigheder: eksakte versioner, mindst 3 dage gamle (se `docs/dependency-security.md`)
 
 ## Mappestruktur
 
