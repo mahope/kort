@@ -182,7 +182,34 @@ body {
   animation: slide-in 0.2s ease-out;
 }
 
+/* Bottom sheet (below md): heights in dvh so they follow resize/rotation.
+   BottomSheet sets --sheet-h on <html>; --sheet-offset is what the map
+   controls sit above (0 when the sheet is a sidebar). */
+:root {
+  --sheet-min: 108px;
+  --sheet-mid: 40vh;
+  --sheet-max: 60vh;
+  --sheet-h: var(--sheet-mid);
+  --sheet-offset: 0px;
+}
+@supports (height: 100dvh) {
+  :root {
+    --sheet-mid: 40dvh;
+    --sheet-max: 60dvh;
+  }
+}
+@media (max-width: 767.98px) {
+  :root {
+    --sheet-offset: var(--sheet-h);
+  }
+}
+
 /* MapLibre overrides */
 .maplibregl-ctrl-attrib {
   font-size: 11px !important;
+}
+.maplibregl-ctrl-bottom-left,
+.maplibregl-ctrl-bottom-right {
+  bottom: var(--sheet-offset);
+  transition: bottom 200ms ease-out;
 }

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Analytics } from "@/components/Analytics";
 import { getBrand, resolveBrandId } from "@/config/brand";
 import { brygada, schibsted } from "@/lib/fonts";
@@ -35,6 +35,12 @@ export const metadata: Metadata = {
     icon: brand.logo.favicon,
     apple: brand.logo.icon192,
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 const themeScript = `(function(){try{var t=localStorage.getItem('theme');var d=t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches);if(d)document.documentElement.classList.add('dark')}catch(e){}})()`;
