@@ -1,6 +1,6 @@
 import { OFFLINE_CONCURRENCY } from "./tiles";
 
-export interface FetchResult {
+interface FetchResult {
   stored: { url: string; bytes: number }[];
   failed: string[];
   rateLimited?: boolean;
@@ -9,7 +9,7 @@ export interface FetchResult {
 export type WorkerSend = (message: Record<string, unknown>) => Promise<unknown>;
 
 /** Send one message to the active service worker and await its reply. */
-export const sendToWorker: WorkerSend = async (message) => {
+const sendToWorker: WorkerSend = async (message) => {
   if (!("serviceWorker" in navigator)) throw new Error("Service worker mangler");
   const reg = await navigator.serviceWorker.ready;
   const worker = reg.active;

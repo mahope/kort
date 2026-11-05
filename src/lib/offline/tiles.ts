@@ -1,12 +1,6 @@
 import type { BaseLayer, OverlayId } from "@/types/map";
 import type { PrintFrameBounds } from "@/types/print";
-import {
-  ORTOFOTO_SOURCE,
-  DTK25_SCREEN_SOURCE,
-  HISTORISK_HOEJE_SOURCE,
-  HISTORISK_LAVE_SOURCE,
-  OVERLAY_SOURCES,
-} from "@/lib/map/sources";
+import { getRasterBaseLayers, OVERLAY_SOURCES } from "@/lib/map/sources";
 
 /** Cache key for a tile: the URL without access token (identical to offlineKey in public/sw.js). */
 export function offlineCacheKey(url: string): string {
@@ -16,7 +10,7 @@ export function offlineCacheKey(url: string): string {
 }
 
 /** Share of the frame size added on each side, so panning near the edge still hits the cache. */
-export const OFFLINE_PADDING = 0.25;
+const OFFLINE_PADDING = 0.25;
 
 /** Tile zoom levels saved for an area (tileSize 256, as the on-screen map). */
 export const OFFLINE_MIN_ZOOM = 12;
@@ -24,9 +18,9 @@ export const OFFLINE_MAX_ZOOM = 16;
 /** Dataforsyningen asks for modest load: never more requests in flight. */
 export const OFFLINE_CONCURRENCY = 6;
 /** Above this many tiles the user must confirm explicitly. */
-export const CONFIRM_TILE_COUNT = 2000;
+const CONFIRM_TILE_COUNT = 2000;
 /** ... or this many bytes (100 MB). */
-export const CONFIRM_BYTES = 100 * 1024 * 1024;
+const CONFIRM_BYTES = 100 * 1024 * 1024;
 /** Hard ceiling so a mistake (huge multi-page area) cannot hammer the service. */
 export const MAX_TILE_COUNT = 20000;
 
@@ -40,13 +34,10 @@ const ORIGIN_Y = Math.PI * EPSG3857_RADIUS;
  * policy forbids bulk downloads) and the vector "skærmkort" needs style, glyphs
  * and sprites, which are not tile-addressable.
  */
-const SAVEABLE_BASE: Partial<Record<BaseLayer, { tiles: string[] }>> = {
-  ortofoto: ORTOFOTO_SOURCE,
-  dtk25: DTK25_SCREEN_SOURCE,
-  historisk_hoeje: HISTORISK_HOEJE_SOURCE,
-  historisk_lave: HISTORISK_LAVE_SOURCE,
-};
-
+const SAVEABLE_BASE: Partial<Record<BaseLayer, { tiles: string[] }>> = (() => {
+  const all = getRasterBaseLayers("screen");
+  return { ortofoto: all.ortofoto, dtk25: all.dtk25, historisk_hoeje: all.historisk_hoeje, historisk_lave: all.historisk_lave };
+})();
 /** Rough average bytes per tile, measured on JPEG/PNG responses from Dataforsyningen. */
 const AVG_TILE_BYTES: Record<string, number> = {
   ortofoto: 24 * 1024,
