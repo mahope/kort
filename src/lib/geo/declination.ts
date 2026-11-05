@@ -205,7 +205,8 @@ export function utmCentralMeridian(zone: number): number {
 
 /**
  * Meridian convergence in degrees for a position in a UTM zone (first-order,
- * accurate to well under 0.01° inside the zone). Positive east of the central
+ * accurate to well under 0.01° inside the zone; not meant for positions
+ * outside the zone's 6° band). Positive east of the central
  * meridian: grid north then lies east of true north.
  */
 export function meridianConvergence(lat: number, lng: number, zone: number): number {

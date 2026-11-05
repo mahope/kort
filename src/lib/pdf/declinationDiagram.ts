@@ -31,8 +31,9 @@ export function computeDeclinationInfo(
       convergence: zone === null ? null : meridianConvergence(lat, lng, zone),
       year: date.getUTCFullYear(),
     };
-  } catch {
-    return null;
+  } catch (e) {
+    if (e instanceof RangeError) return null; // model out of validity
+    throw e;
   }
 }
 
@@ -63,14 +64,25 @@ export function drawDeclinationDiagram(
   pdf.setLineWidth(0.2);
   pdf.rect(box.left, box.top, widthMm, heightMm, "FD");
 
-  // Diagram on the left: origin at the bottom, lines of length L.
-  const ox = box.left + 9;
-  const oy = box.bottom - 4;
-  const L = 15;
+  // Diagram on the left: lines of length L from a common origin. The origin is
+  // placed so the whole rotated drawing (incl. "N" label) stays inside the box,
+  // whatever the map bearing is.
+  const L = 13;
+  const LABEL = L + 2.2;
   const dir = (trueBearingDeg: number) => {
     const a = ((trueBearingDeg - bearing) * Math.PI) / 180; // clockwise from paper-up
     return { x: Math.sin(a), y: -Math.cos(a) };
   };
+  const extents = [dir(0), dir(info.declination), ...(info.convergence !== null ? [dir(info.convergence)] : [])];
+  const pts = [{ x: 0, y: 0 }, ...extents.map((d) => ({ x: d.x * L, y: d.y * L })), { x: dir(0).x * LABEL, y: dir(0).y * LABEL }];
+  const pad = 1;
+  const minX = Math.min(...pts.map((q) => q.x)) - pad;
+  const maxX = Math.max(...pts.map((q) => q.x)) + pad;
+  const minY = Math.min(...pts.map((q) => q.y)) - pad;
+  const maxY = Math.max(...pts.map((q) => q.y)) + pad;
+  const area = { left: box.left + 1.5, right: box.left + 19.5, top: box.top + 1.5, bottom: box.bottom - 5.5 };
+  const ox = Math.min(Math.max(area.left - minX + (area.right - area.left - (maxX - minX)) / 2, area.left - minX), area.right - maxX);
+  const oy = Math.min(Math.max(area.top - minY + (area.bottom - area.top - (maxY - minY)) / 2, area.top - minY), area.bottom - maxY);
   const tipOf = (deg: number, len = L) => {
     const d = dir(deg);
     return { x: ox + d.x * len, y: oy + d.y * len };
@@ -89,7 +101,7 @@ export function drawDeclinationDiagram(
   const py = dn.x;
   pdf.setFillColor(0, 0, 0);
   pdf.triangle(tn.x, tn.y, hb.x + px * 0.9, hb.y + py * 0.9, hb.x - px * 0.9, hb.y - py * 0.9, "F");
-  const nl = tipOf(0, L + 2.2);
+  const nl = tipOf(0, LABEL);
   pdf.setFontSize(7);
   pdf.setFont("helvetica", "bold");
   pdf.text("N", nl.x, nl.y + 1, { align: "center" });
@@ -124,7 +136,7 @@ export function drawDeclinationDiagram(
   }
   rows.push({ label: "Magnetisk nord", value: formatDeclination(info.declination), style: "mn" });
 
-  pdf.setFontSize(5.5);
+  pdf.setFontSize(6);
   let y = box.top + 5;
   for (const r of rows) {
     pdf.setLineWidth(r.style === "tn" ? 0.4 : 0.25);

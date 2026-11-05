@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMapStore } from "@/stores/mapStore";
 import { useUiStore } from "@/stores/uiStore";
 import { pointCoordinates } from "@/lib/geo/coordinates";
@@ -13,12 +13,15 @@ function useSettledDeclination(lat: number, lng: number): string | null {
     const t = setTimeout(() => setPos({ lat, lng }), 200);
     return () => clearTimeout(t);
   }, [lat, lng]);
-  try {
-    const now = new Date();
-    return `${formatDeclination(magneticDeclination(pos.lat, pos.lng, now))} (${now.getFullYear()})`;
-  } catch {
-    return null;
-  }
+  return useMemo(() => {
+    try {
+      const now = new Date();
+      return `${formatDeclination(magneticDeclination(pos.lat, pos.lng, now))} (${now.getUTCFullYear()})`;
+    } catch (e) {
+      if (e instanceof RangeError) return null; // model out of validity
+      throw e;
+    }
+  }, [pos]);
 }
 
 export function CoordinateReadout() {

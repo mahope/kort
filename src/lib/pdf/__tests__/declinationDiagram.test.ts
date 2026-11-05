@@ -43,6 +43,30 @@ describe("declination diagram placement", () => {
     }
   });
 
+  it("keeps every drawn line inside the box for any map bearing", () => {
+    const l = calculatePdfLayout("A4", "portrait", 150);
+    const box = declinationBoxRect(l);
+    for (const bearing of [-180, -135, -90, -40, 0, 40, 90, 135, 180]) {
+      const pdf = new jsPDF({ unit: "mm", format: [l.pageWidthMm, l.pageHeightMm] });
+      const pts: Array<[number, number]> = [];
+      const line = pdf.line.bind(pdf);
+      (pdf as unknown as { line: unknown }).line = (x1: number, y1: number, x2: number, y2: number) => {
+        pts.push([x1, y1], [x2, y2]);
+        return line(x1, y1, x2, y2);
+      };
+      const info = computeDeclinationInfo(55.68, 12.57, 32, new Date(Date.UTC(2026, 10, 5)))!;
+      drawDeclinationDiagram(pdf, l, info, bearing);
+      const diagram = pts.filter(([x]) => x < box.left + 20);
+      expect(diagram.length).toBeGreaterThan(0);
+      for (const [x, y] of diagram) {
+        expect(x).toBeGreaterThanOrEqual(box.left);
+        expect(x).toBeLessThanOrEqual(box.left + 20);
+        expect(y).toBeGreaterThanOrEqual(box.top);
+        expect(y).toBeLessThanOrEqual(box.bottom);
+      }
+    }
+  });
+
   it("returns null outside the model's validity", () => {
     expect(computeDeclinationInfo(55, 12, null, new Date(Date.UTC(2035, 0, 1)))).toBeNull();
   });
