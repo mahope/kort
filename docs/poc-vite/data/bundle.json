@@ -1,0 +1,258 @@
+{
+  "next": {
+    "firstLoad": {
+      "raw": 2258504,
+      "gz": 637617,
+      "n": 16
+    },
+    "firstLoadByCategory": {
+      "next-runtime": {
+        "raw": 255244,
+        "gz": 74564
+      },
+      "unmapped": {
+        "raw": 4576,
+        "gz": 1750
+      },
+      "react": {
+        "raw": 219161,
+        "gz": 67906
+      },
+      "app": {
+        "raw": 122477,
+        "gz": 39167
+      },
+      "jspdf+deps": {
+        "raw": 372605,
+        "gz": 117257
+      },
+      "other-libs": {
+        "raw": 85417,
+        "gz": 26359
+      },
+      "maplibre-gl": {
+        "raw": 1031029,
+        "gz": 272733
+      },
+      "terra-draw": {
+        "raw": 167996,
+        "gz": 37880
+      }
+    },
+    "firstLoadFiles": [
+      {
+        "p": "/_next/static/chunks/3pydwlfrxn3z3.js",
+        "raw": 340,
+        "gz": 264
+      },
+      {
+        "p": "/_next/static/chunks/32ncx2g_f48cd.js",
+        "raw": 32573,
+        "gz": 8751
+      },
+      {
+        "p": "/_next/static/chunks/3qs8poo7i0nem.js",
+        "raw": 13763,
+        "gz": 3488
+      },
+      {
+        "p": "/_next/static/chunks/turbopack-18hpueb50ebbw.js",
+        "raw": 11256,
+        "gz": 4395
+      },
+      {
+        "p": "/_next/static/chunks/0_pb2xyxz40ay.js",
+        "raw": 2778,
+        "gz": 1141
+      },
+      {
+        "p": "/_next/static/chunks/2pe3e6t2xxtro.js",
+        "raw": 164180,
+        "gz": 45208
+      },
+      {
+        "p": "/_next/static/chunks/0df0x3xn9y159.js",
+        "raw": 7791,
+        "gz": 3299
+      },
+      {
+        "p": "/_next/static/chunks/3ke154zgwhomq.js",
+        "raw": 8880,
+        "gz": 3739
+      },
+      {
+        "p": "/_next/static/chunks/1g40_rzznt2sj.js",
+        "raw": 21615,
+        "gz": 8601
+      },
+      {
+        "p": "/_next/static/chunks/2o4jl1gv_0-2j.js",
+        "raw": 234700,
+        "gz": 73284
+      },
+      {
+        "p": "/_next/static/chunks/36ffof6lz-dkv.js",
+        "raw": 1051,
+        "gz": 623
+      },
+      {
+        "p": "/_next/static/chunks/0geti1mi3p-vq.js",
+        "raw": 521354,
+        "gz": 164038
+      },
+      {
+        "p": "/_next/static/chunks/1-r9alsgo8b8g.js",
+        "raw": 1031584,
+        "gz": 272880
+      },
+      {
+        "p": "/_next/static/chunks/0h49qz4fbqv46.js",
+        "raw": 171,
+        "gz": 162
+      },
+      {
+        "p": "/_next/static/chunks/0cxdkb0zuisk4.js",
+        "raw": 6108,
+        "gz": 2566
+      },
+      {
+        "p": "/_next/static/chunks/3d5kb_c43ivzy.js",
+        "raw": 200360,
+        "gz": 45178
+      }
+    ],
+    "allEmitted": {
+      "files": 24,
+      "raw": 2789082,
+      "gz": 794406
+    },
+    "allEmittedByCategory": {
+      "unmapped": {
+        "raw": 118530,
+        "gz": 41775
+      },
+      "app": {
+        "raw": 123374,
+        "gz": 39408
+      },
+      "jspdf+deps": {
+        "raw": 752628,
+        "gz": 221926
+      },
+      "other-libs": {
+        "raw": 85417,
+        "gz": 26359
+      },
+      "next-runtime": {
+        "raw": 290948,
+        "gz": 86418
+      },
+      "maplibre-gl": {
+        "raw": 1031029,
+        "gz": 272733
+      },
+      "react": {
+        "raw": 219161,
+        "gz": 67906
+      },
+      "terra-draw": {
+        "raw": 167996,
+        "gz": 37880
+      }
+    }
+  },
+  "vite": {
+    "firstLoad": {
+      "raw": 1947862,
+      "gz": 543699,
+      "n": 4
+    },
+    "firstLoadByCategory": {
+      "unmapped": {
+        "raw": 68265,
+        "gz": 19593
+      },
+      "react": {
+        "raw": 190059,
+        "gz": 54067
+      },
+      "app": {
+        "raw": 118840,
+        "gz": 32988
+      },
+      "other-libs": {
+        "raw": 87621,
+        "gz": 24715
+      },
+      "jspdf+deps": {
+        "raw": 353152,
+        "gz": 100464
+      },
+      "maplibre-gl": {
+        "raw": 962639,
+        "gz": 273849
+      },
+      "terra-draw": {
+        "raw": 167286,
+        "gz": 38022
+      }
+    },
+    "firstLoadFiles": [
+      {
+        "p": "/assets/rolldown-runtime-Bh1tDfsg.js",
+        "raw": 567,
+        "gz": 360
+      },
+      {
+        "p": "/assets/index-C0kjnekR.js",
+        "raw": 1741372,
+        "gz": 495381
+      },
+      {
+        "p": "/assets/MapContainer-DwyQMxON.js",
+        "raw": 199869,
+        "gz": 45428
+      },
+      {
+        "p": "/assets/plausible-E9P12oj7.js",
+        "raw": 6054,
+        "gz": 2530
+      }
+    ],
+    "allEmitted": {
+      "files": 8,
+      "raw": 2329452,
+      "gz": 650445
+    },
+    "allEmittedByCategory": {
+      "other-libs": {
+        "raw": 87621,
+        "gz": 24715
+      },
+      "app": {
+        "raw": 118840,
+        "gz": 32988
+      },
+      "terra-draw": {
+        "raw": 167286,
+        "gz": 38022
+      },
+      "unmapped": {
+        "raw": 72821,
+        "gz": 21232
+      },
+      "jspdf+deps": {
+        "raw": 730185,
+        "gz": 205571
+      },
+      "react": {
+        "raw": 190059,
+        "gz": 54067
+      },
+      "maplibre-gl": {
+        "raw": 962639,
+        "gz": 273849
+      }
+    }
+  }
+}
