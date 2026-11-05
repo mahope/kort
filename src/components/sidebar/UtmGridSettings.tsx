@@ -10,6 +10,7 @@ import {
   type GridLabelFormat,
   type UtmZoneMode,
 } from "@/lib/geo/utmGrid";
+import { wmmStatus, wmmStatusNote } from "@/lib/geo/declinationValidity";
 
 const SPACING_OPTIONS: { value: string; label: string }[] = [
   { value: "auto", label: "Auto" },
@@ -39,6 +40,7 @@ export function UtmGridSettings() {
   const scale = usePrintStore((s) => s.scale);
   const showDeclination = usePrintStore((s) => s.showDeclination);
   const setShowDeclination = usePrintStore((s) => s.setShowDeclination);
+  const declinationNote = wmmStatusNote(wmmStatus());
   const gridSystem = useMapStore((s) => s.gridSystem);
   const setGridSystem = useMapStore((s) => s.setGridSystem);
 
@@ -161,6 +163,7 @@ export function UtmGridSettings() {
         />
         <span className="text-sm">Misvisning i printet</span>
       </label>
+      {declinationNote && <p className="text-xs text-text-secondary" role="note">{declinationNote}</p>}
     </div>
   );
 }

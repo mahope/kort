@@ -4,24 +4,41 @@ import { useEffect, useMemo, useState } from "react";
 import { useMapStore } from "@/stores/mapStore";
 import { useUiStore } from "@/stores/uiStore";
 import { pointCoordinates } from "@/lib/geo/coordinates";
-import { formatDeclination, magneticDeclination } from "@/lib/geo/declination";
+import { wmmStatus, wmmStatusNote } from "@/lib/geo/declinationValidity";
 
-/** Declination for the map centre, recomputed once the map has been still for 200 ms (≈ moveend). */
+type DeclinationModule = typeof import("@/lib/geo/declination");
+
+/**
+ * Declination for the map centre, recomputed once the map has been still for
+ * 200 ms (≈ moveend). The model is loaded on first use so it stays out of the
+ * initial bundle; null while loading or when the model is out of validity.
+ */
 function useSettledDeclination(lat: number, lng: number): string | null {
   const [pos, setPos] = useState({ lat, lng });
+  const [model, setModel] = useState<DeclinationModule | null>(null);
   useEffect(() => {
     const t = setTimeout(() => setPos({ lat, lng }), 200);
     return () => clearTimeout(t);
   }, [lat, lng]);
+  useEffect(() => {
+    let cancelled = false;
+    import("@/lib/geo/declination").then((m) => {
+      if (!cancelled) setModel(m);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   return useMemo(() => {
+    if (!model) return null;
     try {
       const now = new Date();
-      return `${formatDeclination(magneticDeclination(pos.lat, pos.lng, now))} (${now.getUTCFullYear()})`;
+      return `${model.formatDeclination(model.magneticDeclination(pos.lat, pos.lng, now))} (${now.getUTCFullYear()})`;
     } catch (e) {
       if (e instanceof RangeError) return null; // model out of validity
       throw e;
     }
-  }, [pos]);
+  }, [model, pos]);
 }
 
 export function CoordinateReadout() {
@@ -30,6 +47,7 @@ export function CoordinateReadout() {
   const addToast = useUiStore((s) => s.addToast);
   const coordinates = pointCoordinates(latitude, longitude);
   const declination = useSettledDeclination(latitude, longitude);
+  const declinationNote = wmmStatusNote(wmmStatus());
 
   const copy = async (value: string) => {
     try {
@@ -61,10 +79,11 @@ export function CoordinateReadout() {
                 className="min-h-11 min-w-11 rounded px-2 text-xs text-primary hover:bg-surface-secondary focus-visible:outline-2 focus-visible:outline-primary">Kopiér</button>
             </div>
           ))}
-          {declination && (
+          {(declination || declinationNote) && (
             <div className="border-t border-border py-1" data-testid="declination-readout">
               <div className="text-xs text-text-secondary">Misvisning</div>
-              <div className="select-text font-mono text-xs tabular-nums">{declination}</div>
+              {declination && <div className="select-text font-mono text-xs tabular-nums">{declination}</div>}
+              {declinationNote && <div className="text-xs text-text-secondary" role="note">{declinationNote}</div>}
             </div>
           )}
         </div>

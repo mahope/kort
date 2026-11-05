@@ -26,7 +26,6 @@ import {
   type GridLineClass,
   type GridSpacing,
 } from "@/lib/geo/utmGrid";
-import { computeDeclinationInfo, drawDeclinationDiagram } from "./declinationDiagram";
 import { createPaperProjector, type PaperProjector } from "./gridProjection";
 
 /** Build the download filename shared by single- and multi-page output. */
@@ -137,11 +136,12 @@ export async function generatePdf({
   }
 
   // Draw decorations
+  const declinationDiagram = await loadDeclinationDiagram();
   drawScaleBar(pdf, layout, scale);
   drawNorthArrow(pdf, layout, bearing);
   drawControlLine(pdf, layout);
   drawAttribution(pdf, layout, scale, gridInfo);
-  drawDeclination(pdf, layout, bounds, gridInfo, bearing);
+  drawDeclination(declinationDiagram, pdf, layout, bounds, gridInfo, bearing);
 
   // Record in print history
   useHistoryStore.getState().addEntry({
@@ -473,21 +473,29 @@ export function drawAttribution(
   });
 }
 
+type DeclinationDiagram = typeof import("./declinationDiagram");
+
+/** Loads the declination model on demand, and only when the diagram is switched on. */
+async function loadDeclinationDiagram(): Promise<DeclinationDiagram | null> {
+  return usePrintStore.getState().showDeclination ? import("./declinationDiagram") : null;
+}
+
 /** Misvisning diagram for the frame centre; grid north only when a UTM/MGRS grid is on. */
 function drawDeclination(
+  diagram: DeclinationDiagram | null,
   pdf: jsPDF,
   layout: PdfLayout,
   bounds: PrintFrameBounds,
   gridInfo: GridInfo | null,
   bearing: number
 ) {
-  if (!usePrintStore.getState().showDeclination) return;
-  const info = computeDeclinationInfo(
+  if (!diagram) return;
+  const info = diagram.computeDeclinationInfo(
     (bounds.north + bounds.south) / 2,
     (bounds.west + bounds.east) / 2,
     gridInfo ? gridInfo.zone : null
   );
-  if (info) drawDeclinationDiagram(pdf, layout, info, bearing);
+  if (info) diagram.drawDeclinationDiagram(pdf, layout, info, bearing);
 }
 
 async function generateMultiPagePdf({
@@ -529,7 +537,9 @@ async function generateMultiPagePdf({
   });
   applyPrintPreferences(pdf);
 
+  let declinationDiagram: DeclinationDiagram | null = null;
   try {
+    declinationDiagram = await loadDeclinationDiagram();
     for (let i = 0; i < cells.length; i++) {
       const cell = cells[i];
       printState.setGeneratingPage(i + 1);
@@ -576,7 +586,7 @@ async function generateMultiPagePdf({
       drawControlLine(pdf, layout);
 
       drawAttribution(pdf, layout, scale, gridInfo);
-      drawDeclination(pdf, layout, cell.bounds, gridInfo, bearing);
+      drawDeclination(declinationDiagram, pdf, layout, cell.bounds, gridInfo, bearing);
     }
   } finally {
     // Reset progress state even if a page render throws, so the UI does not
