@@ -179,11 +179,11 @@ export function SearchBar() {
           onKeyDown={handleKeyDown}
           onFocus={() => hasSearched && setIsOpen(true)}
           placeholder="Søg efter adresse eller stednavn..."
-          className="w-full rounded-lg border border-border pl-8 pr-16 py-2 text-sm bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className="w-full rounded-lg border border-border pl-8 pr-16 py-2 text-sm pointer-coarse:min-h-11 pointer-coarse:pr-20 pointer-coarse:text-base bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
         {isLoading && (
           <svg
-            className="absolute right-8 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-text-muted"
+            className="absolute right-8 pointer-coarse:right-12 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-text-muted"
             viewBox="0 0 24 24"
             fill="none"
             aria-hidden="true"
@@ -197,7 +197,7 @@ export function SearchBar() {
             type="button"
             onClick={clearSearch}
             aria-label="Ryd søgning"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full text-text-muted hover:bg-surface-secondary hover:text-text-secondary"
+            className="absolute right-1.5 pointer-coarse:right-0 top-1/2 -translate-y-1/2 flex h-7 w-7 pointer-coarse:h-11 pointer-coarse:w-11 items-center justify-center rounded-full text-text-muted hover:bg-surface-secondary hover:text-text-secondary"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -217,18 +217,19 @@ export function SearchBar() {
             </li>
           ) : results.length > 0 ? (
             results.map((r, i) => (
-              <li key={r.id} id={`search-option-${i}`} role="option" aria-selected={i === activeIndex}>
-                <button
-                  type="button"
-                  className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                    i === activeIndex ? "bg-primary/10" : "hover:bg-surface-secondary"
-                  }`}
-                  onMouseEnter={() => setActiveIndex(i)}
-                  onMouseDown={() => selectResult(r)}
-                >
-                  <div className="font-medium">{r.text}</div>
-                  <div className="text-xs text-text-secondary">{r.description}</div>
-                </button>
+              <li
+                key={r.id}
+                id={`search-option-${i}`}
+                role="option"
+                aria-selected={i === activeIndex}
+                className={`cursor-pointer px-3 py-2 text-sm transition-colors pointer-coarse:min-h-11 ${
+                  i === activeIndex ? "bg-primary/10" : "hover:bg-surface-secondary"
+                }`}
+                onMouseEnter={() => setActiveIndex(i)}
+                onMouseDown={() => selectResult(r)}
+              >
+                <div className="font-medium">{r.text}</div>
+                <div className="text-xs text-text-secondary">{r.description}</div>
               </li>
             ))
           ) : !isLoading ? (

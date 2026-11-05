@@ -6,6 +6,7 @@ import { MAP_STYLES } from "@/lib/map/styles";
 import { BASE_LAYERS } from "@/constants/baseLayers";
 import { useIsMobile } from "@/lib/hooks/useIsMobile";
 import type { MapStyle, OverlayId } from "@/types/map";
+import "./maplibre-touch.css";
 
 const STYLE_KEYS = Object.keys(MAP_STYLES) as MapStyle[];
 
@@ -46,7 +47,7 @@ export function MapControls() {
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
-        className="flex items-center gap-1.5 rounded-lg bg-surface/90 px-3 py-2 text-sm font-medium shadow-md backdrop-blur-sm hover:bg-surface transition-colors"
+        className="flex items-center gap-1.5 rounded-lg bg-surface/90 px-3 py-2 pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:justify-center text-sm font-medium shadow-md backdrop-blur-sm hover:bg-surface transition-colors"
         title="Kortlag"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
@@ -59,17 +60,17 @@ export function MapControls() {
         <div className="mt-2 w-64 max-h-[70vh] overflow-y-auto rounded-lg bg-surface/95 p-3 shadow-lg backdrop-blur-sm">
           {/* Base layer */}
           <div className="mb-3">
-            <h3 className="text-xs font-semibold text-text-secondary mb-2">Basiskort</h3>
-            <div className="space-y-1">
+            <h2 id="map-baseLayer-label" className="text-xs font-semibold text-text-secondary mb-2">Basiskort</h2>
+            <div role="radiogroup" aria-labelledby="map-baseLayer-label" className="space-y-1">
               {BASE_LAYERS.map((layer) => (
                 <div key={layer.value}>
-                  <label className="flex items-center gap-2 cursor-pointer">
+                  <label className="flex items-center gap-2 cursor-pointer pointer-coarse:min-h-11">
                     <input
                       type="radio"
                       name="baseLayer"
                       checked={baseLayer === layer.value}
                       onChange={() => setBaseLayer(layer.value)}
-                      className="accent-primary"
+                      className="accent-primary pointer-coarse:h-5 pointer-coarse:w-5"
                     />
                     <span className="text-sm">{layer.label}</span>
                   </label>
@@ -80,7 +81,7 @@ export function MapControls() {
                           key={key}
                           type="button"
                           onClick={() => setStyle(key)}
-                          className={`rounded px-2 py-1 text-xs transition-colors ${
+                          className={`rounded px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:px-3 text-xs transition-colors ${
                             currentStyle === key
                               ? "bg-primary text-on-primary"
                               : "bg-surface-secondary text-text-secondary hover:bg-border"
@@ -98,16 +99,16 @@ export function MapControls() {
 
           {/* Overlays */}
           <div className="border-t border-border pt-3">
-            <h3 className="text-xs font-semibold text-text-secondary mb-2">Ekstra lag</h3>
+            <h2 className="text-xs font-semibold text-text-secondary mb-2">Ekstra lag</h2>
             <div className="space-y-2">
               {overlays.map((overlay) => (
                 <div key={overlay.id}>
-                  <label className="flex items-center gap-2 cursor-pointer">
+                  <label className="flex items-center gap-2 cursor-pointer pointer-coarse:min-h-11">
                     <input
                       type="checkbox"
                       checked={overlay.enabled}
                       onChange={() => toggleOverlay(overlay.id)}
-                      className="accent-primary"
+                      className="accent-primary pointer-coarse:h-5 pointer-coarse:w-5"
                     />
                     <span className="text-sm">{OVERLAY_LABELS[overlay.id]}</span>
                   </label>
@@ -116,12 +117,13 @@ export function MapControls() {
                       <span className="text-xs text-text-muted w-16">Synlighed</span>
                       <input
                         type="range"
+                        aria-label={`Synlighed: ${OVERLAY_LABELS[overlay.id]}`}
                         min={0}
                         max={1}
                         step={0.05}
                         value={overlay.opacity}
                         onChange={(e) => setOverlayOpacity(overlay.id, Number(e.target.value))}
-                        className="flex-1 h-1.5 accent-primary"
+                        className="flex-1 h-1.5 pointer-coarse:h-11 accent-primary"
                       />
                       <span className="text-xs text-text-secondary w-8 text-right">
                         {Math.round(overlay.opacity * 100)}%

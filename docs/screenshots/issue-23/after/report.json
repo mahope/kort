@@ -1,0 +1,350 @@
+[
+ {
+  "width": 360,
+  "state": "start",
+  "total": 32,
+  "small": [
+   "a \"Mahoje, til mahoje.dk\" 88x19",
+   "input[checkbox] \"on\" 328x20",
+   "button[button] \"Avancerede indstillinger\" 152x24",
+   "a \"Om\" 20x16",
+   "a \"mahoje.dk\" 58x16",
+   "button[button] \"Lyst\" 30x22",
+   "button[button] \"Mørkt\" 30x22",
+   "button[button] \"Auto\" 30x22",
+   "button[button] \"Find min position\" 40x40"
+  ],
+  "smallFields": [],
+  "smallText": [
+   "10px \"A4\"",
+   "10px \"stående\""
+  ],
+  "mapLibre": [
+   "button[button] \"Find min position\" 40x40"
+  ]
+ },
+ {
+  "width": 360,
+  "state": "search",
+  "total": 35,
+  "small": [
+   "a \"Mahoje, til mahoje.dk\" 88x19",
+   "input[checkbox] \"on\" 328x20",
+   "button[button] \"Avancerede indstillinger\" 152x24",
+   "a \"Om\" 20x16",
+   "a \"mahoje.dk\" 58x16",
+   "button[button] \"Lyst\" 30x22",
+   "button[button] \"Mørkt\" 30x22",
+   "button[button] \"Auto\" 30x22",
+   "button[button] \"Find min position\" 40x40"
+  ],
+  "smallFields": [],
+  "smallText": [
+   "10px \"A4\"",
+   "10px \"stående\""
+  ],
+  "mapLibre": [
+   "button[button] \"Find min position\" 40x40"
+  ]
+ },
+ {
+  "width": 360,
+  "state": "advanced",
+  "total": 47,
+  "small": [
+   "a \"Mahoje, til mahoje.dk\" 88x19",
+   "input[checkbox] \"on\" 328x20",
+   "button[button] \"Skjul avancerede indstilling\" 181x24",
+   "button[button] \"Kortlag\" 328x24",
+   "button[button] \"Import & Lag\" 328x24",
+   "button[button] \"Tegning & Mål\" 328x24",
+   "button[button] \"Udskrivning\" 328x24",
+   "input[checkbox] \"on\" 328x20",
+   "button[button] \"Bogmærker\" 328x24",
+   "button[button] \"Historik\" 328x24",
+   "a \"Om\" 20x16",
+   "a \"mahoje.dk\" 58x16",
+   "button[button] \"Lyst\" 30x22",
+   "button[button] \"Mørkt\" 30x22",
+   "button[button] \"Auto\" 30x22",
+   "button[button] \"Find min position\" 40x40"
+  ],
+  "smallFields": [],
+  "smallText": [
+   "10px \"A4\"",
+   "10px \"stående\"",
+   "10px \"GPX, KML, GeoJSON\""
+  ],
+  "mapLibre": [
+   "button[button] \"Find min position\" 40x40"
+  ]
+ },
+ {
+  "width": 360,
+  "state": "layers",
+  "total": 57,
+  "small": [
+   "a \"Mahoje, til mahoje.dk\" 88x19",
+   "input[checkbox] \"on\" 328x20",
+   "button[button] \"Skjul avancerede indstilling\" 181x24",
+   "button[button] \"Kortlag\" 328x24",
+   "button[button] \"Import & Lag\" 328x24",
+   "button[button] \"Tegning & Mål\" 328x24",
+   "button[button] \"Udskrivning\" 328x24",
+   "input[checkbox] \"on\" 328x20",
+   "button[button] \"Bogmærker\" 328x24",
+   "button[button] \"Historik\" 328x24",
+   "a \"Om\" 20x16",
+   "a \"mahoje.dk\" 58x16",
+   "button[button] \"Lyst\" 30x22",
+   "button[button] \"Mørkt\" 30x22",
+   "button[button] \"Auto\" 30x22",
+   "button[button] \"Find min position\" 40x40"
+  ],
+  "smallFields": [],
+  "smallText": [
+   "10px \"A4\"",
+   "10px \"stående\"",
+   "10px \"GPX, KML, GeoJSON\""
+  ],
+  "mapLibre": [
+   "button[button] \"Find min position\" 40x40"
+  ]
+ },
+ {
+  "width": 390,
+  "state": "start",
+  "total": 32,
+  "small": [
+   "a \"Mahoje, til mahoje.dk\" 88x19",
+   "input[checkbox] \"on\" 358x20",
+   "button[button] \"Avancerede indstillinger\" 152x24",
+   "a \"Om\" 20x16",
+   "a \"mahoje.dk\" 58x16",
+   "button[button] \"Lyst\" 30x22",
+   "button[button] \"Mørkt\" 30x22",
+   "button[button] \"Auto\" 30x22",
+   "button[button] \"Find min position\" 40x40"
+  ],
+  "smallFields": [],
+  "smallText": [
+   "10px \"A4\"",
+   "10px \"stående\""
+  ],
+  "mapLibre": [
+   "button[button] \"Find min position\" 40x40"
+  ],
+  "axe": [
+   "region(9)"
+  ]
+ },
+ {
+  "width": 390,
+  "state": "search",
+  "total": 35,
+  "small": [
+   "a \"Mahoje, til mahoje.dk\" 88x19",
+   "input[checkbox] \"on\" 358x20",
+   "button[button] \"Avancerede indstillinger\" 152x24",
+   "a \"Om\" 20x16",
+   "a \"mahoje.dk\" 58x16",
+   "button[button] \"Lyst\" 30x22",
+   "button[button] \"Mørkt\" 30x22",
+   "button[button] \"Auto\" 30x22",
+   "button[button] \"Find min position\" 40x40"
+  ],
+  "smallFields": [],
+  "smallText": [
+   "10px \"A4\"",
+   "10px \"stående\""
+  ],
+  "mapLibre": [
+   "button[button] \"Find min position\" 40x40"
+  ],
+  "axe": [
+   "region(10)"
+  ]
+ },
+ {
+  "width": 390,
+  "state": "advanced",
+  "total": 47,
+  "small": [
+   "a \"Mahoje, til mahoje.dk\" 88x19",
+   "input[checkbox] \"on\" 358x20",
+   "button[button] \"Skjul avancerede indstilling\" 181x24",
+   "button[button] \"Kortlag\" 358x24",
+   "button[button] \"Import & Lag\" 358x24",
+   "button[button] \"Tegning & Mål\" 358x24",
+   "button[button] \"Udskrivning\" 358x24",
+   "input[checkbox] \"on\" 358x20",
+   "button[button] \"Bogmærker\" 358x24",
+   "button[button] \"Historik\" 358x24",
+   "a \"Om\" 20x16",
+   "a \"mahoje.dk\" 58x16",
+   "button[button] \"Lyst\" 30x22",
+   "button[button] \"Mørkt\" 30x22",
+   "button[button] \"Auto\" 30x22",
+   "button[button] \"Find min position\" 40x40"
+  ],
+  "smallFields": [],
+  "smallText": [
+   "10px \"A4\"",
+   "10px \"stående\"",
+   "10px \"GPX, KML, GeoJSON\""
+  ],
+  "mapLibre": [
+   "button[button] \"Find min position\" 40x40"
+  ],
+  "axe": [
+   "region(13)"
+  ]
+ },
+ {
+  "width": 390,
+  "state": "layers",
+  "total": 57,
+  "small": [
+   "a \"Mahoje, til mahoje.dk\" 88x19",
+   "input[checkbox] \"on\" 358x20",
+   "button[button] \"Skjul avancerede indstilling\" 181x24",
+   "button[button] \"Kortlag\" 358x24",
+   "button[button] \"Import & Lag\" 358x24",
+   "button[button] \"Tegning & Mål\" 358x24",
+   "button[button] \"Udskrivning\" 358x24",
+   "input[checkbox] \"on\" 358x20",
+   "button[button] \"Bogmærker\" 358x24",
+   "button[button] \"Historik\" 358x24",
+   "a \"Om\" 20x16",
+   "a \"mahoje.dk\" 58x16",
+   "button[button] \"Lyst\" 30x22",
+   "button[button] \"Mørkt\" 30x22",
+   "button[button] \"Auto\" 30x22",
+   "button[button] \"Find min position\" 40x40"
+  ],
+  "smallFields": [],
+  "smallText": [
+   "10px \"A4\"",
+   "10px \"stående\"",
+   "10px \"GPX, KML, GeoJSON\""
+  ],
+  "mapLibre": [
+   "button[button] \"Find min position\" 40x40"
+  ],
+  "axe": [
+   "region(13)"
+  ]
+ },
+ {
+  "width": 768,
+  "state": "start",
+  "total": 32,
+  "small": [
+   "a \"Mahoje, til mahoje.dk\" 88x19",
+   "input[checkbox] \"on\" 287x20",
+   "button[button] \"Avancerede indstillinger\" 152x24",
+   "a \"Om\" 20x16",
+   "a \"mahoje.dk\" 58x16",
+   "button[button] \"Lyst\" 30x22",
+   "button[button] \"Mørkt\" 30x22",
+   "button[button] \"Auto\" 30x22",
+   "button[button] \"Find min position\" 40x40"
+  ],
+  "smallFields": [],
+  "smallText": [
+   "10px \"A4\"",
+   "10px \"stående\""
+  ],
+  "mapLibre": [
+   "button[button] \"Find min position\" 40x40"
+  ]
+ },
+ {
+  "width": 768,
+  "state": "search",
+  "total": 35,
+  "small": [
+   "a \"Mahoje, til mahoje.dk\" 88x19",
+   "input[checkbox] \"on\" 287x20",
+   "button[button] \"Avancerede indstillinger\" 152x24",
+   "a \"Om\" 20x16",
+   "a \"mahoje.dk\" 58x16",
+   "button[button] \"Lyst\" 30x22",
+   "button[button] \"Mørkt\" 30x22",
+   "button[button] \"Auto\" 30x22",
+   "button[button] \"Find min position\" 40x40"
+  ],
+  "smallFields": [],
+  "smallText": [
+   "10px \"A4\"",
+   "10px \"stående\""
+  ],
+  "mapLibre": [
+   "button[button] \"Find min position\" 40x40"
+  ]
+ },
+ {
+  "width": 768,
+  "state": "advanced",
+  "total": 47,
+  "small": [
+   "a \"Mahoje, til mahoje.dk\" 88x19",
+   "input[checkbox] \"on\" 287x20",
+   "button[button] \"Skjul avancerede indstilling\" 181x24",
+   "button[button] \"Kortlag\" 287x24",
+   "button[button] \"Import & Lag\" 287x24",
+   "button[button] \"Tegning & Mål\" 287x24",
+   "button[button] \"Udskrivning\" 287x24",
+   "input[checkbox] \"on\" 287x20",
+   "button[button] \"Bogmærker\" 287x24",
+   "button[button] \"Historik\" 287x24",
+   "a \"Om\" 20x16",
+   "a \"mahoje.dk\" 58x16",
+   "button[button] \"Lyst\" 30x22",
+   "button[button] \"Mørkt\" 30x22",
+   "button[button] \"Auto\" 30x22",
+   "button[button] \"Find min position\" 40x40"
+  ],
+  "smallFields": [],
+  "smallText": [
+   "10px \"A4\"",
+   "10px \"stående\"",
+   "10px \"GPX, KML, GeoJSON\""
+  ],
+  "mapLibre": [
+   "button[button] \"Find min position\" 40x40"
+  ]
+ },
+ {
+  "width": 768,
+  "state": "layers",
+  "total": 57,
+  "small": [
+   "a \"Mahoje, til mahoje.dk\" 88x19",
+   "input[checkbox] \"on\" 287x20",
+   "button[button] \"Skjul avancerede indstilling\" 181x24",
+   "button[button] \"Kortlag\" 287x24",
+   "button[button] \"Import & Lag\" 287x24",
+   "button[button] \"Tegning & Mål\" 287x24",
+   "button[button] \"Udskrivning\" 287x24",
+   "input[checkbox] \"on\" 287x20",
+   "button[button] \"Bogmærker\" 287x24",
+   "button[button] \"Historik\" 287x24",
+   "a \"Om\" 20x16",
+   "a \"mahoje.dk\" 58x16",
+   "button[button] \"Lyst\" 30x22",
+   "button[button] \"Mørkt\" 30x22",
+   "button[button] \"Auto\" 30x22",
+   "button[button] \"Find min position\" 40x40"
+  ],
+  "smallFields": [],
+  "smallText": [
+   "10px \"A4\"",
+   "10px \"stående\"",
+   "10px \"GPX, KML, GeoJSON\""
+  ],
+  "mapLibre": [
+   "button[button] \"Find min position\" 40x40"
+  ]
+ }
+]

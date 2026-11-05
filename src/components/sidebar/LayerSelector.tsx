@@ -15,25 +15,26 @@ export function LayerSelector() {
 
   return (
     <div>
-      <label className="block text-sm font-medium mb-1">Basiskort</label>
-      <div className="space-y-2">
+      <span id="sidebar-baseLayer-label" className="block text-sm font-medium mb-1">Basiskort</span>
+      <div role="radiogroup" aria-labelledby="sidebar-baseLayer-label" className="space-y-2">
         {BASE_LAYERS.map((layer) => (
           <div key={layer.value}>
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-2 cursor-pointer pointer-coarse:min-h-11">
               <input
                 type="radio"
                 name="sidebar-baseLayer"
                 checked={baseLayer === layer.value}
                 onChange={() => setBaseLayer(layer.value)}
-                className="accent-primary"
+                className="accent-primary pointer-coarse:h-5 pointer-coarse:w-5"
               />
               <span className="text-sm">{layer.label}</span>
             </label>
             {layer.hasStyles && baseLayer === layer.value && (
               <select
+                aria-label="Kortstil"
                 value={currentStyle}
                 onChange={(e) => setStyle(e.target.value as MapStyle)}
-                className="ml-6 mt-1 rounded-lg border border-border px-2 py-1 text-sm bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="ml-6 mt-1 rounded-lg border border-border px-2 py-1 text-sm pointer-coarse:min-h-11 pointer-coarse:text-base bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               >
                 {STYLE_KEYS.map((key) => (
                   <option key={key} value={key}>

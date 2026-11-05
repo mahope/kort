@@ -8,8 +8,11 @@ const brand = getBrand();
 export const metadata: Metadata = {
   title: `Om ${brand.siteName} - Gratis Topografisk Kortudskrivning`,
   description: `Om ${brand.siteName} - en gratis service til at udskrive danske topografiske kort som PDF.`,
+  alternates: { canonical: "/om" },
 };
 
 export default function AboutPage() {
-  return getBrand().id === "solaris" ? <AboutSolaris /> : <AboutMahoje />;
+  return (
+    <main>{getBrand().id === "solaris" ? <AboutSolaris /> : <AboutMahoje />}</main>
+  );
 }

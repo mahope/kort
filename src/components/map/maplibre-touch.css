@@ -1,0 +1,20 @@
+/* Touch targets for MapLibre's own controls (zoom, compass, attribution).
+   MapLibre sizes them 29x29 / 24x24; WCAG/Apple/Google want at least 44x44 on touch. */
+@media (pointer: coarse) {
+  .maplibregl-ctrl-group button,
+  .maplibregl-ctrl-attrib-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .maplibregl-ctrl-attrib.maplibregl-compact {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* The zoom group is 44px wide and would sit under the (40px) geolocation button
+     stacked above it; shift it left so neither obscures the other (axe target-size). */
+  .maplibregl-ctrl-bottom-right .maplibregl-ctrl-group:has(.maplibregl-ctrl-zoom-in) {
+    margin-right: 60px;
+  }
+}
