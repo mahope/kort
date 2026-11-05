@@ -139,7 +139,7 @@ export function drawDeclinationDiagram(
   }
   pdf.setFontSize(4.5);
   pdf.setTextColor(90);
-  pdf.text(`Misvisning ${info.year} (${WMM_MODEL}), ikke i målestok`, box.left + 2, box.bottom - 1.2);
+  pdf.text(`Misvisning ${info.year} (${WMM_MODEL}), vinkler i rigtig størrelse`, box.left + 2, box.bottom - 1.2);
   pdf.setTextColor(0);
   pdf.setDrawColor(0);
   pdf.setLineWidth(0.2);
