@@ -166,6 +166,8 @@ and in single/multi-page PDFs. The existing Danish UTM zone-32 convention is
 still available explicitly. Grid spacing, density guards and heavier 10 km
 lines work in both systems. Edge labels include the MGRS 100 km square letters
 and the kilometre digits within that square.
+At 100 km boundaries, square letters use the line's exact UTM ordinate so
+polyline interpolation cannot select the preceding square on screen or in PDFs.
 
 The system choice is stored in localStorage and shared in the `cs=utm|mgrs`
 URL parameter. Old `g=1` links still select UTM. Open **Koordinat ved sigtekorset**
