@@ -19,6 +19,7 @@ interface PrintStore {
   frameBounds: PrintFrameBounds | null;
   isGenerating: boolean;
   multiPage: boolean;
+  showDeclination: boolean;
   gridCols: number;
   gridRows: number;
   overlapMm: number;
@@ -31,6 +32,7 @@ interface PrintStore {
   setFrameBounds: (bounds: PrintFrameBounds) => void;
   setIsGenerating: (isGenerating: boolean) => void;
   setMultiPage: (multiPage: boolean) => void;
+  setShowDeclination: (show: boolean) => void;
   setGridCols: (cols: number) => void;
   setGridRows: (rows: number) => void;
   setOverlapMm: (mm: number) => void;
@@ -46,6 +48,7 @@ export const usePrintStore = create<PrintStore>((set) => ({
   frameBounds: null,
   isGenerating: false,
   multiPage: false,
+  showDeclination: true,
   gridCols: 2,
   gridRows: 2,
   overlapMm: 10,
@@ -58,6 +61,7 @@ export const usePrintStore = create<PrintStore>((set) => ({
   setFrameBounds: (frameBounds) => set({ frameBounds }),
   setIsGenerating: (isGenerating) => set({ isGenerating }),
   setMultiPage: (multiPage) => set({ multiPage }),
+  setShowDeclination: (showDeclination) => set({ showDeclination }),
   setGridCols: (gridCols) => set({ gridCols }),
   setGridRows: (gridRows) => set({ gridRows }),
   setOverlapMm: (overlapMm) => set({ overlapMm }),
