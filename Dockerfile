@@ -13,6 +13,12 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ARG NEXT_PUBLIC_BRAND=mahoje
 ENV NEXT_PUBLIC_BRAND=$NEXT_PUBLIC_BRAND
+# Public tokens are baked into the client bundle at build time (see docs/tokens.md).
+# Empty means: use the fallback in the source.
+ARG NEXT_PUBLIC_DATAFORSYNINGEN_TOKEN=
+ARG NEXT_PUBLIC_ADRESSEVAELGER_TOKEN=
+ENV NEXT_PUBLIC_DATAFORSYNINGEN_TOKEN=$NEXT_PUBLIC_DATAFORSYNINGEN_TOKEN
+ENV NEXT_PUBLIC_ADRESSEVAELGER_TOKEN=$NEXT_PUBLIC_ADRESSEVAELGER_TOKEN
 RUN npm run build
 
 # Production image
