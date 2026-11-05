@@ -23,8 +23,14 @@ const call = (q: string | null, ip = "203.0.113.1") => {
   const url = new URL("http://localhost/api/stednavne");
   if (q !== null) url.searchParams.set("q", q);
   return GET(
-    new NextRequest(url, { headers: { "x-forwarded-for": `${ip}, 10.0.0.1` } })
+    new NextRequest(url, { headers: { "x-forwarded-for": `198.18.0.9, ${ip}` } })
   );
+};
+
+const callWith = (headers: Record<string, string>) => {
+  const url = new URL("http://localhost/api/stednavne");
+  url.searchParams.set("q", "Skagen");
+  return GET(new NextRequest(url, { headers }));
 };
 
 describe("GET /api/stednavne", () => {
@@ -59,5 +65,28 @@ describe("GET /api/stednavne", () => {
     expect(last.status).toBe(429);
     expect(Number(last.headers.get("retry-after"))).toBeGreaterThan(0);
     expect((await call("Skagen", "198.51.100.8")).status).toBe(200);
+  });
+
+  it("ignores a spoofed first x-forwarded-for value", async () => {
+    const real = "192.0.2.50";
+    let status = 200;
+    for (let i = 0; i < 61; i++) {
+      const res = await callWith({ "x-forwarded-for": `10.1.${i}.1, ${real}` });
+      status = res.status;
+    }
+    expect(status).toBe(429);
+    const res = await callWith({ "x-forwarded-for": `10.9.9.9, ${real}` });
+    expect(res.status).toBe(429);
+    expect(Number(res.headers.get("retry-after"))).toBeGreaterThan(0);
+  });
+
+  it("prefers CF-Connecting-IP over x-forwarded-for", async () => {
+    const headers = (i: number) => ({
+      "cf-connecting-ip": "192.0.2.77",
+      "x-forwarded-for": `10.2.${i}.1, 10.3.${i}.1`,
+    });
+    let status = 200;
+    for (let i = 0; i < 61; i++) status = (await callWith(headers(i))).status;
+    expect(status).toBe(429);
   });
 });
