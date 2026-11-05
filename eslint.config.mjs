@@ -11,6 +11,8 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    // Vite PoC build output (gitignored)
+    "poc-vite/dist/**",
     "next-env.d.ts",
   ]),
 ]);
