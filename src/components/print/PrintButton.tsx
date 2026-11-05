@@ -1,7 +1,6 @@
 "use client";
 
 import { usePrintStore } from "@/stores/printStore";
-import { generatePdf } from "@/lib/pdf/generator";
 import { trackEvent } from "@/lib/analytics";
 import { useUiStore } from "@/stores/uiStore";
 
@@ -14,6 +13,8 @@ export function PrintButton() {
     if (!frameBounds || isGenerating) return;
     setIsGenerating(true);
     try {
+      // jsPDF (~160 KB gz) is only fetched when the user actually downloads.
+      const { generatePdf } = await import("@/lib/pdf/generator");
       await generatePdf({ bounds: frameBounds, scale, paperFormat, orientation, dpi });
       trackEvent("PDF Download", { scale: `1:${scale}`, format: paperFormat, orientation });
       addToast("success", "PDF downloadet!");
