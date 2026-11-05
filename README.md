@@ -40,7 +40,7 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 | [Next.js](https://nextjs.org/) | 16 | App Router, Turbopack |
 | [React](https://react.dev/) | 19 | UI framework |
 | [TypeScript](https://www.typescriptlang.org/) | 5.7 | Type safety |
-| [MapLibre GL JS](https://maplibre.org/) | 5 | Kortvisning (WebGL) |
+| [MapLibre GL JS](https://maplibre.org/) | 6 | Kortvisning (WebGL) |
 | [react-map-gl](https://visgl.github.io/react-map-gl/) | 8 | React bindings til MapLibre |
 | [Tailwind CSS](https://tailwindcss.com/) | 4.2 | Styling (CSS-first) |
 | [Zustand](https://zustand.docs.pmnd.rs/) | 5 | State management |
@@ -94,11 +94,20 @@ npm run build
 npm start
 ```
 
-### Tests
+### Tests og kvalitetstjek
 
 ```bash
-npx vitest run
+npx vitest run        # tests
+npm run lint          # ESLint (autoritet)
+npm run lint:fast     # oxlint, hurtigt forhåndstjek (under 1 s)
+npm run typecheck     # TypeScript 7 (native tsc), under 3 s
+npm run build         # produktionsbuild
 ```
+
+`typecheck` bruger TypeScript 7 (pakken `typescript7`). Next og typescript-eslint
+bruger stadig TypeScript 6 (`typescript`), og `npm run build` typetjekker med den.
+`lint:fast` dækker ikke alle `eslint-config-next`-regler og erstatter ikke `npm run lint`.
+Sikkerhedspolitik for afhængigheder: [docs/dependency-security.md](docs/dependency-security.md).
 
 ## Docker
 
