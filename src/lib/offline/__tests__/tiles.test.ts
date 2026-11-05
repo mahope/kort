@@ -4,6 +4,8 @@ import {
   tileBBox3857,
   expandTileUrl,
   areaTileUrls,
+  offlineCacheKey,
+  padBounds,
   offlineLayerIds,
   checkStart,
   estimateBytes,
@@ -53,7 +55,7 @@ describe("offline tiles", () => {
       { id: "matrikel", enabled: false },
     ]);
     expect(ids).toEqual(["dtk25", "contours"]);
-    const perLayer = tilesForBounds(bounds).length;
+    const perLayer = tilesForBounds(padBounds(bounds)).length;
     const urls = areaTileUrls(bounds, ids);
     expect(urls.length).toBe(perLayer * 2);
     expect(new Set(urls).size).toBe(urls.length);
@@ -70,5 +72,20 @@ describe("offline tiles", () => {
     expect(checkStart(400, 50e6, 10e6).exceedsQuota).toBe(true);
     expect(checkStart(400, 50e6, null).exceedsQuota).toBe(false);
     expect(checkStart(20001, 1, null).tooLarge).toBe(true);
+  });
+
+  it("pads the frame so the edges of the map are covered", () => {
+    const bounds = { north: 56.11, south: 56.1, east: 10.21, west: 10.2 };
+    const padded = padBounds(bounds);
+    expect(padded.west).toBeLessThan(bounds.west);
+    expect(padded.north).toBeGreaterThan(bounds.north);
+    expect(areaTileUrls(bounds, ["dtk25"]).length).toBeGreaterThan(tilesForBounds(bounds).length);
+  });
+
+  it("builds cache keys without the access token", () => {
+    const a = offlineCacheKey("https://api.dataforsyningen.dk/x?a=1&token=old&b=2");
+    const b = offlineCacheKey("https://api.dataforsyningen.dk/x?a=1&token=new&b=2");
+    expect(a).toBe(b);
+    expect(a).not.toContain("token");
   });
 });

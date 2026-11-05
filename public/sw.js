@@ -5,6 +5,8 @@ const TILE_CACHE = "topoprint-tiles-v3";
 // Areas saved on purpose ("Gem området"). Kept apart from TILE_CACHE so the
 // 3,000-entry trim never evicts them, and never revalidated: the user chose them.
 const OFFLINE_CACHE = "topoprint-offline-v1";
+// Keep in sync with OFFLINE_CONCURRENCY / hosts in src/lib/offline/tiles.ts
+// (the worker is plain JS and cannot import it).
 const OFFLINE_CONCURRENCY = 6;
 const OFFLINE_MAX_BATCH = 24;
 // Only Dataforsyningen tiles may be bulk-fetched (OSM's policy forbids it).
@@ -217,6 +219,14 @@ self.addEventListener("message", (event) => {
   );
 });
 
+// Cache key without the access token, so saved areas survive a token rotation.
+// Keep identical to offlineCacheKey() in src/lib/offline/tiles.ts.
+function offlineKey(url) {
+  const u = new URL(url);
+  u.searchParams.delete("token");
+  return u.href;
+}
+
 function offlineUrls(urls, limit) {
   if (!Array.isArray(urls)) return [];
   return urls
@@ -242,17 +252,24 @@ async function offlineFetch(urls) {
   const stored = [];
   const failed = [];
   let next = 0;
+  let rateLimited = false;
   async function worker() {
-    while (next < list.length) {
+    while (next < list.length && !rateLimited) {
       const url = list[next++];
       try {
         const response = await fetch(url, { mode: "cors" });
+        // Dataforsyningen asks for modest load: stop on throttling instead of
+        // pushing on through the rest of the list.
+        if (response.status === 429 || response.status === 503) {
+          rateLimited = true;
+          throw new Error("rate limited");
+        }
         const type = response.headers.get("content-type") || "";
         // WMS errors come back as 200 + XML: only keep real images.
         if (!response.ok || !type.startsWith("image/")) throw new Error("bad");
         const blob = await response.blob();
         await cache.put(
-          url,
+          offlineKey(url),
           new Response(blob, { status: 200, headers: { "content-type": type } })
         );
         stored.push({ url, bytes: blob.size });
@@ -264,19 +281,21 @@ async function offlineFetch(urls) {
   await Promise.all(
     Array.from({ length: Math.min(OFFLINE_CONCURRENCY, list.length) }, worker)
   );
-  return { stored, failed };
+  // Tiles no worker got to are failed too, so the page can report them.
+  for (; next < list.length; next++) failed.push(list[next]);
+  return { stored, failed, rateLimited };
 }
 
 async function offlineDelete(urls) {
   const cache = await caches.open(OFFLINE_CACHE);
   let deleted = 0;
-  for (const u of offlineUrls(urls, 5000)) if (await cache.delete(u)) deleted++;
+  for (const u of offlineUrls(urls, 5000)) if (await cache.delete(offlineKey(u))) deleted++;
   return { deleted };
 }
 
 // Cache-first; entries older than 24 h are refreshed in the background.
 async function tileStrategy(request, event) {
-  const saved = await (await caches.open(OFFLINE_CACHE)).match(request);
+  const saved = await (await caches.open(OFFLINE_CACHE)).match(offlineKey(request.url));
   if (saved) return saved;
   const cache = await caches.open(TILE_CACHE);
   const cached = await cache.match(request);

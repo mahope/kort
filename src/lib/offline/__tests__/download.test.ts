@@ -67,4 +67,16 @@ describe("downloadTiles", () => {
     expect(await deleteTiles(many, send)).toBe(4500);
     expect(calls.map((c) => c.length)).toEqual([2000, 2000, 500]);
   });
+
+  it("stops the run when the server throttles", async () => {
+    const calls: number[] = [];
+    const send: WorkerSend = async (m) => {
+      const batch = m.urls as string[];
+      calls.push(batch.length);
+      return { stored: [], failed: batch, rateLimited: true };
+    };
+    const res = await downloadTiles(urls, { cancelled: () => false, paused: () => false }, () => {}, send);
+    expect(calls).toHaveLength(1);
+    expect(res.rateLimited).toBe(true);
+  });
 });

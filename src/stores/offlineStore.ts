@@ -9,6 +9,8 @@ export interface OfflineArea {
   layerIds: string[];
   tileCount: number;
   bytes: number;
+  /** Tiles that could not be fetched (area has gaps). */
+  failedCount?: number;
 }
 
 interface OfflineStore {

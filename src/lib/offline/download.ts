@@ -3,6 +3,7 @@ import { OFFLINE_CONCURRENCY } from "./tiles";
 export interface FetchResult {
   stored: { url: string; bytes: number }[];
   failed: string[];
+  rateLimited?: boolean;
 }
 
 export type WorkerSend = (message: Record<string, unknown>) => Promise<unknown>;
@@ -43,6 +44,8 @@ export interface DownloadResult extends DownloadProgress {
   storedUrls: string[];
   failedUrls: string[];
   cancelled: boolean;
+  /** The server throttled us (429/503): the run stopped early. */
+  rateLimited: boolean;
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -67,6 +70,7 @@ export async function downloadTiles(
     storedUrls: [],
     failedUrls: [],
     cancelled: false,
+    rateLimited: false,
   };
   for (let i = 0; i < urls.length; i += batchSize) {
     while (control.paused() && !control.cancelled()) await sleep(100);
@@ -84,6 +88,10 @@ export async function downloadTiles(
     result.done = result.storedUrls.length;
     result.failed = result.failedUrls.length;
     onProgress({ done: result.done, failed: result.failed, total: result.total, bytes: result.bytes });
+    if (reply.rateLimited) {
+      result.rateLimited = true;
+      break;
+    }
   }
   return result;
 }

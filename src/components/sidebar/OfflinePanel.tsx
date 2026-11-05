@@ -12,6 +12,7 @@ import {
   formatBytes,
   isBaseLayerSaveable,
   offlineLayerIds,
+  offlineCacheKey,
   OFFLINE_MAX_ZOOM,
   OFFLINE_MIN_ZOOM,
   CONFIRM_TILE_COUNT,
@@ -52,6 +53,32 @@ export function OfflinePanel() {
   // Confirmation holds for one specific plan: changing it asks again.
   const [confirmedFor, setConfirmedFor] = useState<string | null>(null);
   const [available, setAvailable] = useState<number | null>(null);
+  // The list lives in localStorage, the tiles in Cache Storage: drop areas the
+  // browser has evicted or cleared.
+  useEffect(() => {
+    if (typeof caches === "undefined") return;
+    let alive = true;
+    (async () => {
+      const cache = await caches.open("topoprint-offline-v1");
+      for (const area of useOfflineStore.getState().areas) {
+        const urls = areaTileUrls(area.bounds, area.layerIds);
+        const sample = [urls[0], urls[Math.floor(urls.length / 2)], urls[urls.length - 1]];
+        const hits = await Promise.all(
+          sample.map((u) => (u ? cache.match(offlineCacheKey(u)) : undefined))
+        );
+        if (alive && hits.every((h) => !h)) {
+          removeArea(area.id);
+          addToast("info", "Et gemt område er ikke længere i browserens lager og er fjernet fra listen");
+        }
+      }
+    })().catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+    // Run once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const pausedRef = useRef(false);
   const cancelledRef = useRef(false);
 
@@ -96,11 +123,16 @@ export function OfflinePanel() {
     setProgress({ done: 0, failed: 0, total: urls.length, bytes: 0 });
     try {
       await navigator.storage?.persist?.();
-      const res = await downloadTiles(
-        urls,
-        { cancelled: () => cancelledRef.current, paused: () => pausedRef.current },
-        setProgress
-      );
+      const run = () =>
+        downloadTiles(
+          urls,
+          { cancelled: () => cancelledRef.current, paused: () => pausedRef.current },
+          setProgress
+        );
+      // One download at a time across tabs keeps us within 6 requests in flight.
+      const res = navigator.locks
+        ? await navigator.locks.request("offline-download", run)
+        : await run();
       if (res.cancelled) {
         const draft: OfflineArea = {
           id: "",
@@ -123,12 +155,15 @@ export function OfflinePanel() {
           layerIds,
           tileCount: res.done,
           bytes: res.bytes,
+          failedCount: res.failed,
         });
         addToast(
           res.failed > 0 ? "error" : "success",
-          res.failed > 0
-            ? `Området er gemt, men ${res.failed} fliser kunne ikke hentes`
-            : "Området er gemt til offline brug"
+          res.rateLimited
+            ? `Dataforsyningen bremsede hentningen. ${res.failed} fliser mangler: vent lidt og gem området igen`
+            : res.failed > 0
+              ? `Området er gemt, men ${res.failed} fliser mangler og kortet får huller offline`
+              : "Området er gemt til offline brug"
         );
       }
     } catch (err) {
@@ -168,7 +203,7 @@ export function OfflinePanel() {
       {layerIds.length > 0 && frameBounds && (
         <div className="text-xs text-text-secondary space-y-1">
           <p>
-            Printrammen på zoom {OFFLINE_MIN_ZOOM}–{OFFLINE_MAX_ZOOM}:{" "}
+            Printrammen med en kant rundt om på zoom {OFFLINE_MIN_ZOOM}–{OFFLINE_MAX_ZOOM}:{" "}
             <span className="font-medium text-foreground">{urls.length.toLocaleString("da-DK")} fliser</span>,
             ca. <span className="font-medium text-foreground">{formatBytes(estimated)}</span>
           </p>
@@ -199,7 +234,7 @@ export function OfflinePanel() {
             className="mt-0.5 accent-primary"
           />
           <span>
-            Jeg vil hente {urls.length > CONFIRM_TILE_COUNT ? "mere end 2.000 fliser" : "over 100 MB"} (
+            Jeg vil hente {urls.length > CONFIRM_TILE_COUNT ? `mere end ${CONFIRM_TILE_COUNT.toLocaleString("da-DK")} fliser` : "over 100 MB"} (
             {urls.length.toLocaleString("da-DK")} fliser, ca. {formatBytes(estimated)})
           </span>
         </label>
@@ -262,6 +297,7 @@ export function OfflinePanel() {
                 <span className="text-text-muted">
                   {" · "}
                   {a.tileCount.toLocaleString("da-DK")} fliser, {formatBytes(a.bytes)}
+                  {a.failedCount ? ` · ${a.failedCount.toLocaleString("da-DK")} mangler` : ""}
                 </span>
               </span>
               <button

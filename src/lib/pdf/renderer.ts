@@ -5,7 +5,7 @@ import { configureMaplibreWorker } from "@/lib/map/workerUrl";
 import type { ImportedLayer } from "@/stores/importStore";
 import type { DrawnFeature } from "@/stores/drawStore";
 import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
-import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
+import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, DTK25_SCREEN_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
 import type { RasterSourceConfig } from "@/lib/map/sources";
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
 
@@ -126,7 +126,8 @@ export async function renderMapToImage({
 
     const RASTER_BASE_LAYERS: Record<string, RasterSourceConfig> = {
       ortofoto: ORTOFOTO_SOURCE,
-      dtk25: DTK25_SOURCE,
+      // Offline, only the saved screen tiles (JPEG) exist in the cache.
+      dtk25: typeof navigator !== "undefined" && !navigator.onLine ? DTK25_SCREEN_SOURCE : DTK25_SOURCE,
       osm: OSM_SOURCE,
       historisk_hoeje: HISTORISK_HOEJE_SOURCE,
       historisk_lave: HISTORISK_LAVE_SOURCE,
