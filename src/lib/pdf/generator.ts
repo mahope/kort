@@ -10,6 +10,7 @@ import { useHistoryStore } from "@/stores/historyStore";
 import { calculatePdfLayout } from "./layout";
 import { getBrand } from "@/config/brand";
 import { renderMapToImage } from "./renderer";
+import { timed } from "./timing";
 import { calculateMultiPageGrid } from "@/lib/geo/calculations";
 import { computeZonedGrid, gridIntersections, type ZonedGridLine } from "@/lib/geo/zoneGrid";
 import { mgrsSquare, type GridSystem } from "@/lib/geo/coordinates";
@@ -39,8 +40,8 @@ function buildFilename(
 }
 
 /** Trigger a browser download of the generated PDF via an object URL. */
-function downloadPdf(pdf: jsPDF, filename: string): void {
-  const blob = pdf.output("blob");
+async function downloadPdf(pdf: jsPDF, filename: string): Promise<void> {
+  const blob = await timed("output", () => pdf.output("blob"));
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -86,7 +87,7 @@ export async function generatePdf({
   const bearing = mapState.viewState.bearing;
 
   // Render map at target resolution (returns a JPEG data URL)
-  const imgData = await renderMapToImage({
+  const imgData = await timed("render", () => renderMapToImage({
     bounds,
     canvasWidth: layout.canvasWidth,
     canvasHeight: layout.canvasHeight,
@@ -98,7 +99,7 @@ export async function generatePdf({
     showUtmGrid,
     scale,
     bearing,
-  });
+  }));
 
   // Create PDF
   const pdf = new jsPDF({
@@ -108,13 +109,8 @@ export async function generatePdf({
   });
 
   // Add map image
-  pdf.addImage(
-    imgData,
-    "JPEG",
-    layout.marginMm,
-    layout.marginMm,
-    layout.mapWidthMm,
-    layout.mapHeightMm
+  await timed("addImage", () =>
+    pdf.addImage(imgData, "JPEG", layout.marginMm, layout.marginMm, layout.mapWidthMm, layout.mapHeightMm)
   );
 
   // Draw UTM grid lines + margin labels if enabled
@@ -140,7 +136,7 @@ export async function generatePdf({
     baseLayer,
   });
 
-  downloadPdf(pdf, buildFilename(scale, paperFormat));
+  await downloadPdf(pdf, buildFilename(scale, paperFormat));
 }
 
 function drawScaleBar(
@@ -558,5 +554,5 @@ async function generateMultiPagePdf({
     baseLayer,
   });
 
-  downloadPdf(pdf, buildFilename(scale, paperFormat, cells.length));
+  await downloadPdf(pdf, buildFilename(scale, paperFormat, cells.length));
 }

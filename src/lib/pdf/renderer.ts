@@ -8,6 +8,7 @@ import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
 import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
 import type { RasterSourceConfig } from "@/lib/map/sources";
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
+import { timed } from "./timing";
 
 // JPEG quality for the rendered map image embedded in the PDF.
 export const MAP_JPEG_QUALITY = 0.92;
@@ -283,13 +284,16 @@ export async function renderMapToImage({
     // not baked into the raster image, for crisp output at any zoom level.
 
     // Wait for all tiles (including raster overlays) to load
-    await waitForTilesLoaded(map);
-    for (let attempt = 1; failedTiles.size > 0 && attempt <= TILE_RETRIES; attempt++) {
-      if (isOffline()) break;
-      await sleep(TILE_RETRY_PAUSE_MS * attempt);
-      retryTiles(map, failedTiles.values());
-      await waitForTilesLoaded(map);
-    }
+    const tileMap = map;
+    await timed("tiles", async () => {
+      await waitForTilesLoaded(tileMap);
+      for (let attempt = 1; failedTiles.size > 0 && attempt <= TILE_RETRIES; attempt++) {
+        if (isOffline()) break;
+        await sleep(TILE_RETRY_PAUSE_MS * attempt);
+        retryTiles(tileMap, failedTiles.values());
+        await waitForTilesLoaded(tileMap);
+      }
+    });
     if (failedTiles.size > 0) {
       throw new Error(isOffline() ? OFFLINE_MESSAGE : missingTilesMessage(failedTiles.size));
     }
@@ -306,7 +310,7 @@ export async function renderMapToImage({
     // Encode straight from the map's own canvas (preserveDrawingBuffer keeps it
     // valid) before cleanup — avoids cloning the full-resolution canvas a second
     // time, which roughly halves peak memory for large formats.
-    return canvas.toDataURL("image/jpeg", MAP_JPEG_QUALITY);
+    return await timed("encode", () => canvas.toDataURL("image/jpeg", MAP_JPEG_QUALITY));
   } finally {
     // Always release the WebGL context, even if load/tile waits time out —
     // otherwise repeated failures exhaust the browser's ~16 context limit.
