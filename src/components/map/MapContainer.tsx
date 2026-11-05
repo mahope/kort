@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useRef, useEffect, useMemo } from "react";
+import dynamic from "next/dynamic";
+import { preconnect } from "react-dom";
 import Map, {
   NavigationControl,
   ScaleControl,
@@ -11,25 +13,39 @@ import Map, {
   type ViewStateChangeEvent,
 } from "react-map-gl/maplibre";
 import { useMapStore } from "@/stores/mapStore";
+import { useDrawStore } from "@/stores/drawStore";
 import { MAP_STYLES, DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
-import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
+import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SCREEN_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
 import { PrintFrame } from "./PrintFrame";
 import { GeolocationButton } from "./GeolocationButton";
 import { ImportedLayers } from "./ImportedLayers";
-import { DrawingTools } from "./DrawingTools";
 import { UtmGrid } from "./UtmGrid";
+
+// terra-draw (~44 KB gz) is only needed once the user starts drawing or has
+// persisted drawings to restore.
+const DrawingTools = dynamic(
+  () => import("./DrawingTools").then((mod) => mod.DrawingTools),
+  { ssr: false }
+);
 
 // Static lookup — module scope so it isn't re-created per render or used as an
 // effect dependency.
 const RASTER_BASE_LAYERS: Record<string, typeof ORTOFOTO_SOURCE> = {
   ortofoto: ORTOFOTO_SOURCE,
-  dtk25: DTK25_SOURCE,
+  dtk25: DTK25_SCREEN_SOURCE,
   osm: OSM_SOURCE,
   historisk_hoeje: HISTORISK_HOEJE_SOURCE,
   historisk_lave: HISTORISK_LAVE_SOURCE,
 };
 
 export function MapContainer() {
+  // MapLibre fetches tiles/style with CORS, so the connection must be opened
+  // with crossOrigin to be reused. Runs in an effect: this component is
+  // ssr:false, so there is no server render to hoist the hint into anyway.
+  useEffect(() => {
+    preconnect("https://api.dataforsyningen.dk", { crossOrigin: "anonymous" });
+    preconnect("https://cdn.dataforsyningen.dk", { crossOrigin: "anonymous" });
+  }, []);
   const mapRef = useRef<MapRef>(null);
   const viewState = useMapStore((s) => s.viewState);
   const setViewState = useMapStore((s) => s.setViewState);
@@ -38,6 +54,7 @@ export function MapContainer() {
   const overlays = useMapStore((s) => s.overlays);
   const flyToTarget = useMapStore((s) => s.flyToTarget);
   const clearFlyTo = useMapStore((s) => s.clearFlyTo);
+  const needsDrawing = useDrawStore((s) => s.activeMode !== null || s.features.length > 0);
 
   const mapStyle = useMemo(() => {
     if (baseLayer !== "skaermkort") return BLANK_STYLE;
@@ -124,7 +141,7 @@ export function MapContainer() {
       ))}
 
       <ImportedLayers />
-      <DrawingTools />
+      {needsDrawing && <DrawingTools />}
       <UtmGrid />
       <PrintFrame />
 

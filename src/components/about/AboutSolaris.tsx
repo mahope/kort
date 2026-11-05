@@ -8,6 +8,7 @@ export default function AboutSolaris() {
       <div className="mx-auto max-w-2xl px-6 py-16">
         <Link
           href="/"
+          prefetch={false}
           className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary-hover transition-colors mb-10"
         >
           <svg

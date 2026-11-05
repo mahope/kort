@@ -129,6 +129,9 @@ function DrawingToolsImpl() {
     };
 
     map.on("style.load", handleStyleLoad);
+    // This component mounts lazily, so the style may already be loaded and no
+    // style.load will fire: restore persisted drawings right away.
+    if (map.isStyleLoaded()) handleStyleLoad();
     return () => {
       map.off("style.load", handleStyleLoad);
     };

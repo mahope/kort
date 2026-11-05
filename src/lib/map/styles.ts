@@ -6,10 +6,11 @@ export const DATAFORSYNINGEN_TOKEN =
   process.env.NEXT_PUBLIC_DATAFORSYNINGEN_TOKEN || "fd44f26ab5701c01ca9f570e507fe9ab";
 
 /**
- * MapLibre transformRequest: appends token to Dataforsyningen API requests.
+ * MapLibre transformRequest: appends token to Dataforsyningen API requests
+ * that do not already carry one (tile templates in sources.ts embed it).
  */
 export function transformRequest(url: string): { url: string } {
-  if (url.includes("api.dataforsyningen.dk")) {
+  if (url.includes("api.dataforsyningen.dk") && !/[?&]token=/.test(url)) {
     const sep = url.includes("?") ? "&" : "?";
     return { url: `${url}${sep}token=${DATAFORSYNINGEN_TOKEN}` };
   }
