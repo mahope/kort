@@ -52,6 +52,9 @@ export function UrlSync() {
     if (state.multiPage) printStore.setMultiPage(true);
     if (state.gridCols) printStore.setGridCols(state.gridCols);
     if (state.gridRows) printStore.setGridRows(state.gridRows);
+
+    // Rewrite the address bar now so invalid params don't linger until the next store change
+    updateUrl();
   }, []);
 
   // Sync stores to URL (debounced)
