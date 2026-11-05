@@ -35,7 +35,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden">
+    <div className="flex h-screen w-screen supports-[height:100dvh]:h-dvh overflow-hidden">
       <OfflineBanner />
       <Sidebar />
       <main className="relative flex-1">

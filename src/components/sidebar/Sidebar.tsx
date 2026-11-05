@@ -26,7 +26,6 @@ import { UtmGridSettings } from "./UtmGridSettings";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { MahojeWordmark } from "@/components/ui/MahojeWordmark";
-import { useIsMobile } from "@/lib/hooks/useIsMobile";
 import { useUiStore } from "@/stores/uiStore";
 
 function CollapsibleSection({
@@ -44,7 +43,7 @@ function CollapsibleSection({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between py-1"
+        className="flex w-full items-center justify-between py-1 pointer-coarse:min-h-11"
       >
         <span className="text-xs font-semibold text-text-muted">
           {title}
@@ -69,7 +68,7 @@ function AdvancedToggleButton({ advanced, onToggle }: { advanced: boolean; onTog
     <button
       type="button"
       onClick={onToggle}
-      className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors py-1"
+      className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors py-1 pointer-coarse:min-h-11"
     >
       {advanced ? (
         <>
@@ -147,10 +146,6 @@ function SidebarContent() {
       <CoverageInfo />
       <PrintPreview />
 
-      <div className="max-md:sticky max-md:bottom-0 max-md:z-10 max-md:bg-gradient-to-t max-md:from-surface max-md:from-60% max-md:to-transparent max-md:pt-3 max-md:-mx-4 max-md:px-4 max-md:pb-2">
-        <PrintButton />
-      </div>
-
       <AdvancedToggleButton
         advanced={advancedMode}
         onToggle={() => setAdvancedMode(!advancedMode)}
@@ -194,15 +189,15 @@ function SidebarContent() {
         </>
       )}
 
-      <div className="flex items-center justify-between mt-4">
-        <div className="flex items-center gap-2 text-xs text-text-muted">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <div className="flex flex-wrap items-center gap-x-2 text-xs text-text-muted">
           <span>Kortdata &copy; Klimadatastyrelsen</span>
           <span>&middot;</span>
-          <a href="/om" className="hover:text-text-secondary underline underline-offset-2">Om</a>
+          <a href="/om" className="inline-flex items-center justify-center pointer-coarse:min-h-11 pointer-coarse:min-w-11 hover:text-text-secondary underline underline-offset-2">Om</a>
           {brand.id === "mahoje" && (
             <>
               <span>&middot;</span>
-              <a href={brand.credit.url} className="hover:text-text-secondary underline underline-offset-2">
+              <a href={brand.credit.url} className="inline-flex items-center pointer-coarse:min-h-11 hover:text-text-secondary underline underline-offset-2">
                 mahoje.dk
               </a>
             </>
@@ -215,19 +210,9 @@ function SidebarContent() {
 }
 
 export function Sidebar() {
-  const isMobile = useIsMobile();
-
-  if (isMobile) {
-    return (
-      <BottomSheet>
-        <SidebarContent />
-      </BottomSheet>
-    );
-  }
-
   return (
-    <aside className="w-80 shrink-0 border-r border-sidebar-border bg-sidebar-bg overflow-y-auto p-4">
+    <BottomSheet footer={<PrintButton />}>
       <SidebarContent />
-    </aside>
+    </BottomSheet>
   );
 }

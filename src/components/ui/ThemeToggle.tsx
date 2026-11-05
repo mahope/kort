@@ -74,7 +74,7 @@ export function ThemeToggle() {
           aria-checked={theme === t.value}
           aria-label={t.label}
           onClick={() => setTheme(t.value)}
-          className={`flex items-center gap-1 rounded-md px-2 py-1 text-[10px] transition-colors ${
+          className={`flex items-center justify-center gap-1 rounded-md px-2 py-1 text-[10px] pointer-coarse:min-h-11 pointer-coarse:min-w-11 transition-colors ${
             theme === t.value
               ? "bg-surface text-foreground shadow-sm"
               : "text-text-muted hover:text-text-secondary"

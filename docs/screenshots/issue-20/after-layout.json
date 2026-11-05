@@ -1,0 +1,767 @@
+{
+ "rotation": [
+  {
+   "pos": "min",
+   "portrait": 15,
+   "landscape": 30,
+   "mapVisibleLandscape": 70,
+   "back": 15
+  },
+  {
+   "pos": "mid",
+   "portrait": 40,
+   "landscape": 40,
+   "mapVisibleLandscape": 60,
+   "back": 40
+  },
+  {
+   "pos": "max",
+   "portrait": 60,
+   "landscape": 60,
+   "mapVisibleLandscape": 40,
+   "back": 60
+  }
+ ],
+ "landscapeStart": 40,
+ "shifts": [
+  {
+   "v": 0.002810471462905146,
+   "recent": false,
+   "src": [
+    "DIV.shrink-0 border-t border-border bg-surfa"
+   ]
+  }
+ ],
+ "ssr": {
+  "hasAsideSheet": true,
+  "hasHandle": true,
+  "hasDownload": true
+ },
+ "axe": [
+  {
+   "pos": "mid",
+   "region": 0,
+   "all": [
+    {
+     "id": "select-name",
+     "n": 2
+    }
+   ]
+  },
+  {
+   "pos": "min",
+   "region": 0,
+   "all": [
+    {
+     "id": "select-name",
+     "n": 2
+    }
+   ]
+  },
+  {
+   "pos": "max",
+   "region": 0,
+   "all": [
+    {
+     "id": "select-name",
+     "n": 2
+    }
+   ]
+  }
+ ],
+ "sweep": [
+  {
+   "vp": "320x568",
+   "adv": false,
+   "coarse": true,
+   "asideSW": 320,
+   "asideCW": 320,
+   "scSW": 320,
+   "scCW": 320,
+   "asideW": 320,
+   "theme": [
+    {
+     "x": 18,
+     "r": 62,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 64,
+     "r": 108,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 110,
+     "r": 154,
+     "w": 44,
+     "h": 44
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 143x36",
+    "Liggende 143x36"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "320x568",
+   "adv": true,
+   "coarse": true,
+   "asideSW": 320,
+   "asideCW": 320,
+   "scSW": 320,
+   "scCW": 320,
+   "asideW": 320,
+   "theme": [
+    {
+     "x": 18,
+     "r": 62,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 64,
+     "r": 108,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 110,
+     "r": 154,
+     "w": 44,
+     "h": 44
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 143x36",
+    "Liggende 143x36",
+    "Del kort 90x30"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "360x740",
+   "adv": false,
+   "coarse": true,
+   "asideSW": 360,
+   "asideCW": 360,
+   "scSW": 360,
+   "scCW": 360,
+   "asideW": 360,
+   "theme": [
+    {
+     "x": 18,
+     "r": 62,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 64,
+     "r": 108,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 110,
+     "r": 154,
+     "w": 44,
+     "h": 44
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 163x36",
+    "Liggende 163x36"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "360x740",
+   "adv": true,
+   "coarse": true,
+   "asideSW": 360,
+   "asideCW": 360,
+   "scSW": 360,
+   "scCW": 360,
+   "asideW": 360,
+   "theme": [
+    {
+     "x": 18,
+     "r": 62,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 64,
+     "r": 108,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 110,
+     "r": 154,
+     "w": 44,
+     "h": 44
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 163x36",
+    "Liggende 163x36",
+    "Del kort 90x30"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "390x844",
+   "adv": false,
+   "coarse": true,
+   "asideSW": 390,
+   "asideCW": 390,
+   "scSW": 390,
+   "scCW": 390,
+   "asideW": 390,
+   "theme": [
+    {
+     "x": 18,
+     "r": 62,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 64,
+     "r": 108,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 110,
+     "r": 154,
+     "w": 44,
+     "h": 44
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 178x36",
+    "Liggende 178x36"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "390x844",
+   "adv": true,
+   "coarse": true,
+   "asideSW": 390,
+   "asideCW": 390,
+   "scSW": 390,
+   "scCW": 390,
+   "asideW": 390,
+   "theme": [
+    {
+     "x": 18,
+     "r": 62,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 64,
+     "r": 108,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 110,
+     "r": 154,
+     "w": 44,
+     "h": 44
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 178x36",
+    "Liggende 178x36",
+    "Del kort 90x30"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "430x932",
+   "adv": false,
+   "coarse": true,
+   "asideSW": 430,
+   "asideCW": 430,
+   "scSW": 430,
+   "scCW": 430,
+   "asideW": 430,
+   "theme": [
+    {
+     "x": 18,
+     "r": 62,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 64,
+     "r": 108,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 110,
+     "r": 154,
+     "w": 44,
+     "h": 44
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 198x36",
+    "Liggende 198x36"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "430x932",
+   "adv": true,
+   "coarse": true,
+   "asideSW": 430,
+   "asideCW": 430,
+   "scSW": 430,
+   "scCW": 430,
+   "asideW": 430,
+   "theme": [
+    {
+     "x": 18,
+     "r": 62,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 64,
+     "r": 108,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 110,
+     "r": 154,
+     "w": 44,
+     "h": 44
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 198x36",
+    "Liggende 198x36",
+    "Del kort 90x30"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "600x900",
+   "adv": false,
+   "coarse": true,
+   "asideSW": 600,
+   "asideCW": 600,
+   "scSW": 600,
+   "scCW": 600,
+   "asideW": 600,
+   "theme": [
+    {
+     "x": 446,
+     "r": 490,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 492,
+     "r": 536,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 538,
+     "r": 582,
+     "w": 44,
+     "h": 44
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 283x36",
+    "Liggende 283x36"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "600x900",
+   "adv": true,
+   "coarse": true,
+   "asideSW": 600,
+   "asideCW": 600,
+   "scSW": 600,
+   "scCW": 600,
+   "asideW": 600,
+   "theme": [
+    {
+     "x": 446,
+     "r": 490,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 492,
+     "r": 536,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 538,
+     "r": 582,
+     "w": 44,
+     "h": 44
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 283x36",
+    "Liggende 283x36",
+    "Del kort 90x30"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "768x1024",
+   "adv": false,
+   "coarse": true,
+   "asideSW": 319,
+   "asideCW": 319,
+   "scSW": 319,
+   "scCW": 319,
+   "asideW": 320,
+   "theme": [
+    {
+     "x": 18,
+     "r": 62,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 64,
+     "r": 108,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 110,
+     "r": 154,
+     "w": 44,
+     "h": 44
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 143x36",
+    "Liggende 143x36"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "768x1024",
+   "adv": true,
+   "coarse": true,
+   "asideSW": 319,
+   "asideCW": 319,
+   "scSW": 319,
+   "scCW": 319,
+   "asideW": 320,
+   "theme": [
+    {
+     "x": 18,
+     "r": 62,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 64,
+     "r": 108,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 110,
+     "r": 154,
+     "w": 44,
+     "h": 44
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 143x36",
+    "Liggende 143x36",
+    "Del kort 90x30"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "844x390",
+   "adv": false,
+   "coarse": true,
+   "asideSW": 319,
+   "asideCW": 319,
+   "scSW": 319,
+   "scCW": 319,
+   "asideW": 320,
+   "theme": [
+    {
+     "x": 18,
+     "r": 62,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 64,
+     "r": 108,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 110,
+     "r": 154,
+     "w": 44,
+     "h": 44
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 143x36",
+    "Liggende 143x36"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "844x390",
+   "adv": true,
+   "coarse": true,
+   "asideSW": 319,
+   "asideCW": 319,
+   "scSW": 319,
+   "scCW": 319,
+   "asideW": 320,
+   "theme": [
+    {
+     "x": 18,
+     "r": 62,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 64,
+     "r": 108,
+     "w": 44,
+     "h": 44
+    },
+    {
+     "x": 110,
+     "r": 154,
+     "w": 44,
+     "h": 44
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 143x36",
+    "Liggende 143x36",
+    "Del kort 90x30"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "1024x768",
+   "adv": false,
+   "coarse": false,
+   "asideSW": 319,
+   "asideCW": 319,
+   "scSW": 319,
+   "scCW": 319,
+   "asideW": 320,
+   "theme": [
+    {
+     "x": 18,
+     "r": 48,
+     "w": 30,
+     "h": 22
+    },
+    {
+     "x": 50,
+     "r": 80,
+     "w": 30,
+     "h": 22
+    },
+    {
+     "x": 82,
+     "r": 112,
+     "w": 30,
+     "h": 22
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 143x36",
+    "Liggende 143x36",
+    "Avancerede indstilling 152x24",
+    "Om 20x16",
+    "mahoje.dk 58x16",
+    "Lyst 30x22",
+    "Mørkt 30x22",
+    "Auto 30x22"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "1024x768",
+   "adv": true,
+   "coarse": false,
+   "asideSW": 319,
+   "asideCW": 319,
+   "scSW": 319,
+   "scCW": 319,
+   "asideW": 320,
+   "theme": [
+    {
+     "x": 18,
+     "r": 48,
+     "w": 30,
+     "h": 22
+    },
+    {
+     "x": 50,
+     "r": 80,
+     "w": 30,
+     "h": 22
+    },
+    {
+     "x": 82,
+     "r": 112,
+     "w": 30,
+     "h": 22
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 143x36",
+    "Liggende 143x36",
+    "Skjul avancerede indst 181x24",
+    "Kortlag 287x24",
+    "Import & Lag 287x24",
+    "Tegning & Mål 287x24",
+    "Udskrivning 287x24",
+    "Del kort 90x30",
+    "Bogmærker 287x24",
+    "Historik 287x24",
+    "Om 20x16",
+    "mahoje.dk 58x16",
+    "Lyst 30x22",
+    "Mørkt 30x22",
+    "Auto 30x22"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "1440x900",
+   "adv": false,
+   "coarse": false,
+   "asideSW": 319,
+   "asideCW": 319,
+   "scSW": 319,
+   "scCW": 319,
+   "asideW": 320,
+   "theme": [
+    {
+     "x": 18,
+     "r": 48,
+     "w": 30,
+     "h": 22
+    },
+    {
+     "x": 50,
+     "r": 80,
+     "w": 30,
+     "h": 22
+    },
+    {
+     "x": 82,
+     "r": 112,
+     "w": 30,
+     "h": 22
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 143x36",
+    "Liggende 143x36",
+    "Avancerede indstilling 152x24",
+    "Om 20x16",
+    "mahoje.dk 58x16",
+    "Lyst 30x22",
+    "Mørkt 30x22",
+    "Auto 30x22"
+   ],
+   "downloadVisible": true
+  },
+  {
+   "vp": "1440x900",
+   "adv": true,
+   "coarse": false,
+   "asideSW": 319,
+   "asideCW": 319,
+   "scSW": 319,
+   "scCW": 319,
+   "asideW": 320,
+   "theme": [
+    {
+     "x": 18,
+     "r": 48,
+     "w": 30,
+     "h": 22
+    },
+    {
+     "x": 50,
+     "r": 80,
+     "w": 30,
+     "h": 22
+    },
+    {
+     "x": 82,
+     "r": 112,
+     "w": 30,
+     "h": 22
+    }
+   ],
+   "small": [
+    "Mahoje, til mahoje.dk 88x19",
+    "Stående 143x36",
+    "Liggende 143x36",
+    "Skjul avancerede indst 181x24",
+    "Kortlag 287x24",
+    "Import & Lag 287x24",
+    "Tegning & Mål 287x24",
+    "Udskrivning 287x24",
+    "Del kort 90x30",
+    "Bogmærker 287x24",
+    "Historik 287x24",
+    "Om 20x16",
+    "mahoje.dk 58x16",
+    "Lyst 30x22",
+    "Mørkt 30x22",
+    "Auto 30x22"
+   ],
+   "downloadVisible": true
+  }
+ ]
+}

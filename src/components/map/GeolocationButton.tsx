@@ -138,14 +138,14 @@ function GeolocationButtonImpl({ mapRef }: GeolocationButtonProps) {
       )}
 
       {/* Button */}
-      <div className="absolute bottom-28 right-2.5 z-10">
+      <div className="absolute z-10 max-md:bottom-[calc(var(--sheet-offset)+3rem)] max-md:left-2.5 md:right-2.5 md:bottom-28 transition-[bottom] duration-200 ease-out">
         <button
           type="button"
           onClick={handleClick}
           disabled={state === "loading"}
           title="Find min position"
           aria-label="Find min position"
-          className={`flex items-center justify-center w-10 h-10 rounded-lg bg-surface shadow-md border border-border hover:bg-surface-secondary transition-colors ${
+          className={`flex items-center justify-center w-11 h-11 rounded-lg bg-surface shadow-md border border-border hover:bg-surface-secondary transition-colors ${
             state === "active" ? "text-primary" : state === "error" ? "text-danger" : "text-text-secondary"
           } ${state === "loading" ? "animate-pulse" : ""}`}
         >
