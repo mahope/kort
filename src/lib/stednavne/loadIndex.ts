@@ -6,7 +6,7 @@ import { parseIndex, type StednavnIndex } from "./search";
 // Relative to the app root (process.cwd() both in `next start` and in the
 // standalone Docker image). next.config.ts traces the file into the
 // standalone output for the /api/stednavne route.
-export const STEDNAVNE_INDEX_PATH = path.join("data", "stednavne.tsv.gz");
+const STEDNAVNE_INDEX_PATH = path.join("data", "stednavne.tsv.gz");
 
 let cached: Promise<StednavnIndex> | null = null;
 

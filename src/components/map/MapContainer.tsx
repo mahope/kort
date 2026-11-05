@@ -15,7 +15,7 @@ import Map, {
 import { useMapStore } from "@/stores/mapStore";
 import { useDrawStore } from "@/stores/drawStore";
 import { MAP_STYLES, DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
-import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SCREEN_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
+import { BLANK_STYLE, getRasterBaseLayers, OVERLAY_SOURCES } from "@/lib/map/sources";
 import { PrintFrame } from "./PrintFrame";
 import { GeolocationButton } from "./GeolocationButton";
 import { ImportedLayers } from "./ImportedLayers";
@@ -33,13 +33,7 @@ const DrawingTools = dynamic(
 // effect dependency.
 configureMaplibreWorker();
 
-const RASTER_BASE_LAYERS: Record<string, typeof ORTOFOTO_SOURCE> = {
-  ortofoto: ORTOFOTO_SOURCE,
-  dtk25: DTK25_SCREEN_SOURCE,
-  osm: OSM_SOURCE,
-  historisk_hoeje: HISTORISK_HOEJE_SOURCE,
-  historisk_lave: HISTORISK_LAVE_SOURCE,
-};
+const RASTER_BASE_LAYERS = getRasterBaseLayers("screen");
 
 export function MapContainer() {
   // MapLibre fetches tiles/style with CORS, so the connection must be opened

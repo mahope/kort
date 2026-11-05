@@ -5,7 +5,7 @@ import { DATAFORSYNINGEN_TOKEN } from "./styles";
  * Ortofoto WMTS tile URL template.
  * Uses DFD_GoogleMapsCompatible TileMatrixSet (EPSG:3857).
  */
-export const ORTOFOTO_TILES_URL =
+const ORTOFOTO_TILES_URL =
   `https://api.dataforsyningen.dk/orto_foraar_webm_DAF?` +
   `service=WMTS&request=GetTile&version=1.0.0` +
   `&layer=orto_foraar_webm&style=default` +
@@ -30,7 +30,7 @@ export const DTK25_TILES_URL =
  * DTK 25 for on-screen use: the layer is opaque, so JPEG is 7-13x smaller than
  * PNG. The PDF renderer keeps using DTK25_TILES_URL (PNG) for full quality.
  */
-export const DTK25_SCREEN_TILES_URL = DTK25_TILES_URL.replace(
+const DTK25_SCREEN_TILES_URL = DTK25_TILES_URL.replace(
   "TRANSPARENT=TRUE&FORMAT=image/png",
   "TRANSPARENT=FALSE&FORMAT=image/jpeg"
 );
@@ -38,7 +38,7 @@ export const DTK25_SCREEN_TILES_URL = DTK25_TILES_URL.replace(
 /**
  * Høje Målebordsblade (1842-1899) WMS tile URL.
  */
-export const HISTORISK_HOEJE_TILES_URL =
+const HISTORISK_HOEJE_TILES_URL =
   `https://api.dataforsyningen.dk/topo20_hoeje_maalebordsblade_DAF?` +
   `service=WMS&version=1.1.1&request=GetMap` +
   `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
@@ -50,7 +50,7 @@ export const HISTORISK_HOEJE_TILES_URL =
 /**
  * Lave Målebordsblade (1901-1971) WMS tile URL.
  */
-export const HISTORISK_LAVE_TILES_URL =
+const HISTORISK_LAVE_TILES_URL =
   `https://api.dataforsyningen.dk/topo20_lave_maalebordsblade_DAF?` +
   `service=WMS&version=1.1.1&request=GetMap` +
   `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
@@ -62,7 +62,7 @@ export const HISTORISK_LAVE_TILES_URL =
 /**
  * Danske Stednavne WMS tile URL.
  */
-export const STEDNAVNE_TILES_URL =
+const STEDNAVNE_TILES_URL =
   `https://api.dataforsyningen.dk/danske_stednavne_DAF?` +
   `service=WMS&version=1.1.1&request=GetMap` +
   `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
@@ -74,7 +74,7 @@ export const STEDNAVNE_TILES_URL =
 /**
  * Matrikelskel WMS tile URL.
  */
-export const MATRIKEL_TILES_URL =
+const MATRIKEL_TILES_URL =
   `https://api.dataforsyningen.dk/forvaltning2_udv?` +
   `service=WMS&version=1.1.1&request=GetMap` +
   `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
@@ -97,13 +97,13 @@ const DHM_WMS_BASE =
 /**
  * DHM Contour lines (0.5m) WMS tile URL.
  */
-export const DHM_CONTOURS_URL =
+const DHM_CONTOURS_URL =
   `${DHM_WMS_BASE}&LAYERS=dhm_kurve_0_5_m&BBOX={bbox-epsg-3857}`;
 
 /**
  * DHM Hillshade (terrain shadow) WMS tile URL.
  */
-export const DHM_HILLSHADE_URL =
+const DHM_HILLSHADE_URL =
   `${DHM_WMS_BASE}&LAYERS=dhm_terraen_skyggekort&BBOX={bbox-epsg-3857}`;
 
 /**
@@ -128,7 +128,7 @@ export interface RasterSourceConfig {
   attribution: string;
 }
 
-export const ORTOFOTO_SOURCE: RasterSourceConfig = {
+const ORTOFOTO_SOURCE: RasterSourceConfig = {
   tiles: [ORTOFOTO_TILES_URL],
   tileSize: 256,
   attribution: "&copy; Klimadatastyrelsen",
@@ -145,23 +145,40 @@ export const DTK25_SCREEN_SOURCE: RasterSourceConfig = {
   tiles: [DTK25_SCREEN_TILES_URL],
 };
 
-export const OSM_SOURCE: RasterSourceConfig = {
+const OSM_SOURCE: RasterSourceConfig = {
   tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
   tileSize: 256,
   attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors",
 };
 
-export const HISTORISK_HOEJE_SOURCE: RasterSourceConfig = {
+const HISTORISK_HOEJE_SOURCE: RasterSourceConfig = {
   tiles: [HISTORISK_HOEJE_TILES_URL],
   tileSize: 256,
   attribution: "&copy; Klimadatastyrelsen (Høje Målebordsblade)",
 };
 
-export const HISTORISK_LAVE_SOURCE: RasterSourceConfig = {
+const HISTORISK_LAVE_SOURCE: RasterSourceConfig = {
   tiles: [HISTORISK_LAVE_TILES_URL],
   tileSize: 256,
   attribution: "&copy; Klimadatastyrelsen (Lave Målebordsblade)",
 };
+
+/**
+ * The one definition of the raster base maps, for the live map and the PDF.
+ * Only DTK25 differs: the screen uses opaque JPEG, the PDF keeps PNG for full
+ * quality.
+ */
+export type RasterBaseLayerTarget = "screen" | "print";
+
+export function getRasterBaseLayers(target: RasterBaseLayerTarget): Record<string, RasterSourceConfig> {
+  return {
+    ortofoto: ORTOFOTO_SOURCE,
+    dtk25: target === "screen" ? DTK25_SCREEN_SOURCE : DTK25_SOURCE,
+    osm: OSM_SOURCE,
+    historisk_hoeje: HISTORISK_HOEJE_SOURCE,
+    historisk_lave: HISTORISK_LAVE_SOURCE,
+  };
+}
 
 export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
   contours: {

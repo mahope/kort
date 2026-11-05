@@ -2,7 +2,6 @@ import { create } from "zustand";
 import type {
   PaperFormat,
   Orientation,
-  ScalePreset,
   DpiOption,
   PrintFrameBounds,
 } from "@/types/print";

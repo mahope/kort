@@ -7,7 +7,7 @@ export interface MapViewState {
 }
 
 /** Deferred coordinate lookup for Adressevælger results (search returns no coords). */
-export type AddressLookup =
+type AddressLookup =
   | { kind: "husnummer"; id: string }
   | { kind: "adresse"; id: string }
   | { kind: "vej"; vejnavn: string; postnr: string };

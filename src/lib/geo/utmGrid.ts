@@ -119,7 +119,7 @@ export interface GridLine {
 }
 
 /** UTM extent covering a lng/lat box (corners and edge midpoints, since grid convergence skews it). */
-export function utmExtent(b: LngLatBounds, zone: number) {
+function utmExtent(b: LngLatBounds, zone: number) {
   const pts: [number, number][] = [];
   for (const lat of [b.south, (b.south + b.north) / 2, b.north]) {
     for (const lng of [b.west, (b.west + b.east) / 2, b.east]) pts.push([lat, lng]);
@@ -210,10 +210,6 @@ export function formatGridLabel(value: number, format: GridLabelFormat): Formatt
   return { prefix: kmStr.slice(0, -2), main: kmStr.slice(-2) + frac };
 }
 
-export function labelText(l: FormattedLabel): string {
-  return l.prefix + l.main;
-}
-
 /**
  * Label thinning step: the smallest multiple of `spacing` (×1, 2, 5, 10, …)
  * whose labels are at least `minGap` units apart.
@@ -290,9 +286,9 @@ export function metersPerPixel(lat: number, zoom: number): number {
 // ---------------------------------------------------------------------------
 
 /** Minimum distance between printed grid lines. 100 m at 1:25.000 = 4 mm is fine; at 1:50.000 = 2 mm is not. */
-export const PRINT_MIN_LINE_GAP_MM = 3;
+const PRINT_MIN_LINE_GAP_MM = 3;
 /** Minimum distance between grid lines on screen. */
-export const SCREEN_MIN_LINE_GAP_PX = 8;
+const SCREEN_MIN_LINE_GAP_PX = 8;
 
 export interface ResolvedSpacing {
   /** What the user asked for (auto resolved to a concrete value). */
