@@ -338,7 +338,7 @@ export async function renderMapToImage({
     // Encode straight from the map's own canvas (preserveDrawingBuffer keeps it
     // valid) before cleanup. toBlob encodes off the main thread, unlike
     // toDataURL, which blocked the page for the whole encode.
-    await yieldToMain();
+    await timed("gpu", () => waitForGpu(canvas));
     return await timed("encode", () => encodeJpeg(canvas));
   } finally {
     // Always release the WebGL context, even if load/tile waits time out —
@@ -348,10 +348,38 @@ export async function renderMapToImage({
   }
 }
 
+// Reading pixels back while the GPU still has the render queued blocks the main
+// thread until it is done (seconds with software WebGL). Fence the queue and poll
+// instead, so the page stays responsive and the readback that follows is quick.
+export const GPU_WAIT_TIMEOUT_MS = 60000;
+const GPU_POLL_MS = 20;
+
+async function waitForGpu(canvas: HTMLCanvasElement): Promise<void> {
+  if (typeof canvas.getContext !== "function") return;
+  const gl = canvas.getContext("webgl2") as WebGL2RenderingContext | null; // returns the map's own context
+  const sync = gl?.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+  if (!gl || !sync) return;
+  gl.flush();
+  try {
+    const deadline = performance.now() + GPU_WAIT_TIMEOUT_MS;
+    while (performance.now() < deadline) {
+      const status = gl.clientWaitSync(sync, 0, 0);
+      if (status !== gl.TIMEOUT_EXPIRED) return;
+      await sleep(GPU_POLL_MS);
+    }
+  } finally {
+    gl.deleteSync(sync);
+  }
+}
+
 async function encodeJpeg(canvas: HTMLCanvasElement): Promise<Uint8Array> {
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", MAP_JPEG_QUALITY));
+  const blob = await canvasToJpegBlob(canvas);
   if (!blob) throw new Error("Kortbilledet kunne ikke gemmes som JPEG. Prøv igen med lavere opløsning.");
   return new Uint8Array(await blob.arrayBuffer());
+}
+
+function canvasToJpegBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
+  return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", MAP_JPEG_QUALITY));
 }
 
 function waitForMapLoad(map: maplibregl.Map): Promise<void> {
