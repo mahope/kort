@@ -1,6 +1,6 @@
 import math, os, sys, time, urllib.request, urllib.error, json
 
-TOKEN = "fd44f26ab5701c01ca9f570e507fe9ab"  # appens offentlige token (src/lib/map/styles.ts)
+TOKEN = os.environ["NEXT_PUBLIC_DATAFORSYNINGEN_TOKEN"]  # appens offentlige token, se src/lib/map/styles.ts
 OUT = sys.argv[1]
 AREAS = {
     "hilleroed": (55.927, 12.300),

@@ -1,3 +1,6 @@
+# Input: Natural Earth 10m admin 0 map units (ne_10m_admin_0_map_units.geojson, ikke i git).
+# Hentes fra https://www.naturalearthdata.com/downloads/10m-cultural-vectors/ (Admin 0 - Map Units);
+# GeoJSON-udgaven findes fx i github.com/nvkelso/natural-earth-vector (geojson/). Version ikke noteret ved kørslen.
 import json, math, sys
 d = json.load(open(sys.argv[1]))
 geom = [f['geometry'] for f in d['features'] if f['properties'].get('ADM0_A3') == 'DNK'][0]
