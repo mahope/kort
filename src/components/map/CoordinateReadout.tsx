@@ -1,14 +1,32 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useMapStore } from "@/stores/mapStore";
 import { useUiStore } from "@/stores/uiStore";
 import { pointCoordinates } from "@/lib/geo/coordinates";
+import { formatDeclination, magneticDeclination } from "@/lib/geo/declination";
+
+/** Declination for the map centre, recomputed once the map has been still for 200 ms (≈ moveend). */
+function useSettledDeclination(lat: number, lng: number): string | null {
+  const [pos, setPos] = useState({ lat, lng });
+  useEffect(() => {
+    const t = setTimeout(() => setPos({ lat, lng }), 200);
+    return () => clearTimeout(t);
+  }, [lat, lng]);
+  try {
+    const now = new Date();
+    return `${formatDeclination(magneticDeclination(pos.lat, pos.lng, now))} (${now.getFullYear()})`;
+  } catch {
+    return null;
+  }
+}
 
 export function CoordinateReadout() {
   const longitude = useMapStore((s) => s.viewState.longitude);
   const latitude = useMapStore((s) => s.viewState.latitude);
   const addToast = useUiStore((s) => s.addToast);
   const coordinates = pointCoordinates(latitude, longitude);
+  const declination = useSettledDeclination(latitude, longitude);
 
   const copy = async (value: string) => {
     try {
@@ -40,6 +58,12 @@ export function CoordinateReadout() {
                 className="min-h-11 min-w-11 rounded px-2 text-xs text-primary hover:bg-surface-secondary focus-visible:outline-2 focus-visible:outline-primary">Kopiér</button>
             </div>
           ))}
+          {declination && (
+            <div className="border-t border-border py-1" data-testid="declination-readout">
+              <div className="text-xs text-text-secondary">Misvisning</div>
+              <div className="select-text font-mono text-xs tabular-nums">{declination}</div>
+            </div>
+          )}
         </div>
       </details>
     </>

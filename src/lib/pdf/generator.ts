@@ -24,6 +24,7 @@ import {
   type GridLineClass,
   type GridSpacing,
 } from "@/lib/geo/utmGrid";
+import { computeDeclinationInfo, drawDeclinationDiagram } from "./declinationDiagram";
 import { createPaperProjector, type PaperProjector } from "./gridProjection";
 
 /** Build the download filename shared by single- and multi-page output. */
@@ -128,6 +129,7 @@ export async function generatePdf({
   drawScaleBar(pdf, layout, scale);
   drawNorthArrow(pdf, layout, bearing);
   drawAttribution(pdf, layout, scale, gridInfo);
+  drawDeclination(pdf, layout, bounds, gridInfo, bearing);
 
   // Record in print history
   useHistoryStore.getState().addEntry({
@@ -458,6 +460,23 @@ function drawAttribution(
   });
 }
 
+/** Misvisning diagram for the frame centre; grid north only when a UTM/MGRS grid is on. */
+function drawDeclination(
+  pdf: jsPDF,
+  layout: PdfLayout,
+  bounds: PrintFrameBounds,
+  gridInfo: GridInfo | null,
+  bearing: number
+) {
+  if (!usePrintStore.getState().showDeclination) return;
+  const info = computeDeclinationInfo(
+    (bounds.north + bounds.south) / 2,
+    (bounds.west + bounds.east) / 2,
+    gridInfo ? gridInfo.zone : null
+  );
+  if (info) drawDeclinationDiagram(pdf, layout, info, bearing);
+}
+
 async function generateMultiPagePdf({
   scale,
   paperFormat,
@@ -539,6 +558,7 @@ async function generateMultiPagePdf({
       drawNorthArrow(pdf, layout, bearing);
 
       drawAttribution(pdf, layout, scale, gridInfo);
+      drawDeclination(pdf, layout, cell.bounds, gridInfo, bearing);
     }
   } finally {
     // Reset progress state even if a page render throws, so the UI does not

@@ -37,6 +37,8 @@ export function UtmGridSettings() {
   const utmZoneMode = useMapStore((s) => s.utmZoneMode);
   const setUtmZoneMode = useMapStore((s) => s.setUtmZoneMode);
   const scale = usePrintStore((s) => s.scale);
+  const showDeclination = usePrintStore((s) => s.showDeclination);
+  const setShowDeclination = usePrintStore((s) => s.setShowDeclination);
   const gridSystem = useMapStore((s) => s.gridSystem);
   const setGridSystem = useMapStore((s) => s.setGridSystem);
 
@@ -150,6 +152,15 @@ export function UtmGridSettings() {
           </div>}
         </div>
       )}
+      <label className="flex items-center gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={showDeclination}
+          onChange={(e) => setShowDeclination(e.target.checked)}
+          className="accent-primary"
+        />
+        <span className="text-sm">Misvisning i printet</span>
+      </label>
     </div>
   );
 }
