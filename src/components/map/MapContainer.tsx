@@ -18,9 +18,12 @@ import { GeolocationButton } from "./GeolocationButton";
 import { ImportedLayers } from "./ImportedLayers";
 import { DrawingTools } from "./DrawingTools";
 import { UtmGrid } from "./UtmGrid";
+import { configureMaplibreWorker } from "@/lib/map/workerUrl";
 
 // Static lookup — module scope so it isn't re-created per render or used as an
 // effect dependency.
+configureMaplibreWorker();
+
 const RASTER_BASE_LAYERS: Record<string, typeof ORTOFOTO_SOURCE> = {
   ortofoto: ORTOFOTO_SOURCE,
   dtk25: DTK25_SOURCE,
@@ -88,7 +91,7 @@ export function MapContainer() {
       onMove={onMove}
       mapStyle={mapStyle}
       transformRequest={transformRequest}
-      maxBounds={DENMARK_BOUNDS as [[number, number], [number, number]]}
+      maxBounds={[...DENMARK_BOUNDS[0], ...DENMARK_BOUNDS[1]]}
       attributionControl={false}
       canvasContextAttributes={{ preserveDrawingBuffer: true }}
       style={{ width: "100%", height: "100%" }}

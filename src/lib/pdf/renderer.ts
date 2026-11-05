@@ -1,6 +1,7 @@
-import maplibregl from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
 import type { PrintFrameBounds } from "@/types/print";
 import type { MapStyle, BaseLayer, OverlayState } from "@/types/map";
+import { configureMaplibreWorker } from "@/lib/map/workerUrl";
 import type { ImportedLayer } from "@/stores/importStore";
 import type { DrawnFeature } from "@/stores/drawStore";
 import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
@@ -101,6 +102,7 @@ export async function renderMapToImage({
       mapOptions.fitBoundsOptions = { padding: 0 };
     }
 
+    configureMaplibreWorker();
     map = new maplibregl.Map(mapOptions);
 
     await waitForMapLoad(map);
