@@ -1,7 +1,10 @@
 import fs from "node:fs";
 import zlib from "node:zlib";
 import path from "node:path";
-import { decode } from "/home/user/dev/worktrees/kort-poc-40-vite/node_modules/@jridgewell/sourcemap-codec/dist/sourcemap-codec.mjs";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const { decode } = await import(createRequire(repoRoot + "/package.json").resolve("@jridgewell/sourcemap-codec").replace(/\.cjs$/, ".mjs").replace(/dist\/sourcemap-codec\.umd\.js$/, "dist/sourcemap-codec.mjs"));
 
 export function category(src) {
   const s = src.replace(/\\/g, "/");

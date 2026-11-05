@@ -1,10 +1,13 @@
 // Functional smoke + screenshots for both builds. usage: node smoke.mjs <out.json>
 import fs from "node:fs";
-import { targets, launch, sleep } from "./lib.mjs";
+import os from "node:os";
+import path from "node:path";
+import { targets, launch, sleep, REPO } from "./lib.mjs";
 
 const T = targets({ maps: false });
 const out = {};
-const shotDir = "/home/user/dev/worktrees/kort-poc-40-vite/docs/poc-vite";
+const shotDir = process.env.SHOT_DIR || path.join(REPO, "docs/poc-vite");
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "kort-smoke-"));
 
 for (const [label, t] of Object.entries(T)) {
   const stop = await t.start();
@@ -18,12 +21,13 @@ for (const [label, t] of Object.entries(T)) {
 
     // 1. map loads
     await page.goto(t.url, { waitUntil: "load" });
-    r.mapCanvas = await page.locator("canvas.maplibregl-canvas").count();
     await sleep(5000);
+    r.mapCanvas = await page.locator("canvas.maplibregl-canvas").count();
     r.mapLoaded = await page.evaluate(() => !!document.querySelector(".maplibregl-canvas") && document.querySelector(".maplibregl-canvas").width > 100);
     await page.screenshot({ path: `${shotDir}/${label}-1440.png` });
 
     // 2. search
+    r.stednavneApi = await page.evaluate(async () => { const x = await fetch("/api/stednavne?q=Himmelbjerget"); return { status: x.status, contentType: x.headers.get("content-type") }; });
     const input = page.locator("#search-input");
     r.searchInput = await input.count();
     for (const [name, q] of [["stednavn", "Himmelbjerget"], ["adresse", "Rådhuspladsen 1"]]) {
@@ -53,7 +57,7 @@ for (const [label, t] of Object.entries(T)) {
       page2.waitForEvent("download", { timeout: 120000 }),
       page2.getByRole("button", { name: /Download PDF/ }).click(),
     ]);
-    const p = `/tmp/kort-smoke-${label}.pdf`;
+    const p = path.join(tmp, `${label}.pdf`);
     await dl.saveAs(p);
     r.pdf = { name: dl.suggestedFilename(), bytes: fs.statSync(p).size, ms: Date.now() - t0, header: fs.readFileSync(p).subarray(0, 5).toString() };
 

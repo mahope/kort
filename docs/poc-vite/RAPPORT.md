@@ -4,9 +4,10 @@ Gren `poc/40-vite` (fra `origin/main` e7aa242). Next-appen er urørt. Vite-versi
 
 ## Resultat i korte træk
 
+- **Alle tal gælder Vite 8.1.3 (Rolldown) + `@vitejs/plugin-react` 6.0.3, ikke 8.3.5 som jobbet bad om** (se afvigelse 1). De er ikke genmålt på 8.3.5, så de besvarer ikke issuets 8.3.5-spørgsmål direkte.
 - PoC'en virker: kortet, søgning (adresse), MGRS-gitter og PDF-eksport opfører sig ens i begge builds. Forsidens skærmbilleder er pixelidentiske (1440, 390 og MGRS, sha1 ens). **Nul ændringer i `src/`.**
 - First-load JS: 638 KB gz (Next) mod 544 KB gz (Vite), -94 KB (-15 %). 16 mod 4 JS-requests.
-- Mobil TBT 1.605 mod 553 ms, TTI 7,2 mod 5,1 s, performance 34 mod 86 (Lighthouse, simuleret throttling). Build 9,0 s mod 0,6 s.
+- Mobil TBT 1.605 mod 553 ms og TTI 7,2 mod 5,1 s (Lighthouse, simuleret throttling) er de pålidelige gevinster. Performance-scoren 34 mod 86 bør **ikke** citeres alene: den er domineret af et layout shift i Next-forsiden (CLS 0,389) og af en tom Vite-side (LCP=FCP). Med devtools-throttling er FCP/LCP dårligere i Vite (4,6 s mod 1,8 s). Build 9,0 s mod 0,6 s.
 - **Men:** Vites forside er tom, til JS er hentet. Med rigtig (devtools) throttling er FCP/LCP *dårligere* i Vite (4,6 s mod 1,8 s). Det store LCP/CLS-spring i den simulerede måling skyldes primært et layout shift i Next-forsiden (CLS 0,389), ikke bundleren.
 - Det meste af byte-gevinsten (jsPDF, ca. 100-117 KB gz, ligger i first-load, fordi `generator.ts` importerer den statisk) kan tages i Next med lazy-load. Bundleren er ikke den største løftestang.
 - **Anbefaling: A nu, og behold PoC'en som plan B.** Se nederst.
@@ -29,9 +30,11 @@ Gren `poc/40-vite` (fra `origin/main` e7aa242). Next-appen er urørt. Vite-versi
 | `package.json` | scripts `build:vite`, `preview:vite` (ingen nye afhængigheder) |
 | `poc-vite/measure/*.mjs` | `bundle`, `lh`, `lh-one`, `smoke` og hjælpere (genkørbare) |
 | `.gitignore` | `/poc-vite/dist/` |
+| `eslint.config.mjs` | Tilføjet `poc-vite/dist` til ignore, så `npm run lint` ikke lugger over build-output (eneste fil uden for `poc-vite/`, `docs/` og `package.json`; additiv) |
 
 **Shims (hver):**
 1. `next/dynamic` med `ssr:false` → `React.lazy` + `Suspense` (i `poc-vite/main.tsx`). Eneste Next-import på kortsiden.
+1b. **Drift-risiko:** `poc-vite/main.tsx` er en kopi af `src/app/page.tsx`. Ændringer i `page.tsx` skal spejles manuelt, ellers glider de to fra hinanden. I en rigtig migrering erstatter Vite-versionen `page.tsx`, så kopien forsvinder.
 2. `next/font/local` → `poc-vite/fonts.css` (brygada/schibsted som variabel-fonte, samme woff2).
 3. `process.env.NEXT_PUBLIC_*` → `define` i Vite-konfigurationen (Next inliner dem selv).
 4. `layout.tsx` (html-attributter, tema-script, meta) → `index.html`; `<Analytics/>` → direkte kald.
@@ -87,6 +90,10 @@ Sidste outputlinjer: `next build run3 9.04 s` / `vite build run3 0.58 s` (tid in
 | CLS | 0,389 | 0 | 0 | 0 |
 | TTI | 7.212 ms | 5.094 ms | 1.468 ms | 1.190 ms |
 | FCP | 917 ms | 907 ms | 258 ms | 248 ms |
+| *Kontrol, mobil, devtools-throttling (1 kørsel): FCP=LCP* | 1.797 ms | 4.574 ms | | |
+| *Kontrol, mobil, devtools-throttling (1 kørsel): TTI* | 7.311 ms | 5.802 ms | | |
+
+**Performance-scoren (34 mod 86) er ikke et rent bundler-tal**: se forbeholdet nedenfor. Brug TBT og TTI som hovedtal; kontrolrækkerne viser, at Vite er dårligere på første paint under rigtig netværksdrosling.
 
 Enkeltkørsler spreder meget (mobil Vite perf 79-89, TBT 391-899 ms; maskinen var belastet af andre jobs, load op til 3,9), så brug retningen, ikke decimalerne. Next mobil perf var 32-37.
 
@@ -103,7 +110,7 @@ Sidste outputlinje: `{"key":"vite-desktop","value":{"n":3,"perf":95,"a11y":94,"t
 |---|---|---|
 | Kort indlæses (canvas, 0 konsol-/sidefejl) | ja | ja |
 | Søgning, adresse ("Rådhuspladsen 1") | 6 forslag | 6 forslag |
-| Søgning, stednavn ("Himmelbjerget") | 3 forslag | **0 forslag** (`/api/stednavne` findes ikke i Vite) |
+| Søgning, stednavn ("Himmelbjerget") | 3 forslag | **0 forslag** (`/api/stednavne` findes ikke i Vite; `vite preview` svarer med `index.html`, og appen sluger parse-fejlen tavst. `smoke.mjs` logger nu `stednavneApi` med status og content-type) |
 | MGRS `?cs=mgrs&g=1`: parametre bevaret, 2 afkrydsninger | ja | ja |
 | PDF A4, 150 dpi, København (`c=55.6761,12.5683,12`) | 944.933 B, `%PDF-` | 944.933 B, `%PDF-` |
 
@@ -111,7 +118,7 @@ Bemærkning: PDF'en med standardcentret (Kattegat, åbent hav) er kun 28.720 B, 
 
 Sidste outputlinje: `vite {"errors":[],"mapCanvas":0,"mapLoaded":true,... "pdf":{"name":"kort_125k_A4_202611051250.pdf","bytes":944933,"ms":1598,"header":"%PDF-"}}`. Tests i øvrigt: `npx tsc --noEmit` exit 0; `npx vitest run`: `Tests  142 passed (142)` (15 filer), uændret.
 
-Skærmbilleder: `docs/poc-vite/{next,vite}-1440.png`, `-390.png`, `-mgrs-1440.png`. Hver Next/Vite-par er byte-identiske (`cmp`), så en side-om-side-fil ville vise to ens billeder. Kortfliserne var færdigindlæst ved optagelsen.
+Skærmbilleder: `docs/poc-vite/{next,vite}-1440.png`, `-390.png`, `-mgrs-1440.png`. Hvert Next/Vite-par er byte-identisk (`cmp`; sha1 ens), så en side-om-side-fil ville vise to ens billeder. Kortfliserne var færdigindlæst ved optagelsen.
 
 ## Paritetsliste (hvad mangler, før Vite kan erstatte Next)
 
@@ -156,6 +163,7 @@ Begrundelse:
 
 ```
 npm run build && npm run build:vite
+# stier udledes af scriptets placering; værktøjer (playwright-core, lighthouse) forventes i $POC_TOOLS_DIR (standard ~/dev/poc-tools-40)
 node poc-vite/measure/bundle.mjs docs/poc-vite/data/bundle.json   # kræver sourcemap-builds (se lib.mjs)
 node poc-vite/measure/lh.mjs docs/poc-vite/data/lighthouse.json
 node poc-vite/measure/smoke.mjs docs/poc-vite/data/smoke.json

@@ -1,7 +1,14 @@
 import { spawn } from "node:child_process";
 import net from "node:net";
+import os from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-export const TOOLS = "/home/user/dev/poc-tools-40/node_modules";
+// Root of the repo/worktree, derived from this file (poc-vite/measure/lib.mjs).
+export const REPO = process.env.POC_REPO || path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+// Isolated tool install (playwright-core, lighthouse) outside the repo; override with POC_TOOLS_DIR.
+export const TOOLS_DIR = process.env.POC_TOOLS_DIR || path.join(os.homedir(), "dev/poc-tools-40");
+export const TOOLS = `${TOOLS_DIR}/node_modules`;
 export const CHROME = "/usr/bin/google-chrome";
 export const { chromium } = await import(`${TOOLS}/playwright-core/index.mjs`);
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -27,13 +34,12 @@ export async function startServer(cmd, args, cwd, port) {
 }
 
 export const NEXT_DIR = process.env.NEXT_DIR; // dir containing .next to serve
-export const REPO = "/home/user/dev/worktrees/kort-poc-40-vite";
 export const NEXT_PORT = 3100, VITE_PORT = 4173;
 
 /** targets: label -> {url, start()} */
 export function targets({ maps = false } = {}) {
-  const nextCwd = maps ? "/home/user/dev/poc-tools-40/nextcopy" : REPO;
-  const viteOut = maps ? "/home/user/dev/poc-tools-40/vite-map" : `${REPO}/poc-vite/dist`;
+  const nextCwd = maps ? `${TOOLS_DIR}/nextcopy` : REPO;
+  const viteOut = maps ? `${TOOLS_DIR}/vite-map` : `${REPO}/poc-vite/dist`;
   return {
     next: {
       url: `http://127.0.0.1:${NEXT_PORT}/`,
