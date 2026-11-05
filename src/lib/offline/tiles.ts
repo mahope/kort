@@ -34,10 +34,14 @@ const ORIGIN_Y = Math.PI * EPSG3857_RADIUS;
  * policy forbids bulk downloads) and the vector "skærmkort" needs style, glyphs
  * and sprites, which are not tile-addressable.
  */
-const SAVEABLE_BASE: Partial<Record<BaseLayer, { tiles: string[] }>> = (() => {
-  const all = getRasterBaseLayers("screen");
-  return { ortofoto: all.ortofoto, dtk25: all.dtk25, historisk_hoeje: all.historisk_hoeje, historisk_lave: all.historisk_lave };
-})();
+const SCREEN_RASTER = getRasterBaseLayers("screen");
+const SAVEABLE_BASE: Partial<Record<BaseLayer, { tiles: string[] }>> = {
+  ortofoto: SCREEN_RASTER.ortofoto,
+  dtk25: SCREEN_RASTER.dtk25,
+  historisk_hoeje: SCREEN_RASTER.historisk_hoeje,
+  historisk_lave: SCREEN_RASTER.historisk_lave,
+};
+
 /** Rough average bytes per tile, measured on JPEG/PNG responses from Dataforsyningen. */
 const AVG_TILE_BYTES: Record<string, number> = {
   ortofoto: 24 * 1024,

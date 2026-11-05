@@ -9,6 +9,8 @@ import { BLANK_STYLE, getRasterBaseLayers, OVERLAY_SOURCES } from "@/lib/map/sou
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
 import { timed } from "./timing";
 
+const PRINT_RASTER_BASE_LAYERS = getRasterBaseLayers("print");
+
 // JPEG quality for the rendered map image embedded in the PDF.
 const MAP_JPEG_QUALITY = 0.92;
 
@@ -194,7 +196,7 @@ export async function renderMapToImage({
     await waitForMapLoad(map);
 
     // Add raster base layer if not skaermkort
-    const rasterSource = getRasterBaseLayers("print")[baseLayer];
+    const rasterSource = PRINT_RASTER_BASE_LAYERS[baseLayer];
     if (rasterSource) {
       map.addSource(`base-${baseLayer}`, {
         type: "raster",
