@@ -1,0 +1,54 @@
+{
+  "next": {
+    "errors": [],
+    "mapCanvas": 0,
+    "mapLoaded": true,
+    "searchInput": 1,
+    "search_stednavn": {
+      "expanded": "true",
+      "options": 3
+    },
+    "search_adresse": {
+      "expanded": "true",
+      "options": 6
+    },
+    "mgrs": {
+      "url": "http://127.0.0.1:3100/?cs=mgrs&c=56.00000%2C10.40000%2C7.0&l=dtk&v=kl&s=25000&f=A4&o=p&d=300&g=1",
+      "keptParams": true,
+      "checkedBoxes": 2
+    },
+    "pdfUrlState": "http://127.0.0.1:3100/?cs=utm&c=55.67610%2C12.56830%2C12.0&l=dtk&v=kl&s=25000&f=A4&o=p&d=150",
+    "pdf": {
+      "name": "kort_125k_A4_202611051250.pdf",
+      "bytes": 944933,
+      "ms": 2453,
+      "header": "%PDF-"
+    }
+  },
+  "vite": {
+    "errors": [],
+    "mapCanvas": 0,
+    "mapLoaded": true,
+    "searchInput": 1,
+    "search_stednavn": {
+      "expanded": "true",
+      "options": 0
+    },
+    "search_adresse": {
+      "expanded": "true",
+      "options": 6
+    },
+    "mgrs": {
+      "url": "http://127.0.0.1:4173/?cs=mgrs&c=56.00000%2C10.40000%2C7.0&l=dtk&v=kl&s=25000&f=A4&o=p&d=300&g=1",
+      "keptParams": true,
+      "checkedBoxes": 2
+    },
+    "pdfUrlState": "http://127.0.0.1:4173/?cs=utm&c=55.67610%2C12.56830%2C12.0&l=dtk&v=kl&s=25000&f=A4&o=p&d=150",
+    "pdf": {
+      "name": "kort_125k_A4_202611051250.pdf",
+      "bytes": 944933,
+      "ms": 1598,
+      "header": "%PDF-"
+    }
+  }
+}

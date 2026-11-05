@@ -1,0 +1,107 @@
+{
+  "next": {
+    "shifts": [
+      {
+        "el": "body.antialiased > div.flex > main.relative",
+        "score": 0.3888213851761847
+      },
+      {
+        "score": 0.0009583545946258037
+      }
+    ],
+    "lcpPhases": [
+      {
+        "type": "table",
+        "headings": [
+          {
+            "key": "label",
+            "valueType": "text",
+            "label": "Subpart"
+          },
+          {
+            "key": "duration",
+            "valueType": "ms",
+            "label": "Duration"
+          }
+        ],
+        "items": [
+          {
+            "subpart": "timeToFirstByte",
+            "label": "Time to first byte",
+            "duration": 21.11900000023842
+          },
+          {
+            "subpart": "elementRenderDelay",
+            "label": "Element render delay",
+            "duration": 1775.4619999997615
+          }
+        ]
+      }
+    ],
+    "rendering": 0,
+    "mainThread": 4002,
+    "bootup": 2699,
+    "fcp": 1796.581,
+    "lcp": 1796.581,
+    "interactive": 7310.893
+  },
+  "vite": {
+    "shifts": [
+      {
+        "el": "div.overflow-y-auto > div.space-y-4 > div.border-b > p.mt-1",
+        "score": 0.0004789834542769344
+      }
+    ],
+    "lcpPhases": [
+      {
+        "type": "table",
+        "headings": [
+          {
+            "key": "label",
+            "valueType": "text",
+            "label": "Subpart"
+          },
+          {
+            "key": "duration",
+            "valueType": "ms",
+            "label": "Duration"
+          }
+        ],
+        "items": [
+          {
+            "subpart": "timeToFirstByte",
+            "label": "Time to first byte",
+            "duration": 7.38
+          },
+          {
+            "subpart": "elementRenderDelay",
+            "label": "Element render delay",
+            "duration": 4566.85
+          }
+        ]
+      },
+      {
+        "type": "node",
+        "lhId": "page-0-H1",
+        "path": "1,HTML,1,BODY,0,DIV,0,DIV,0,DIV,1,DIV,0,DIV,0,DIV,1,H1",
+        "selector": "div.overflow-y-auto > div.space-y-4 > div.border-b > h1.mt-3",
+        "boundingRect": {
+          "top": 551,
+          "bottom": 575,
+          "left": 16,
+          "right": 396,
+          "width": 380,
+          "height": 24
+        },
+        "snippet": "<h1 class=\"mt-3 text-[22px] md:mt-4 md:text-[26px] text-foreground\">",
+        "nodeLabel": "Topografiske kort"
+      }
+    ],
+    "rendering": 0,
+    "mainThread": 1642,
+    "bootup": 756,
+    "fcp": 4574.23,
+    "lcp": 4574.23,
+    "interactive": 5802.158
+  }
+}

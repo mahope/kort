@@ -1,0 +1,207 @@
+{
+  "runs": [
+    {
+      "label": "next",
+      "ff": "mobile",
+      "round": 1,
+      "load1": "1.02",
+      "perf": 37,
+      "a11y": 94,
+      "tbt": 1117,
+      "lcp": 5681,
+      "fcp": 913,
+      "cls": 0.389,
+      "tti": 6679
+    },
+    {
+      "label": "vite",
+      "ff": "mobile",
+      "round": 1,
+      "load1": "0.73",
+      "perf": 86,
+      "a11y": 94,
+      "tbt": 553,
+      "lcp": 907,
+      "fcp": 907,
+      "cls": 0,
+      "tti": 5094
+    },
+    {
+      "label": "next",
+      "ff": "desktop",
+      "round": 1,
+      "load1": "1.01",
+      "perf": 96,
+      "a11y": 94,
+      "tbt": 152,
+      "lcp": 257,
+      "fcp": 257,
+      "cls": 0,
+      "tti": 1468
+    },
+    {
+      "label": "vite",
+      "ff": "desktop",
+      "round": 1,
+      "load1": "0.86",
+      "perf": 99,
+      "a11y": 94,
+      "tbt": 67,
+      "lcp": 248,
+      "fcp": 248,
+      "cls": 0,
+      "tti": 1055
+    },
+    {
+      "label": "vite",
+      "ff": "mobile",
+      "round": 2,
+      "load1": "1.14",
+      "perf": 89,
+      "a11y": 94,
+      "tbt": 391,
+      "lcp": 905,
+      "fcp": 905,
+      "cls": 0,
+      "tti": 4928
+    },
+    {
+      "label": "next",
+      "ff": "mobile",
+      "round": 2,
+      "load1": "1.65",
+      "perf": 34,
+      "a11y": 94,
+      "tbt": 1605,
+      "lcp": 5535,
+      "fcp": 917,
+      "cls": 0.389,
+      "tti": 7212
+    },
+    {
+      "label": "vite",
+      "ff": "desktop",
+      "round": 2,
+      "load1": "2.94",
+      "perf": 94,
+      "a11y": 94,
+      "tbt": 186,
+      "lcp": 248,
+      "fcp": 248,
+      "cls": 0,
+      "tti": 1190
+    },
+    {
+      "label": "next",
+      "ff": "desktop",
+      "round": 2,
+      "load1": "3.87",
+      "perf": 93,
+      "a11y": 94,
+      "tbt": 198,
+      "lcp": 258,
+      "fcp": 258,
+      "cls": 0,
+      "tti": 1379
+    },
+    {
+      "label": "next",
+      "ff": "mobile",
+      "round": 3,
+      "load1": "3.08",
+      "perf": 32,
+      "a11y": 94,
+      "tbt": 1934,
+      "lcp": 5668,
+      "fcp": 922,
+      "cls": 0.389,
+      "tti": 7495
+    },
+    {
+      "label": "vite",
+      "ff": "mobile",
+      "round": 3,
+      "load1": "3.01",
+      "perf": 79,
+      "a11y": 94,
+      "tbt": 899,
+      "lcp": 912,
+      "fcp": 912,
+      "cls": 0,
+      "tti": 5379
+    },
+    {
+      "label": "next",
+      "ff": "desktop",
+      "round": 3,
+      "load1": "2.85",
+      "perf": 92,
+      "a11y": 94,
+      "tbt": 212,
+      "lcp": 260,
+      "fcp": 260,
+      "cls": 0,
+      "tti": 1486
+    },
+    {
+      "label": "vite",
+      "ff": "desktop",
+      "round": 3,
+      "load1": "2.36",
+      "perf": 95,
+      "a11y": 94,
+      "tbt": 179,
+      "lcp": 250,
+      "fcp": 250,
+      "cls": 0,
+      "tti": 1237
+    }
+  ],
+  "summary": {
+    "next-mobile": {
+      "n": 3,
+      "perf": 34,
+      "a11y": 94,
+      "tbt": 1605,
+      "lcp": 5668,
+      "fcp": 917,
+      "cls": 0.389,
+      "tti": 7212
+    },
+    "next-desktop": {
+      "n": 3,
+      "perf": 93,
+      "a11y": 94,
+      "tbt": 198,
+      "lcp": 258,
+      "fcp": 258,
+      "cls": 0,
+      "tti": 1468
+    },
+    "vite-mobile": {
+      "n": 3,
+      "perf": 86,
+      "a11y": 94,
+      "tbt": 553,
+      "lcp": 907,
+      "fcp": 907,
+      "cls": 0,
+      "tti": 5094
+    },
+    "vite-desktop": {
+      "n": 3,
+      "perf": 95,
+      "a11y": 94,
+      "tbt": 179,
+      "lcp": 248,
+      "fcp": 248,
+      "cls": 0,
+      "tti": 1190
+    }
+  },
+  "loadAtEnd": [
+    2.29,
+    3.99,
+    3.94
+  ]
+}

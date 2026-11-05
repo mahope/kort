@@ -1,0 +1,120 @@
+{
+  "next": {
+    "shifts": [
+      {
+        "el": "body.antialiased > div.flex > main.relative",
+        "score": 0.3888213851761847
+      }
+    ],
+    "lcpPhases": [
+      {
+        "type": "table",
+        "headings": [
+          {
+            "key": "label",
+            "valueType": "text",
+            "label": "Subpart"
+          },
+          {
+            "key": "duration",
+            "valueType": "ms",
+            "label": "Duration"
+          }
+        ],
+        "items": [
+          {
+            "subpart": "timeToFirstByte",
+            "label": "Time to first byte",
+            "duration": 26.269
+          },
+          {
+            "subpart": "elementRenderDelay",
+            "label": "Element render delay",
+            "duration": 602.874
+          }
+        ]
+      },
+      {
+        "type": "node",
+        "lhId": "page-0-H1",
+        "path": "1,HTML,1,BODY,2,DIV,0,DIV,1,DIV,0,DIV,0,DIV,1,H1",
+        "selector": "div.overflow-y-auto > div.space-y-4 > div.border-b > h1.mt-3",
+        "boundingRect": {
+          "top": 551,
+          "bottom": 575,
+          "left": 16,
+          "right": 396,
+          "width": 380,
+          "height": 24
+        },
+        "snippet": "<h1 class=\"mt-3 text-[22px] md:mt-4 md:text-[26px] text-foreground\">",
+        "nodeLabel": "Topografiske kort"
+      }
+    ],
+    "rendering": 0,
+    "mainThread": 3665,
+    "bootup": 2950,
+    "fcp": 913.8538000000001,
+    "lcp": 5485.1345,
+    "interactive": 7020.8114000000005
+  },
+  "vite": {
+    "shifts": [
+      {
+        "el": "div.overflow-y-auto > div.space-y-4 > div.border-b > p.mt-1",
+        "score": 0.0004789834542769344
+      }
+    ],
+    "lcpPhases": [
+      {
+        "type": "table",
+        "headings": [
+          {
+            "key": "label",
+            "valueType": "text",
+            "label": "Subpart"
+          },
+          {
+            "key": "duration",
+            "valueType": "ms",
+            "label": "Duration"
+          }
+        ],
+        "items": [
+          {
+            "subpart": "timeToFirstByte",
+            "label": "Time to first byte",
+            "duration": 6.951
+          },
+          {
+            "subpart": "elementRenderDelay",
+            "label": "Element render delay",
+            "duration": 500.452
+          }
+        ]
+      },
+      {
+        "type": "node",
+        "lhId": "page-0-H1",
+        "path": "1,HTML,1,BODY,0,DIV,0,DIV,0,DIV,1,DIV,0,DIV,0,DIV,1,H1",
+        "selector": "div.overflow-y-auto > div.space-y-4 > div.border-b > h1.mt-3",
+        "boundingRect": {
+          "top": 551,
+          "bottom": 575,
+          "left": 16,
+          "right": 396,
+          "width": 380,
+          "height": 24
+        },
+        "snippet": "<h1 class=\"mt-3 text-[22px] md:mt-4 md:text-[26px] text-foreground\">",
+        "nodeLabel": "Topografiske kort"
+      }
+    ],
+    "rendering": 0,
+    "mainThread": 2650,
+    "bootup": 2004,
+    "fcp": 909.171,
+    "lcp": 909.171,
+    "interactive": 5427.171
+  }
+}
