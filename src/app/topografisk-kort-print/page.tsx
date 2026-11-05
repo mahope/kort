@@ -86,6 +86,7 @@ export default function LandingPage() {
           </p>
           <Link
             href="/"
+            prefetch={false}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-base font-semibold text-on-primary hover:bg-primary-hover transition-colors"
           >
             Start kortudskrivning
@@ -200,6 +201,7 @@ export default function LandingPage() {
           <div className="mt-8">
             <Link
               href="/"
+              prefetch={false}
               className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary hover:bg-primary-hover transition-colors"
             >
               Prøv det nu &mdash; det er gratis
@@ -265,6 +267,7 @@ export default function LandingPage() {
           </p>
           <Link
             href="/"
+            prefetch={false}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-base font-semibold text-on-primary hover:bg-primary-hover transition-colors"
           >
             Gå til kortet
