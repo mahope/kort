@@ -14,3 +14,17 @@ PLAYWRIGHT_DIR=/sti/til/node_modules node tests/e2e/offline.mjs
 afhængighed i repoet). Fliskald til Dataforsyningen mockes, så der ikke kræves token.
 
 TODO: Afsnittet hører hjemme i README under "Tests"; README er ikke rørt her pga. den igangværende MGRS-gren.
+
+## Gem området (issue #36)
+
+`tests/e2e/offline-area.mjs` tester "Offline"-sektionen mod en mock-server:
+plan med antal og størrelse, højst 6 samtidige requests, pause, afbryd (fjerner
+delvist hentede fliser), fuld hentning, offline-panorering/zoom inden for området
+(alle fliser besvares 200 fra cachen) og sletning. Sæt `SHOT_DIR` for skærmbilleder.
+
+```bash
+PLAYWRIGHT_DIR=/sti/til/node_modules node tests/e2e/offline-area.mjs
+```
+
+Gemte fliser ligger i cachen `topoprint-offline-v1`, adskilt fra `topoprint-tiles-v3`
+(loft 3.000), så de aldrig trimmes væk. Områdelisten ligger i localStorage (`offline-areas`).
