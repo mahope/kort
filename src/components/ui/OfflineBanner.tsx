@@ -28,7 +28,7 @@ export function OfflineBanner() {
       aria-live="polite"
       className="fixed top-0 left-0 right-0 z-50 bg-amber-500 text-white text-center text-sm py-1.5 px-4 shadow"
     >
-      Du er offline — cached kort-tiles er stadig tilgængelige
+      Du er offline — appen og de kortfliser, du allerede har set, virker stadig
     </div>
   );
 }
