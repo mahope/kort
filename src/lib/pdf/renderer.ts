@@ -6,9 +6,54 @@ import type { DrawnFeature } from "@/stores/drawStore";
 import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
 import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
 import type { RasterSourceConfig } from "@/lib/map/sources";
+import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
 
 // JPEG quality for the rendered map image embedded in the PDF.
 export const MAP_JPEG_QUALITY = 0.92;
+
+// Failed tiles are retried this many times, with a growing pause, before the
+// render is aborted.
+export const TILE_RETRIES = 2;
+export const TILE_RETRY_PAUSE_MS = 1000;
+
+const OFFLINE_MESSAGE = "Du er offline: kortet kan ikke hentes";
+
+function isOffline(): boolean {
+  return typeof navigator !== "undefined" && navigator.onLine === false;
+}
+
+function missingTilesMessage(count: number): string {
+  const tiles = count === 1 ? "1 kortflise mangler" : `${count} kortfliser mangler`;
+  return `${tiles}, så PDF'en ville have huller i kortet. Prøv igen.`;
+}
+
+/** Tracks tiles that errored and have not (yet) loaded successfully. */
+function trackFailedTiles(map: maplibregl.Map) {
+  const failed = new Map<string, string>(); // tile key -> source id
+  let anonymous = 0;
+  map.on("error", (e) => {
+    const ev = e as unknown as { sourceId?: string; tile?: { tileID?: { key?: number | string } } };
+    if (!ev.tile || !ev.sourceId) return; // style/glyph errors are not tile errors
+    const key = `${ev.sourceId}/${ev.tile.tileID?.key ?? `anon${anonymous++}`}`;
+    failed.set(key, ev.sourceId);
+  });
+  map.on("data", (e) => {
+    const ev = e as unknown as { dataType?: string; sourceId?: string; tile?: { tileID?: { key?: number | string } } };
+    if (ev.dataType === "source" && ev.tile && ev.sourceId) {
+      failed.delete(`${ev.sourceId}/${ev.tile.tileID?.key}`);
+    }
+  });
+  return failed;
+}
+
+function reloadSources(map: maplibregl.Map, sourceIds: Iterable<string>) {
+  const style = (map as unknown as { style?: { _reloadSource?: (id: string) => void } }).style;
+  for (const id of new Set(sourceIds)) style?._reloadSource?.(id);
+}
+
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
 
 function getDashArray(lineStyle: string): number[] | undefined {
   switch (lineStyle) {
@@ -45,6 +90,13 @@ export async function renderMapToImage({
   scale = 25000,
   bearing = 0,
 }: RenderOptions): Promise<string> {
+  if (isOffline()) throw new Error(OFFLINE_MESSAGE);
+
+  const maxSize = getMaxCanvasSize();
+  if (Math.max(canvasWidth, canvasHeight) > maxSize) {
+    throw new Error(canvasLimitMessage(canvasWidth, canvasHeight, maxSize));
+  }
+
   // Create hidden container at target resolution
   const container = document.createElement("div");
   container.style.position = "absolute";
@@ -102,6 +154,7 @@ export async function renderMapToImage({
     }
 
     map = new maplibregl.Map(mapOptions);
+    const failedTiles = trackFailedTiles(map);
 
     await waitForMapLoad(map);
 
@@ -216,11 +269,29 @@ export async function renderMapToImage({
 
     // Wait for all tiles (including raster overlays) to load
     await waitForTilesLoaded(map);
+    for (let attempt = 1; failedTiles.size > 0 && attempt <= TILE_RETRIES; attempt++) {
+      if (isOffline()) break;
+      await sleep(TILE_RETRY_PAUSE_MS * attempt);
+      reloadSources(map, failedTiles.values());
+      await waitForTilesLoaded(map);
+    }
+    if (failedTiles.size > 0) {
+      throw new Error(isOffline() ? OFFLINE_MESSAGE : missingTilesMessage(failedTiles.size));
+    }
+
+    // WebGL silently clamps oversized canvases; never deliver a downscaled map.
+    const canvas = map.getCanvas();
+    if (canvas.width !== canvasWidth || canvas.height !== canvasHeight) {
+      throw new Error(
+        `Kortbilledet blev ${canvas.width} x ${canvas.height} px i stedet for ${canvasWidth} x ${canvasHeight} px. ` +
+          canvasLimitMessage(canvasWidth, canvasHeight, Math.min(maxSize, Math.max(canvas.width, canvas.height)))
+      );
+    }
 
     // Encode straight from the map's own canvas (preserveDrawingBuffer keeps it
     // valid) before cleanup — avoids cloning the full-resolution canvas a second
     // time, which roughly halves peak memory for large formats.
-    return map.getCanvas().toDataURL("image/jpeg", MAP_JPEG_QUALITY);
+    return canvas.toDataURL("image/jpeg", MAP_JPEG_QUALITY);
   } finally {
     // Always release the WebGL context, even if load/tile waits time out —
     // otherwise repeated failures exhaust the browser's ~16 context limit.
