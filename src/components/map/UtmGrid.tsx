@@ -4,19 +4,14 @@ import { useEffect, useMemo, useState, memo } from "react";
 import { Source, Layer, useMap } from "react-map-gl/maplibre";
 import type { Map as MaplibreMap } from "maplibre-gl";
 import { useMapStore } from "@/stores/mapStore";
-import { latlngToUtm } from "@/lib/geo/utm";
+import { computeZonedGrid, gridIntersections, type ZonedGridLine } from "@/lib/geo/zoneGrid";
+import { mgrsSquare, type GridSystem } from "@/lib/geo/coordinates";
 import {
-  computeGridLines,
-  dominantAxis,
   dropOverlapping,
-  edgeCrossings,
-  formatGridLabel,
   formatSpacing,
-  labelStep,
   metersPerPixel,
   resolveScreenSpacing,
   resolveUtmZone,
-  type EdgeSample,
   type FormattedLabel,
   type GridLabelFormat,
   type GridLineClass,
@@ -24,7 +19,6 @@ import {
 } from "@/lib/geo/utmGrid";
 
 const LINE_COLOR = "#1e3a8a";
-const EDGE_SAMPLES = 32;
 // Strip reserved along the left edge for northing labels; top labels start after it.
 const LEFT_STRIP_PX = 44;
 const TOP_STRIP_PX = 22;
@@ -67,7 +61,9 @@ function UtmGridImpl() {
   const gridSpacing = useMapStore((s) => s.gridSpacing);
   const showLabels = useMapStore((s) => s.showGridLabels);
   const labelFormat = useMapStore((s) => s.gridLabelFormat);
-  const zoneMode = useMapStore((s) => s.utmZoneMode);
+  const savedZoneMode = useMapStore((s) => s.utmZoneMode);
+  const system = useMapStore((s) => s.gridSystem);
+  const zoneMode = system === "mgrs" ? "std" : savedZoneMode;
   const [view, setView] = useState<ViewInfo | null>(null);
 
   // Recompute the grid only when a move ends — not on every animation frame.
@@ -90,9 +86,9 @@ function UtmGridImpl() {
   );
   const spacing = resolved?.spacing ?? null;
 
+  const lines = useMemo(() => view && spacing ? computeZonedGrid(view.bounds, spacing, zoneMode, view.zone) : [], [view, spacing, zoneMode]);
   const gridData = useMemo(() => {
-    if (!view || !spacing) return null;
-    const lines = computeGridLines(view.bounds, view.zone, spacing);
+    if (!lines.length || !spacing) return null;
     return {
       type: "FeatureCollection" as const,
       features: lines.map((l) => {
@@ -104,7 +100,7 @@ function UtmGridImpl() {
         };
       }),
     };
-  }, [view, spacing]);
+  }, [lines, spacing]);
 
   if (!showGrid || !view) return null;
 
@@ -126,13 +122,16 @@ function UtmGridImpl() {
       {showLabels && spacing && mapRef && (
         <GridEdgeLabels
           map={mapRef.getMap()}
-          zone={view.zone}
+          lines={lines}
+          system={system}
           spacing={spacing}
           format={labelFormat}
         />
       )}
       <GridBadge
         zone={view.zone}
+        system={system}
+        square={mgrsSquare(useMapStore.getState().viewState.latitude, useMapStore.getState().viewState.longitude)}
         spacing={spacing}
         requested={resolved?.requested ?? null}
         coarsened={resolved?.coarsened ?? false}
@@ -146,25 +145,6 @@ interface PlacedLabel {
   label: FormattedLabel;
 }
 
-function sampleEdge(
-  map: MaplibreMap,
-  zone: number,
-  from: [number, number],
-  to: [number, number],
-  length: number
-): EdgeSample[] {
-  const out: EdgeSample[] = [];
-  for (let i = 0; i <= EDGE_SAMPLES; i++) {
-    const f = i / EDGE_SAMPLES;
-    const x = from[0] + (to[0] - from[0]) * f;
-    const y = from[1] + (to[1] - from[1]) * f;
-    const ll = map.unproject([x, y]);
-    const u = latlngToUtm(ll.lat, ll.lng, zone);
-    out.push({ t: f * length, e: u.easting, n: u.northing });
-  }
-  return out;
-}
-
 /**
  * One coordinate per grid line along the top (eastings) and left (northings)
  * edge of the map, thinned so labels never overlap. Positions follow the map
@@ -172,12 +152,14 @@ function sampleEdge(
  */
 function GridEdgeLabels({
   map,
-  zone,
+  lines,
+  system,
   spacing,
   format,
 }: {
   map: MaplibreMap;
-  zone: number;
+  lines: ZonedGridLine[];
+  system: GridSystem;
   spacing: number;
   format: GridLabelFormat;
 }) {
@@ -191,27 +173,15 @@ function GridEdgeLabels({
       const w = el.clientWidth;
       const h = el.clientHeight;
       if (!w || !h) return;
-      const mpp = metersPerPixel(map.getCenter().lat, map.getZoom());
-      // Label widths estimated from the widest possible easting (13 px bold digits ≈ 8 px).
-      const widest = formatGridLabel(spacing < 1000 ? 999900 : 999000, format);
-      const topGap = widest.main.length * 8 + widest.prefix.length * 6 + 16;
+      const topGap = system === "mgrs" ? 66 : 72;
       const leftGap = 24;
-
-      const topSamples = sampleEdge(map, zone, [0, TOP_STRIP_PX / 2], [w, TOP_STRIP_PX / 2], w);
-      const topAxis = dominantAxis(topSamples);
+      const project = (lng: number, lat: number) => map.project([lng, lat]);
       const top = dropOverlapping(
-        edgeCrossings(topSamples, topAxis, labelStep(spacing, 1 / mpp, topGap))
-          .filter((c) => c.t > LEFT_STRIP_PX + topGap / 2 && c.t < w - topGap / 2),
-        topGap
-      ).map((c) => ({ t: c.t, label: formatGridLabel(c.value, format) }));
-
-      const leftSamples = sampleEdge(map, zone, [LEFT_STRIP_PX / 2, 0], [LEFT_STRIP_PX / 2, h], h);
-      const leftAxis = dominantAxis(leftSamples);
+        gridIntersections(lines, project, [0, TOP_STRIP_PX / 2], [w, TOP_STRIP_PX / 2], system, format)
+          .filter((c) => c.t > LEFT_STRIP_PX + topGap / 2 && c.t < w - topGap / 2), topGap);
       const left = dropOverlapping(
-        edgeCrossings(leftSamples, leftAxis, labelStep(spacing, 1 / mpp, leftGap))
-          .filter((c) => c.t > TOP_STRIP_PX + leftGap / 2 && c.t < h - LEFT_BOTTOM_RESERVE_PX),
-        leftGap
-      ).map((c) => ({ t: c.t, label: formatGridLabel(c.value, format) }));
+        gridIntersections(lines, project, [LEFT_STRIP_PX / 2, 0], [LEFT_STRIP_PX / 2, h], system, format)
+          .filter((c) => c.t > TOP_STRIP_PX + leftGap / 2 && c.t < h - LEFT_BOTTOM_RESERVE_PX), leftGap);
 
       setLabels({ top, left });
     };
@@ -226,7 +196,7 @@ function GridEdgeLabels({
       map.off("move", schedule);
       map.off("resize", schedule);
     };
-  }, [map, zone, spacing, format]);
+  }, [map, lines, system, spacing, format]);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden" aria-hidden="true">
@@ -255,11 +225,15 @@ function GridLabel({ label, style }: { label: FormattedLabel; style: React.CSSPr
 /** Zone/datum badge plus a note when the grid was coarsened or hidden. */
 function GridBadge({
   zone,
+  system,
+  square,
   spacing,
   requested,
   coarsened,
 }: {
   zone: number;
+  system: GridSystem;
+  square: string;
   spacing: number | null;
   requested: number | null;
   coarsened: boolean;
@@ -274,7 +248,7 @@ function GridBadge({
       data-testid="utm-grid-badge"
     >
       <div className="font-semibold">
-        UTM {zone}N · ETRS89{spacing ? ` · ${formatSpacing(spacing)}` : ""}
+        {system === "mgrs" ? `MGRS ${square} · WGS84` : `UTM ${zone}N · ETRS89`}{spacing ? ` · ${formatSpacing(spacing)}` : ""}
       </div>
       {note && <div className="text-slate-600">{note}</div>}
     </div>

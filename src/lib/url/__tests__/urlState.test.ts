@@ -151,3 +151,13 @@ describe("deserializeState validation", () => {
     expect(state.lng).toBeUndefined();
   });
 });
+
+describe("coordinate system links", () => {
+  it("round trips MGRS, even with the grid hidden", () => {
+    expect(deserializeState(serializeState({ gridSystem: "mgrs" })).gridSystem).toBe("mgrs");
+  });
+  it("keeps old grid links in UTM and ignores unknown systems", () => {
+    expect(deserializeState("?g=1").gridSystem).toBe("utm");
+    expect(deserializeState("?cs=invalid").gridSystem).toBeUndefined();
+  });
+});

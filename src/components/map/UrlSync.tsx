@@ -44,6 +44,7 @@ export function UrlSync() {
       }
     }
     if (state.showUtmGrid) mapStore.setShowUtmGrid(true);
+    if (state.gridSystem) mapStore.setGridSystem(state.gridSystem);
     if (state.gridSpacing) mapStore.setGridSpacing(state.gridSpacing);
     if (state.showGridLabels === false) mapStore.setShowGridLabels(false);
     if (state.gridLabelFormat) mapStore.setGridLabelFormat(state.gridLabelFormat);
@@ -96,6 +97,7 @@ function updateUrl() {
       .filter((o) => o.enabled)
       .map((o) => ({ id: o.id, opacity: o.opacity })),
     showUtmGrid: mapState.showUtmGrid,
+    gridSystem: mapState.gridSystem,
     gridSpacing: mapState.gridSpacing,
     showGridLabels: mapState.showGridLabels,
     gridLabelFormat: mapState.gridLabelFormat,

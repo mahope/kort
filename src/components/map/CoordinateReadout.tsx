@@ -2,52 +2,46 @@
 
 import { useMapStore } from "@/stores/mapStore";
 import { useUiStore } from "@/stores/uiStore";
-import { latlngToUtm } from "@/lib/geo/utm";
-import { resolveUtmZone } from "@/lib/geo/utmGrid";
+import { pointCoordinates } from "@/lib/geo/coordinates";
 
-/**
- * Live readout of the map-centre coordinates in both UTM (ETRS89 / zone 32N)
- * and WGS84. Desktop-only to avoid crowding the mobile map; copies WGS84.
- */
 export function CoordinateReadout() {
   const longitude = useMapStore((s) => s.viewState.longitude);
   const latitude = useMapStore((s) => s.viewState.latitude);
-  const zoneMode = useMapStore((s) => s.utmZoneMode);
   const addToast = useUiStore((s) => s.addToast);
+  const coordinates = pointCoordinates(latitude, longitude);
 
-  // Same zone as the grid, so the readout matches the grid labels (zone 32 on Bornholm by default).
-  const zone = resolveUtmZone(longitude, latitude, zoneMode);
-  const utm = latlngToUtm(latitude, longitude, zone);
-  const wgs = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-
-  const copy = async () => {
+  const copy = async (value: string) => {
     try {
-      await navigator.clipboard.writeText(wgs);
-      addToast("success", "Koordinater kopieret");
+      await navigator.clipboard.writeText(value);
+      addToast("success", "Koordinat kopieret");
     } catch {
-      addToast("error", "Kunne ikke kopiere");
+      addToast("error", "Kunne ikke kopiere. Markér og kopiér koordinatet.");
     }
   };
 
   return (
-    <div className="hidden md:flex absolute top-3 right-3 z-10 items-center gap-2 rounded-lg bg-surface/90 px-3 py-1.5 shadow-md backdrop-blur-sm">
-      <div className="font-mono text-[11px] leading-tight text-text-secondary">
-        <div>
-          UTM {zone}N {Math.round(utm.easting)} {Math.round(utm.northing)}
-        </div>
-        <div>{wgs}</div>
-      </div>
-      <button
-        type="button"
-        onClick={copy}
-        title="Kopiér koordinater"
-        aria-label="Kopiér koordinater"
-        className="shrink-0 text-text-muted hover:text-primary"
-      >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+    <>
+      <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 text-slate-900" style={{ filter: "drop-shadow(0 0 2px white)" }}>
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M14 0v10m0 8v10M0 14h10m8 0h10" /><circle cx="14" cy="14" r="3" />
         </svg>
-      </button>
-    </div>
+      </div>
+      <details className="absolute top-20 right-2 z-20 w-[min(19rem,calc(100%-1rem))] rounded-lg bg-surface/95 shadow-md backdrop-blur-sm md:top-8 md:right-3">
+        <summary className="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-primary">Koordinat ved sigtekorset</summary>
+        <div className="px-3 pb-3">
+          <p className="mb-2 text-xs text-text-secondary">Flyt kortet, så punktet ligger i sigtekorset.</p>
+          {coordinates.map(({ name, value }) => (
+            <div key={name} className="flex items-center gap-2 border-t border-border py-1">
+              <div className="min-w-0 flex-1">
+                <div className="text-xs text-text-secondary">{name}</div>
+                <div className="select-text font-mono text-xs tabular-nums">{value}</div>
+              </div>
+              <button type="button" onClick={() => copy(value)} aria-label={`Kopiér ${name}`}
+                className="min-h-11 min-w-11 rounded px-2 text-xs text-primary hover:bg-surface-secondary focus-visible:outline-2 focus-visible:outline-primary">Kopiér</button>
+            </div>
+          ))}
+        </div>
+      </details>
+    </>
   );
 }

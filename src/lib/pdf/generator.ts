@@ -11,18 +11,14 @@ import { calculatePdfLayout } from "./layout";
 import { getBrand } from "@/config/brand";
 import { renderMapToImage } from "./renderer";
 import { calculateMultiPageGrid } from "@/lib/geo/calculations";
-import { latlngToUtm } from "@/lib/geo/utm";
+import { computeZonedGrid, gridIntersections, type ZonedGridLine } from "@/lib/geo/zoneGrid";
+import { mgrsSquare, type GridSystem } from "@/lib/geo/coordinates";
 import {
-  computeGridLines,
-  dominantAxis,
   dropOverlapping,
-  edgeCrossings,
   formatGridLabel,
   formatSpacing,
-  labelStep,
   resolvePrintSpacing,
   resolveUtmZone,
-  type EdgeSample,
   type FormattedLabel,
   type GridLabelFormat,
   type GridLineClass,
@@ -125,7 +121,7 @@ export async function generatePdf({
   let gridInfo: GridInfo | null = null;
   if (showUtmGrid) {
     const opts = gridOptionsFromStore((bounds.west + bounds.east) / 2, (bounds.north + bounds.south) / 2, bearing);
-    gridInfo = { zone: opts.zone, spacing: drawUtmGrid(pdf, layout, bounds, scale, opts) };
+    gridInfo = { system: opts.system, square: opts.square, zone: opts.zone, spacing: drawUtmGrid(pdf, layout, bounds, scale, opts) };
   }
 
   // Draw decorations
@@ -232,6 +228,9 @@ function drawNorthArrow(
 }
 
 interface GridOptions {
+  system: GridSystem;
+  zoneMode: "dk" | "std";
+  square: string;
   spacing: GridSpacing;
   showLabels: boolean;
   labelFormat: GridLabelFormat;
@@ -244,10 +243,13 @@ interface GridOptions {
 function gridOptionsFromStore(zoneLng: number, zoneLat: number, bearing: number): GridOptions {
   const m = useMapStore.getState();
   return {
+    system: m.gridSystem,
+    zoneMode: m.gridSystem === "mgrs" ? "std" : m.utmZoneMode,
+    square: mgrsSquare(zoneLat, zoneLng),
     spacing: m.gridSpacing,
     showLabels: m.showGridLabels,
     labelFormat: m.gridLabelFormat,
-    zone: resolveUtmZone(zoneLng, zoneLat, m.utmZoneMode),
+    zone: resolveUtmZone(zoneLng, zoneLat, m.gridSystem === "mgrs" ? "std" : m.utmZoneMode),
     bearing,
   };
 }
@@ -295,7 +297,7 @@ function drawUtmGrid(
     south: Math.min(...corners.map((c) => c.lat)),
     north: Math.max(...corners.map((c) => c.lat)),
   };
-  const lines = computeGridLines(cover, zone, spacing);
+  const lines = computeZonedGrid(cover, spacing, opts.zoneMode, zone);
 
   // Clip lines to the map area so nothing spills into the label margin.
   pdf.saveGraphicsState();
@@ -321,7 +323,7 @@ function drawUtmGrid(
   pdf.setDrawColor(0, 0, 0);
 
   if (opts.showLabels) {
-    drawGridLabels(pdf, proj, { left, top, right, bottom }, layout.marginMm, spacing, scale, opts);
+    drawGridLabels(pdf, proj, { left, top, right, bottom }, layout.marginMm, spacing, lines, opts);
   }
   return spacing;
 }
@@ -332,23 +334,9 @@ function drawGridLabels(
   rect: { left: number; top: number; right: number; bottom: number },
   marginMm: number,
   spacing: number,
-  scale: number,
+  lines: ZonedGridLine[],
   opts: GridOptions
 ) {
-  const mmPerMeter = 1000 / scale;
-  const SAMPLES = 48;
-  const sample = (from: [number, number], to: [number, number]): EdgeSample[] => {
-    const len = Math.hypot(to[0] - from[0], to[1] - from[1]);
-    const out: EdgeSample[] = [];
-    for (let i = 0; i <= SAMPLES; i++) {
-      const f = i / SAMPLES;
-      const ll = proj.fromMm(from[0] + (to[0] - from[0]) * f, from[1] + (to[1] - from[1]) * f);
-      const u = latlngToUtm(ll.lat, ll.lng, opts.zone);
-      out.push({ t: f * len, e: u.easting, n: u.northing });
-    }
-    return out;
-  };
-
   pdf.setTextColor(0, 0, 0);
   pdf.setFont("helvetica", "bold");
 
@@ -360,7 +348,7 @@ function drawGridLabels(
   };
 
   // Shrink the font if the widest possible northing label would not fit the side margin.
-  const widest = formatGridLabel(spacing < 1000 ? 6999900 : 6999000, opts.labelFormat);
+  const widest = opts.system === "mgrs" ? { prefix: "WW ", main: spacing < 1000 ? "99,9" : "99" } : formatGridLabel(spacing < 1000 ? 6999900 : 6999000, opts.labelFormat);
   const w1 = measure(widest, 1);
   const k = Math.min(1, (marginMm - 2) / (w1.wp + w1.wm));
 
@@ -416,23 +404,22 @@ function drawGridLabels(
   ];
 
   for (const edge of edges) {
-    const samples = sample(edge.from, edge.to);
-    const len = samples[samples.length - 1].t;
+    const len = Math.hypot(edge.to[0] - edge.from[0], edge.to[1] - edge.from[1]);
     const gap = edge.horizontal ? hGap : vGap;
-    const axis = dominantAxis(samples);
-    const step = labelStep(spacing, mmPerMeter, gap);
     const startMin = Math.max(gap / 2, (edge.reserveStart ?? 0) + gap / 2);
     const crossings = dropOverlapping(
-      edgeCrossings(samples, axis, step).filter((c) => c.t >= startMin && c.t <= len - gap / 2),
+      gridIntersections(lines, proj.toMm, edge.from, edge.to, opts.system, opts.labelFormat).filter((c) => c.t >= startMin && c.t <= len - gap / 2),
       gap
     );
-    for (const c of crossings) edge.place(c.t, formatGridLabel(c.value, opts.labelFormat));
+    for (const c of crossings) edge.place(c.t, c.label);
   }
 
   pdf.setFont("helvetica", "normal");
 }
 
 interface GridInfo {
+  system: GridSystem;
+  square: string;
   zone: number;
   spacing: number | null;
 }
@@ -451,7 +438,7 @@ function drawAttribution(
   // Scale text on left
   let scaleText = `1:${scale.toLocaleString("da-DK")}`;
   if (grid) {
-    scaleText += ` | UTM ${grid.zone}N / ETRS89`;
+    scaleText += grid.system === "mgrs" ? ` | MGRS ${grid.square} / WGS84` : ` | UTM ${grid.zone}N / ETRS89`;
     if (grid.spacing) scaleText += ` | Gitter ${formatSpacing(grid.spacing)}`;
   }
   pdf.text(scaleText, layout.marginMm, y);
@@ -538,7 +525,7 @@ async function generateMultiPagePdf({
         // One zone for all pages (from the overall centre) so sheets line up.
         const opts = gridOptionsFromStore(mapState.viewState.longitude, mapState.viewState.latitude, bearing);
         opts.reserveTopLeftMm = pageLabelMm;
-        gridInfo = { zone: opts.zone, spacing: drawUtmGrid(pdf, layout, cell.bounds, scale, opts) };
+        gridInfo = { system: opts.system, square: opts.square, zone: opts.zone, spacing: drawUtmGrid(pdf, layout, cell.bounds, scale, opts) };
       }
 
       drawScaleBar(pdf, layout, scale);

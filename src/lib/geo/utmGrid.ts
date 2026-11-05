@@ -46,7 +46,7 @@ export function resolveUtmZone(lng: number, lat: number, mode: UtmZoneMode): num
   ) {
     return 32;
   }
-  return getUtmZone(lng);
+  return getUtmZone(lng, lat);
 }
 
 /** Conventional grid for a printed map scale (1 km up to 1:50.000, as on Danish/NATO topo maps). */
