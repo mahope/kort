@@ -9,6 +9,8 @@ const ALLOWED = new Set(["lib/map/styles.ts", "lib/api/address.ts"]);
 
 const PATTERNS: { name: string; re: RegExp }[] = [
   { name: "long hex string", re: /["'`][0-9a-f]{32,}["'`]/i },
+  { name: "JWT-like string", re: /["'`]eyJ[A-Za-z0-9_-]{20,}/ },
+  { name: "Bearer/Basic credential literal", re: /\b(Bearer|Basic)\s+[A-Za-z0-9._~+/=-]{16,}/ },
   { name: "token= with literal value", re: /[?&]token=(?!\$\{)[A-Za-z0-9_-]{8,}/ },
   {
     name: "token/key/secret assigned a string literal",
@@ -20,7 +22,8 @@ const PATTERNS: { name: string; re: RegExp }[] = [
 function files(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const p = join(dir, name);
-    if (statSync(p).isDirectory()) return files(p);
+    // Tests never reach the client bundle; skipping them keeps hash fixtures from tripping the guard.
+    if (statSync(p).isDirectory()) return name === "__tests__" ? [] : files(p);
     return /\.(tsx?|jsx?|mjs|json)$/.test(name) ? [p] : [];
   });
 }
@@ -30,7 +33,7 @@ describe("public tokens", () => {
     const offenders: string[] = [];
     for (const file of files(SRC)) {
       const rel = relative(SRC, file).split(sep).join("/");
-      if (ALLOWED.has(rel) || rel.endsWith("public-tokens.test.ts")) continue;
+      if (ALLOWED.has(rel)) continue;
       const lines = readFileSync(file, "utf8").split("\n");
       lines.forEach((line, i) => {
         for (const { name, re } of PATTERNS) {
@@ -41,9 +44,19 @@ describe("public tokens", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("detects a token literal (the scanner can fail)", () => {
-    const sample = `const x = "${"a1".repeat(16)}";`;
-    expect(PATTERNS.some(({ re }) => re.test(sample))).toBe(true);
+  it("every pattern can fail on a positive sample (and ignores a template placeholder)", () => {
+    const samples: Record<string, string> = {
+      "long hex string": `const x = "${"a1".repeat(16)}";`,
+      "JWT-like string": `const auth = "eyJ${"A".repeat(30)}";`,
+      "Bearer/Basic credential literal": `headers: { Authorization: "Bearer ${"Ab1".repeat(8)}" }`,
+      "token= with literal value": `fetch("/x?token=${"Ab1".repeat(4)}")`,
+      "token/key/secret assigned a string literal": `const apiKey = "${"Ab1".repeat(6)}";`,
+      "|| fallback literal on NEXT_PUBLIC_*": `process.env.NEXT_PUBLIC_FOO_TOKEN || "x"`,
+    };
+    for (const { name, re } of PATTERNS) {
+      expect(samples[name], `missing sample for ${name}`).toBeDefined();
+      expect(re.test(samples[name]), name).toBe(true);
+    }
     expect(PATTERNS.some(({ re }) => re.test("fetch(`/x?token=${t}`)"))).toBe(false);
   });
 
