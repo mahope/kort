@@ -1,4 +1,4 @@
-import { getUtmZone } from "./utm";
+import { getUtmZone, latlngToUtm, utmToLatlng } from "./utm";
 import { mgrsSquare, type GridSystem } from "./coordinates";
 import { computeGridLines, formatGridLabel, type GridLabelFormat, type GridLine, type LngLatBounds, type UtmZoneMode } from "./utmGrid";
 
@@ -78,11 +78,20 @@ export function gridIntersections(
       let label = formatGridLabel(line.value, format);
       if (system === "mgrs") {
         const p = line.coords[i - 1], q = line.coords[i];
-        // Choose the square just above/right of a 100 km boundary, rather than
-        // letting inverse-projection roundoff select the preceding square.
-        const lat = p[1] + (q[1] - p[1]) * u + 1e-7;
+        const rawLat = p[1] + (q[1] - p[1]) * u;
         const rawLng = p[0] + (q[0] - p[0]) * u;
-        const lng = rawLng + (getUtmZone(rawLng + 1e-7, lat) === line.zone ? 1e-7 : -1e-7);
+        const utm = latlngToUtm(rawLat, rawLng, line.zone);
+        // Restore the exact grid ordinate before choosing the square; polyline
+        // interpolation can fall across a 100 km boundary. Bias into that square
+        // by 10 cm to absorb inverse-projection roundoff.
+        const exact = utmToLatlng(
+          line.axis === "E" ? line.value + 0.1 : utm.easting,
+          line.axis === "N" ? line.value + 0.1 : utm.northing,
+          line.zone,
+        );
+        const lat = exact.lat;
+        const rawLngExact = exact.lng;
+        const lng = rawLngExact + (getUtmZone(rawLngExact + 1e-7, lat) === line.zone ? 1e-7 : -1e-7);
         const square = mgrsSquare(lat, lng);
         const principal = formatGridLabel(line.value, "short").main;
         label = { prefix: `${square} `, main: principal };

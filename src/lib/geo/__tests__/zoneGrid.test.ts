@@ -5,6 +5,30 @@ import { createPaperProjector } from "@/lib/pdf/gridProjection";
 const bounds = { west: 11.94, east: 12.06, south: 55.64, north: 55.76 };
 
 describe("zone-clipped grid shared by screen and PDF", () => {
+  it.each(["screen", "PDF"])("uses the exact northing at a 100 km boundary on %s", (target) => {
+    const box = { west: 9.8, east: 10.2, south: 55.8, north: 56.2 };
+    const lines = computeZonedGrid(box, 1000, "std", 32)
+      .filter((line) => line.axis === "N" && line.value === 6200000);
+    const project = target === "screen"
+      ? (lng: number, lat: number) => ({ x: lng, y: lat })
+      : createPaperProjector(box, { marginMm: 10, mapWidthMm: 180, mapHeightMm: 240 }, 0).toMm;
+    const from = project(9.81, box.south), to = project(9.81, box.north);
+    const labels = gridIntersections(lines, project, [from.x, from.y], [to.x, to.y], "mgrs", "full");
+    expect(labels).toHaveLength(1);
+    expect(labels[0].label).toEqual({ prefix: "32U NH ", main: "00" });
+  });
+  it.each(["screen", "PDF"])("uses the exact easting at a 100 km boundary on %s", (target) => {
+    const box = { west: 10.4, east: 10.8, south: 55.8, north: 56.2 };
+    const lines = computeZonedGrid(box, 1000, "std", 32)
+      .filter((line) => line.axis === "E" && line.value === 600000);
+    const project = target === "screen"
+      ? (lng: number, lat: number) => ({ x: lng, y: lat })
+      : createPaperProjector(box, { marginMm: 10, mapWidthMm: 180, mapHeightMm: 240 }, 0).toMm;
+    const from = project(box.west, 55.9), to = project(box.east, 55.9);
+    const labels = gridIntersections(lines, project, [from.x, from.y], [to.x, to.y], "mgrs", "full");
+    expect(labels).toHaveLength(1);
+    expect(labels[0].label).toEqual({ prefix: "32U PG ", main: "00" });
+  });
   it.each([1000, 10000])("clips %i metre lines at 12 degrees", (spacing) => {
     const lines = computeZonedGrid(bounds, spacing, "std", 32);
     expect(new Set(lines.map((line) => line.zone))).toEqual(new Set([32, 33]));
