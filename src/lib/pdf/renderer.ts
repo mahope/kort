@@ -8,7 +8,7 @@ import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
 import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
 import type { RasterSourceConfig } from "@/lib/map/sources";
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
-import { timed, yieldToMain } from "./timing";
+import { timed } from "./timing";
 
 // JPEG quality for the rendered map image embedded in the PDF.
 export const MAP_JPEG_QUALITY = 0.92;

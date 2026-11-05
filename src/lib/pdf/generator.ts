@@ -11,6 +11,7 @@ import { calculatePdfLayout } from "./layout";
 import { getBrand } from "@/config/brand";
 import { renderMapToImage } from "./renderer";
 import { timed, yieldToMain } from "./timing";
+import { applyPrintPreferences, drawControlLine } from "./controlLine";
 import { calculateMultiPageGrid } from "@/lib/geo/calculations";
 import { computeZonedGrid, gridIntersections, type ZonedGridLine } from "@/lib/geo/zoneGrid";
 import { mgrsSquare, type GridSystem } from "@/lib/geo/coordinates";
@@ -121,6 +122,7 @@ export async function generatePdf({
     unit: "mm",
     format: [layout.pageWidthMm, layout.pageHeightMm],
   });
+  applyPrintPreferences(pdf);
 
   // Add map image
   await timed("addImage", () =>
@@ -138,6 +140,7 @@ export async function generatePdf({
   // Draw decorations
   drawScaleBar(pdf, layout, scale);
   drawNorthArrow(pdf, layout, bearing);
+  drawControlLine(pdf, layout);
   drawAttribution(pdf, layout, scale, gridInfo);
 
   // Record in print history
@@ -155,7 +158,7 @@ export async function generatePdf({
   await downloadPdf(pdf, buildFilename(scale, paperFormat));
 }
 
-function drawScaleBar(
+export function drawScaleBar(
   pdf: jsPDF,
   layout: { marginMm: number; mapWidthMm: number; mapHeightMm: number; pageHeightMm: number },
   scale: number
@@ -199,7 +202,7 @@ function niceNumber(value: number): number {
   return niceValues[niceValues.length - 1];
 }
 
-function drawNorthArrow(
+export function drawNorthArrow(
   pdf: jsPDF,
   layout: { marginMm: number; mapWidthMm: number },
   bearing = 0
@@ -444,7 +447,7 @@ interface GridInfo {
   spacing: number | null;
 }
 
-function drawAttribution(
+export function drawAttribution(
   pdf: jsPDF,
   layout: { marginMm: number; mapWidthMm: number; mapHeightMm: number; pageWidthMm: number; pageHeightMm: number },
   scale: number,
@@ -507,6 +510,7 @@ async function generateMultiPagePdf({
     unit: "mm",
     format: [layout.pageWidthMm, layout.pageHeightMm],
   });
+  applyPrintPreferences(pdf);
 
   try {
     for (let i = 0; i < cells.length; i++) {
@@ -554,6 +558,7 @@ async function generateMultiPagePdf({
 
       drawScaleBar(pdf, layout, scale);
       drawNorthArrow(pdf, layout, bearing);
+      drawControlLine(pdf, layout);
 
       drawAttribution(pdf, layout, scale, gridInfo);
     }
