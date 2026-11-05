@@ -1,6 +1,8 @@
 import type { BaseLayer, MapStyle, OverlayId } from "@/types/map";
 import type { GridSystem } from "@/lib/geo/coordinates";
 import type { PaperFormat, Orientation, DpiOption } from "@/types/print";
+import { DENMARK_BOUNDS } from "@/lib/map/styles";
+import { MIN_CUSTOM_SCALE, MAX_CUSTOM_SCALE } from "@/constants/scales";
 import { isGridSpacing, type GridSpacing, type GridLabelFormat, type UtmZoneMode } from "@/lib/geo/utmGrid";
 
 export interface UrlOverlay {
@@ -120,6 +122,21 @@ export function serializeState(state: UrlState): string {
   return params.toString();
 }
 
+const MAX_ZOOM = 22;
+
+/** Parses a plain finite number; rejects "", "Infinity", "NaN" and junk. */
+function parseFinite(raw: string): number | undefined {
+  if (raw.trim() === "") return undefined;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+/** Wraps any finite angle into [-180, 180]; values already inside are kept. */
+function normalizeBearing(deg: number): number {
+  if (deg >= -180 && deg <= 180) return deg;
+  return ((((deg + 180) % 360) + 360) % 360) - 180;
+}
+
 export function deserializeState(search: string): UrlState {
   const params = new URLSearchParams(search);
   const state: UrlState = {};
@@ -129,18 +146,23 @@ export function deserializeState(search: string): UrlState {
 
   const c = params.get("c");
   if (c) {
-    const parts = c.split(",").map(Number);
-    if (parts.length >= 3 && parts.every((n) => !isNaN(n))) {
-      state.lat = parts[0];
-      state.lng = parts[1];
-      state.zoom = parts[2];
+    const parts = c.split(",").map(parseFinite);
+    if (parts.length >= 3 && parts.slice(0, 3).every((n) => n !== undefined)) {
+      const [lat, lng, zoom] = parts as number[];
+      const [[west, south], [east, north]] = DENMARK_BOUNDS;
+      // Out-of-range views are dropped as a whole; the URL is rewritten from the stores.
+      if (lat >= south && lat <= north && lng >= west && lng <= east && zoom >= 0 && zoom <= MAX_ZOOM) {
+        state.lat = lat;
+        state.lng = lng;
+        state.zoom = zoom;
+      }
     }
   }
 
   const b = params.get("b");
   if (b) {
-    const bearing = Number(b);
-    if (!isNaN(bearing)) state.bearing = bearing;
+    const bearing = parseFinite(b);
+    if (bearing !== undefined) state.bearing = normalizeBearing(bearing);
   }
 
   const l = params.get("l");
@@ -165,8 +187,9 @@ export function deserializeState(search: string): UrlState {
 
   const s = params.get("s");
   if (s) {
-    const scale = Number(s);
-    if (!isNaN(scale) && scale > 0) state.scale = scale;
+    // Same interval the custom-scale input in the sidebar accepts.
+    const scale = parseFinite(s);
+    if (scale !== undefined && scale >= MIN_CUSTOM_SCALE && scale <= MAX_CUSTOM_SCALE) state.scale = scale;
   }
 
   const f = params.get("f");
