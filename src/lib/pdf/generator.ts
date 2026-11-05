@@ -10,6 +10,8 @@ import { useHistoryStore } from "@/stores/historyStore";
 import { calculatePdfLayout } from "./layout";
 import { getBrand } from "@/config/brand";
 import { renderMapToImage } from "./renderer";
+import { timed, yieldToMain } from "./timing";
+import { applyPrintPreferences, drawControlLine } from "./controlLine";
 import { calculateMultiPageGrid } from "@/lib/geo/calculations";
 import { computeZonedGrid, gridIntersections, type ZonedGridLine } from "@/lib/geo/zoneGrid";
 import { mgrsSquare, type GridSystem } from "@/lib/geo/coordinates";
@@ -39,8 +41,8 @@ function buildFilename(
 }
 
 /** Trigger a browser download of the generated PDF via an object URL. */
-function downloadPdf(pdf: jsPDF, filename: string): void {
-  const blob = pdf.output("blob");
+async function downloadPdf(pdf: jsPDF, filename: string): Promise<void> {
+  const blob = await timed("output", () => pdf.output("blob"));
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -52,12 +54,20 @@ function downloadPdf(pdf: jsPDF, filename: string): void {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+/** Where the generation is, for the progress text on the download button. */
+export interface PdfProgress {
+  stage: "render" | "assemble";
+  tilesLoaded: number;
+  tilesTotal: number;
+}
+
 interface GeneratePdfOptions {
   bounds: PrintFrameBounds;
   scale: number;
   paperFormat: PaperFormat;
   orientation: Orientation;
   dpi: DpiOption;
+  onProgress?: (progress: PdfProgress) => void;
 }
 
 export async function generatePdf({
@@ -66,12 +76,13 @@ export async function generatePdf({
   paperFormat,
   orientation,
   dpi,
+  onProgress,
 }: GeneratePdfOptions): Promise<void> {
   const printState = usePrintStore.getState();
 
   // Delegate to multi-page if enabled
   if (printState.multiPage) {
-    return generateMultiPagePdf({ bounds, scale, paperFormat, orientation, dpi });
+    return generateMultiPagePdf({ bounds, scale, paperFormat, orientation, dpi, onProgress });
   }
 
   const mapState = useMapStore.getState();
@@ -85,8 +96,10 @@ export async function generatePdf({
   const showUtmGrid = mapState.showUtmGrid;
   const bearing = mapState.viewState.bearing;
 
-  // Render map at target resolution (returns a JPEG data URL)
-  const imgData = await renderMapToImage({
+  // Render map at target resolution (returns JPEG bytes)
+  onProgress?.({ stage: "render", tilesLoaded: 0, tilesTotal: 0 });
+  const imgData = await timed("render", () => renderMapToImage({
+    onTileProgress: (tilesLoaded, tilesTotal) => onProgress?.({ stage: "render", tilesLoaded, tilesTotal }),
     bounds,
     canvasWidth: layout.canvasWidth,
     canvasHeight: layout.canvasHeight,
@@ -98,7 +111,10 @@ export async function generatePdf({
     showUtmGrid,
     scale,
     bearing,
-  });
+  }));
+
+  onProgress?.({ stage: "assemble", tilesLoaded: 0, tilesTotal: 0 });
+  await yieldToMain();
 
   // Create PDF
   const pdf = new jsPDF({
@@ -106,18 +122,15 @@ export async function generatePdf({
     unit: "mm",
     format: [layout.pageWidthMm, layout.pageHeightMm],
   });
+  applyPrintPreferences(pdf);
 
   // Add map image
-  pdf.addImage(
-    imgData,
-    "JPEG",
-    layout.marginMm,
-    layout.marginMm,
-    layout.mapWidthMm,
-    layout.mapHeightMm
+  await timed("addImage", () =>
+    pdf.addImage(imgData, "JPEG", layout.marginMm, layout.marginMm, layout.mapWidthMm, layout.mapHeightMm)
   );
 
   // Draw UTM grid lines + margin labels if enabled
+  await yieldToMain();
   let gridInfo: GridInfo | null = null;
   if (showUtmGrid) {
     const opts = gridOptionsFromStore((bounds.west + bounds.east) / 2, (bounds.north + bounds.south) / 2, bearing);
@@ -127,6 +140,7 @@ export async function generatePdf({
   // Draw decorations
   drawScaleBar(pdf, layout, scale);
   drawNorthArrow(pdf, layout, bearing);
+  drawControlLine(pdf, layout);
   drawAttribution(pdf, layout, scale, gridInfo);
 
   // Record in print history
@@ -140,10 +154,11 @@ export async function generatePdf({
     baseLayer,
   });
 
-  downloadPdf(pdf, buildFilename(scale, paperFormat));
+  await yieldToMain();
+  await downloadPdf(pdf, buildFilename(scale, paperFormat));
 }
 
-function drawScaleBar(
+export function drawScaleBar(
   pdf: jsPDF,
   layout: { marginMm: number; mapWidthMm: number; mapHeightMm: number; pageHeightMm: number },
   scale: number
@@ -187,7 +202,7 @@ function niceNumber(value: number): number {
   return niceValues[niceValues.length - 1];
 }
 
-function drawNorthArrow(
+export function drawNorthArrow(
   pdf: jsPDF,
   layout: { marginMm: number; mapWidthMm: number },
   bearing = 0
@@ -432,7 +447,7 @@ interface GridInfo {
   spacing: number | null;
 }
 
-function drawAttribution(
+export function drawAttribution(
   pdf: jsPDF,
   layout: { marginMm: number; mapWidthMm: number; mapHeightMm: number; pageWidthMm: number; pageHeightMm: number },
   scale: number,
@@ -463,6 +478,7 @@ async function generateMultiPagePdf({
   paperFormat,
   orientation,
   dpi,
+  onProgress,
 }: GeneratePdfOptions): Promise<void> {
   const mapState = useMapStore.getState();
   const printState = usePrintStore.getState();
@@ -494,6 +510,7 @@ async function generateMultiPagePdf({
     unit: "mm",
     format: [layout.pageWidthMm, layout.pageHeightMm],
   });
+  applyPrintPreferences(pdf);
 
   try {
     for (let i = 0; i < cells.length; i++) {
@@ -504,7 +521,9 @@ async function generateMultiPagePdf({
         pdf.addPage([layout.pageWidthMm, layout.pageHeightMm], orientation === "landscape" ? "landscape" : "portrait");
       }
 
+      onProgress?.({ stage: "render", tilesLoaded: 0, tilesTotal: 0 });
       const imgData = await renderMapToImage({
+        onTileProgress: (tilesLoaded, tilesTotal) => onProgress?.({ stage: "render", tilesLoaded, tilesTotal }),
         bounds: cell.bounds,
         canvasWidth: layout.canvasWidth,
         canvasHeight: layout.canvasHeight,
@@ -518,6 +537,8 @@ async function generateMultiPagePdf({
         bearing,
       });
 
+      onProgress?.({ stage: "assemble", tilesLoaded: 0, tilesTotal: 0 });
+      await yieldToMain();
       pdf.addImage(imgData, "JPEG", layout.marginMm, layout.marginMm, layout.mapWidthMm, layout.mapHeightMm);
 
       // Page label
@@ -537,6 +558,7 @@ async function generateMultiPagePdf({
 
       drawScaleBar(pdf, layout, scale);
       drawNorthArrow(pdf, layout, bearing);
+      drawControlLine(pdf, layout);
 
       drawAttribution(pdf, layout, scale, gridInfo);
     }
@@ -558,5 +580,5 @@ async function generateMultiPagePdf({
     baseLayer,
   });
 
-  downloadPdf(pdf, buildFilename(scale, paperFormat, cells.length));
+  await downloadPdf(pdf, buildFilename(scale, paperFormat, cells.length));
 }
