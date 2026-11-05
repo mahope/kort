@@ -1,23 +1,30 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import {
-  WMM_VALID_UNTIL,
-  decimalYear,
+  WMM_COEFFICIENTS,
   formatDeclination,
-  isWithinWmmValidity,
   magneticDeclination,
   magneticDeclinationAtYear,
   meridianConvergence,
 } from "../declination";
+import {
+  WMM_EPOCH,
+  WMM_VALID_UNTIL,
+  decimalYear,
+  isWithinWmmValidity,
+  wmmStatus,
+  wmmStatusNote,
+} from "../declinationValidity";
 
 const DATE = new Date(Date.UTC(2026, 10, 5, 12)); // 5/11-2026
 
 /**
- * Reference values for the three Danish points on 5/11-2026.
- * NOAA's online calculator and its web API now require a registered key, so
- * these were NOT read from the calculator. They come from an independent
- * implementation (npm geomagnetism@0.2.0, bundling NOAA's WMM2025 coefficients),
- * run 5/11-2026. The algorithm is additionally pinned to NOAA's official
- * WMM2025_TEST_VALUES.txt below. Replace with calculator values when available.
+ * Reference values for three Danish points on 5/11-2026, from an independent
+ * implementation (npm geomagnetism@0.2.0, bundling NOAA's WMM2025 coefficients).
+ * NOAA's online calculator was not used (it needs a registered key). The
+ * algorithm and the coefficients are pinned to NOAA's own files below:
+ * WMM2025_TEST_VALUES.txt and WMM.COF (data/wmm/WMM2025.COF).
  */
 const POINTS = [
   { name: "København", lat: 55.6761, lng: 12.5683, ref: 5.283 },
@@ -27,10 +34,8 @@ const POINTS = [
 
 describe("magneticDeclination (WMM2025)", () => {
   for (const p of POINTS) {
-    it(`${p.name} 5/11-2026 within 0.3° of reference`, () => {
-      const d = magneticDeclination(p.lat, p.lng, DATE);
-      expect(Math.abs(d - p.ref)).toBeLessThanOrEqual(0.3);
-      expect(Math.abs(d - p.ref)).toBeLessThan(0.02); // same model, so in practice far tighter
+    it(`${p.name} 5/11-2026 within 0.02° of reference`, () => {
+      expect(Math.abs(magneticDeclination(p.lat, p.lng, DATE) - p.ref)).toBeLessThan(0.02);
     });
   }
 
@@ -54,16 +59,60 @@ describe("magneticDeclination (WMM2025)", () => {
     expect(Math.abs(magneticDeclinationAtYear(lat, lng, year, h) - decl)).toBeLessThan(0.02);
   });
 
-  it("is expired once the coefficients pass epoch + 5 years", () => {
-    // Fails on 1/1-2030 so someone has to bring in WMM2030.
-    expect(decimalYear(new Date())).toBeLessThan(WMM_VALID_UNTIL);
+  it("embedded coefficients equal NOAA's WMM.COF", () => {
+    const rows = readFileSync(join(process.cwd(), "data/wmm/WMM2025.COF"), "utf8")
+      .split("\n")
+      .map((l) => l.trim().split(/\s+/))
+      .filter((p) => p.length === 6 && /^\d+$/.test(p[0]))
+      .map((p) => p.map((v) => Number(v) + 0)); // + 0 turns "-0.0" into 0
+    expect(rows).toHaveLength(90);
+    expect(WMM_COEFFICIENTS.map((r) => [...r])).toEqual(rows);
+  });
+});
+
+describe("model validity window", () => {
+  it("covers 2025.0 up to, but not including, 2030.0", () => {
+    expect(WMM_VALID_UNTIL).toBe(2030);
+    expect(isWithinWmmValidity(WMM_EPOCH)).toBe(true);
+    expect(isWithinWmmValidity(2029.999)).toBe(true);
+    expect(isWithinWmmValidity(2024.999)).toBe(false);
+    expect(isWithinWmmValidity(2030.0)).toBe(false);
   });
 
   it("rejects dates outside validity", () => {
-    expect(isWithinWmmValidity(2024.9)).toBe(false);
-    expect(isWithinWmmValidity(2030.0)).toBe(false);
     expect(() => magneticDeclinationAtYear(55, 12, 2031)).toThrow(RangeError);
     expect(() => magneticDeclinationAtYear(55, 12, 2020)).toThrow(RangeError);
+    expect(() => magneticDeclination(55, 12, new Date(Date.UTC(2024, 11, 31, 23, 59)))).toThrow(RangeError);
+    expect(() => magneticDeclination(55, 12, new Date(Date.UTC(2030, 0, 1)))).toThrow(RangeError);
+  });
+
+  it("accepts the first and last instants", () => {
+    expect(() => magneticDeclination(55, 12, new Date(Date.UTC(2025, 0, 1)))).not.toThrow();
+    expect(() => magneticDeclination(55, 12, new Date(Date.UTC(2029, 11, 31, 23, 59)))).not.toThrow();
+  });
+
+  it("converts dates to decimal years, leap years included", () => {
+    expect(decimalYear(new Date(Date.UTC(2025, 0, 1)))).toBe(2025);
+    expect(decimalYear(new Date(Date.UTC(2028, 6, 1, 12)))).toBeCloseTo(2028.5, 2); // 2028 is a leap year
+    expect(decimalYear(new Date(Date.UTC(2030, 0, 1)))).toBe(2030);
+  });
+
+  it("reports status with a warning during the last half year", () => {
+    const at = (y: number, m: number, d: number) => wmmStatus(new Date(Date.UTC(y, m - 1, d)));
+    expect(at(2024, 12, 31)).toBe("not-yet");
+    expect(at(2025, 1, 1)).toBe("ok");
+    expect(at(2026, 11, 5)).toBe("ok");
+    expect(at(2029, 6, 30)).toBe("ok");
+    expect(at(2029, 7, 3)).toBe("expiring");
+    expect(at(2029, 12, 31)).toBe("expiring");
+    expect(at(2030, 1, 1)).toBe("expired");
+  });
+
+  it("explains non-ok states in Danish", () => {
+    expect(wmmStatusNote("ok")).toBeNull();
+    expect(wmmStatusNote("expiring")).toMatch(/udløber 2030/);
+    expect(wmmStatusNote("expired")).toMatch(/vises ikke/);
+    expect(wmmStatusNote("not-yet")).toMatch(/vises ikke/);
   });
 });
 

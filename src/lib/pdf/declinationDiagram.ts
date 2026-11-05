@@ -4,8 +4,8 @@ import {
   formatDeclination,
   magneticDeclination,
   meridianConvergence,
-  WMM_MODEL,
 } from "@/lib/geo/declination";
+import { WMM_MODEL } from "@/lib/geo/declinationValidity";
 
 /** Box size and inset from the map corner (mm). Bottom-right, away from scale bar (left) and north arrow (top right). */
 export const DECLINATION_BOX = { widthMm: 54, heightMm: 25, insetMm: 3 } as const;

@@ -7,13 +7,10 @@
  * Positive declination = magnetic north lies east of true north.
  */
 
-export const WMM_MODEL = "WMM2025";
-export const WMM_EPOCH = 2025.0;
-/** The model is only valid for epoch + 5 years. */
-export const WMM_VALID_UNTIL = WMM_EPOCH + 5;
+import { WMM_EPOCH, WMM_MODEL, WMM_VALID_UNTIL, decimalYear, isWithinWmmValidity } from "./declinationValidity";
 
 /** Rows: [n, m, g, h, gDot, hDot] (nT, nT/yr). */
-const WMM_COEFFICIENTS: ReadonlyArray<readonly [number, number, number, number, number, number]> = [
+export const WMM_COEFFICIENTS: ReadonlyArray<readonly [number, number, number, number, number, number]> = [
   [1, 0, -29351.8, 0, 12, 0],
   [1, 1, -1410.8, 4545.4, 9.7, -21.5],
   [2, 0, -2556.6, 0, -11.6, 0],
@@ -113,19 +110,6 @@ const A_REF_KM = 6371.2; // WMM geomagnetic reference radius
 const RAD = Math.PI / 180;
 const N_MAX = 12;
 
-/** Decimal year (UTC) of a Date, e.g. 2026-11-05 -> 2026.84. */
-export function decimalYear(date: Date): number {
-  const y = date.getUTCFullYear();
-  const start = Date.UTC(y, 0, 1);
-  const end = Date.UTC(y + 1, 0, 1);
-  return y + (date.getTime() - start) / (end - start);
-}
-
-/** True if a decimal year lies inside the model's validity window. */
-export function isWithinWmmValidity(year: number): boolean {
-  return year >= WMM_EPOCH && year < WMM_VALID_UNTIL;
-}
-
 /**
  * Magnetic declination in degrees (east positive) at a WGS84 position.
  * @param heightKm height above the ellipsoid (default 0)
@@ -199,7 +183,7 @@ export function magneticDeclination(lat: number, lng: number, date: Date = new D
 }
 
 /** UTM central meridian (degrees) of a zone. */
-export function utmCentralMeridian(zone: number): number {
+function utmCentralMeridian(zone: number): number {
   return (zone - 1) * 6 - 180 + 3;
 }
 
