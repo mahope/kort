@@ -5,7 +5,7 @@ import { configureMaplibreWorker } from "@/lib/map/workerUrl";
 import type { ImportedLayer } from "@/stores/importStore";
 import type { DrawnFeature } from "@/stores/drawStore";
 import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
-import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, DTK25_SCREEN_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
+import { BLANK_STYLE, ORTOFOTO_SOURCE, OSM_SOURCE, DTK25_SOURCE, HISTORISK_HOEJE_SOURCE, HISTORISK_LAVE_SOURCE, OVERLAY_SOURCES } from "@/lib/map/sources";
 import type { RasterSourceConfig } from "@/lib/map/sources";
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
 
@@ -17,7 +17,11 @@ export const MAP_JPEG_QUALITY = 0.92;
 export const TILE_RETRIES = 2;
 export const TILE_RETRY_PAUSE_MS = 1000;
 
-const OFFLINE_MESSAGE = "Du er offline: kortet kan ikke hentes";
+// PDFs are rendered at print resolution from DTK25's print tiles, which the
+// offline area cache (screen tiles at zoom 12-16) does not hold. Offline PDF is
+// deliberately unsupported; the message says so instead of failing on tiles.
+const OFFLINE_MESSAGE =
+  "Du er offline: PDF kræver internet, også for gemte områder. Gemte områder virker kun i kortvisningen";
 
 function isOffline(): boolean {
   return typeof navigator !== "undefined" && navigator.onLine === false;
@@ -126,8 +130,7 @@ export async function renderMapToImage({
 
     const RASTER_BASE_LAYERS: Record<string, RasterSourceConfig> = {
       ortofoto: ORTOFOTO_SOURCE,
-      // Offline, only the saved screen tiles (JPEG) exist in the cache.
-      dtk25: typeof navigator !== "undefined" && !navigator.onLine ? DTK25_SCREEN_SOURCE : DTK25_SOURCE,
+      dtk25: DTK25_SOURCE,
       osm: OSM_SOURCE,
       historisk_hoeje: HISTORISK_HOEJE_SOURCE,
       historisk_lave: HISTORISK_LAVE_SOURCE,

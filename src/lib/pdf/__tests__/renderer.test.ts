@@ -61,6 +61,9 @@ vi.mock("../limits", async (orig) => ({
 
 import { renderMapToImage, TILE_RETRIES } from "../renderer";
 
+const OFFLINE_PDF_MESSAGE =
+  "Du er offline: PDF kræver internet, også for gemte områder. Gemte områder virker kun i kortvisningen";
+
 const base = {
   bounds: { west: 10, east: 11, south: 55, north: 56 },
   canvasWidth: 100,
@@ -118,7 +121,14 @@ describe("renderMapToImage tile errors", () => {
 describe("renderMapToImage offline", () => {
   it("aborts before creating a map", async () => {
     Object.defineProperty(navigator, "onLine", { value: false, configurable: true });
-    expect(((await run()) as { error: Error }).error.message).toBe("Du er offline: kortet kan ikke hentes");
+    expect(((await run()) as { error: Error }).error.message).toBe(OFFLINE_PDF_MESSAGE);
+  });
+
+  it("refuses PDF offline even for a saved DTK25 area (no screen-tile fallback)", async () => {
+    Object.defineProperty(navigator, "onLine", { value: false, configurable: true });
+    const r = await run({ ...base, baseLayer: "dtk25" } as typeof base);
+    expect((r as { error: Error }).error.message).toBe(OFFLINE_PDF_MESSAGE);
+    expect((r as { error: Error }).error.message).toContain("kun i kortvisningen");
   });
 
   it("reports offline when connection drops during rendering", async () => {
@@ -129,7 +139,7 @@ describe("renderMapToImage offline", () => {
     await vi.advanceTimersByTimeAsync(1);
     Object.defineProperty(navigator, "onLine", { value: false, configurable: true });
     await vi.advanceTimersByTimeAsync(30000);
-    expect(((await settled) as { error: Error }).error.message).toBe("Du er offline: kortet kan ikke hentes");
+    expect(((await settled) as { error: Error }).error.message).toBe(OFFLINE_PDF_MESSAGE);
   });
 });
 
