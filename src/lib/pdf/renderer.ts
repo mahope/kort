@@ -92,8 +92,14 @@ function trackTileProgress(map: maplibregl.Map, onProgress: TileProgress) {
 // some of them before they arrived, and the PDF was refused as incomplete.
 type Manager = { _removeTile?: (id: number | string) => void };
 
+type Internals = { _update?: () => void; redraw?: () => void; style?: { tileManagers?: Record<string, Manager> } };
+
 function retryTiles(map: maplibregl.Map, failed: Map<string, FailedTile>) {
-  const managers = (map as unknown as { style?: { tileManagers?: Record<string, Manager> } }).style?.tileManagers;
+  const internals = map as unknown as Internals;
+  // Without _update a removed tile would never be requested again: leave the
+  // failures counted so the PDF is refused loudly instead of having a hole.
+  if (typeof internals._update !== "function") return;
+  const managers = internals.style?.tileManagers;
   let removed = 0;
   for (const [key, { sourceId, tileKey }] of [...failed]) {
     const manager = managers?.[sourceId];
@@ -105,9 +111,12 @@ function retryTiles(map: maplibregl.Map, failed: Map<string, FailedTile>) {
     failed.delete(key);
     removed++;
   }
-  // Marks the sources dirty and repaints; the next frame updates every source
-  // with the camera's transform and requests the missing tiles.
-  if (removed > 0) (map as unknown as { _update?: () => void })._update?.();
+  if (removed === 0) return;
+  // Marks the sources dirty, then renders synchronously so update() requests
+  // the missing tiles now; waiting for the next frame left a window (and in a
+  // hidden tab no frame at all) in which areTilesLoaded() saw nothing missing.
+  internals._update();
+  internals.redraw?.();
 }
 
 function sleep(ms: number) {

@@ -13,6 +13,7 @@ const ctl = {
   removed: [] as string[],
   updates: 0,
   notNeeded: [] as string[], // removed helper tiles the map does not request again
+  noUpdate: false,
   maxSize: 8192,
   blob: true,
   gpuBusyPolls: 0, // clientWaitSync reports TIMEOUT_EXPIRED this many times before the GPU is idle
@@ -48,6 +49,7 @@ class FakeMap {
   };
   constructor(options: Record<string, unknown>) {
     ctl.lastOptions = options;
+    if (ctl.noUpdate) (this as { _update?: unknown })._update = undefined;
     setTimeout(() => {
       for (const key of ctl.failOnLoad) this.emit("error", { sourceId: "src", tile: { tileID: { key } } });
       for (const key of ctl.tiles) this.emit("dataloading", { dataType: "source", sourceId: "src", tile: { tileID: { key } } });
@@ -115,7 +117,7 @@ async function run(opts = base) {
 
 beforeEach(() => {
   vi.useFakeTimers();
-  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], reloads: 0, removed: [], updates: 0, notNeeded: [], maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [] });
+  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], reloads: 0, removed: [], updates: 0, notNeeded: [], noUpdate: false, maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [] });
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
 });
 afterEach(() => vi.useRealTimers());
@@ -153,6 +155,14 @@ describe("renderMapToImage tile errors", () => {
     ctl.failOnReload = ["2"];
     ctl.notNeeded = ["2"];
     expect(await run()).toHaveProperty("v");
+  });
+
+  it("leaves failures counted when the map cannot be told to update", async () => {
+    ctl.failOnLoad = ["1"];
+    ctl.noUpdate = true;
+    const r = await run();
+    expect(ctl.removed).toEqual([]);
+    expect((r as { error: Error }).error.message).toMatch(/^1 kortflise mangler/);
   });
 
   it("throws with the number of missing tiles after retries are exhausted", async () => {
