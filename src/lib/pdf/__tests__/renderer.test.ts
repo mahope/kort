@@ -11,6 +11,7 @@ const ctl = {
   failOnReload: [] as string[], // tile keys that still fail after a retry
   reloads: 0,
   reloadStates: [] as string[],
+  sourceType: "raster" as string,
   maxSize: 8192,
   blob: true,
   gpuBusyPolls: 0, // clientWaitSync reports TIMEOUT_EXPIRED this many times before the GPU is idle
@@ -60,6 +61,7 @@ class FakeMap {
   }
   emit(n: string, e: unknown) { [...(this.handlers[n] ?? [])].forEach((h) => h(e)); }
   isStyleLoaded() { return true; }
+  getSource() { return { type: ctl.sourceType }; }
   areTilesLoaded() { return true; }
   addSource() {}
   addLayer() {}
@@ -102,7 +104,7 @@ async function run(opts = base) {
 
 beforeEach(() => {
   vi.useFakeTimers();
-  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], reloads: 0, reloadStates: [], maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [] });
+  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], reloads: 0, reloadStates: [], sourceType: "raster", maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [] });
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
 });
 afterEach(() => vi.useRealTimers());
@@ -128,10 +130,18 @@ describe("renderMapToImage tile errors", () => {
     expect(ctl.reloads).toBe(2);
   });
 
-  it("re-requests failed tiles as loading, not expired (expired has no texture and crashes the raster draw, #66)", async () => {
+  it("re-requests a failed raster tile as loading (expired has no texture and crashed the draw, #66)", async () => {
     ctl.failOnLoad = ["1"];
+    ctl.sourceType = "raster";
     await run();
     expect(ctl.reloadStates).toEqual(["loading"]);
+  });
+
+  it("re-requests a failed vector tile as expired (loading would wait forever)", async () => {
+    ctl.failOnLoad = ["1"];
+    ctl.sourceType = "vector";
+    await run();
+    expect(ctl.reloadStates).toEqual(["expired"]);
   });
 
   it("throws with the number of missing tiles after retries are exhausted", async () => {

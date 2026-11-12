@@ -85,14 +85,22 @@ function trackTileProgress(map: maplibregl.Map, onProgress: TileProgress) {
 }
 
 // MapLibre has no public retry for errored tiles, and TileManager.reload()
-// deliberately skips them. Re-request each failed tile as "loading", as
-// MapLibre itself does for errored tiles: "expired" counts as having data, so
-// a raster tile without a texture got drawn and threw "reading 'bind'" (#66).
+// deliberately skips them, so call its internal _reloadTile per failed tile.
+// The state matters and differs per source type (#66):
+// - raster: "loading". "expired" counts as having data, so the tile was drawn
+//   before it had a texture and threw "reading 'bind'".
+// - vector: "expired". A vector tile in "loading" that already has a worker
+//   waits for a reload that never comes, and the PDF hung.
+export function retryState(sourceType: string | undefined): "loading" | "expired" {
+  return sourceType === "raster" || sourceType === "raster-dem" ? "loading" : "expired";
+}
+
 function retryTiles(map: maplibregl.Map, tiles: Iterable<FailedTile>) {
   type Manager = { _reloadTile?: (id: number | string, state: string) => unknown };
   const managers = (map as unknown as { style?: { tileManagers?: Record<string, Manager> } }).style?.tileManagers;
   for (const { sourceId, tileKey } of tiles) {
-    if (tileKey !== undefined) managers?.[sourceId]?._reloadTile?.(tileKey, "loading");
+    if (tileKey === undefined) continue;
+    managers?.[sourceId]?._reloadTile?.(tileKey, retryState(map.getSource(sourceId)?.type));
   }
 }
 
