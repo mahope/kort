@@ -51,9 +51,10 @@ export function resolveUtmZone(lng: number, lat: number, mode: UtmZoneMode): num
 
 /**
  * Conventional grid for a printed map scale (1 km up to 1:50.000, as on Danish/NATO topo maps).
- * At 1:5.000 and below 1 km lines are 200 mm apart, so 500 m keeps a few lines on the sheet.
+ * At 1:5.000 1 km lines are 200 mm apart, so 500 m (100 m from 1:2.000) keeps a few lines on the sheet.
  */
 export function autoPrintSpacing(scale: number): GridSpacingMeters {
+  if (scale <= 2000) return 100;
   if (scale <= 5000) return 500;
   if (scale <= 50000) return 1000;
   if (scale <= 100000) return 2000;

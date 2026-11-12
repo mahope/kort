@@ -94,7 +94,11 @@ export function MapContainer() {
     if (!cfg) return;
     const source = map.getSource("base-raster");
     if (source && "setTiles" in source) {
-      (source as import("maplibre-gl").RasterTileSource).setTiles(cfg.tiles);
+      const raster = source as import("maplibre-gl").RasterTileSource;
+      // The source is created once, so its zoom limit must follow the layer too
+      // (OSM stops at 19, ortofoto goes to 20); setTiles reloads with it.
+      raster.maxzoom = cfg.maxzoom ?? 22;
+      raster.setTiles(cfg.tiles);
     }
   }, [baseLayer]);
 
