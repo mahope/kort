@@ -16,7 +16,7 @@ import { useMapStore } from "@/stores/mapStore";
 import { useUiStore } from "@/stores/uiStore";
 import { useDrawStore } from "@/stores/drawStore";
 import { MAP_STYLES, DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
-import { BLANK_STYLE, getRasterBaseLayers, OVERLAY_SOURCES } from "@/lib/map/sources";
+import { BLANK_STYLE, getRasterBaseLayers, OVERLAY_SOURCES, sourceZoomLimit } from "@/lib/map/sources";
 import { PrintFrame } from "./PrintFrame";
 import { GeolocationButton } from "./GeolocationButton";
 import { ImportedLayers } from "./ImportedLayers";
@@ -94,7 +94,11 @@ export function MapContainer() {
     if (!cfg) return;
     const source = map.getSource("base-raster");
     if (source && "setTiles" in source) {
-      (source as import("maplibre-gl").RasterTileSource).setTiles(cfg.tiles);
+      const raster = source as import("maplibre-gl").RasterTileSource;
+      // The source is created once, so its zoom limit must follow the layer too
+      // (OSM stops at 19, ortofoto goes to 20); setTiles reloads with it.
+      raster.maxzoom = cfg.maxzoom ?? 22;
+      raster.setTiles(cfg.tiles);
     }
   }, [baseLayer]);
 
@@ -131,6 +135,7 @@ export function MapContainer() {
           type="raster"
           tiles={RASTER_BASE_LAYERS[baseLayer].tiles}
           tileSize={RASTER_BASE_LAYERS[baseLayer].tileSize}
+          {...sourceZoomLimit(RASTER_BASE_LAYERS[baseLayer])}
           attribution={RASTER_BASE_LAYERS[baseLayer].attribution}
         >
           <Layer id="base-raster-layer" type="raster" />
@@ -145,6 +150,7 @@ export function MapContainer() {
           type="raster"
           tiles={OVERLAY_SOURCES[overlay.id].tiles}
           tileSize={OVERLAY_SOURCES[overlay.id].tileSize}
+          {...sourceZoomLimit(OVERLAY_SOURCES[overlay.id])}
           attribution={OVERLAY_SOURCES[overlay.id].attribution}
         >
           <Layer

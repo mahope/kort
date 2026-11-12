@@ -84,7 +84,9 @@ describe("resolveUtmZone", () => {
 });
 
 describe("spacing", () => {
-  it("auto print spacing is 1 km up to 1:50.000", () => {
+  it("auto print spacing is 500 m at 1:5.000 and 1 km up to 1:50.000", () => {
+    expect(autoPrintSpacing(2000)).toBe(100);
+    expect(autoPrintSpacing(5000)).toBe(500);
     expect(autoPrintSpacing(10000)).toBe(1000);
     expect(autoPrintSpacing(25000)).toBe(1000);
     expect(autoPrintSpacing(50000)).toBe(1000);
