@@ -16,6 +16,8 @@ export interface FlyPadding {
 const DEFAULT_OVERLAYS: OverlayState[] = [
   { id: "contours", enabled: false, opacity: 1 },
   { id: "contours25", enabled: false, opacity: 1 },
+  { id: "kurver5", enabled: false, opacity: 1 },
+  { id: "kurver10", enabled: false, opacity: 1 },
   { id: "hillshade", enabled: false, opacity: 0.5 },
   { id: "stednavne", enabled: false, opacity: 1 },
   { id: "matrikel", enabled: false, opacity: 1 },

@@ -17,6 +17,7 @@ import { useUiStore } from "@/stores/uiStore";
 import { useDrawStore } from "@/stores/drawStore";
 import { MAP_STYLES, DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
 import { BLANK_STYLE, getRasterBaseLayers, OVERLAY_SOURCES, sourceZoomLimit } from "@/lib/map/sources";
+import { contourLayers, contourSourceUrl, ensurePmtilesProtocol } from "@/lib/map/contours";
 import { PrintFrame } from "./PrintFrame";
 import { GeolocationButton } from "./GeolocationButton";
 import { ImportedLayers } from "./ImportedLayers";
@@ -143,7 +144,26 @@ export function MapContainer() {
       )}
 
       {/* Overlays (generic loop) */}
-      {overlays.filter((o) => o.enabled).map((overlay) => (
+      {overlays.filter((o) => o.enabled).map((overlay) => {
+        const interval = OVERLAY_SOURCES[overlay.id].contourInterval;
+        if (interval) {
+          ensurePmtilesProtocol();
+          const sourceId = `${overlay.id}-overlay`;
+          return (
+            <Source
+              key={overlay.id}
+              id={sourceId}
+              type="vector"
+              url={contourSourceUrl()}
+              attribution={OVERLAY_SOURCES[overlay.id].attribution}
+            >
+              {contourLayers(sourceId, interval, overlay.opacity).map((layer) => (
+                <Layer key={layer.id} {...layer} />
+              ))}
+            </Source>
+          );
+        }
+        return (
         <Source
           key={overlay.id}
           id={`${overlay.id}-overlay`}
@@ -159,7 +179,8 @@ export function MapContainer() {
             paint={{ "raster-opacity": overlay.opacity, ...OVERLAY_SOURCES[overlay.id].paint }}
           />
         </Source>
-      ))}
+        );
+      })}
 
       <ImportedLayers />
       {needsDrawing && <DrawingTools />}

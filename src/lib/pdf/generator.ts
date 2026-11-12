@@ -128,6 +128,7 @@ export async function generatePdf({
     bounds,
     canvasWidth: layout.canvasWidth,
     canvasHeight: layout.canvasHeight,
+    pxPerMm: layout.canvasWidth / layout.mapWidthMm,
     style,
     baseLayer,
     overlays,
@@ -572,7 +573,7 @@ export function thirdPartyCredits(): { credits: string[]; notForNavigation: bool
   for (const o of overlays) {
     if (!o.enabled) continue;
     const src = OVERLAY_SOURCES[o.id];
-    if (src.credit) credits.push(src.credit);
+    if (src.credit && !credits.includes(src.credit)) credits.push(src.credit); // 5 and 10 m share one
     if (src.notForNavigation) notForNavigation = true;
   }
   return { credits, notForNavigation };
@@ -670,6 +671,7 @@ async function generateMultiPagePdf({
         bounds: totalBounds,
         canvasWidth: Math.round((place.w / 25.4) * 100),
         canvasHeight: Math.round((place.h / 25.4) * 100),
+        pxPerMm: 100 / 25.4,
         style,
         baseLayer,
         overlays,
@@ -707,6 +709,7 @@ async function generateMultiPagePdf({
         bounds: cell.bounds,
         canvasWidth: layout.canvasWidth,
         canvasHeight: layout.canvasHeight,
+        pxPerMm: layout.canvasWidth / layout.mapWidthMm,
         style,
         baseLayer,
         overlays,

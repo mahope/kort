@@ -7,6 +7,7 @@ import type { DrawnFeature } from "@/stores/drawStore";
 import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
 import { BLANK_STYLE, getRasterBaseLayers, OVERLAY_SOURCES, sourceZoomLimit } from "@/lib/map/sources";
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
+import { contourLayers, contourSourceUrl, ensurePmtilesProtocol, SCREEN_PX_PER_MM } from "@/lib/map/contours";
 import { timed } from "./timing";
 
 const PRINT_RASTER_BASE_LAYERS = getRasterBaseLayers("print");
@@ -45,12 +46,21 @@ type TileProgress = (loaded: number, total: number) => void;
 type TileEvent = { sourceId?: string; dataType?: string; tile?: { tileID?: { key?: number | string } } };
 
 /** Tracks tiles that errored and have not (yet) loaded successfully. */
-function trackFailedTiles(map: maplibregl.Map) {
+function trackFailedTiles(map: maplibregl.Map, failedSources: Set<string>) {
   const failed = new Map<string, FailedTile>();
   let anonymous = 0;
   map.on("error", (e) => {
     const ev = e as unknown as TileEvent;
-    if (!ev.tile || !ev.sourceId) return; // style/glyph errors are not tile errors
+    if (!ev.sourceId) return; // style/glyph errors are not tile errors
+    // A source error without a tile: the source itself (e.g. the contour archive's
+    // header) could not load. MapLibre then marks it loaded with no tiles, so the
+    // tile wait would pass and the PDF would silently miss the layer.
+    if (!ev.tile) {
+      // Only map overlays load from the net this way; a broken local import
+      // (GeoJSON worker error) is not "a layer that could not be fetched".
+      if (ev.sourceId.endsWith("-overlay")) failedSources.add(ev.sourceId);
+      return;
+    }
     const tileKey = ev.tile.tileID?.key;
     failed.set(`${ev.sourceId}/${tileKey ?? `anon${anonymous++}`}`, { sourceId: ev.sourceId, tileKey });
   });
@@ -141,6 +151,8 @@ interface RenderOptions {
   importedLayers?: ImportedLayer[];
   drawnFeatures?: DrawnFeature[];
   bearing?: number;
+  /** Canvas pixels per millimetre on paper, for vector line widths (contours). */
+  pxPerMm?: number;
   onTileProgress?: TileProgress;
 }
 
@@ -155,6 +167,7 @@ export async function renderMapToImage({
   importedLayers = [],
   drawnFeatures = [],
   bearing = 0,
+  pxPerMm = SCREEN_PX_PER_MM,
   onTileProgress,
 }: RenderOptions): Promise<Uint8Array> {
   if (isOffline()) throw new Error(OFFLINE_MESSAGE);
@@ -217,7 +230,8 @@ export async function renderMapToImage({
 
     configureMaplibreWorker();
     map = new maplibregl.Map(mapOptions);
-    const failedTiles = trackFailedTiles(map);
+    const failedSources = new Set<string>();
+    const failedTiles = trackFailedTiles(map, failedSources);
     if (onTileProgress) trackTileProgress(map, onTileProgress);
 
     await waitForMapLoad(map);
@@ -239,6 +253,12 @@ export async function renderMapToImage({
     for (const overlay of activeOverlays) {
       const sourceConfig = OVERLAY_SOURCES[overlay.id];
       const sourceId = `${overlay.id}-overlay`;
+      if (sourceConfig.contourInterval) {
+        ensurePmtilesProtocol();
+        map.addSource(sourceId, { type: "vector", url: contourSourceUrl() });
+        for (const layer of contourLayers(sourceId, sourceConfig.contourInterval, overlay.opacity, pxPerMm)) map.addLayer(layer);
+        continue;
+      }
       map.addSource(sourceId, {
         type: "raster",
         tiles: sourceConfig.tiles,
@@ -346,6 +366,9 @@ export async function renderMapToImage({
     });
     if (failedTiles.size > 0) {
       throw new Error(isOffline() ? OFFLINE_MESSAGE : missingTilesMessage(failedTiles.size));
+    }
+    if (failedSources.size > 0) {
+      throw new Error(isOffline() ? OFFLINE_MESSAGE : "Et kortlag kunne ikke hentes, så PDF'en ville mangle det. Prøv igen.");
     }
 
     // WebGL silently clamps oversized canvases; never deliver a downscaled map.

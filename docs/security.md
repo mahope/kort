@@ -19,7 +19,7 @@ Sættes i `next.config.ts` for alle ruter (Cloudflare foran).
 
 - `connect-src`, `img-src`: `'self'` plus `api.dataforsyningen.dk`, `cdn.dataforsyningen.dk`,
   `tile.openstreetmap.org`, `ows.emodnet-bathymetry.eu` og `tiles.openseamap.org` (img og connect; de to sidste er de valgfrie havlag),
-  `adressevaelger.dk` og `analytics.holstjensen.eu` (kun connect).
+  `adressevaelger.dk`, `tiles.mahoje.dk` (vores egne 5/10 m-højdekurver som PMTiles) og `analytics.holstjensen.eu` (kun connect).
   `img-src` har desuden `data:` og `blob:`.
 - `font-src`: `'self' data:`. Kortets skrifttyper hentes som `.pbf`-glyphs via `connect-src`.
 - `script-src`: `'self' 'unsafe-inline'`. `'unsafe-eval'` er fjernet; MapLibre 5 kører uden

@@ -145,7 +145,7 @@ const DHM_HILLSHADE_URL =
  */
 export const BLANK_STYLE = {
   version: 8 as const,
-  glyphs: "https://cdn.dataforsyningen.dk/assets/vector_tiles_assets/latest/fonts/{fontstack}/{range}.pbf",
+  glyphs: "https://cdn.dataforsyningen.dk/assets/vector_tiles_assets/latest/glyphs/{fontstack}/{range}.pbf",
   sources: {},
   layers: [
     {
@@ -168,6 +168,8 @@ export interface RasterSourceConfig {
   noOffline?: boolean;
   /** Sea data: the PDF carries "Ikke til navigation". */
   notForNavigation?: boolean;
+  /** Our own vector contours (PMTiles, see contours.ts) instead of raster tiles. */
+  contourInterval?: 5 | 10;
   /** Highest zoom the server has; MapLibre enlarges these tiles above it instead of failing on 404. */
   maxzoom?: number;
 }
@@ -241,6 +243,25 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     tileSize: 256,
     attribution: "&copy; Klimadatastyrelsen (DHM)",
   },
+  // Vector, from tiles.mahoje.dk: `tiles` is unused, the layers come from contours.ts.
+  kurver5: {
+    tiles: [],
+    tileSize: 512,
+    attribution: "Højdekurver beregnet fra &copy; Klimadatastyrelsen (DHM)",
+    // CC BY: say on the PDF that the lines are derived, not Klimadatastyrelsen's own.
+    credit: "Højdekurver beregnet af kort.mahoje.dk fra Klimadatastyrelsens højdemodel (DHM)",
+    contourInterval: 5,
+    noOffline: true,
+  },
+  kurver10: {
+    tiles: [],
+    tileSize: 512,
+    attribution: "Højdekurver beregnet fra &copy; Klimadatastyrelsen (DHM)",
+    // CC BY: say on the PDF that the lines are derived, not Klimadatastyrelsen's own.
+    credit: "Højdekurver beregnet af kort.mahoje.dk fra Klimadatastyrelsens højdemodel (DHM)",
+    contourInterval: 10,
+    noOffline: true,
+  },
   hillshade: {
     tiles: [DHM_HILLSHADE_URL],
     tileSize: 256,
@@ -290,6 +311,8 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
 export const OVERLAY_LABELS: Record<OverlayId, string> = {
   contours: "Højdekurver (0,5 m)",
   contours25: "Højdekurver (2,5 m, roligere)",
+  kurver5: "Højdekurver (5 m, med tal)",
+  kurver10: "Højdekurver (10 m, med tal)",
   hillshade: "Skyggekort (terræn)",
   stednavne: "Stednavne",
   matrikel: "Matrikelskel",
