@@ -61,7 +61,7 @@ function CollapsibleSection({
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between py-1 pointer-coarse:min-h-11"
       >
-        <span className="text-xs font-semibold text-text-muted">
+        <span className="text-xs font-semibold text-text-secondary">
           {title}
         </span>
         <svg
@@ -128,7 +128,7 @@ function AdvancedToggleButton({ advanced, onToggle }: { advanced: boolean; onTog
     <button
       type="button"
       onClick={onToggle}
-      className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors py-1 pointer-coarse:min-h-11"
+      className="flex items-center gap-1 text-sm font-medium text-text-secondary underline-offset-2 hover:text-foreground hover:underline transition-colors py-1 pointer-coarse:min-h-11"
     >
       {advanced ? (
         <>

@@ -60,7 +60,7 @@ export function ChipGroup({ label, hint, value, options, onChange, columns = 4 }
               tabIndex={checked || (selectedIndex < 0 && i === 0) ? 0 : -1}
               onClick={() => onChange(opt.value)}
               onKeyDown={(e) => onKeyDown(e, i)}
-              className={`min-h-9 rounded-lg border px-1 text-sm font-medium tabular-nums transition-colors pointer-coarse:min-h-11 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary ${
+              className={`min-h-9 rounded-lg border px-0.5 text-sm font-medium tabular-nums md:text-[13px] md:tracking-tight transition-colors pointer-coarse:min-h-11 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary ${
                 checked
                   ? "border-primary bg-primary text-on-primary"
                   : "border-border bg-surface text-foreground hover:bg-surface-secondary"
