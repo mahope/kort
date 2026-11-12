@@ -15,7 +15,7 @@ bash scripts/contours/kurver-dk.sh ~/dev/kurver/dk 6   # resumable; ~1-2 h for a
 ```
 
 Per 5 x 5 km cell (EPSG:25832) the script:
-1. probes the terrain WCS at 100 m and skips the cell if the highest point is 0 m or below (sea). A probe that is not a readable GeoTIFF (the WCS answers errors with HTTP 200 and XML) is logged as a failure instead,
+1. probes the terrain WCS at 100 m and skips the cell if the highest point is 0 m or below (sea). A probe that is not a readable GeoTIFF (the WCS answers errors with HTTP 200 and XML) is logged as a failure instead, except "InvalidBoundingBox" (outside the model), which counts as sea,
 2. fetches the terrain at 5 m with a 20 m buffer and averages it to 10 m, so 5 m lines do not trace every ditch and road bank,
 3. runs `gdal_contour -i 5`, clips back to the cell, drops lines shorter than 50 m and heights of 0 m or below,
 4. writes GeoJSONSeq; all cells are joined by `tippecanoe` into `kurver-5m.pmtiles` (zoom 11-14, layer `kurver`, attribute `h` in metres).

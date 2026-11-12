@@ -28,6 +28,10 @@ cell() {
     "$wcs&bbox=$x,$y,$((x+5000)),$((y+5000))&width=50&height=50" || { echo "probe-fail $id" >> "$W/logs/fejl.log"; rm -rf "$d"; return 0; }
   # The WCS answers errors with HTTP 200 and an XML report, so a probe that is not
   # a readable GeoTIFF is a failure (retried next run), never "sea".
+  # Outside the model's extent the WCS answers "InvalidBoundingBox": no land there.
+  if grep -q "InvalidBoundingBox" "$d/probe.tif"; then
+    rm -rf "$d"; touch "$d.done"; return 0
+  fi
   local stats
   if ! stats=$(docker run --rm -u "$(id -u):$(id -g)" -v "$d:/c" kort-kurver gdalinfo -stats /c/probe.tif 2>/dev/null); then
     echo "probe-bad $id" >> "$W/logs/fejl.log"; rm -rf "$d"; return 0
