@@ -66,11 +66,17 @@ export function drawCropMarks(pdf: jsPDF, layout: Pick<PdfLayout, "marginMm" | "
   }
 }
 
-const LABEL_PT = 6.5;
+const LABEL_PT = 7;
+/** Below this overlap the hint goes in the margin instead of the overlap strip. */
+const MIN_STRIP_MM = 5;
 
 /**
- * Where the neighbour's map edge lands on this sheet (dashed, on the right and
- * bottom overlap) and which sheet continues on each side (in the margin).
+ * Where the next sheet goes: a dashed line where its edge lands, and
+ * "Læg ark A2 her" in the strip it will cover (so the hint is hidden once the
+ * map is assembled). Only right and bottom neighbours are marked; each pair of
+ * sheets is then marked once, and the overview page shows the whole grid.
+ * Nothing is written in the margin where the UTM grid puts its labels, unless
+ * the overlap is too small for the strip.
  */
 export function drawAssemblyMarks(
   pdf: jsPDF,
@@ -94,21 +100,32 @@ export function drawAssemblyMarks(
     pdf.setLineDashPattern([], 0);
   }
 
-  pdf.setFont("helvetica", "normal");
+  pdf.setFont("helvetica", "bold");
   pdf.setFontSize(LABEL_PT);
   pdf.setTextColor(0);
-  const m = layout.marginMm;
-  if (neighbours.top) pdf.text(`Fortsætter på ${neighbours.top}`, cx, m - 2, { align: "center" });
-  if (neighbours.bottom) pdf.text(`Fortsætter på ${neighbours.bottom}`, cx, y2 + 3.5, { align: "center" });
-  // jsPDF ignores align for rotated text, so centre on the edge by hand.
-  if (neighbours.left) {
-    const t = `Fortsætter på ${neighbours.left}`;
-    pdf.text(t, m - 2.5, cy + pdf.getTextWidth(t) / 2, { angle: 90 });
-  }
+  const inStrip = overlapMm >= MIN_STRIP_MM;
+  const textH = LABEL_PT * (25.4 / 72);
   if (neighbours.right) {
-    const t = `Fortsætter på ${neighbours.right}`;
-    pdf.text(t, x2 + 2.5, cy - pdf.getTextWidth(t) / 2, { angle: -90 });
+    const t = `Læg ark ${neighbours.right} her`;
+    const w = pdf.getTextWidth(t);
+    // Rotated -90 reads top to bottom; the baseline sits left of the glyphs.
+    const x = inStrip ? x2 - overlapMm / 2 - textH / 2 : x2 + 2;
+    if (inStrip) whiteBox(pdf, x - 0.8, cy - w / 2 - 1, textH + 1.6, w + 2);
+    pdf.text(t, x, cy - w / 2, { angle: -90 });
   }
+  if (neighbours.bottom) {
+    const t = `Læg ark ${neighbours.bottom} her`;
+    const w = pdf.getTextWidth(t);
+    const y = inStrip ? y2 - overlapMm / 2 + textH / 2 : y2 + 3.5;
+    if (inStrip) whiteBox(pdf, cx - w / 2 - 1, y - textH - 0.4, w + 2, textH + 1.4);
+    pdf.text(t, cx, y, { align: "center" });
+  }
+  pdf.setFont("helvetica", "normal");
+}
+
+function whiteBox(pdf: jsPDF, x: number, y: number, w: number, h: number): void {
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(x, y, w, h, "F");
 }
 
 export interface OverviewPlacement {
@@ -213,11 +230,11 @@ export function drawOverview(
   const size = `${formatCm(t.assembled.widthCm)} × ${formatCm(t.assembled.heightCm)} cm`;
   const lines = [
     `Samlet kort: ca. ${size} i 1:${t.scale.toLocaleString("da-DK")}.`,
-    "Udskriv i 100 % / faktisk størrelse. Klip hvert ark langs hjørnemærkerne.",
+    "Udskriv i 100 % / faktisk størrelse. Klip kun venstre og øverste kant af hvert ark af, langs hjørnemærkerne.",
     t.overlapMm > 0
-      ? `Arkene overlapper ${t.overlapMm} mm: læg venstre og øverste kant af et ark på den stiplede linje på arket ved siden af.`
-      : "Arkene overlapper ikke: læg kanterne kant i kant.",
-    "Kanten af hvert ark viser, hvilket ark der fortsætter dér (rækker A, B, C ..., kolonner 1, 2, 3 ...).",
+      ? `Arkene overlapper ${t.overlapMm} mm: læg den klippede kant på den stiplede linje, hvor der står "Læg ark ... her".`
+      : "Arkene overlapper ikke: læg den klippede kant kant i kant med naboarket.",
+    "Rækkerne hedder A, B, C ... oppefra, og kolonnerne 1, 2, 3 ... fra venstre.",
   ];
   let y = place.y + place.h + 7;
   for (const line of lines) {

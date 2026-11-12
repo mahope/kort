@@ -1,6 +1,7 @@
 "use client";
 
 import { usePrintStore } from "@/stores/printStore";
+import { useMapStore } from "@/stores/mapStore";
 import { ChipGroup } from "@/components/ui/ChipGroup";
 import { calculatePdfLayout } from "@/lib/pdf/layout";
 import { assembledSizeCm } from "@/lib/pdf/assembly";
@@ -17,6 +18,7 @@ export function MultiPageSelector() {
   const overlapMm = usePrintStore((s) => s.overlapMm);
   const setOverlapMm = usePrintStore((s) => s.setOverlapMm);
   const paperFormat = usePrintStore((s) => s.paperFormat);
+  const rotated = useMapStore((s) => Math.abs(s.viewState.bearing) > 0.5);
   const orientation = usePrintStore((s) => s.orientation);
 
   const totalPages = gridCols * gridRows;
@@ -53,12 +55,17 @@ export function MultiPageSelector() {
               className="w-full accent-primary pointer-coarse:h-11"
             />
           </div>
+          {rotated && (
+            <p className="text-xs text-danger" role="note">
+              Kortet er drejet. Sæt rotationen til 0°, ellers passer arkene ikke sammen.
+            </p>
+          )}
           <p className="text-xs text-text-secondary" data-testid="multipage-summary">
             {totalPages} ark i {paperFormat} ({gridCols} × {gridRows}). Samlet kort ca.{" "}
             <span className="font-medium text-foreground tabular-nums">
               {Math.round(size.widthCm)} × {Math.round(size.heightCm)} cm
             </span>
-            {totalPages > 1 && ". PDF'en starter med en oversigtsside, og hvert ark har hjørnemærker og navnet på nabo-arkene."}
+            {totalPages > 1 && ". PDF'en starter med en oversigtsside, og hvert ark har hjørnemærker og viser, hvor naboarket skal ligge."}
           </p>
         </div>
       )}

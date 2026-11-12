@@ -15,7 +15,8 @@ import {
   overviewPlacement,
   sheetNeighbours,
 } from "../assembly";
-import { generatePdf } from "../generator";
+import { generatePdf, MULTIPAGE_ROTATION_MESSAGE } from "../generator";
+import { useMapStore } from "@/stores/mapStore";
 import { printDpi } from "@/constants/paperFormats";
 
 const layout = calculatePdfLayout("A4", "portrait", 150);
@@ -68,7 +69,21 @@ describe("marks on a sheet", () => {
       [right, layout.marginMm, right, layout.marginMm + layout.mapHeightMm],
       [layout.marginMm, bottom, layout.marginMm + layout.mapWidthMm, bottom],
     ]);
-    expect(text.sort()).toEqual(["Fortsætter på A1", "Fortsætter på B2", "Fortsætter på C1"]);
+    // Only right and bottom are marked; the hint sits in the strip the neighbour covers.
+    expect(text.sort()).toEqual(["Læg ark B2 her", "Læg ark C1 her"]);
+  });
+
+  it("keeps the hints inside the map when the overlap strip is wide enough", () => {
+    const pdf = new jsPDF({ unit: "mm", format: [layout.pageWidthMm, layout.pageHeightMm] });
+    const text = vi.spyOn(pdf, "text");
+    drawAssemblyMarks(pdf, layout, { top: null, bottom: "B1", left: null, right: "A2" }, 10);
+    const x2 = layout.marginMm + layout.mapWidthMm;
+    const y2 = layout.marginMm + layout.mapHeightMm;
+    const [right, bottom] = text.mock.calls.map((c) => [c[1] as number, c[2] as number]);
+    expect(right[0]).toBeGreaterThan(x2 - 10);
+    expect(right[0]).toBeLessThan(x2);
+    expect(bottom[1]).toBeGreaterThan(y2 - 10);
+    expect(bottom[1]).toBeLessThan(y2);
   });
 
   it("draws no overlap line without overlap", () => {
@@ -132,14 +147,30 @@ describe("generatePdf floor map", () => {
     expect(overviewCall.bearing).toBe(0);
   });
 
-  it("renders A0 at 150 dpi even when 300 is chosen", async () => {
+  it("renders A0 at most at 150 dpi, and lower on a device with a small canvas limit", async () => {
     usePrintStore.setState({ multiPage: false });
     await generatePdf({
       bounds: { west: 10, east: 10.1, south: 56, north: 56.1 },
       scale: 10000, paperFormat: "A0", orientation: "portrait", dpi: 300,
     });
+    // jsdom has no WebGL, so the device limit is the 4096 px fallback.
     const { canvasWidth, canvasHeight } = renderMapToImage.mock.calls[0][0];
-    const l = calculatePdfLayout("A0", "portrait", 150);
-    expect([canvasWidth, canvasHeight]).toEqual([l.canvasWidth, l.canvasHeight]);
+    const at150 = calculatePdfLayout("A0", "portrait", 150);
+    expect(Math.max(canvasWidth, canvasHeight)).toBeLessThanOrEqual(4096);
+    expect(canvasHeight).toBeLessThan(at150.canvasHeight);
+    expect(canvasHeight).toBeGreaterThan(4000);
+  });
+
+  it("refuses a turned multi-page print with an honest message", async () => {
+    usePrintStore.setState({ multiPage: true, gridCols: 2, gridRows: 2, overlapMm: 10 });
+    useMapStore.setState({ viewState: { ...useMapStore.getState().viewState, bearing: 30 } });
+    await expect(
+      generatePdf({
+        bounds: { west: 10, east: 10.1, south: 56, north: 56.1 },
+        scale: 10000, paperFormat: "A4", orientation: "portrait", dpi: 150,
+      })
+    ).rejects.toThrow(MULTIPAGE_ROTATION_MESSAGE);
+    expect(renderMapToImage).not.toHaveBeenCalled();
+    useMapStore.setState({ viewState: { ...useMapStore.getState().viewState, bearing: 0 } });
   });
 });

@@ -5,7 +5,7 @@ import { getBrand } from "@/config/brand";
 export const metadata: Metadata = {
   title: "Udskriv Topografisk Kort som PDF - Gratis Dansk Kortudskrivning",
   description:
-    "Print danske topografiske kort i høj kvalitet som PDF. Vælg målestok fra 1:10.000 til 1:500.000, papirformat A5-A2 med UTM-gitter. Gratis, uden login.",
+    "Print danske topografiske kort i høj kvalitet som PDF. Vælg målestok fra 1:10.000 til 1:500.000, papirformat A5-A0 og gulvkort over flere ark, med UTM-gitter. Gratis, uden login.",
   alternates: {
     canonical: "/topografisk-kort-print",
   },
@@ -124,7 +124,7 @@ export default function LandingPage() {
                 desc: "Præcist koordinatgitter på kortet til orientering, eftersøgning og positionsangivelse.",
               },
               {
-                title: "A5 til A2 papirformat",
+                title: "A5 til A0 papirformat",
                 desc: "Stående eller liggende. PDF'en matcher det nøjagtige papirformat.",
               },
               {

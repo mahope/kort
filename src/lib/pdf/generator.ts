@@ -13,7 +13,8 @@ import { renderMapToImage } from "./renderer";
 import { timed, yieldToMain } from "./timing";
 import { applyPrintPreferences, drawControlLine } from "./controlLine";
 import { calculateMultiPageGrid, calculatePrintArea } from "@/lib/geo/calculations";
-import { printDpi } from "@/constants/paperFormats";
+import { LARGE_FORMATS, printDpi } from "@/constants/paperFormats";
+import { effectiveDpi, getMaxCanvasSize } from "./limits";
 import {
   assembledSizeCm,
   drawAssemblyMarks,
@@ -80,6 +81,9 @@ interface GeneratePdfOptions {
   onProgress?: (progress: PdfProgress) => void;
 }
 
+export const MULTIPAGE_ROTATION_MESSAGE =
+  "Flersidet udskrift kan ikke drejes, for så passer arkene ikke sammen. Sæt rotationen til 0° under Udskrivning.";
+
 export async function generatePdf({
   bounds,
   scale,
@@ -89,11 +93,19 @@ export async function generatePdf({
   onProgress,
 }: GeneratePdfOptions): Promise<void> {
   const printState = usePrintStore.getState();
-  // A1/A0 are print-shop sheets: capped so the canvas stays renderable.
-  const dpi = printDpi(paperFormat, requestedDpi) as DpiOption;
+  // A1/A0 are print-shop sheets: capped at 150 dpi, and lower still on a
+  // device that cannot render that canvas (there is no lower DPI to pick).
+  let dpi = printDpi(paperFormat, requestedDpi) as DpiOption;
+  if (LARGE_FORMATS.includes(paperFormat)) {
+    dpi = effectiveDpi(paperFormat, orientation, dpi, getMaxCanvasSize()) as DpiOption;
+  }
 
   // Delegate to multi-page if enabled
   if (printState.multiPage) {
+    // Sheets are laid out unrotated; turned sheets would not fit together.
+    if (Math.abs(useMapStore.getState().viewState.bearing) > 0.5) {
+      throw new Error(MULTIPAGE_ROTATION_MESSAGE);
+    }
     return generateMultiPagePdf({ bounds, scale, paperFormat, orientation, dpi, onProgress });
   }
 
@@ -463,7 +475,9 @@ export function drawAttribution(
   pdf: jsPDF,
   layout: { marginMm: number; mapWidthMm: number; mapHeightMm: number; pageWidthMm: number; pageHeightMm: number },
   scale: number,
-  grid: GridInfo | null
+  grid: GridInfo | null,
+  /** Replaces the scale/grid text on the left (e.g. on the overview page). */
+  leftText?: string
 ) {
   pdf.setFontSize(6);
   pdf.setTextColor(100);
@@ -476,7 +490,7 @@ export function drawAttribution(
     scaleText += grid.system === "mgrs" ? ` | MGRS ${grid.square} / WGS84` : ` | UTM ${grid.zone}N / ETRS89`;
     if (grid.spacing) scaleText += ` | Gitter ${formatSpacing(grid.spacing)}`;
   }
-  pdf.text(scaleText, layout.marginMm, y);
+  pdf.text(leftText ?? scaleText, layout.marginMm, y);
 
   // Attribution on right
   const attribution = `Kortdata: Klimadatastyrelsen | ${getBrand().credit.short}`;
@@ -592,7 +606,7 @@ async function generateMultiPagePdf({
         overlapMm,
         assembled: assembledSizeCm(layout, gridCols, gridRows, overlapMm),
       });
-      drawAttribution(pdf, layout, scale, null);
+      drawAttribution(pdf, layout, scale, null, "Oversigt, ikke i målestok");
     }
 
     for (let i = 0; i < cells.length; i++) {

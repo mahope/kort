@@ -27,7 +27,7 @@ export function PaperFormatSelector() {
       />
       {LARGE_FORMATS.includes(paperFormat) && (
         <p className="text-xs text-text-secondary" role="note">
-          {paperFormat} er ét stort ark til et trykkeri eller en plotter. Det laves med {LARGE_FORMAT_MAX_DPI} dpi, som er rigeligt til et kort, man står og kigger på.
+          {paperFormat} er ét stort ark til et trykkeri eller en plotter. Det laves med op til {LARGE_FORMAT_MAX_DPI} dpi, som er rigeligt til et kort, man står og kigger på. Kan enheden ikke klare det, bliver opløsningen lidt lavere.
         </p>
       )}
       <Toggle
