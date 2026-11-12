@@ -57,6 +57,15 @@ describe("PDF credits", () => {
     expect(thirdPartyCredits()).toEqual({ credits: [], notForNavigation: false });
   });
 
+  it("credits the derived contours once when both 5 and 10 m are on", () => {
+    useMapStore.setState({
+      overlays: initial.overlays.map((o) => ({ ...o, enabled: o.id === "kurver5" || o.id === "kurver10" })),
+    });
+    const c = thirdPartyCredits().credits;
+    expect(c).toHaveLength(1);
+    expect(c[0]).toMatch(/beregnet/);
+  });
+
   it("credits OSM, Dybdemodellen, EMODnet and OpenSeaMap and says not for navigation", () => {
     useMapStore.setState({
       baseLayer: "osm",

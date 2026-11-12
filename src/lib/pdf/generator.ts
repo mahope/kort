@@ -573,7 +573,7 @@ export function thirdPartyCredits(): { credits: string[]; notForNavigation: bool
   for (const o of overlays) {
     if (!o.enabled) continue;
     const src = OVERLAY_SOURCES[o.id];
-    if (src.credit) credits.push(src.credit);
+    if (src.credit && !credits.includes(src.credit)) credits.push(src.credit); // 5 and 10 m share one
     if (src.notForNavigation) notForNavigation = true;
   }
   return { credits, notForNavigation };

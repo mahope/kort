@@ -186,6 +186,11 @@ describe("renderMapToImage tile errors", () => {
     expect(await run()).toHaveProperty("v");
   });
 
+  it("does not refuse the PDF for a broken local import", async () => {
+    ctl.errorsWithoutTile = [{ sourceId: "pdf-import-1", error: new Error("worker") }];
+    expect(await run()).toHaveProperty("v");
+  });
+
   it("refuses the PDF when a whole source fails to load (contour archive down)", async () => {
     // MapLibre marks the source loaded with no tiles, so the tile wait alone would pass.
     ctl.errorsWithoutTile = [{ sourceId: "kurver5-overlay", error: new Error("header") }];

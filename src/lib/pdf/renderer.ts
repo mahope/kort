@@ -56,7 +56,9 @@ function trackFailedTiles(map: maplibregl.Map, failedSources: Set<string>) {
     // header) could not load. MapLibre then marks it loaded with no tiles, so the
     // tile wait would pass and the PDF would silently miss the layer.
     if (!ev.tile) {
-      failedSources.add(ev.sourceId);
+      // Only map overlays load from the net this way; a broken local import
+      // (GeoJSON worker error) is not "a layer that could not be fetched".
+      if (ev.sourceId.endsWith("-overlay")) failedSources.add(ev.sourceId);
       return;
     }
     const tileKey = ev.tile.tileID?.key;
