@@ -32,6 +32,11 @@ describe("overlay layers", () => {
     expect(src.attribution).toContain("href='https://gst.dk/");
   });
 
+  it("caps OpenSeaMap at its last zoom, so 1:5.000 at 300 dpi enlarges instead of failing", () => {
+    expect(sourceZoomLimit(OVERLAY_SOURCES.soemaerker)).toEqual({ maxzoom: 18 });
+    expect(sourceZoomLimit(OVERLAY_SOURCES.havdybder)).toEqual({});
+  });
+
   it("uses the smoothed 2.5 m contours for contours25", () => {
     expect(OVERLAY_SOURCES.contours25.tiles[0]).toContain("LAYERS=dhm_kurve_traditionel");
   });

@@ -5,7 +5,7 @@ import { configureMaplibreWorker } from "@/lib/map/workerUrl";
 import type { ImportedLayer } from "@/stores/importStore";
 import type { DrawnFeature } from "@/stores/drawStore";
 import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
-import { BLANK_STYLE, getRasterBaseLayers, OVERLAY_SOURCES } from "@/lib/map/sources";
+import { BLANK_STYLE, getRasterBaseLayers, OVERLAY_SOURCES, sourceZoomLimit } from "@/lib/map/sources";
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
 import { timed } from "./timing";
 
@@ -229,6 +229,7 @@ export async function renderMapToImage({
         type: "raster",
         tiles: rasterSource.tiles,
         tileSize: rasterSource.tileSize,
+        ...sourceZoomLimit(rasterSource),
       });
       map.addLayer({ id: `base-${baseLayer}-layer`, type: "raster", source: `base-${baseLayer}` });
     }
@@ -242,6 +243,7 @@ export async function renderMapToImage({
         type: "raster",
         tiles: sourceConfig.tiles,
         tileSize: sourceConfig.tileSize,
+        ...sourceZoomLimit(sourceConfig),
       });
       map.addLayer({
         id: `${sourceId}-layer`,

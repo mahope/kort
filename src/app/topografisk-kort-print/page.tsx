@@ -5,7 +5,7 @@ import { getBrand } from "@/config/brand";
 export const metadata: Metadata = {
   title: "Udskriv Topografisk Kort som PDF - Gratis Dansk Kortudskrivning",
   description:
-    "Print danske topografiske kort i høj kvalitet som PDF. Vælg målestok fra 1:10.000 til 1:500.000, papirformat A5-A0 og gulvkort over flere ark, med UTM-gitter. Gratis, uden login.",
+    "Print danske topografiske kort i høj kvalitet som PDF. Vælg målestok fra 1:5.000 til 1:500.000, papirformat A5-A0 og gulvkort over flere ark, med UTM-gitter. Gratis, uden login.",
   alternates: {
     canonical: "/topografisk-kort-print",
   },
@@ -23,7 +23,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Hvilke målestoksforhold kan jeg vælge?",
-    a: "Du kan vælge mellem 1:10.000, 1:25.000, 1:50.000, 1:100.000, 1:250.000 og 1:500.000. Til vandreture og orientering er 1:25.000 eller 1:50.000 mest brugt.",
+    a: "Du kan vælge mellem 1:5.000, 1:10.000, 1:25.000, 1:50.000, 1:100.000, 1:250.000 og 1:500.000, eller skrive din egen under "Andet". Til vandreture og orientering er 1:25.000 eller 1:50.000 mest brugt.",
   },
   {
     q: "Hvad er UTM-gitter, og hvorfor er det nyttigt?",
@@ -116,8 +116,8 @@ export default function LandingPage() {
           <div className="grid sm:grid-cols-2 gap-6">
             {[
               {
-                title: "6 målestoksforhold",
-                desc: "Fra detaljeret 1:10.000 til overblik 1:500.000. Vælg det der passer til din tur.",
+                title: "7 målestoksforhold",
+                desc: "Fra detaljeret 1:5.000 til overblik 1:500.000. Vælg det der passer til din tur.",
               },
               {
                 title: "UTM-gitter og koordinater",
