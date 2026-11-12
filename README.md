@@ -18,12 +18,12 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 - **4 kortstilarter** - Klassisk, Dæmpet, Grå og Mørkt skærmkort
 - **5 basiskort** - Skærmkort, Ortofoto, OpenStreetMap, Høje & Lave Målebordsblade
 - **6 målestoksforhold** - 1:10.000, 1:25.000, 1:50.000, 1:100.000, 1:250.000, 1:500.000
-- **4 papirformater** - A5, A4, A3, A2 i stående eller liggende
+- **6 papirformater** - A5, A4, A3, A2 i stående eller liggende, plus A1 og A0 som ét stort ark til trykkeri/plotter (150 dpi)
 - **UTM-gitter** - Grid-linjer og koordinater på kort og PDF, til orientering i felten
 - **Overlays** - Højdekurver, skyggekort, matrikelskel og stednavne
 - **Import** - Indlæs GPX, GeoJSON og KML-filer og print dem direkte
 - **Tegning & mål** - Tegn ruter og mål afstande direkte på kortet
-- **Multi-page print** - Udskriv store områder over flere sider
+- **Multi-page print og gulvkort** - Udskriv store områder over op til 5 × 5 ark med overlap. PDF'en starter med en oversigtsside (arkgitter, samlet størrelse og vejledning), og hvert ark har hjørnemærker, "Ark B2 (side 6 af 10)", en stiplet linje hvor naboarket lægges, og navnene på nabo-arkene i margenen
 - **PDF-generering** - Client-side PDF med målestok-lineal, nordpil og attribution
 - **Misvisning** - Magnetisk misvisning ved sigtekorset på kortet og som diagram (retvisende, gitter- og magnetisk nord) på PDF'en. Se [Misvisning](#misvisning-magnetic-declination)
 - **Kortrotation** - Drej kortet til en valgfri bearing/retning
