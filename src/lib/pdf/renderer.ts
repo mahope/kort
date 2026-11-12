@@ -46,12 +46,19 @@ type TileProgress = (loaded: number, total: number) => void;
 type TileEvent = { sourceId?: string; dataType?: string; tile?: { tileID?: { key?: number | string } } };
 
 /** Tracks tiles that errored and have not (yet) loaded successfully. */
-function trackFailedTiles(map: maplibregl.Map) {
+function trackFailedTiles(map: maplibregl.Map, failedSources: Set<string>) {
   const failed = new Map<string, FailedTile>();
   let anonymous = 0;
   map.on("error", (e) => {
     const ev = e as unknown as TileEvent;
-    if (!ev.tile || !ev.sourceId) return; // style/glyph errors are not tile errors
+    if (!ev.sourceId) return; // style/glyph errors are not tile errors
+    // A source error without a tile: the source itself (e.g. the contour archive's
+    // header) could not load. MapLibre then marks it loaded with no tiles, so the
+    // tile wait would pass and the PDF would silently miss the layer.
+    if (!ev.tile) {
+      failedSources.add(ev.sourceId);
+      return;
+    }
     const tileKey = ev.tile.tileID?.key;
     failed.set(`${ev.sourceId}/${tileKey ?? `anon${anonymous++}`}`, { sourceId: ev.sourceId, tileKey });
   });
@@ -221,7 +228,8 @@ export async function renderMapToImage({
 
     configureMaplibreWorker();
     map = new maplibregl.Map(mapOptions);
-    const failedTiles = trackFailedTiles(map);
+    const failedSources = new Set<string>();
+    const failedTiles = trackFailedTiles(map, failedSources);
     if (onTileProgress) trackTileProgress(map, onTileProgress);
 
     await waitForMapLoad(map);
@@ -354,6 +362,9 @@ export async function renderMapToImage({
     });
     if (failedTiles.size > 0) {
       throw new Error(isOffline() ? OFFLINE_MESSAGE : missingTilesMessage(failedTiles.size));
+    }
+    if (failedSources.size > 0) {
+      throw new Error(isOffline() ? OFFLINE_MESSAGE : "Et kortlag kunne ikke hentes, så PDF'en ville mangle det. Prøv igen.");
     }
 
     // WebGL silently clamps oversized canvases; never deliver a downscaled map.

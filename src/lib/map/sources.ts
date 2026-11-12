@@ -240,6 +240,8 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     tiles: [],
     tileSize: 512,
     attribution: "Højdekurver beregnet fra &copy; Klimadatastyrelsen (DHM)",
+    // CC BY: say on the PDF that the lines are derived, not Klimadatastyrelsen's own.
+    credit: "Højdekurver beregnet af kort.mahoje.dk fra Klimadatastyrelsens højdemodel (DHM)",
     contourInterval: 5,
     noOffline: true,
   },
@@ -247,6 +249,8 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     tiles: [],
     tileSize: 512,
     attribution: "Højdekurver beregnet fra &copy; Klimadatastyrelsen (DHM)",
+    // CC BY: say on the PDF that the lines are derived, not Klimadatastyrelsen's own.
+    credit: "Højdekurver beregnet af kort.mahoje.dk fra Klimadatastyrelsens højdemodel (DHM)",
     contourInterval: 10,
     noOffline: true,
   },

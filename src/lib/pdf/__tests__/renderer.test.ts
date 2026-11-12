@@ -9,6 +9,7 @@ const ctl = {
   canvasH: 100,
   failOnLoad: [] as string[], // tile keys that error after load
   failOnReload: [] as string[], // tile keys that still fail after a retry
+  errorsWithoutTile: [] as unknown[], // error events without a tile (style, glyphs, a source's header)
   reloads: 0,
   removed: [] as string[],
   updates: 0,
@@ -52,6 +53,7 @@ class FakeMap {
     if (ctl.noUpdate) (this as { _update?: unknown })._update = undefined;
     setTimeout(() => {
       for (const key of ctl.failOnLoad) this.emit("error", { sourceId: "src", tile: { tileID: { key } } });
+      for (const ev of ctl.errorsWithoutTile) this.emit("error", ev);
       for (const key of ctl.tiles) this.emit("dataloading", { dataType: "source", sourceId: "src", tile: { tileID: { key } } });
       for (const key of ctl.tiles) this.emit("data", { dataType: "source", sourceId: "src", tile: { tileID: { key } } });
       this.emit("load", {});
@@ -117,7 +119,7 @@ async function run(opts = base) {
 
 beforeEach(() => {
   vi.useFakeTimers();
-  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], reloads: 0, removed: [], updates: 0, notNeeded: [], noUpdate: false, maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [] });
+  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], errorsWithoutTile: [], reloads: 0, removed: [], updates: 0, notNeeded: [], noUpdate: false, maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [] });
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
 });
 afterEach(() => vi.useRealTimers());
@@ -179,8 +181,15 @@ describe("renderMapToImage tile errors", () => {
     expect(((await run()) as { error: Error }).error.message).toMatch(/^1 kortflise mangler/);
   });
 
-  it("does not count errors without a tile (style, glyphs)", async () => {
+  it("does not count errors without a source (style, glyphs)", async () => {
+    ctl.errorsWithoutTile = [{ error: new Error("glyphs 404") }];
     expect(await run()).toHaveProperty("v");
+  });
+
+  it("refuses the PDF when a whole source fails to load (contour archive down)", async () => {
+    // MapLibre marks the source loaded with no tiles, so the tile wait alone would pass.
+    ctl.errorsWithoutTile = [{ sourceId: "kurver5-overlay", error: new Error("header") }];
+    expect(((await run()) as { error: Error }).error.message).toBe("Et kortlag kunne ikke hentes, så PDF'en ville mangle det. Prøv igen.");
   });
 });
 

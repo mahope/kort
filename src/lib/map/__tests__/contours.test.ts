@@ -15,6 +15,8 @@ function evalFilter(f: unknown, h: number): boolean {
     case "!": return !evalFilter(e[1], h);
     case "==": {
       const mod = e[1] as Expr; // ["%", ["to-number", ["get", "h"]], step]
+      expect(mod[0]).toBe("%");
+      expect(mod[1]).toEqual(["to-number", ["get", "h"]]); // tippecanoe may store h as a string
       return h % (mod[2] as number) === (e[2] as number);
     }
     default: throw new Error(`unexpected ${String(e[0])}`);
@@ -50,6 +52,8 @@ describe("contour layers", () => {
     for (const l of layers) expect((l as { "source-layer": string })["source-layer"]).toBe(CONTOURS_SOURCE_LAYER);
     const label = layers.find((l) => l.type === "symbol") as { layout: Record<string, unknown>; filter: unknown };
     expect(label.layout["text-field"]).toEqual(["to-string", ["get", "h"]]);
+    // Heights from zoom 12: 1:25.000 on screen and 1:50.000 in a 150 dpi PDF.
+    expect((label as { minzoom?: number }).minzoom).toBe(12);
     expect(evalFilter(label.filter, 50)).toBe(true);
     expect(evalFilter(label.filter, 40)).toBe(false);
     expect(contourSourceUrl()).toMatch(/^pmtiles:\/\/https:\/\/.+\.pmtiles$/);

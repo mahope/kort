@@ -11,7 +11,6 @@ import { Protocol } from "pmtiles";
 export const CONTOURS_URL =
   process.env.NEXT_PUBLIC_CONTOURS_URL || "https://tiles.mahoje.dk/kurver-5m.pmtiles";
 export const CONTOURS_SOURCE_LAYER = "kurver";
-export const CONTOURS_HOST = new URL(CONTOURS_URL).origin;
 
 /** CSS pixels per millimetre on screen (96 dpi). */
 export const SCREEN_PX_PER_MM = 96 / 25.4;
@@ -23,7 +22,17 @@ let registered = false;
 export function ensurePmtilesProtocol(): void {
   if (registered) return;
   const protocol = new Protocol();
-  maplibregl.addProtocol("pmtiles", protocol.tile);
+  // pmtiles caches the header promise per archive, also when it rejected, so one
+  // network hiccup would hide the contours until reload. Forget the archive on
+  // failure; the next request then fetches the header again.
+  maplibregl.addProtocol("pmtiles", async (params, abort) => {
+    try {
+      return await protocol.tile(params, abort);
+    } catch (err) {
+      if (!abort.signal.aborted) protocol.tiles.delete(CONTOURS_URL);
+      throw err;
+    }
+  });
   registered = true;
 }
 
@@ -79,7 +88,8 @@ export function contourLayers(
       source: sourceId,
       "source-layer": CONTOURS_SOURCE_LAYER,
       filter: isIndex,
-      minzoom: 13,
+      // Zoom 12 = about 1:25.000 on screen and 1:50.000 in a 150 dpi PDF.
+      minzoom: 12,
       layout: {
         "symbol-placement": "line",
         "text-field": ["to-string", ["get", "h"]],

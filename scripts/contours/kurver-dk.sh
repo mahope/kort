@@ -14,6 +14,7 @@ W=${1:-$HOME/dev/kurver/dk}
 P=${2:-6}
 T=fd44f26ab5701c01ca9f570e507fe9ab
 mkdir -p "$W/cells" "$W/logs"
+: > "$W/logs/fejl.log" # failures of this run only
 export W T
 
 cell() {
@@ -25,7 +26,13 @@ cell() {
   # Probe at 100 m: all nodata means sea or outside Denmark.
   curl -sf --retry 4 --retry-delay 5 -H "Referer: https://kort.mahoje.dk/" -o "$d/probe.tif" \
     "$wcs&bbox=$x,$y,$((x+5000)),$((y+5000))&width=50&height=50" || { echo "probe-fail $id" >> "$W/logs/fejl.log"; rm -rf "$d"; return 0; }
-  if ! docker run --rm -u "$(id -u):$(id -g)" -v "$d:/c" kort-kurver gdalinfo -stats /c/probe.tif 2>/dev/null | grep -E "STATISTICS_MAXIMUM=" | grep -vqE "=(-|0(\.0*)?$)"; then
+  # The WCS answers errors with HTTP 200 and an XML report, so a probe that is not
+  # a readable GeoTIFF is a failure (retried next run), never "sea".
+  local stats
+  if ! stats=$(docker run --rm -u "$(id -u):$(id -g)" -v "$d:/c" kort-kurver gdalinfo -stats /c/probe.tif 2>/dev/null); then
+    echo "probe-bad $id" >> "$W/logs/fejl.log"; rm -rf "$d"; return 0
+  fi
+  if ! grep -E "STATISTICS_MAXIMUM=" <<< "$stats" | grep -vqE "=(-|0(\.0*)?$)"; then
     rm -rf "$d"; touch "$d.done"; return 0
   fi
   local n=$(( (5000 + 2*B) / 5 ))
@@ -38,7 +45,7 @@ cell() {
     ogr2ogr -q -f GeoJSONSeq -t_srs EPSG:4326 -lco RS=NO -clipsrc $x $y $((x+5000)) $((y+5000)) \
       -dialect SQLITE -sql 'SELECT CAST(h AS integer) AS h, geom FROM contour WHERE h > 0 AND ST_Length(geom) > 50' k.geojsons k.gpkg
   " || { echo "gdal-fail $id" >> "$W/logs/fejl.log"; rm -rf "$d"; return 0; }
-  mv "$d/k.geojsons" "$W/cells/$id.geojsons"
+  mv "$d/k.geojsons" "$W/cells/$id.geojsons" || { echo "mv-fail $id" >> "$W/logs/fejl.log"; return 0; }
   rm -rf "$d"
   touch "$d.done"
 }
@@ -52,6 +59,10 @@ for x in $(seq ${X0:-440000} 5000 ${X1:-895000}); do
 done | xargs -P "$P" -n 2 bash -c 'cell "$0" "$1"'
 
 echo "celler med kurver: $(ls "$W"/cells/*.geojsons 2>/dev/null | wc -l)"
+# Failed cells have no .done marker; a new run retries them. Never publish a file with holes.
+if [ -s "$W/logs/fejl.log" ]; then
+  echo "KURVER-FEJL: $(wc -l < "$W/logs/fejl.log") celler fejlede, kør scriptet igen"; exit 1
+fi
 cat "$W"/cells/*.geojsons > "$W/kurver.geojsons"
 docker run --rm -u "$(id -u):$(id -g)" -v "$W:/w" kort-kurver \
   tippecanoe -q -o /w/kurver-5m.pmtiles -l kurver -Z11 -z14 --force \
