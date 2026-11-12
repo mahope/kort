@@ -17,7 +17,7 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 - **Interaktivt kort** - Danske topografiske kort via Dataforsyningens vector tiles (MapLibre GL JS)
 - **4 kortstilarter** - Klassisk, Dæmpet, Grå og Mørkt skærmkort
 - **5 basiskort** - Skærmkort, Ortofoto, OpenStreetMap, Høje & Lave Målebordsblade
-- **6 målestoksforhold** - 1:10.000, 1:25.000, 1:50.000, 1:100.000, 1:250.000, 1:500.000
+- **7 målestoksforhold** - 1:5.000, 1:10.000, 1:25.000, 1:50.000, 1:100.000, 1:250.000, 1:500.000 og valgfri fra 1:1.000 til 1:1.000.000 ("Andet"). Ved 1:5.000 er skærmkort og ortofoto skarpest; topografisk kort 1:25.000 bliver forstørret fem gange
 - **6 papirformater** - A5, A4, A3, A2 i stående eller liggende, plus A1 og A0 som ét stort ark til trykkeri/plotter (150 dpi)
 - **UTM-gitter** - Grid-linjer og koordinater på kort og PDF, til orientering i felten
 - **Overlays** - Højdekurver (0,25 m, 0,5 m og roligere 2,5 m fra Dataforsyningen, plus egne 5 og 10 m-kurver med højdetal fra ca. 1:25.000 på skærmen og 1:50.000 på PDF'en; kurverne vises fra zoom 11, ca. 1:80.000 på skærmen), skyggekort, matrikelskel og stednavne

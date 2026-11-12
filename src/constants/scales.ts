@@ -1,4 +1,5 @@
 export const SCALE_PRESETS: { value: number; label: string }[] = [
+  { value: 5000, label: "1:5.000" },
   { value: 10000, label: "1:10.000" },
   { value: 25000, label: "1:25.000" },
   { value: 50000, label: "1:50.000" },

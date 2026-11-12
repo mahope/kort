@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { DDM_TERMS_URL, OVERLAY_LABELS, OVERLAY_SOURCES, SEA_OVERLAYS } from "../sources";
+import { DDM_TERMS_URL, OVERLAY_LABELS, OVERLAY_SOURCES, SEA_OVERLAYS, sourceZoomLimit } from "../sources";
 import { offlineLayerIds } from "@/lib/offline/tiles";
 import { deserializeState, serializeState } from "@/lib/url/urlState";
 import { thirdPartyCredits, drawThirdPartyCredits, overviewCreditsBox } from "@/lib/pdf/generator";
@@ -30,6 +30,11 @@ describe("overlay layers", () => {
     expect(src.credit).toContain(`Vilkår: ${DDM_TERMS_URL}`);
     expect(src.credit).toContain("ikke egnet til navigation");
     expect(src.attribution).toContain("href='https://gst.dk/");
+  });
+
+  it("caps OpenSeaMap at its last zoom, so 1:5.000 at 300 dpi enlarges instead of failing", () => {
+    expect(sourceZoomLimit(OVERLAY_SOURCES.soemaerker)).toEqual({ maxzoom: 18 });
+    expect(sourceZoomLimit(OVERLAY_SOURCES.havdybder)).toEqual({});
   });
 
   it("uses the smoothed 2.5 m contours for contours25", () => {

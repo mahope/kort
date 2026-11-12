@@ -170,6 +170,13 @@ export interface RasterSourceConfig {
   notForNavigation?: boolean;
   /** Our own vector contours (PMTiles, see contours.ts) instead of raster tiles. */
   contourInterval?: 5 | 10;
+  /** Highest zoom the server has; MapLibre enlarges these tiles above it instead of failing on 404. */
+  maxzoom?: number;
+}
+
+/** `{ maxzoom }` for sources that set one, else nothing (MapLibre rejects `maxzoom: undefined`). */
+export function sourceZoomLimit(cfg: RasterSourceConfig): { maxzoom?: number } {
+  return cfg.maxzoom === undefined ? {} : { maxzoom: cfg.maxzoom };
 }
 
 const ORTOFOTO_SOURCE: RasterSourceConfig = {
@@ -191,6 +198,7 @@ export const DTK25_SCREEN_SOURCE: RasterSourceConfig = {
 
 const OSM_SOURCE: RasterSourceConfig = {
   tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+  maxzoom: 19,
   tileSize: 256,
   attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors",
 };
@@ -290,6 +298,7 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
   },
   soemaerker: {
     tiles: [OPENSEAMAP_URL],
+    maxzoom: 18,
     tileSize: 256,
     attribution: "Sømærker: &copy; <a href='https://www.openseamap.org'>OpenSeaMap</a>, &copy; OpenStreetMap-bidragydere. Ikke til navigation",
     credit: "Sømærker: OpenSeaMap, OpenStreetMap-bidragydere",
