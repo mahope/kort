@@ -28,6 +28,8 @@ export type BaseLayer = "skaermkort" | "ortofoto" | "osm" | "dtk25" | "historisk
 export type OverlayId =
   | "contours"
   | "contours25"
+  | "kurver5"
+  | "kurver10"
   | "hillshade"
   | "stednavne"
   | "matrikel"

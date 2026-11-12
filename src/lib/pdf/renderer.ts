@@ -7,6 +7,7 @@ import type { DrawnFeature } from "@/stores/drawStore";
 import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
 import { BLANK_STYLE, getRasterBaseLayers, OVERLAY_SOURCES } from "@/lib/map/sources";
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
+import { contourLayers, contourSourceUrl, ensurePmtilesProtocol, SCREEN_PX_PER_MM } from "@/lib/map/contours";
 import { timed } from "./timing";
 
 const PRINT_RASTER_BASE_LAYERS = getRasterBaseLayers("print");
@@ -117,6 +118,8 @@ interface RenderOptions {
   importedLayers?: ImportedLayer[];
   drawnFeatures?: DrawnFeature[];
   bearing?: number;
+  /** Canvas pixels per millimetre on paper, for vector line widths (contours). */
+  pxPerMm?: number;
   onTileProgress?: TileProgress;
 }
 
@@ -131,6 +134,7 @@ export async function renderMapToImage({
   importedLayers = [],
   drawnFeatures = [],
   bearing = 0,
+  pxPerMm = SCREEN_PX_PER_MM,
   onTileProgress,
 }: RenderOptions): Promise<Uint8Array> {
   if (isOffline()) throw new Error(OFFLINE_MESSAGE);
@@ -214,6 +218,12 @@ export async function renderMapToImage({
     for (const overlay of activeOverlays) {
       const sourceConfig = OVERLAY_SOURCES[overlay.id];
       const sourceId = `${overlay.id}-overlay`;
+      if (sourceConfig.contourInterval) {
+        ensurePmtilesProtocol();
+        map.addSource(sourceId, { type: "vector", url: contourSourceUrl() });
+        for (const layer of contourLayers(sourceId, sourceConfig.contourInterval, overlay.opacity, pxPerMm)) map.addLayer(layer);
+        continue;
+      }
       map.addSource(sourceId, {
         type: "raster",
         tiles: sourceConfig.tiles,

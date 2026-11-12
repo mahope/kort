@@ -37,6 +37,8 @@ interface UrlState {
 const OVERLAY_CODES: Record<string, OverlayId> = {
   co: "contours",
   c2: "contours25",
+  k5: "kurver5",
+  kt: "kurver10",
   hs: "hillshade",
   sn: "stednavne",
   mk: "matrikel",
