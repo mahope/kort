@@ -129,7 +129,7 @@ export default function LandingPage() {
               },
               {
                 title: "Højdekurver og skyggekort",
-                desc: "Tilføj højdekurver, skyggekort, matrikelskel og stednavne som overlay.",
+                desc: "Tilføj højdekurver (også roligere 2,5 m-kurver), skyggekort, matrikelskel og stednavne som overlay. Til vandet: havdybder og sømærker (ikke til navigation).",
               },
               {
                 title: "Importer ruter",
