@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { jsPDF } from "jspdf";
 
 vi.mock("maplibre-gl", () => ({ default: {}, setWorkerUrl: () => {} }));
@@ -129,6 +129,9 @@ describe("generatePdf floor map", () => {
     URL.revokeObjectURL = () => {};
     HTMLAnchorElement.prototype.click = () => {};
   });
+  afterEach(() => {
+    useMapStore.setState({ viewState: { ...useMapStore.getState().viewState, bearing: 0 } });
+  });
 
   it("adds an overview page and numbered sheets for a 3 x 3 grid", async () => {
     usePrintStore.setState({ multiPage: true, gridCols: 3, gridRows: 3, overlapMm: 10 });
@@ -171,6 +174,16 @@ describe("generatePdf floor map", () => {
       })
     ).rejects.toThrow(MULTIPAGE_ROTATION_MESSAGE);
     expect(renderMapToImage).not.toHaveBeenCalled();
-    useMapStore.setState({ viewState: { ...useMapStore.getState().viewState, bearing: 0 } });
+  });
+
+  it("prints a slightly turned map north-up on every sheet", async () => {
+    usePrintStore.setState({ multiPage: true, gridCols: 2, gridRows: 1, overlapMm: 10 });
+    useMapStore.setState({ viewState: { ...useMapStore.getState().viewState, bearing: 0.3 } });
+    await generatePdf({
+      bounds: { west: 10, east: 10.1, south: 56, north: 56.1 },
+      scale: 10000, paperFormat: "A4", orientation: "portrait", dpi: 150,
+    });
+    expect(renderMapToImage).toHaveBeenCalledTimes(3);
+    for (const [opts] of renderMapToImage.mock.calls) expect(opts.bearing).toBe(0);
   });
 });

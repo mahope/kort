@@ -539,7 +539,9 @@ async function generateMultiPagePdf({
   const importedLayers = useImportStore.getState().layers;
   const drawnFeatures = useDrawStore.getState().features;
   const showUtmGrid = mapState.showUtmGrid;
-  const bearing = mapState.viewState.bearing;
+  // Sheets are cut from a north-up grid; a sub-threshold bearing (rotations
+  // above it are refused) would turn each sheet about its own centre.
+  const bearing = 0;
   const layout = calculatePdfLayout(paperFormat, orientation, dpi);
 
   const { cells } = calculateMultiPageGrid(
@@ -646,7 +648,6 @@ async function generateMultiPagePdf({
       const pageLabelMm = pdf.getTextWidth(pageLabel) + 4;
       pdf.setFont("helvetica", "normal");
       drawCropMarks(pdf, layout);
-      drawAssemblyMarks(pdf, layout, sheetNeighbours(cell, gridCols, gridRows), overlapMm);
 
       let gridInfo: GridInfo | null = null;
       if (showUtmGrid) {
@@ -654,6 +655,8 @@ async function generateMultiPagePdf({
         opts.reserveTopLeftMm = pageLabelMm;
         gridInfo = { system: opts.system, square: opts.square, zone: opts.zone, spacing: drawUtmGrid(pdf, layout, cell.bounds, scale, opts) };
       }
+      // After the grid, so the white box keeps grid lines off the hint.
+      drawAssemblyMarks(pdf, layout, sheetNeighbours(cell, gridCols, gridRows), overlapMm);
 
       drawScaleBar(pdf, layout, scale);
       drawNorthArrow(pdf, layout, bearing);
