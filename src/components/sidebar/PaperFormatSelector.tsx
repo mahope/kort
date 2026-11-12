@@ -1,6 +1,6 @@
 "use client";
 
-import { Select } from "@/components/ui/Select";
+import { ChipGroup } from "@/components/ui/ChipGroup";
 import { Toggle } from "@/components/ui/Toggle";
 import { usePrintStore } from "@/stores/printStore";
 import { PAPER_FORMAT_OPTIONS } from "@/constants/paperFormats";
@@ -14,12 +14,13 @@ export function PaperFormatSelector() {
 
   return (
     <div className="space-y-3">
-      <Select
+      <ChipGroup
         label="Papirformat"
         value={paperFormat}
         options={PAPER_FORMAT_OPTIONS.map((f) => ({
           value: f.value,
-          label: f.label,
+          label: f.value,
+          ariaLabel: f.label,
         }))}
         onChange={(v) => setPaperFormat(v as PaperFormat)}
       />

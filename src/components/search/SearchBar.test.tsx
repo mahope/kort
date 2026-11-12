@@ -67,7 +67,8 @@ describe("SearchBar keyboard flow", () => {
     expect(input.getAttribute("aria-activedescendant")).toBe("search-option-0");
     await press(input, "ArrowDown");
     await press(input, "Enter");
-    expect(flyTo).toHaveBeenCalledWith(11, 56);
+    // Zoom is chosen so the whole print frame fits the visible map.
+    expect(flyTo).toHaveBeenCalledWith(11, 56, expect.any(Number), expect.objectContaining({ bottom: 0 }));
   });
 
   it("closes the list on Escape", async () => {
@@ -82,6 +83,7 @@ describe("SearchBar keyboard flow", () => {
     await act(async () => {
       opt.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
     });
-    expect(flyTo).toHaveBeenCalledWith(11, 56);
+    // Zoom is chosen so the whole print frame fits the visible map.
+    expect(flyTo).toHaveBeenCalledWith(11, 56, expect.any(Number), expect.objectContaining({ bottom: 0 }));
   });
 });

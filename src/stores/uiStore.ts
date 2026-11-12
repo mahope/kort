@@ -2,6 +2,9 @@ import { create } from "zustand";
 
 export type Theme = "system" | "light" | "dark";
 
+/** Snap position of the mobile bottom sheet (ignored from md up). */
+export type SheetPosition = "min" | "mid" | "max";
+
 export interface ToastMessage {
   id: string;
   type: "success" | "error" | "info";
@@ -14,6 +17,14 @@ interface UiStore {
   theme: Theme;
   advancedMode: boolean;
   toasts: ToastMessage[];
+  sheetPosition: SheetPosition;
+  /** Settled height of the mobile sheet over the map in px (0 as a sidebar). */
+  sheetPx: number;
+  setSheetPosition: (position: SheetPosition) => void;
+  setSheetPx: (px: number) => void;
+  /** Sidebar section a tool shortcut asked to open and scroll to. */
+  focusSection: string | null;
+  setFocusSection: (id: string | null) => void;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   setTheme: (theme: Theme) => void;
@@ -49,6 +60,12 @@ export const useUiStore = create<UiStore>((set) => ({
   theme: "system",
   advancedMode: false,
   toasts: [],
+  sheetPosition: "mid",
+  sheetPx: 0,
+  setSheetPosition: (sheetPosition) => set({ sheetPosition }),
+  setSheetPx: (sheetPx) => set({ sheetPx }),
+  focusSection: null,
+  setFocusSection: (focusSection) => set({ focusSection }),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
   setTheme: (theme) => {

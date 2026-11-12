@@ -138,7 +138,7 @@ function GeolocationButtonImpl({ mapRef }: GeolocationButtonProps) {
       )}
 
       {/* Button */}
-      <div className="absolute z-10 max-md:bottom-[calc(var(--sheet-offset)+3rem)] max-md:left-2.5 md:right-2.5 md:bottom-28 transition-[bottom] duration-200 ease-out">
+      <div className="absolute z-10 max-md:bottom-[calc(var(--sheet-offset)+4.25rem)] max-md:left-2.5 md:right-2.5 md:bottom-28 transition-[bottom] duration-200 ease-out">
         <button
           type="button"
           onClick={handleClick}

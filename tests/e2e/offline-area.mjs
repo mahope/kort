@@ -63,7 +63,7 @@ try {
   await page.waitForFunction(() => navigator.serviceWorker.controller);
   await page.waitForSelector("canvas", { timeout: 15000 });
 
-  await page.getByRole("button", { name: "Offline" }).click();
+  await page.getByRole("button", { name: "Offline", exact: true }).click();
   const summary = await page.getByText(/fliser, ca\./).first().textContent();
   check(/fliser/.test(summary) && /MB|KB/.test(summary), `plan shows count and size: "${summary}"`);
   const shot = (name) =>
@@ -129,7 +129,7 @@ try {
   await ctx.setOffline(false);
 
   // --- Delete.
-  await page.getByRole("button", { name: "Offline" }).click(); // collapsed after reload
+  await page.getByRole("button", { name: "Offline", exact: true }).click(); // collapsed after reload
   await page.getByRole("button", { name: "Slet" }).click();
   await page.waitForFunction(() => !document.querySelector('[aria-label="Gemte områder"]'));
   check((await offlineCount()) === 0, "delete empties the offline cache");

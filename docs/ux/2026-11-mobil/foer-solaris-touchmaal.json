@@ -1,0 +1,584 @@
+{
+  "390x844": {
+    "steps": {
+      "start": {
+        "small": [
+          {
+            "tag": "a",
+            "text": "Bygget af mahoje.dk",
+            "w": 115,
+            "h": 13
+          }
+        ]
+      },
+      "settings": {
+        "small": [
+          {
+            "tag": "a",
+            "text": "Bygget af mahoje.dk",
+            "w": 115,
+            "h": 13
+          },
+          {
+            "tag": "label",
+            "text": "Koordinatgitter",
+            "w": 358,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Misvisning i printet",
+            "w": 358,
+            "h": 20
+          }
+        ]
+      },
+      "advanced": {
+        "small": [
+          {
+            "tag": "label",
+            "text": "Koordinatgitter",
+            "w": 358,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Misvisning i printet",
+            "w": 358,
+            "h": 20
+          }
+        ]
+      }
+    },
+    "pdf": {
+      "file": "./foer/solaris-390x844.pdf",
+      "ms": 9341,
+      "bytes": 1878454
+    }
+  },
+  "390x844-dark": {
+    "steps": {
+      "start": {
+        "small": [
+          {
+            "tag": "a",
+            "text": "Bygget af mahoje.dk",
+            "w": 115,
+            "h": 13
+          }
+        ]
+      },
+      "settings": {
+        "small": [
+          {
+            "tag": "a",
+            "text": "Bygget af mahoje.dk",
+            "w": 115,
+            "h": 13
+          },
+          {
+            "tag": "label",
+            "text": "Koordinatgitter",
+            "w": 358,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Misvisning i printet",
+            "w": 358,
+            "h": 20
+          }
+        ]
+      },
+      "advanced": {
+        "small": [
+          {
+            "tag": "label",
+            "text": "Koordinatgitter",
+            "w": 358,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Misvisning i printet",
+            "w": 358,
+            "h": 20
+          }
+        ]
+      }
+    },
+    "pdf": {
+      "file": "./foer/solaris-390x844-dark.pdf",
+      "ms": 10365,
+      "bytes": 1878457
+    }
+  },
+  "360x800": {
+    "steps": {
+      "start": {
+        "small": [
+          {
+            "tag": "a",
+            "text": "Bygget af mahoje.dk",
+            "w": 115,
+            "h": 13
+          }
+        ]
+      },
+      "settings": {
+        "small": [
+          {
+            "tag": "a",
+            "text": "Bygget af mahoje.dk",
+            "w": 115,
+            "h": 13
+          },
+          {
+            "tag": "label",
+            "text": "Koordinatgitter",
+            "w": 328,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Misvisning i printet",
+            "w": 328,
+            "h": 20
+          }
+        ]
+      },
+      "advanced": {
+        "small": [
+          {
+            "tag": "label",
+            "text": "Koordinatgitter",
+            "w": 328,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Misvisning i printet",
+            "w": 328,
+            "h": 20
+          }
+        ]
+      }
+    },
+    "pdf": {
+      "file": "./foer/solaris-360x800.pdf",
+      "ms": 9227,
+      "bytes": 1878459
+    }
+  },
+  "1440x900": {
+    "steps": {
+      "start": {
+        "small": [
+          {
+            "tag": "a",
+            "text": "Bygget af mahoje.dk",
+            "w": 115,
+            "h": 13
+          },
+          {
+            "tag": "input",
+            "text": "",
+            "w": 287,
+            "h": 38
+          },
+          {
+            "tag": "label",
+            "text": "Skærmkort",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Topografisk kort 1:25.000",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Ortofoto (luftfoto)",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "OpenStreetMap",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Høje Målebordsblade (1842–1899)",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Lave Målebordsblade (1901–1971)",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Koordinatgitter",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Misvisning i printet",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "select",
+            "text": "1:10.0001:25.0001:50.0001:100.0001:250.0",
+            "w": 287,
+            "h": 36
+          },
+          {
+            "tag": "select",
+            "text": "A5 (148 x 210 mm)A4 (210 x 297 mm)A3 (29",
+            "w": 287,
+            "h": 36
+          },
+          {
+            "tag": "button",
+            "text": "Stående",
+            "w": 143,
+            "h": 36
+          },
+          {
+            "tag": "button",
+            "text": "Liggende",
+            "w": 143,
+            "h": 36
+          },
+          {
+            "tag": "button",
+            "text": "Avancerede indstillinger",
+            "w": 163,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "Om",
+            "w": 21,
+            "h": 16
+          },
+          {
+            "tag": "button",
+            "text": "Zoom in",
+            "w": 29,
+            "h": 29
+          },
+          {
+            "tag": "button",
+            "text": "Zoom out",
+            "w": 29,
+            "h": 29
+          },
+          {
+            "tag": "button",
+            "text": "Drag to rotate map, click to reset north",
+            "w": 29,
+            "h": 29
+          },
+          {
+            "tag": "button",
+            "text": "Kortlag",
+            "w": 96,
+            "h": 36
+          }
+        ]
+      },
+      "settings": {
+        "small": [
+          {
+            "tag": "a",
+            "text": "Bygget af mahoje.dk",
+            "w": 115,
+            "h": 13
+          },
+          {
+            "tag": "input",
+            "text": "",
+            "w": 287,
+            "h": 38
+          },
+          {
+            "tag": "button",
+            "text": "Ryd søgning",
+            "w": 28,
+            "h": 28
+          },
+          {
+            "tag": "label",
+            "text": "Skærmkort",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Topografisk kort 1:25.000",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Ortofoto (luftfoto)",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "OpenStreetMap",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Høje Målebordsblade (1842–1899)",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Lave Målebordsblade (1901–1971)",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Koordinatgitter",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Misvisning i printet",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "select",
+            "text": "1:10.0001:25.0001:50.0001:100.0001:250.0",
+            "w": 287,
+            "h": 36
+          },
+          {
+            "tag": "select",
+            "text": "A5 (148 x 210 mm)A4 (210 x 297 mm)A3 (29",
+            "w": 287,
+            "h": 36
+          },
+          {
+            "tag": "button",
+            "text": "Stående",
+            "w": 143,
+            "h": 36
+          },
+          {
+            "tag": "button",
+            "text": "Liggende",
+            "w": 143,
+            "h": 36
+          },
+          {
+            "tag": "button",
+            "text": "Avancerede indstillinger",
+            "w": 163,
+            "h": 24
+          },
+          {
+            "tag": "a",
+            "text": "Om",
+            "w": 21,
+            "h": 16
+          },
+          {
+            "tag": "button",
+            "text": "Zoom in",
+            "w": 29,
+            "h": 29
+          },
+          {
+            "tag": "button",
+            "text": "Zoom out",
+            "w": 29,
+            "h": 29
+          },
+          {
+            "tag": "button",
+            "text": "Drag to rotate map, click to reset north",
+            "w": 29,
+            "h": 29
+          },
+          {
+            "tag": "button",
+            "text": "Kortlag",
+            "w": 96,
+            "h": 36
+          }
+        ]
+      },
+      "advanced": {
+        "small": [
+          {
+            "tag": "input",
+            "text": "",
+            "w": 287,
+            "h": 38
+          },
+          {
+            "tag": "button",
+            "text": "Ryd søgning",
+            "w": 28,
+            "h": 28
+          },
+          {
+            "tag": "label",
+            "text": "Skærmkort",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Topografisk kort 1:25.000",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Ortofoto (luftfoto)",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "OpenStreetMap",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Høje Målebordsblade (1842–1899)",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Lave Målebordsblade (1901–1971)",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Koordinatgitter",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Misvisning i printet",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "select",
+            "text": "1:10.0001:25.0001:50.0001:100.0001:250.0",
+            "w": 287,
+            "h": 36
+          },
+          {
+            "tag": "select",
+            "text": "A5 (148 x 210 mm)A4 (210 x 297 mm)A3 (29",
+            "w": 287,
+            "h": 36
+          },
+          {
+            "tag": "button",
+            "text": "Stående",
+            "w": 143,
+            "h": 36
+          },
+          {
+            "tag": "button",
+            "text": "Liggende",
+            "w": 143,
+            "h": 36
+          },
+          {
+            "tag": "button",
+            "text": "Skjul avancerede indstillinger",
+            "w": 195,
+            "h": 24
+          },
+          {
+            "tag": "button",
+            "text": "Kortlag",
+            "w": 287,
+            "h": 24
+          },
+          {
+            "tag": "label",
+            "text": "Højdekurver (0,5 m)",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Skyggekort (terræn)",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Stednavne",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "label",
+            "text": "Matrikelskel",
+            "w": 287,
+            "h": 20
+          },
+          {
+            "tag": "button",
+            "text": "Zoom in",
+            "w": 29,
+            "h": 29
+          },
+          {
+            "tag": "button",
+            "text": "Zoom out",
+            "w": 29,
+            "h": 29
+          },
+          {
+            "tag": "button",
+            "text": "Drag to rotate map, click to reset north",
+            "w": 29,
+            "h": 29
+          },
+          {
+            "tag": "button",
+            "text": "Kortlag",
+            "w": 96,
+            "h": 36
+          }
+        ]
+      }
+    },
+    "pdf": {
+      "file": "./foer/solaris-1440x900.pdf",
+      "ms": 8437,
+      "bytes": 1878459
+    }
+  }
+}

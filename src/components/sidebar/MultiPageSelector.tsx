@@ -16,12 +16,12 @@ export function MultiPageSelector() {
 
   return (
     <div>
-      <label className="flex items-center gap-2 cursor-pointer">
+      <label className="flex items-center gap-2 cursor-pointer pointer-coarse:min-h-11">
         <input
           type="checkbox"
           checked={multiPage}
           onChange={(e) => setMultiPage(e.target.checked)}
-          className="accent-primary"
+          className="accent-primary pointer-coarse:h-5 pointer-coarse:w-5"
         />
         <span className="text-sm font-medium">Flersidet udskrift</span>
       </label>

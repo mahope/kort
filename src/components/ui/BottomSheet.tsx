@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef, useCallback, useEffect, useState, type ReactNode } from "react";
+import { useUiStore, type SheetPosition } from "@/stores/uiStore";
+import { SNAP_MAX_FRAC, SNAP_MIN_PX, sheetHeightPx } from "@/lib/ui/sheet";
 
 interface BottomSheetProps {
   children: ReactNode;
@@ -8,17 +10,9 @@ interface BottomSheetProps {
   footer?: ReactNode;
 }
 
-type SheetPosition = "min" | "mid" | "max";
-
-// Heights live in CSS (globals.css: --sheet-min/mid/max) so the first server
-// render already has the final layout and dvh follows resize and rotation.
-const SNAP_MIN_PX = 108;
-const SNAP_MID_FRAC = 0.4;
-const SNAP_MAX_FRAC = 0.6;
-
 function snapPointsPx(): Record<SheetPosition, number> {
   const vh = window.innerHeight;
-  return { min: SNAP_MIN_PX, mid: vh * SNAP_MID_FRAC, max: vh * SNAP_MAX_FRAC };
+  return { min: sheetHeightPx("min", vh), mid: sheetHeightPx("mid", vh), max: sheetHeightPx("max", vh) };
 }
 
 function nearestPosition(heightPx: number): SheetPosition {
@@ -36,7 +30,9 @@ function nearestPosition(heightPx: number): SheetPosition {
  * so the map controls can sit above it.
  */
 export function BottomSheet({ children, footer }: BottomSheetProps) {
-  const [position, setPosition] = useState<SheetPosition>("mid");
+  const position = useUiStore((s) => s.sheetPosition);
+  const setPosition = useUiStore((s) => s.setSheetPosition);
+  const setSheetPx = useUiStore((s) => s.setSheetPx);
   const [dragHeight, setDragHeight] = useState<number | null>(null);
   const dragging = useRef(false);
   const startY = useRef(0);
@@ -54,6 +50,28 @@ export function BottomSheet({ children, footer }: BottomSheetProps) {
       root.style.removeProperty("--sheet-h");
     };
   }, [height]);
+
+  // Publish the settled sheet height (not every drag frame) so the map can pad
+  // its centre into the visible area above the sheet. 0 when it is a sidebar.
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const publish = (e?: Event) => {
+      // An on-screen keyboard shrinks the viewport while typing; re-padding
+      // the map then would make it jump under the user's eyes.
+      const el = document.activeElement;
+      if (e?.type === "resize" && el instanceof HTMLElement && el.matches("input, textarea, select")) return;
+      const px = mq.matches ? 0 : snapPointsPx()[position];
+      setSheetPx(px);
+      document.documentElement.style.setProperty("--map-pad-bottom", `${px}px`);
+    };
+    publish();
+    mq.addEventListener("change", publish);
+    window.addEventListener("resize", publish);
+    return () => {
+      mq.removeEventListener("change", publish);
+      window.removeEventListener("resize", publish);
+    };
+  }, [position, setSheetPx]);
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     dragging.current = true;
@@ -83,9 +101,9 @@ export function BottomSheet({ children, footer }: BottomSheetProps) {
       setDragHeight(null);
     } else {
       // Tap: toggle between minimized and mid
-      setPosition((p) => (p === "min" ? "mid" : "min"));
+      setPosition(position === "min" ? "mid" : "min");
     }
-  }, []);
+  }, [position, setPosition]);
 
   return (
     <aside
@@ -96,7 +114,7 @@ export function BottomSheet({ children, footer }: BottomSheetProps) {
     >
       <div
         data-sheet-handle
-        className="flex shrink-0 cursor-grab touch-none items-center justify-center py-2 active:cursor-grabbing md:hidden"
+        className="flex shrink-0 cursor-grab touch-none items-center justify-center py-3 active:cursor-grabbing md:hidden"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

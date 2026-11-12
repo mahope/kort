@@ -1,8 +1,9 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useState } from "react";
 import { usePrintStore } from "@/stores/printStore";
 import { SCALE_PRESETS, MIN_CUSTOM_SCALE, MAX_CUSTOM_SCALE } from "@/constants/scales";
+import { ChipGroup } from "@/components/ui/ChipGroup";
 
 const CUSTOM_VALUE = "custom";
 
@@ -12,11 +13,10 @@ export function ScaleSelector() {
   const [isCustom, setIsCustom] = useState(false);
   const [customInput, setCustomInput] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const selectId = useId();
 
   const isPreset = SCALE_PRESETS.some((p) => p.value === scale);
 
-  const handleSelectChange = (value: string) => {
+  const handleChange = (value: string) => {
     if (value === CUSTOM_VALUE) {
       setIsCustom(true);
       setCustomInput(String(scale));
@@ -46,20 +46,20 @@ export function ScaleSelector() {
 
   return (
     <div>
-      <label htmlFor={selectId} className="block text-sm font-medium mb-1">Målestok</label>
-      <select
-        id={selectId}
+      <ChipGroup
+        label="Målestok"
+        hint="1:"
         value={selectValue}
-        onChange={(e) => handleSelectChange(e.target.value)}
-        className="w-full rounded-lg border border-border px-3 py-2 text-sm pointer-coarse:min-h-11 pointer-coarse:text-base bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-      >
-        {SCALE_PRESETS.map((s) => (
-          <option key={s.value} value={String(s.value)}>
-            {s.label}
-          </option>
-        ))}
-        <option value={CUSTOM_VALUE}>Brugerdefineret...</option>
-      </select>
+        onChange={handleChange}
+        options={[
+          ...SCALE_PRESETS.map((s) => ({
+            value: String(s.value),
+            label: s.value.toLocaleString("da-DK"),
+            ariaLabel: s.label,
+          })),
+          { value: CUSTOM_VALUE, label: "Andet", ariaLabel: "Andet (brugerdefineret målestok)" },
+        ]}
+      />
 
       {(isCustom || !isPreset) && (
         <div className="mt-2">
