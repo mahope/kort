@@ -13,7 +13,18 @@ import { renderMapToImage } from "./renderer";
 import { OVERLAY_SOURCES } from "@/lib/map/sources";
 import { timed, yieldToMain } from "./timing";
 import { applyPrintPreferences, drawControlLine } from "./controlLine";
-import { calculateMultiPageGrid } from "@/lib/geo/calculations";
+import { calculateMultiPageGrid, calculatePrintArea } from "@/lib/geo/calculations";
+import { LARGE_FORMATS, printDpi } from "@/constants/paperFormats";
+import { effectiveDpi, getMaxCanvasSize } from "./limits";
+import {
+  assembledSizeCm,
+  drawAssemblyMarks,
+  drawCropMarks,
+  drawOverview,
+  overviewCells,
+  overviewPlacement,
+  sheetNeighbours,
+} from "./assembly";
 import { computeZonedGrid, gridIntersections, type ZonedGridLine } from "@/lib/geo/zoneGrid";
 import { mgrsSquare, type GridSystem } from "@/lib/geo/coordinates";
 import {
@@ -71,18 +82,31 @@ interface GeneratePdfOptions {
   onProgress?: (progress: PdfProgress) => void;
 }
 
+export const MULTIPAGE_ROTATION_MESSAGE =
+  "Flersidet udskrift kan ikke drejes, for så passer arkene ikke sammen. Sæt rotationen til 0° under Udskrivning.";
+
 export async function generatePdf({
   bounds,
   scale,
   paperFormat,
   orientation,
-  dpi,
+  dpi: requestedDpi,
   onProgress,
 }: GeneratePdfOptions): Promise<void> {
   const printState = usePrintStore.getState();
+  // A1/A0 are print-shop sheets: capped at 150 dpi, and lower still on a
+  // device that cannot render that canvas (there is no lower DPI to pick).
+  let dpi = printDpi(paperFormat, requestedDpi) as DpiOption;
+  if (LARGE_FORMATS.includes(paperFormat)) {
+    dpi = effectiveDpi(paperFormat, orientation, dpi, getMaxCanvasSize()) as DpiOption;
+  }
 
   // Delegate to multi-page if enabled
   if (printState.multiPage) {
+    // Sheets are laid out unrotated; turned sheets would not fit together.
+    if (Math.abs(useMapStore.getState().viewState.bearing) > 0.5) {
+      throw new Error(MULTIPAGE_ROTATION_MESSAGE);
+    }
     return generateMultiPagePdf({ bounds, scale, paperFormat, orientation, dpi, onProgress });
   }
 
@@ -452,7 +476,9 @@ export function drawAttribution(
   pdf: jsPDF,
   layout: { marginMm: number; mapWidthMm: number; mapHeightMm: number; pageWidthMm: number; pageHeightMm: number },
   scale: number,
-  grid: GridInfo | null
+  grid: GridInfo | null,
+  /** Replaces the scale/grid text on the left (e.g. on the overview page). */
+  leftText?: string
 ) {
   pdf.setFontSize(6);
   pdf.setTextColor(100);
@@ -465,7 +491,7 @@ export function drawAttribution(
     scaleText += grid.system === "mgrs" ? ` | MGRS ${grid.square} / WGS84` : ` | UTM ${grid.zone}N / ETRS89`;
     if (grid.spacing) scaleText += ` | Gitter ${formatSpacing(grid.spacing)}`;
   }
-  pdf.text(scaleText, layout.marginMm, y);
+  pdf.text(leftText ?? scaleText, layout.marginMm, y);
 
   // Attribution on right
   const attribution = `Kortdata: Klimadatastyrelsen | ${getBrand().credit.short}`;
@@ -540,7 +566,9 @@ async function generateMultiPagePdf({
   const importedLayers = useImportStore.getState().layers;
   const drawnFeatures = useDrawStore.getState().features;
   const showUtmGrid = mapState.showUtmGrid;
-  const bearing = mapState.viewState.bearing;
+  // Sheets are cut from a north-up grid; a sub-threshold bearing (rotations
+  // above it are refused) would turn each sheet about its own centre.
+  const bearing = 0;
   const layout = calculatePdfLayout(paperFormat, orientation, dpi);
 
   const { cells } = calculateMultiPageGrid(
@@ -554,8 +582,11 @@ async function generateMultiPagePdf({
     printState.gridRows
   );
 
-  const totalPages = cells.length;
+  // A sheet grid gets an overview page first (skipped for a single sheet).
+  const withOverview = cells.length > 1;
+  const totalPages = cells.length + (withOverview ? 1 : 0);
   printState.setTotalPages(totalPages);
+  const { gridCols, gridRows, overlapMm } = printState;
 
   const pdf = new jsPDF({
     orientation: orientation === "landscape" ? "landscape" : "portrait",
@@ -567,11 +598,52 @@ async function generateMultiPagePdf({
   let declinationDiagram: DeclinationDiagram | null = null;
   try {
     declinationDiagram = await loadDeclinationDiagram();
+    if (withOverview) {
+      printState.setGeneratingPage(1);
+      const area = calculatePrintArea(paperFormat, orientation, scale);
+      const overlapM = (overlapMm * scale) / 1000;
+      const groundW = area.groundWidthM + (gridCols - 1) * (area.groundWidthM - overlapM);
+      const groundH = area.groundHeightM + (gridRows - 1) * (area.groundHeightM - overlapM);
+      const place = overviewPlacement(layout, groundW, groundH);
+      const totalBounds = {
+        west: Math.min(...cells.map((c) => c.bounds.west)),
+        east: Math.max(...cells.map((c) => c.bounds.east)),
+        south: Math.min(...cells.map((c) => c.bounds.south)),
+        north: Math.max(...cells.map((c) => c.bounds.north)),
+      };
+      onProgress?.({ stage: "render", tilesLoaded: 0, tilesTotal: 0 });
+      // A small, quick render: the overview is for orientation, not for reading.
+      const overviewImg = await renderMapToImage({
+        onTileProgress: (tilesLoaded, tilesTotal) => onProgress?.({ stage: "render", tilesLoaded, tilesTotal }),
+        bounds: totalBounds,
+        canvasWidth: Math.round((place.w / 25.4) * 100),
+        canvasHeight: Math.round((place.h / 25.4) * 100),
+        style,
+        baseLayer,
+        overlays,
+        importedLayers,
+        drawnFeatures,
+        bearing: 0,
+      });
+      onProgress?.({ stage: "assemble", tilesLoaded: 0, tilesTotal: 0 });
+      pdf.addImage(overviewImg, "JPEG", place.x, place.y, place.w, place.h);
+      drawOverview(pdf, layout, place, overviewCells(place, gridCols, gridRows, area.groundWidthM, area.groundHeightM, overlapM), {
+        cols: gridCols,
+        rows: gridRows,
+        paper: paperFormat,
+        scale,
+        overlapMm,
+        assembled: assembledSizeCm(layout, gridCols, gridRows, overlapMm),
+      });
+      drawAttribution(pdf, layout, scale, null, "Oversigt, ikke i målestok");
+    }
+
     for (let i = 0; i < cells.length; i++) {
       const cell = cells[i];
-      printState.setGeneratingPage(i + 1);
+      const pageNo = i + 1 + (withOverview ? 1 : 0);
+      printState.setGeneratingPage(pageNo);
 
-      if (i > 0) {
+      if (pageNo > 1) {
         pdf.addPage([layout.pageWidthMm, layout.pageHeightMm], orientation === "landscape" ? "landscape" : "portrait");
       }
 
@@ -593,13 +665,16 @@ async function generateMultiPagePdf({
       await yieldToMain();
       pdf.addImage(imgData, "JPEG", layout.marginMm, layout.marginMm, layout.mapWidthMm, layout.mapHeightMm);
 
-      // Page label
-      const pageLabel = `Side ${cell.label}`;
-      pdf.setFont("helvetica", "normal");
+      // Sheet label, with page number so a stack can be put back in order.
+      const pageLabel = `Ark ${cell.label} (side ${pageNo} af ${totalPages})`;
+      pdf.setFont("helvetica", "bold");
       pdf.setFontSize(8);
       pdf.setTextColor(0);
-      pdf.text(pageLabel, layout.marginMm, layout.marginMm - 2);
-      const pageLabelMm = pdf.getTextWidth(pageLabel) + 2;
+      // Starts 2 mm in, clear of the vertical crop mark at the map corner.
+      pdf.text(pageLabel, layout.marginMm + 2, layout.marginMm - 2);
+      const pageLabelMm = pdf.getTextWidth(pageLabel) + 4;
+      pdf.setFont("helvetica", "normal");
+      drawCropMarks(pdf, layout);
 
       let gridInfo: GridInfo | null = null;
       if (showUtmGrid) {
@@ -607,6 +682,8 @@ async function generateMultiPagePdf({
         opts.reserveTopLeftMm = pageLabelMm;
         gridInfo = { system: opts.system, square: opts.square, zone: opts.zone, spacing: drawUtmGrid(pdf, layout, cell.bounds, scale, opts) };
       }
+      // After the grid, so the white box keeps grid lines off the hint.
+      drawAssemblyMarks(pdf, layout, sheetNeighbours(cell, gridCols, gridRows), overlapMm);
 
       drawScaleBar(pdf, layout, scale);
       drawNorthArrow(pdf, layout, bearing);

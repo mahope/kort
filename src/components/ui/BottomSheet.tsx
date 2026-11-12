@@ -67,9 +67,12 @@ export function BottomSheet({ children, footer }: BottomSheetProps) {
     publish();
     mq.addEventListener("change", publish);
     window.addEventListener("resize", publish);
+    // Resizes skipped while typing (keyboard) are caught up when focus leaves.
+    document.addEventListener("focusout", publish);
     return () => {
       mq.removeEventListener("change", publish);
       window.removeEventListener("resize", publish);
+      document.removeEventListener("focusout", publish);
     };
   }, [position, setSheetPx]);
 

@@ -82,7 +82,11 @@ export default function AboutMahoje() {
               </li>
               <li className="flex gap-2">
                 <span className="text-primary mt-0.5">&#10003;</span>
-                Vælg mellem papirformater fra A5 til A2, stående eller liggende
+                Vælg mellem papirformater fra A5 til A2, stående eller liggende, eller A1 og A0 til trykkeriet
+              </li>
+              <li className="flex gap-2">
+                <span className="text-primary mt-0.5">&#10003;</span>
+                Print et stort område over flere ark og saml dem til et gulvkort, med oversigtsside og samlemærker
               </li>
               <li className="flex gap-2">
                 <span className="text-primary mt-0.5">&#10003;</span>
