@@ -131,7 +131,8 @@ describe("deserializeState validation", () => {
   });
 
   it("rejects an out-of-whitelist paper format", () => {
-    expect(deserializeState("f=A0").paperFormat).toBeUndefined();
+    expect(deserializeState("f=A6").paperFormat).toBeUndefined();
+    expect(deserializeState("f=A0").paperFormat).toBe("A0");
     expect(deserializeState("f=A4").paperFormat).toBe("A4");
   });
 
