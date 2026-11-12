@@ -23,7 +23,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Hvilke målestoksforhold kan jeg vælge?",
-    a: "Du kan vælge mellem 1:5.000, 1:10.000, 1:25.000, 1:50.000, 1:100.000, 1:250.000 og 1:500.000, eller skrive din egen under "Andet". Til vandreture og orientering er 1:25.000 eller 1:50.000 mest brugt.",
+    a: "Du kan vælge mellem 1:5.000, 1:10.000, 1:25.000, 1:50.000, 1:100.000, 1:250.000 og 1:500.000, eller skrive din egen under Andet. Til vandreture og orientering er 1:25.000 eller 1:50.000 mest brugt.",
   },
   {
     q: "Hvad er UTM-gitter, og hvorfor er det nyttigt?",
