@@ -36,9 +36,12 @@ interface UrlState {
 
 const OVERLAY_CODES: Record<string, OverlayId> = {
   co: "contours",
+  c2: "contours25",
   hs: "hillshade",
   sn: "stednavne",
   mk: "matrikel",
+  hd: "havdybder",
+  sm: "soemaerker",
 };
 
 const OVERLAY_TO_CODE = Object.fromEntries(

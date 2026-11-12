@@ -115,7 +115,7 @@ export function offlineLayerIds(
 ): string[] {
   const ids: string[] = [];
   if (isBaseLayerSaveable(baseLayer)) ids.push(baseLayer);
-  for (const o of overlays) if (o.enabled) ids.push(o.id);
+  for (const o of overlays) if (o.enabled && !OVERLAY_SOURCES[o.id].noOffline) ids.push(o.id);
   return ids;
 }
 

@@ -149,7 +149,7 @@ export function MapContainer() {
           <Layer
             id={`${overlay.id}-overlay-layer`}
             type="raster"
-            paint={{ "raster-opacity": overlay.opacity }}
+            paint={{ "raster-opacity": overlay.opacity, ...OVERLAY_SOURCES[overlay.id].paint }}
           />
         </Source>
       ))}

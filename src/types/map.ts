@@ -25,7 +25,14 @@ export type MapStyle = "klassisk" | "daempet" | "graa" | "moerkt";
 
 export type BaseLayer = "skaermkort" | "ortofoto" | "osm" | "dtk25" | "historisk_hoeje" | "historisk_lave";
 
-export type OverlayId = "contours" | "hillshade" | "stednavne" | "matrikel";
+export type OverlayId =
+  | "contours"
+  | "contours25"
+  | "hillshade"
+  | "stednavne"
+  | "matrikel"
+  | "havdybder"
+  | "soemaerker";
 
 export interface OverlayState {
   id: OverlayId;

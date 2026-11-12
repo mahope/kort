@@ -10,6 +10,7 @@ import { useHistoryStore } from "@/stores/historyStore";
 import { calculatePdfLayout } from "./layout";
 import { getBrand } from "@/config/brand";
 import { renderMapToImage } from "./renderer";
+import { OVERLAY_SOURCES } from "@/lib/map/sources";
 import { timed, yieldToMain } from "./timing";
 import { applyPrintPreferences, drawControlLine } from "./controlLine";
 import { calculateMultiPageGrid } from "@/lib/geo/calculations";
@@ -471,6 +472,32 @@ export function drawAttribution(
   pdf.text(attribution, layout.pageWidthMm - layout.marginMm, y, {
     align: "right",
   });
+
+  // Third-party layers get their own credit line above, and sea layers a
+  // clear "not for navigation" (EMODnet/OpenSeaMap terms, and common sense).
+  const extra = thirdPartyCredits();
+  if (extra.credits.length > 0 || extra.notForNavigation) {
+    const parts = [...extra.credits];
+    if (extra.notForNavigation) parts.push("IKKE TIL NAVIGATION");
+    pdf.setTextColor(extra.notForNavigation ? 0 : 100);
+    pdf.text(parts.join(" | "), layout.pageWidthMm - layout.marginMm, y - 2.6, { align: "right" });
+    pdf.setTextColor(100);
+  }
+}
+
+/** Credits for non-KDS data in the print: OSM base map and third-party overlays. */
+export function thirdPartyCredits(): { credits: string[]; notForNavigation: boolean } {
+  const { baseLayer, overlays } = useMapStore.getState();
+  const credits: string[] = [];
+  let notForNavigation = false;
+  if (baseLayer === "osm") credits.push("Kort: OpenStreetMap-bidragydere (ODbL)");
+  for (const o of overlays) {
+    if (!o.enabled) continue;
+    const src = OVERLAY_SOURCES[o.id];
+    if (src.credit) credits.push(src.credit);
+    if (src.notForNavigation) notForNavigation = true;
+  }
+  return { credits, notForNavigation };
 }
 
 type DeclinationDiagram = typeof import("./declinationDiagram");
