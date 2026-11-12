@@ -10,6 +10,7 @@ const ctl = {
   failOnLoad: [] as string[], // tile keys that error after load
   failOnReload: [] as string[], // tile keys that still fail after a retry
   reloads: 0,
+  reloadStates: [] as string[],
   maxSize: 8192,
   blob: true,
   gpuBusyPolls: 0, // clientWaitSync reports TIMEOUT_EXPIRED this many times before the GPU is idle
@@ -34,8 +35,9 @@ class FakeMap {
   style = {
     tileManagers: {
       src: {
-        _reloadTile: (key: string) => {
+        _reloadTile: (key: string, state: string) => {
           ctl.reloads++;
+          ctl.reloadStates.push(state);
           if (ctl.failOnReload.includes(key)) this.emit("error", { sourceId: "src", tile: { tileID: { key } } });
           else this.emit("data", { dataType: "source", sourceId: "src", tile: { tileID: { key } } });
         },
@@ -100,7 +102,7 @@ async function run(opts = base) {
 
 beforeEach(() => {
   vi.useFakeTimers();
-  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], reloads: 0, maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [] });
+  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], reloads: 0, reloadStates: [], maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [] });
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
 });
 afterEach(() => vi.useRealTimers());
@@ -124,6 +126,12 @@ describe("renderMapToImage tile errors", () => {
     ctl.failOnLoad = ["1", "2"];
     expect(await run()).toEqual({ v: new Uint8Array([1, 2, 3]) });
     expect(ctl.reloads).toBe(2);
+  });
+
+  it("re-requests failed tiles as loading, not expired (expired has no texture and crashes the raster draw, #66)", async () => {
+    ctl.failOnLoad = ["1"];
+    await run();
+    expect(ctl.reloadStates).toEqual(["loading"]);
   });
 
   it("throws with the number of missing tiles after retries are exhausted", async () => {
