@@ -31,7 +31,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Hvilke papirformater understøttes?",
-    a: "A5, A4, A3 og A2 i både stående og liggende format. PDF'en genereres i den nøjagtige størrelse, så du kan printe direkte.",
+    a: "A5, A4, A3 og A2 i både stående og liggende format, og A1 og A0 som ét stort ark til et trykkeri. PDF'en genereres i den nøjagtige størrelse, så du kan printe direkte. Et stort område kan også deles over flere ark med overlap, oversigtsside og samlemærker, så det kan lægges sammen til et gulvkort.",
   },
   {
     q: "Koster det noget at bruge?",

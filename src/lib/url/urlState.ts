@@ -193,7 +193,7 @@ export function deserializeState(search: string): UrlState {
   }
 
   const f = params.get("f");
-  if (f && ["A5", "A4", "A3", "A2"].includes(f)) {
+  if (f && ["A5", "A4", "A3", "A2", "A1", "A0"].includes(f)) {
     state.paperFormat = f as PaperFormat;
   }
 
