@@ -1,5 +1,5 @@
 import * as maplibregl from "maplibre-gl";
-import type { LayerSpecification, FilterSpecification } from "maplibre-gl";
+import type { LayerSpecification, ExpressionSpecification } from "maplibre-gl";
 import { Protocol } from "pmtiles";
 
 /**
@@ -36,7 +36,7 @@ export function contourSteps(interval: 5 | 10): { interval: number; index: numbe
   return { interval, index: interval * 5 };
 }
 
-function everyMetres(step: number): FilterSpecification {
+function everyMetres(step: number): ExpressionSpecification {
   return ["==", ["%", ["to-number", ["get", "h"]], step], 0];
 }
 
@@ -52,8 +52,8 @@ export function contourLayers(
   pxPerMm: number = SCREEN_PX_PER_MM
 ): LayerSpecification[] {
   const { index } = contourSteps(interval);
-  const base: FilterSpecification = everyMetres(interval);
-  const isIndex: FilterSpecification = everyMetres(index);
+  const base = everyMetres(interval);
+  const isIndex = everyMetres(index);
   return [
     {
       id: `${sourceId}-line`,
