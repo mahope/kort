@@ -19,6 +19,7 @@ const DEFAULT_OVERLAYS: OverlayState[] = [
   { id: "hillshade", enabled: false, opacity: 0.5 },
   { id: "stednavne", enabled: false, opacity: 1 },
   { id: "matrikel", enabled: false, opacity: 1 },
+  { id: "dybdemodel", enabled: false, opacity: 0.8 },
   { id: "havdybder", enabled: false, opacity: 0.6 },
   { id: "soemaerker", enabled: false, opacity: 1 },
 ];

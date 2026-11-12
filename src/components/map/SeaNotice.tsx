@@ -1,7 +1,7 @@
 "use client";
 
 import { useMapStore } from "@/stores/mapStore";
-import { SEA_OVERLAYS } from "@/lib/map/sources";
+import { DDM_TERMS_URL, SEA_OVERLAYS } from "@/lib/map/sources";
 
 /** Shown while a sea layer is on: what the data is, and that it is not a chart. */
 export function SeaNotice() {
@@ -9,9 +9,12 @@ export function SeaNotice() {
   if (!seaOn) return null;
   return (
     <p className="mt-2 rounded border border-border bg-surface-secondary px-2 py-1.5 text-xs text-text-secondary" role="note">
-      <strong className="font-semibold text-foreground">Ikke til navigation.</strong> Officielle danske søkort er ophavsretligt
-      beskyttede og sælges af Geodatastyrelsen. Her vises frie data: grove dybder fra EMODnet (ca. 100 m) og sømærker fra
-      OpenSeaMap. Det står også på PDF&apos;en.
+      <strong className="font-semibold text-foreground">Ikke til navigation.</strong> Officielle søkort er ophavsretligt
+      beskyttede og sælges af Geodatastyrelsen. Her vises frie data: dybder fra Danmarks Dybdemodel (50 m,{" "}
+      <a href={DDM_TERMS_URL} target="_blank" rel="noopener noreferrer" className="underline">
+        vilkår
+      </a>
+      ), grovere dybder fra EMODnet uden for Danmark og sømærker fra OpenSeaMap. Det står også på PDF&apos;en.
     </p>
   );
 }

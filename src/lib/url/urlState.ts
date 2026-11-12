@@ -40,6 +40,7 @@ const OVERLAY_CODES: Record<string, OverlayId> = {
   hs: "hillshade",
   sn: "stednavne",
   mk: "matrikel",
+  dd: "dybdemodel",
   hd: "havdybder",
   sm: "soemaerker",
 };
