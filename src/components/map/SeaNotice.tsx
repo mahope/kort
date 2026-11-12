@@ -15,3 +15,18 @@ export function SeaNotice() {
     </p>
   );
 }
+
+/** Always visible on the map while a sea layer is on (also when opened from a link). */
+export function SeaBadge() {
+  const seaOn = useMapStore((s) => s.overlays.some((o) => o.enabled && SEA_OVERLAYS.includes(o.id)));
+  if (!seaOn) return null;
+  return (
+    <div
+      className="pointer-events-none absolute left-3 top-[4.25rem] z-[1] rounded bg-white/90 px-2 py-1 text-xs font-semibold leading-tight text-slate-900 shadow-sm"
+      role="note"
+      data-testid="sea-badge"
+    >
+      Ikke til navigation
+    </div>
+  );
+}

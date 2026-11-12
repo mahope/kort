@@ -2,7 +2,9 @@ import { describe, it, expect, afterEach } from "vitest";
 import { OVERLAY_LABELS, OVERLAY_SOURCES, SEA_OVERLAYS } from "../sources";
 import { offlineLayerIds } from "@/lib/offline/tiles";
 import { deserializeState, serializeState } from "@/lib/url/urlState";
-import { thirdPartyCredits } from "@/lib/pdf/generator";
+import { thirdPartyCredits, drawThirdPartyCredits } from "@/lib/pdf/generator";
+import { calculatePdfLayout } from "@/lib/pdf/layout";
+import { jsPDF } from "jspdf";
 import { useMapStore } from "@/stores/mapStore";
 import type { OverlayId } from "@/types/map";
 
@@ -51,5 +53,40 @@ describe("PDF credits", () => {
     expect(c.credits.join(" ")).toMatch(/OpenStreetMap/);
     expect(c.credits.join(" ")).toMatch(/EMODnet/);
     expect(c.credits.join(" ")).toMatch(/OpenSeaMap/);
+  });
+
+  it("puts the credits inside the map image, wrapped to fit A5, clear of the margins", () => {
+    useMapStore.setState({
+      baseLayer: "osm",
+      overlays: initial.overlays.map((o) => ({ ...o, enabled: SEA_OVERLAYS.includes(o.id) })),
+    });
+    const layout = calculatePdfLayout("A5", "portrait", 150);
+    const pdf = new jsPDF({ unit: "mm", format: "a5" });
+    const texts: { t: string; x: number; y: number; w: number }[] = [];
+    const rects: number[][] = [];
+    const origText = pdf.text.bind(pdf);
+    pdf.text = ((t: string, x: number, y: number, o?: object) => {
+      texts.push({ t, x, y, w: pdf.getTextWidth(t) });
+      return origText(t, x, y, o);
+    }) as typeof pdf.text;
+    const origRect = pdf.rect.bind(pdf);
+    pdf.rect = ((x: number, y: number, w: number, h: number, st?: string) => {
+      rects.push([x, y, w, h]);
+      return origRect(x, y, w, h, st);
+    }) as typeof pdf.rect;
+    const m = layout.marginMm;
+    drawThirdPartyCredits(pdf, m + 1.5, m + 1.5, Math.min(110, layout.mapWidthMm - 24));
+    expect(texts[0].t).toBe("IKKE TIL NAVIGATION");
+    expect(texts.map((t) => t.t).join(" ")).toMatch(/EMODnet/);
+    expect(texts.length).toBeGreaterThan(3); // the OSM/EMODnet/OpenSeaMap credits wrap on A5
+    const [bx, by, bw, bh] = rects[0];
+    expect(bx).toBeGreaterThan(m);
+    expect(by).toBeGreaterThan(m);
+    expect(bx + bw).toBeLessThan(m + layout.mapWidthMm - 20); // clear of the north arrow
+    expect(by + bh).toBeLessThan(m + layout.mapHeightMm);
+    for (const t of texts) {
+      expect(t.x + t.w).toBeLessThanOrEqual(bx + bw + 0.01);
+      expect(t.y).toBeLessThan(by + bh);
+    }
   });
 });

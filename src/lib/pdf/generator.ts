@@ -166,6 +166,7 @@ export async function generatePdf({
   drawNorthArrow(pdf, layout, bearing);
   drawControlLine(pdf, layout);
   drawAttribution(pdf, layout, scale, gridInfo);
+  drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm));
   drawDeclination(declinationDiagram, pdf, layout, bounds, gridInfo, bearing);
 
   // Record in print history
@@ -498,17 +499,50 @@ export function drawAttribution(
   pdf.text(attribution, layout.pageWidthMm - layout.marginMm, y, {
     align: "right",
   });
+}
 
-  // Third-party layers get their own credit line above, and sea layers a
-  // clear "not for navigation" (EMODnet/OpenSeaMap terms, and common sense).
+/**
+ * Third-party credits (OSM base map, EMODnet, OpenSeaMap) and, for sea
+ * layers, a bold "IKKE TIL NAVIGATION", in a white box in the top-left corner
+ * of the map image: the margins hold the grid labels and the footer. Text is
+ * wrapped to the box width so it also fits A5.
+ */
+export function drawThirdPartyCredits(pdf: jsPDF, x: number, y: number, maxWidthMm: number): void {
   const extra = thirdPartyCredits();
-  if (extra.credits.length > 0 || extra.notForNavigation) {
-    const parts = [...extra.credits];
-    if (extra.notForNavigation) parts.push("IKKE TIL NAVIGATION");
-    pdf.setTextColor(extra.notForNavigation ? 0 : 100);
-    pdf.text(parts.join(" | "), layout.pageWidthMm - layout.marginMm, y - 2.6, { align: "right" });
-    pdf.setTextColor(100);
+  if (extra.credits.length === 0 && !extra.notForNavigation) return;
+  const pad = 1.2;
+  const textW = maxWidthMm - 2 * pad;
+  const lines: { text: string; bold: boolean; pt: number }[] = [];
+  if (extra.notForNavigation) lines.push({ text: "IKKE TIL NAVIGATION", bold: true, pt: 7 });
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(6);
+  for (const c of extra.credits) {
+    for (const l of pdf.splitTextToSize(c, textW) as string[]) lines.push({ text: l, bold: false, pt: 6 });
   }
+  const lineMm = (pt: number) => pt * 0.3528 * 1.25;
+  let w = 0;
+  for (const l of lines) {
+    pdf.setFont("helvetica", l.bold ? "bold" : "normal");
+    pdf.setFontSize(l.pt);
+    w = Math.max(w, pdf.getTextWidth(l.text));
+  }
+  const h = lines.reduce((sum, l) => sum + lineMm(l.pt), 0);
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(x, y, w + 2 * pad, h + 2 * pad - 0.4, "F");
+  let ty = y + pad;
+  pdf.setTextColor(0);
+  for (const l of lines) {
+    ty += lineMm(l.pt);
+    pdf.setFont("helvetica", l.bold ? "bold" : "normal");
+    pdf.setFontSize(l.pt);
+    pdf.text(l.text, x + pad, ty - 0.6);
+  }
+  pdf.setFont("helvetica", "normal");
+}
+
+/** Credit box width: clear of the north arrow in the top-right corner. */
+function creditsWidthMm(mapWidthMm: number): number {
+  return Math.min(110, mapWidthMm - 24);
 }
 
 /** Credits for non-KDS data in the print: OSM base map and third-party overlays. */
@@ -636,6 +670,7 @@ async function generateMultiPagePdf({
         assembled: assembledSizeCm(layout, gridCols, gridRows, overlapMm),
       });
       drawAttribution(pdf, layout, scale, null, "Oversigt, ikke i målestok");
+      drawThirdPartyCredits(pdf, place.x + 1.5, place.y + 1.5, creditsWidthMm(place.w));
     }
 
     for (let i = 0; i < cells.length; i++) {
@@ -690,6 +725,7 @@ async function generateMultiPagePdf({
       drawControlLine(pdf, layout);
 
       drawAttribution(pdf, layout, scale, gridInfo);
+      drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm));
       drawDeclination(declinationDiagram, pdf, layout, cell.bounds, gridInfo, bearing);
     }
   } finally {
