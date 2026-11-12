@@ -33,6 +33,7 @@ export type OverlayId =
   | "hillshade"
   | "stednavne"
   | "matrikel"
+  | "dybdemodel"
   | "havdybder"
   | "soemaerker";
 

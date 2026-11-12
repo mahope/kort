@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { OVERLAY_LABELS, OVERLAY_SOURCES, SEA_OVERLAYS } from "../sources";
+import { DDM_TERMS_URL, OVERLAY_LABELS, OVERLAY_SOURCES, SEA_OVERLAYS } from "../sources";
 import { offlineLayerIds } from "@/lib/offline/tiles";
 import { deserializeState, serializeState } from "@/lib/url/urlState";
 import { thirdPartyCredits, drawThirdPartyCredits, overviewCreditsBox } from "@/lib/pdf/generator";
@@ -20,6 +20,18 @@ describe("overlay layers", () => {
     }
   });
 
+  it("credits Danmarks Dybdemodel as its terms require", () => {
+    const src = OVERLAY_SOURCES.dybdemodel;
+    expect(src.tiles[0]).toContain("/wms/ddm?");
+    expect(src.tiles[0]).toContain("LAYERS=ddm_50m_dybde_relief");
+    // Credit text, "WMS-tjeneste", not for navigation, and a link to the terms.
+    expect(src.credit).toContain("Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning");
+    expect(src.credit).toContain("Indeholder WMS-tjeneste");
+    expect(src.credit).toContain(`Vilkår: ${DDM_TERMS_URL}`);
+    expect(src.credit).toContain("ikke egnet til navigation");
+    expect(src.attribution).toContain("href='https://gst.dk/");
+  });
+
   it("uses the smoothed 2.5 m contours for contours25", () => {
     expect(OVERLAY_SOURCES.contours25.tiles[0]).toContain("LAYERS=dhm_kurve_traditionel");
   });
@@ -27,11 +39,12 @@ describe("overlay layers", () => {
   it("marks the sea layers as not for navigation and keeps them out of offline saving", () => {
     for (const id of SEA_OVERLAYS) {
       expect(OVERLAY_SOURCES[id].notForNavigation).toBe(true);
-      expect(OVERLAY_SOURCES[id].attribution).toMatch(/Ikke til navigation/);
+      expect(OVERLAY_SOURCES[id].attribution).toMatch(/ikke (egnet )?til navigation/i);
     }
     const ids = offlineLayerIds("dtk25", all.map((id) => ({ id, enabled: true })));
     expect(ids).toContain("contours25");
     expect(ids).not.toContain("havdybder");
+    expect(ids).not.toContain("dybdemodel");
     expect(ids).not.toContain("soemaerker");
   });
 });
@@ -44,7 +57,7 @@ describe("PDF credits", () => {
     expect(thirdPartyCredits()).toEqual({ credits: [], notForNavigation: false });
   });
 
-  it("credits OSM, EMODnet and OpenSeaMap and says not for navigation", () => {
+  it("credits OSM, Dybdemodellen, EMODnet and OpenSeaMap and says not for navigation", () => {
     useMapStore.setState({
       baseLayer: "osm",
       overlays: initial.overlays.map((o) => ({ ...o, enabled: SEA_OVERLAYS.includes(o.id) })),
@@ -53,6 +66,7 @@ describe("PDF credits", () => {
     expect(c.notForNavigation).toBe(true);
     expect(c.credits.join(" ")).toMatch(/OpenStreetMap/);
     expect(c.credits.join(" ")).toMatch(/EMODnet/);
+    expect(c.credits.join(" ")).toMatch(/Danmarks Dybdemodel/);
     expect(c.credits.join(" ")).toMatch(/OpenSeaMap/);
   });
 
