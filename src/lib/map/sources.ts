@@ -108,6 +108,20 @@ const DHM_CONTOURS_25_URL =
   `${DHM_WMS_BASE}&LAYERS=dhm_kurve_traditionel&BBOX={bbox-epsg-3857}`;
 
 /**
+ * Danmarks Dybdemodel 2024, 50 m (Geodatastyrelsen): free to copy, publish and
+ * use commercially, with the credit, a link to the terms and "not for
+ * navigation". The relief style is already blue, so no paint is needed.
+ * Covers Danish waters only; EMODnet covers the rest.
+ */
+const DDM_DEPTH_URL =
+  `https://api.dataforsyningen.dk/wms/ddm?service=WMS&version=1.1.1&request=GetMap` +
+  `&LAYERS=ddm_50m_dybde_relief&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE` +
+  `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}&token=${DATAFORSYNINGEN_TOKEN}`;
+
+export const DDM_TERMS_URL =
+  "https://gst.dk/ansvarsomraader/soekort-og-marine-data/soeopmaaling-og-dybdedata/danmarks-dybdemodel";
+
+/**
  * EMODnet Bathymetry (CC BY 4.0), mean depth, transparent over land. The
  * service colours depth red to yellow; the layer paint turns it into blues.
  * Coarse (about 115 m cells) and never for navigation.
@@ -234,6 +248,15 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     tileSize: 256,
     attribution: "&copy; Klimadatastyrelsen (Matrikelskel)",
   },
+  dybdemodel: {
+    tiles: [DDM_DEPTH_URL],
+    tileSize: 256,
+    attribution: `Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning. Indeholder WMS-tjeneste (<a href='${DDM_TERMS_URL}'>vilkår</a>). Model og data er ikke egnet til navigation`,
+    credit: `Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning. Indeholder WMS-tjeneste. Model og data er ikke egnet til navigation. Vilkår: ${DDM_TERMS_URL}`,
+    // Saved tiles would need a download date in the credit instead of "WMS-tjeneste".
+    noOffline: true,
+    notForNavigation: true,
+  },
   havdybder: {
     tiles: [EMODNET_DEPTH_URL],
     tileSize: 256,
@@ -261,8 +284,9 @@ export const OVERLAY_LABELS: Record<OverlayId, string> = {
   hillshade: "Skyggekort (terræn)",
   stednavne: "Stednavne",
   matrikel: "Matrikelskel",
-  havdybder: "Havdybder (EMODnet)",
+  dybdemodel: "Havdybder Danmark (Dybdemodel 50 m)",
+  havdybder: "Havdybder Europa (EMODnet, grovere)",
   soemaerker: "Sømærker (OpenSeaMap)",
 };
 
-export const SEA_OVERLAYS: readonly OverlayId[] = ["havdybder", "soemaerker"];
+export const SEA_OVERLAYS: readonly OverlayId[] = ["dybdemodel", "havdybder", "soemaerker"];

@@ -21,7 +21,7 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 - **6 papirformater** - A5, A4, A3, A2 i stående eller liggende, plus A1 og A0 som ét stort ark til trykkeri/plotter (150 dpi)
 - **UTM-gitter** - Grid-linjer og koordinater på kort og PDF, til orientering i felten
 - **Overlays** - Højdekurver (0,25 m, 0,5 m og roligere 2,5 m), skyggekort, matrikelskel og stednavne
-- **Havlag** - Havdybder (EMODnet Bathymetry, CC BY 4.0) og sømærker (OpenSeaMap). Ikke til navigation: det står i appen og på PDF'en
+- **Havlag** - Havdybder i danske farvande fra Danmarks Dybdemodel (Geodatastyrelsen, 50 m), grovere dybder uden for Danmark fra EMODnet Bathymetry (CC BY 4.0) og sømærker (OpenSeaMap). Ikke til navigation: det står i appen og på PDF'en
 - **Import** - Indlæs GPX, GeoJSON og KML-filer og print dem direkte
 - **Tegning & mål** - Tegn ruter og mål afstande direkte på kortet
 - **Multi-page print og gulvkort** - Udskriv store områder over op til 5 × 5 ark med overlap. PDF'en starter med en oversigtsside (arkgitter, samlet størrelse og vejledning), og hvert ark har hjørnemærker, "Ark B2 (side 6 af 10)", en stiplet linje hvor naboarket lægges, og navnene på nabo-arkene i margenen
