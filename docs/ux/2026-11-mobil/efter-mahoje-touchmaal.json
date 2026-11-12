@@ -12,9 +12,9 @@
       }
     },
     "pdf": {
-      "file": "/home/mads/dev/kort-shots/efter/mahoje-390x844.pdf",
-      "ms": 10307,
-      "bytes": 1878460
+      "file": "/home/mads/dev/kort-shots/efter2/mahoje-390x844.pdf",
+      "ms": 11433,
+      "bytes": 1878458
     }
   },
   "390x844-dark": {
@@ -30,9 +30,9 @@
       }
     },
     "pdf": {
-      "file": "/home/mads/dev/kort-shots/efter/mahoje-390x844-dark.pdf",
-      "ms": 11228,
-      "bytes": 1878458
+      "file": "/home/mads/dev/kort-shots/efter2/mahoje-390x844-dark.pdf",
+      "ms": 7253,
+      "bytes": 1878459
     }
   },
   "360x800": {
@@ -48,9 +48,9 @@
       }
     },
     "pdf": {
-      "file": "/home/mads/dev/kort-shots/efter/mahoje-360x800.pdf",
-      "ms": 9242,
-      "bytes": 1878460
+      "file": "/home/mads/dev/kort-shots/efter2/mahoje-360x800.pdf",
+      "ms": 9235,
+      "bytes": 1878459
     }
   },
   "1440x900": {
@@ -107,7 +107,7 @@
           },
           {
             "tag": "button",
-            "text": "Brugerdefineret målestok",
+            "text": "Andet (brugerdefineret målestok)",
             "w": 67,
             "h": 36
           },
@@ -285,7 +285,7 @@
           },
           {
             "tag": "button",
-            "text": "Brugerdefineret målestok",
+            "text": "Andet (brugerdefineret målestok)",
             "w": 67,
             "h": 36
           },
@@ -561,9 +561,9 @@
       }
     },
     "pdf": {
-      "file": "/home/mads/dev/kort-shots/efter/mahoje-1440x900.pdf",
-      "ms": 7845,
-      "bytes": 1878460
+      "file": "/home/mads/dev/kort-shots/efter2/mahoje-1440x900.pdf",
+      "ms": 10270,
+      "bytes": 1878457
     }
   }
 }

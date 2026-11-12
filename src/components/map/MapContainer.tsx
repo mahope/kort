@@ -103,6 +103,7 @@ export function MapContainer() {
       mapRef.current.flyTo({
         center: [flyToTarget.lng, flyToTarget.lat],
         zoom: flyToTarget.zoom,
+        ...(flyToTarget.padding ? { padding: flyToTarget.padding } : {}),
         duration: 1500,
       });
       clearFlyTo();

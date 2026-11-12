@@ -246,7 +246,7 @@ function GridBadge({
 
   return (
     <div
-      className="pointer-events-none absolute bottom-8 left-2 z-[1] rounded bg-white/90 px-1.5 py-0.5 text-[11px] leading-tight text-slate-800 shadow-sm max-md:bottom-auto max-md:left-auto max-md:right-2 max-md:top-7"
+      className="pointer-events-none absolute bottom-8 left-2 z-[1] rounded bg-white/90 px-1.5 py-0.5 text-[11px] leading-tight text-slate-800 shadow-sm max-md:bottom-auto max-md:left-auto max-md:right-3 max-md:top-[4.25rem]"
       data-testid="utm-grid-badge"
     >
       <div className="font-semibold">

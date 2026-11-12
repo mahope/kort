@@ -68,7 +68,7 @@ describe("SearchBar keyboard flow", () => {
     await press(input, "ArrowDown");
     await press(input, "Enter");
     // Zoom is chosen so the whole print frame fits the visible map.
-    expect(flyTo).toHaveBeenCalledWith(11, 56, expect.any(Number));
+    expect(flyTo).toHaveBeenCalledWith(11, 56, expect.any(Number), expect.objectContaining({ bottom: 0 }));
   });
 
   it("closes the list on Escape", async () => {
@@ -84,6 +84,6 @@ describe("SearchBar keyboard flow", () => {
       opt.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
     });
     // Zoom is chosen so the whole print frame fits the visible map.
-    expect(flyTo).toHaveBeenCalledWith(11, 56, expect.any(Number));
+    expect(flyTo).toHaveBeenCalledWith(11, 56, expect.any(Number), expect.objectContaining({ bottom: 0 }));
   });
 });
