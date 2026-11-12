@@ -85,23 +85,28 @@ function trackTileProgress(map: maplibregl.Map, onProgress: TileProgress) {
 }
 
 // MapLibre has no public retry for errored tiles, and TileManager.reload()
-// deliberately skips them, so call its internal _reloadTile per failed tile.
-// The state matters and differs per source type (#66):
-// - raster: "loading". "expired" counts as having data, so the tile was drawn
-//   before it had a texture and threw "reading 'bind'".
-// - vector: "expired". A vector tile in "loading" that already has a worker
-//   waits for a reload that never comes, and the PDF hung.
-export function retryState(sourceType: string | undefined): "loading" | "expired" {
-  return sourceType === "raster" || sourceType === "raster-dem" ? "loading" : "expired";
-}
+// deliberately skips them. Drop each failed tile from its TileManager and let
+// update() request it again like any new tile. Reloading it in place does not
+// work for raster tiles (#66): as "expired" it counts as having data and was
+// drawn without a texture ("reading 'bind'"); as "loading" MapLibre dropped
+// some of them before they arrived, and the PDF was refused as incomplete.
+type Manager = {
+  _removeTile?: (id: number | string) => void;
+  update?: (transform: unknown, terrain: unknown) => void;
+};
 
 function retryTiles(map: maplibregl.Map, tiles: Iterable<FailedTile>) {
-  type Manager = { _reloadTile?: (id: number | string, state: string) => unknown };
   const managers = (map as unknown as { style?: { tileManagers?: Record<string, Manager> } }).style?.tileManagers;
+  const touched = new Set<Manager>();
   for (const { sourceId, tileKey } of tiles) {
-    if (tileKey === undefined) continue;
-    managers?.[sourceId]?._reloadTile?.(tileKey, retryState(map.getSource(sourceId)?.type));
+    const manager = managers?.[sourceId];
+    if (tileKey === undefined || !manager?._removeTile) continue;
+    manager._removeTile(tileKey);
+    touched.add(manager);
   }
+  const internals = map as unknown as { transform?: unknown; terrain?: unknown };
+  for (const manager of touched) manager.update?.(internals.transform, internals.terrain);
+  if (touched.size > 0) map.triggerRepaint();
 }
 
 function sleep(ms: number) {

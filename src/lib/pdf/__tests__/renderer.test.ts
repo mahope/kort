@@ -10,8 +10,8 @@ const ctl = {
   failOnLoad: [] as string[], // tile keys that error after load
   failOnReload: [] as string[], // tile keys that still fail after a retry
   reloads: 0,
-  reloadStates: [] as string[],
-  sourceType: "raster" as string,
+  removed: [] as string[],
+  updates: 0,
   maxSize: 8192,
   blob: true,
   gpuBusyPolls: 0, // clientWaitSync reports TIMEOUT_EXPIRED this many times before the GPU is idle
@@ -36,11 +36,21 @@ class FakeMap {
   style = {
     tileManagers: {
       src: {
-        _reloadTile: (key: string, state: string) => {
+        removed: [] as string[],
+        _removeTile(key: string) {
           ctl.reloads++;
-          ctl.reloadStates.push(state);
-          if (ctl.failOnReload.includes(key)) this.emit("error", { sourceId: "src", tile: { tileID: { key } } });
-          else this.emit("data", { dataType: "source", sourceId: "src", tile: { tileID: { key } } });
+          ctl.removed.push(key);
+          this.removed.push(key);
+        },
+        // update() requests the removed (now missing) tiles again.
+        update: () => {
+          const src = this.style.tileManagers.src;
+          for (const key of src.removed) {
+            if (ctl.failOnReload.includes(key)) this.emit("error", { sourceId: "src", tile: { tileID: { key } } });
+            else this.emit("data", { dataType: "source", sourceId: "src", tile: { tileID: { key } } });
+          }
+          ctl.updates++;
+          src.removed = [];
         },
       },
     },
@@ -61,7 +71,7 @@ class FakeMap {
   }
   emit(n: string, e: unknown) { [...(this.handlers[n] ?? [])].forEach((h) => h(e)); }
   isStyleLoaded() { return true; }
-  getSource() { return { type: ctl.sourceType }; }
+  triggerRepaint() {}
   areTilesLoaded() { return true; }
   addSource() {}
   addLayer() {}
@@ -104,7 +114,7 @@ async function run(opts = base) {
 
 beforeEach(() => {
   vi.useFakeTimers();
-  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], reloads: 0, reloadStates: [], sourceType: "raster", maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [] });
+  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], reloads: 0, removed: [], updates: 0, maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [] });
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
 });
 afterEach(() => vi.useRealTimers());
@@ -130,18 +140,11 @@ describe("renderMapToImage tile errors", () => {
     expect(ctl.reloads).toBe(2);
   });
 
-  it("re-requests a failed raster tile as loading (expired has no texture and crashed the draw, #66)", async () => {
-    ctl.failOnLoad = ["1"];
-    ctl.sourceType = "raster";
-    await run();
-    expect(ctl.reloadStates).toEqual(["loading"]);
-  });
-
-  it("re-requests a failed vector tile as expired (loading would wait forever)", async () => {
-    ctl.failOnLoad = ["1"];
-    ctl.sourceType = "vector";
-    await run();
-    expect(ctl.reloadStates).toEqual(["expired"]);
+  it("drops failed tiles and lets MapLibre request them anew, never reloading in place (#66)", async () => {
+    ctl.failOnLoad = ["1", "2"];
+    expect(await run()).toHaveProperty("v");
+    expect(ctl.removed).toEqual(["1", "2"]);
+    expect(ctl.updates).toBe(1); // one update for the source, not one per tile
   });
 
   it("throws with the number of missing tiles after retries are exhausted", async () => {
