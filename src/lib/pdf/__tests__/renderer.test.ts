@@ -15,6 +15,7 @@ const ctl = {
   gpuBusyPolls: 0, // clientWaitSync reports TIMEOUT_EXPIRED this many times before the GPU is idle
   gpuCalls: [] as string[],
   tiles: [] as string[], // tile keys that load fine (for progress counting)
+  lastOptions: null as Record<string, unknown> | null,
 };
 
 function fakeGl() {
@@ -41,7 +42,8 @@ class FakeMap {
       },
     },
   };
-  constructor() {
+  constructor(options: Record<string, unknown>) {
+    ctl.lastOptions = options;
     setTimeout(() => {
       for (const key of ctl.failOnLoad) this.emit("error", { sourceId: "src", tile: { tileID: { key } } });
       for (const key of ctl.tiles) this.emit("dataloading", { dataType: "source", sourceId: "src", tile: { tileID: { key } } });
@@ -102,6 +104,15 @@ beforeEach(() => {
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
 });
 afterEach(() => vi.useRealTimers());
+
+describe("renderMapToImage canvas size", () => {
+  it("lets MapLibre use the device limit instead of its 4096 px default", async () => {
+    // A2 at 300 dpi is about 4724 x 6780 px; MapLibre would scale that down.
+    ctl.maxSize = 8192;
+    await run();
+    expect(ctl.lastOptions?.maxCanvasSize).toEqual([8192, 8192]);
+  });
+});
 
 describe("renderMapToImage tile errors", () => {
   it("returns the image when no tile fails", async () => {

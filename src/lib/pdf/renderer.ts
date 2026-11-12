@@ -163,6 +163,9 @@ export async function renderMapToImage({
       interactive: false,
       attributionControl: false,
       pixelRatio: 1,
+      // MapLibre's own default (4096 px) silently scales a larger canvas down,
+      // which made A2 at 300 dpi and A1/A0 fail. Allow what the GPU can do.
+      maxCanvasSize: [maxSize, maxSize],
       canvasContextAttributes: { preserveDrawingBuffer: true },
     };
 
