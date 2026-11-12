@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { OVERLAY_LABELS, OVERLAY_SOURCES, SEA_OVERLAYS } from "../sources";
+import { DDM_TERMS_URL, OVERLAY_LABELS, OVERLAY_SOURCES, SEA_OVERLAYS } from "../sources";
 import { offlineLayerIds } from "@/lib/offline/tiles";
 import { deserializeState, serializeState } from "@/lib/url/urlState";
 import { thirdPartyCredits, drawThirdPartyCredits, overviewCreditsBox } from "@/lib/pdf/generator";
@@ -26,7 +26,8 @@ describe("overlay layers", () => {
     expect(src.tiles[0]).toContain("LAYERS=ddm_50m_dybde_relief");
     // Credit text, "WMS-tjeneste", not for navigation, and a link to the terms.
     expect(src.credit).toContain("Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning");
-    expect(src.credit).toContain("WMS-tjeneste");
+    expect(src.credit).toContain("Indeholder WMS-tjeneste");
+    expect(src.credit).toContain(`Vilkår: ${DDM_TERMS_URL}`);
     expect(src.credit).toContain("ikke egnet til navigation");
     expect(src.attribution).toContain("href='https://gst.dk/");
   });
@@ -43,6 +44,7 @@ describe("overlay layers", () => {
     const ids = offlineLayerIds("dtk25", all.map((id) => ({ id, enabled: true })));
     expect(ids).toContain("contours25");
     expect(ids).not.toContain("havdybder");
+    expect(ids).not.toContain("dybdemodel");
     expect(ids).not.toContain("soemaerker");
   });
 });
@@ -55,7 +57,7 @@ describe("PDF credits", () => {
     expect(thirdPartyCredits()).toEqual({ credits: [], notForNavigation: false });
   });
 
-  it("credits OSM, EMODnet and OpenSeaMap and says not for navigation", () => {
+  it("credits OSM, Dybdemodellen, EMODnet and OpenSeaMap and says not for navigation", () => {
     useMapStore.setState({
       baseLayer: "osm",
       overlays: initial.overlays.map((o) => ({ ...o, enabled: SEA_OVERLAYS.includes(o.id) })),
@@ -64,6 +66,7 @@ describe("PDF credits", () => {
     expect(c.notForNavigation).toBe(true);
     expect(c.credits.join(" ")).toMatch(/OpenStreetMap/);
     expect(c.credits.join(" ")).toMatch(/EMODnet/);
+    expect(c.credits.join(" ")).toMatch(/Danmarks Dybdemodel/);
     expect(c.credits.join(" ")).toMatch(/OpenSeaMap/);
   });
 
