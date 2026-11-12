@@ -92,13 +92,17 @@ function trackTileProgress(map: maplibregl.Map, onProgress: TileProgress) {
 // some of them before they arrived, and the PDF was refused as incomplete.
 type Manager = { _removeTile?: (id: number | string) => void };
 
-function retryTiles(map: maplibregl.Map, tiles: Iterable<FailedTile>) {
+function retryTiles(map: maplibregl.Map, failed: Map<string, FailedTile>) {
   const managers = (map as unknown as { style?: { tileManagers?: Record<string, Manager> } }).style?.tileManagers;
   let removed = 0;
-  for (const { sourceId, tileKey } of tiles) {
+  for (const [key, { sourceId, tileKey }] of [...failed]) {
     const manager = managers?.[sourceId];
     if (tileKey === undefined || !manager?._removeTile) continue;
     manager._removeTile(tileKey);
+    // Forget it: if the map still needs the tile it is requested again and an
+    // error puts it back. Helper tiles (parents, edge buffer) are not, and must
+    // not count as holes in the PDF.
+    failed.delete(key);
     removed++;
   }
   // Marks the sources dirty and repaints; the next frame updates every source
@@ -325,7 +329,7 @@ export async function renderMapToImage({
       for (let attempt = 1; failedTiles.size > 0 && attempt <= TILE_RETRIES; attempt++) {
         if (isOffline()) break;
         await sleep(TILE_RETRY_PAUSE_MS * attempt);
-        retryTiles(tileMap, failedTiles.values());
+        retryTiles(tileMap, failedTiles);
         await waitForTilesLoaded(tileMap);
       }
     });
