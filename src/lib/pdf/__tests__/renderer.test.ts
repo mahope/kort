@@ -10,6 +10,10 @@ const ctl = {
   failOnLoad: [] as string[], // tile keys that error after load
   failOnReload: [] as string[], // tile keys that still fail after a retry
   reloads: 0,
+  removed: [] as string[],
+  updates: 0,
+  notNeeded: [] as string[], // removed helper tiles the map does not request again
+  noUpdate: false,
   maxSize: 8192,
   blob: true,
   gpuBusyPolls: 0, // clientWaitSync reports TIMEOUT_EXPIRED this many times before the GPU is idle
@@ -34,16 +38,18 @@ class FakeMap {
   style = {
     tileManagers: {
       src: {
-        _reloadTile: (key: string) => {
+        removed: [] as string[],
+        _removeTile(key: string) {
           ctl.reloads++;
-          if (ctl.failOnReload.includes(key)) this.emit("error", { sourceId: "src", tile: { tileID: { key } } });
-          else this.emit("data", { dataType: "source", sourceId: "src", tile: { tileID: { key } } });
+          ctl.removed.push(key);
+          this.removed.push(key);
         },
       },
     },
   };
   constructor(options: Record<string, unknown>) {
     ctl.lastOptions = options;
+    if (ctl.noUpdate) (this as { _update?: unknown })._update = undefined;
     setTimeout(() => {
       for (const key of ctl.failOnLoad) this.emit("error", { sourceId: "src", tile: { tileID: { key } } });
       for (const key of ctl.tiles) this.emit("dataloading", { dataType: "source", sourceId: "src", tile: { tileID: { key } } });
@@ -58,6 +64,17 @@ class FakeMap {
   }
   emit(n: string, e: unknown) { [...(this.handlers[n] ?? [])].forEach((h) => h(e)); }
   isStyleLoaded() { return true; }
+  // _update() marks sources dirty; the next frame requests the removed tiles again.
+  _update() {
+    const src = this.style.tileManagers.src;
+    for (const key of src.removed) {
+      if (ctl.notNeeded.includes(key)) continue;
+      if (ctl.failOnReload.includes(key)) this.emit("error", { sourceId: "src", tile: { tileID: { key } } });
+      else this.emit("data", { dataType: "source", sourceId: "src", tile: { tileID: { key } } });
+    }
+    ctl.updates++;
+    src.removed = [];
+  }
   areTilesLoaded() { return true; }
   addSource() {}
   addLayer() {}
@@ -100,7 +117,7 @@ async function run(opts = base) {
 
 beforeEach(() => {
   vi.useFakeTimers();
-  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], reloads: 0, maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [] });
+  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], reloads: 0, removed: [], updates: 0, notNeeded: [], noUpdate: false, maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [] });
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
 });
 afterEach(() => vi.useRealTimers());
@@ -124,6 +141,28 @@ describe("renderMapToImage tile errors", () => {
     ctl.failOnLoad = ["1", "2"];
     expect(await run()).toEqual({ v: new Uint8Array([1, 2, 3]) });
     expect(ctl.reloads).toBe(2);
+  });
+
+  it("drops failed tiles and lets MapLibre request them anew, never reloading in place (#66)", async () => {
+    ctl.failOnLoad = ["1", "2"];
+    expect(await run()).toHaveProperty("v");
+    expect(ctl.removed).toEqual(["1", "2"]);
+    expect(ctl.updates).toBe(1); // one map update per retry round, not one per tile
+  });
+
+  it("does not count failed helper tiles the map no longer requests", async () => {
+    ctl.failOnLoad = ["1", "2"];
+    ctl.failOnReload = ["2"];
+    ctl.notNeeded = ["2"];
+    expect(await run()).toHaveProperty("v");
+  });
+
+  it("leaves failures counted when the map cannot be told to update", async () => {
+    ctl.failOnLoad = ["1"];
+    ctl.noUpdate = true;
+    const r = await run();
+    expect(ctl.removed).toEqual([]);
+    expect((r as { error: Error }).error.message).toMatch(/^1 kortflise mangler/);
   });
 
   it("throws with the number of missing tiles after retries are exhausted", async () => {
