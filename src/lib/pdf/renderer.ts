@@ -223,7 +223,7 @@ export async function renderMapToImage({
         id: `${sourceId}-layer`,
         type: "raster",
         source: sourceId,
-        paint: { "raster-opacity": overlay.opacity },
+        paint: { "raster-opacity": overlay.opacity, ...sourceConfig.paint },
       });
     }
 

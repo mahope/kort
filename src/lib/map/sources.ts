@@ -101,6 +101,26 @@ const DHM_CONTOURS_URL =
   `${DHM_WMS_BASE}&LAYERS=dhm_kurve_0_5_m&BBOX={bbox-epsg-3857}`;
 
 /**
+ * DHM "traditionel" contours: 2.5 m interval, heavily smoothed for 1:25.000.
+ * Much calmer on a 1:25.000 print than the 0.5 m lines.
+ */
+const DHM_CONTOURS_25_URL =
+  `${DHM_WMS_BASE}&LAYERS=dhm_kurve_traditionel&BBOX={bbox-epsg-3857}`;
+
+/**
+ * EMODnet Bathymetry (CC BY 4.0), mean depth, transparent over land. The
+ * service colours depth red to yellow; the layer paint turns it into blues.
+ * Coarse (about 115 m cells) and never for navigation.
+ */
+const EMODNET_DEPTH_URL =
+  `https://ows.emodnet-bathymetry.eu/wms?service=WMS&version=1.1.1&request=GetMap` +
+  `&LAYERS=emodnet:mean_multicolour&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE` +
+  `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}`;
+
+/** OpenSeaMap seamarks (buoys, beacons, lights), transparent XYZ overlay. */
+const OPENSEAMAP_URL = "https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png";
+
+/**
  * DHM Hillshade (terrain shadow) WMS tile URL.
  */
 const DHM_HILLSHADE_URL =
@@ -126,6 +146,14 @@ export interface RasterSourceConfig {
   tiles: string[];
   tileSize: number;
   attribution: string;
+  /** Short credit for the PDF footer (plain text). */
+  credit?: string;
+  /** Extra raster paint (besides opacity), shared by screen and PDF. */
+  paint?: { "raster-hue-rotate"?: number; "raster-saturation"?: number; "raster-contrast"?: number };
+  /** Third-party host whose terms do not cover bulk prefetching: never saved offline. */
+  noOffline?: boolean;
+  /** Sea data: the PDF carries "Ikke til navigation". */
+  notForNavigation?: boolean;
 }
 
 const ORTOFOTO_SOURCE: RasterSourceConfig = {
@@ -186,6 +214,11 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     tileSize: 256,
     attribution: "&copy; Klimadatastyrelsen (DHM)",
   },
+  contours25: {
+    tiles: [DHM_CONTOURS_25_URL],
+    tileSize: 256,
+    attribution: "&copy; Klimadatastyrelsen (DHM)",
+  },
   hillshade: {
     tiles: [DHM_HILLSHADE_URL],
     tileSize: 256,
@@ -201,4 +234,35 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     tileSize: 256,
     attribution: "&copy; Klimadatastyrelsen (Matrikelskel)",
   },
+  havdybder: {
+    tiles: [EMODNET_DEPTH_URL],
+    tileSize: 256,
+    attribution: "Dybder: <a href='https://emodnet.ec.europa.eu/en/bathymetry'>EMODnet Bathymetry</a> (CC BY 4.0). Ikke til navigation",
+    credit: "Dybder: EMODnet Bathymetry (CC BY 4.0)",
+    // Red-yellow ramp turned into blue-cyan, toned down so the map stays readable.
+    paint: { "raster-hue-rotate": 200, "raster-saturation": -0.3 },
+    noOffline: true,
+    notForNavigation: true,
+  },
+  soemaerker: {
+    tiles: [OPENSEAMAP_URL],
+    tileSize: 256,
+    attribution: "Sømærker: &copy; <a href='https://www.openseamap.org'>OpenSeaMap</a>, &copy; OpenStreetMap-bidragydere. Ikke til navigation",
+    credit: "Sømærker: OpenSeaMap, OpenStreetMap-bidragydere",
+    noOffline: true,
+    notForNavigation: true,
+  },
 };
+
+/** Overlays shown in the UI, in order, with their labels. */
+export const OVERLAY_LABELS: Record<OverlayId, string> = {
+  contours: "Højdekurver (0,5 m)",
+  contours25: "Højdekurver (2,5 m, roligere)",
+  hillshade: "Skyggekort (terræn)",
+  stednavne: "Stednavne",
+  matrikel: "Matrikelskel",
+  havdybder: "Havdybder (EMODnet)",
+  soemaerker: "Sømærker (OpenSeaMap)",
+};
+
+export const SEA_OVERLAYS: readonly OverlayId[] = ["havdybder", "soemaerker"];

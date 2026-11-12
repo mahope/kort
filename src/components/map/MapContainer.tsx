@@ -145,11 +145,12 @@ export function MapContainer() {
           type="raster"
           tiles={OVERLAY_SOURCES[overlay.id].tiles}
           tileSize={OVERLAY_SOURCES[overlay.id].tileSize}
+          attribution={OVERLAY_SOURCES[overlay.id].attribution}
         >
           <Layer
             id={`${overlay.id}-overlay-layer`}
             type="raster"
-            paint={{ "raster-opacity": overlay.opacity }}
+            paint={{ "raster-opacity": overlay.opacity, ...OVERLAY_SOURCES[overlay.id].paint }}
           />
         </Source>
       ))}

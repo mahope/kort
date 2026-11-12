@@ -54,6 +54,7 @@ export default function AboutSolaris() {
                 "Print et stort område over flere ark og saml dem til et gulvkort, med oversigtsside og samlemærker",
                 "UTM-gitter med koordinater — til orientering i felten",
                 "Højdekurver, skyggekort, matrikelskel og stednavne som overlay",
+                "Havdybder og sømærker til ture på vandet (ikke til navigation)",
                 "Importer GPX- og GeoJSON-ruter og print dem direkte",
                 "Tegn og mål direkte på kortet",
               ].map((item) => (

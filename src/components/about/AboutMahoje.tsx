@@ -98,6 +98,10 @@ export default function AboutMahoje() {
               </li>
               <li className="flex gap-2">
                 <span className="text-primary mt-0.5">&#10003;</span>
+                Havdybder og sømærker til ture på vandet (ikke til navigation)
+              </li>
+              <li className="flex gap-2">
+                <span className="text-primary mt-0.5">&#10003;</span>
                 Importer GPX- og GeoJSON-ruter og print dem direkte
               </li>
               <li className="flex gap-2">

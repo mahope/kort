@@ -5,17 +5,13 @@ import { useMapStore } from "@/stores/mapStore";
 import { MAP_STYLES } from "@/lib/map/styles";
 import { BASE_LAYERS } from "@/constants/baseLayers";
 import { useIsMobile } from "@/lib/hooks/useIsMobile";
-import type { MapStyle, OverlayId } from "@/types/map";
+import type { MapStyle } from "@/types/map";
+import { OVERLAY_LABELS } from "@/lib/map/sources";
+import { SeaNotice } from "./SeaNotice";
 import "./maplibre-touch.css";
 
 const STYLE_KEYS = Object.keys(MAP_STYLES) as MapStyle[];
 
-const OVERLAY_LABELS: Record<OverlayId, string> = {
-  contours: "Højdekurver",
-  hillshade: "Skyggekort",
-  stednavne: "Stednavne",
-  matrikel: "Matrikelskel",
-};
 
 export function MapControls() {
   const [isOpen, setIsOpen] = useState(false);
@@ -133,6 +129,7 @@ export function MapControls() {
                 </div>
               ))}
             </div>
+            <SeaNotice />
           </div>
         </div>
       )}

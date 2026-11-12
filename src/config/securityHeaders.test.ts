@@ -36,6 +36,8 @@ describe("security headers (next.config.ts)", () => {
         "https://cdn.dataforsyningen.dk",
         "https://adressevaelger.dk",
         "https://tile.openstreetmap.org",
+        "https://ows.emodnet-bathymetry.eu",
+        "https://tiles.openseamap.org",
         "https://analytics.holstjensen.eu",
       ])
     );

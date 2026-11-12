@@ -10,6 +10,7 @@ import { useHistoryStore } from "@/stores/historyStore";
 import { calculatePdfLayout } from "./layout";
 import { getBrand } from "@/config/brand";
 import { renderMapToImage } from "./renderer";
+import { OVERLAY_SOURCES } from "@/lib/map/sources";
 import { timed, yieldToMain } from "./timing";
 import { applyPrintPreferences, drawControlLine } from "./controlLine";
 import { calculateMultiPageGrid, calculatePrintArea } from "@/lib/geo/calculations";
@@ -165,6 +166,7 @@ export async function generatePdf({
   drawNorthArrow(pdf, layout, bearing);
   drawControlLine(pdf, layout);
   drawAttribution(pdf, layout, scale, gridInfo);
+  drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm));
   drawDeclination(declinationDiagram, pdf, layout, bounds, gridInfo, bearing);
 
   // Record in print history
@@ -499,6 +501,83 @@ export function drawAttribution(
   });
 }
 
+/**
+ * Third-party credits (OSM base map, EMODnet, OpenSeaMap) and, for sea
+ * layers, a bold "IKKE TIL NAVIGATION", in a white box in the top-left corner
+ * of the map image: the margins hold the grid labels and the footer. Text is
+ * wrapped to the box width so it also fits A5.
+ */
+export function drawThirdPartyCredits(pdf: jsPDF, x: number, y: number, maxWidthMm: number): void {
+  const extra = thirdPartyCredits();
+  if (extra.credits.length === 0 && !extra.notForNavigation) return;
+  const pad = 1.2;
+  const textW = maxWidthMm - 2 * pad;
+  const lines: { text: string; bold: boolean; pt: number }[] = [];
+  if (extra.notForNavigation) lines.push({ text: "IKKE TIL NAVIGATION", bold: true, pt: 7 });
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(6);
+  for (const c of extra.credits) {
+    for (const l of pdf.splitTextToSize(c, textW) as string[]) lines.push({ text: l, bold: false, pt: 6 });
+  }
+  const lineMm = (pt: number) => pt * 0.3528 * 1.25;
+  let w = 0;
+  for (const l of lines) {
+    pdf.setFont("helvetica", l.bold ? "bold" : "normal");
+    pdf.setFontSize(l.pt);
+    w = Math.max(w, pdf.getTextWidth(l.text));
+  }
+  const h = lines.reduce((sum, l) => sum + lineMm(l.pt), 0);
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(x, y, w + 2 * pad, h + 2 * pad - 0.4, "F");
+  let ty = y + pad;
+  pdf.setTextColor(0);
+  for (const l of lines) {
+    ty += lineMm(l.pt);
+    pdf.setFont("helvetica", l.bold ? "bold" : "normal");
+    pdf.setFontSize(l.pt);
+    pdf.text(l.text, x + pad, ty - 0.6);
+  }
+  pdf.setFont("helvetica", "normal");
+}
+
+const MIN_CREDITS_MM = 40;
+
+/** Credit box width: clear of the north arrow in the top-right corner. */
+function creditsWidthMm(mapWidthMm: number): number {
+  return Math.max(MIN_CREDITS_MM, Math.min(110, mapWidthMm - 24));
+}
+
+/**
+ * Where the credits go on the overview page: inside the image when it is wide
+ * enough, otherwise in the free page area left of a narrow (centred) image.
+ */
+export function overviewCreditsBox(
+  marginMm: number,
+  place: { x: number; y: number; w: number }
+): { x: number; y: number; width: number } {
+  if (place.w - 24 >= MIN_CREDITS_MM) {
+    return { x: place.x + 1.5, y: place.y + 1.5, width: Math.min(110, place.w - 24) };
+  }
+  const beside = place.x - marginMm - 2;
+  if (beside >= MIN_CREDITS_MM) return { x: marginMm, y: place.y, width: Math.min(110, beside) };
+  return { x: place.x + 1.5, y: place.y + 1.5, width: MIN_CREDITS_MM };
+}
+
+/** Credits for non-KDS data in the print: OSM base map and third-party overlays. */
+export function thirdPartyCredits(): { credits: string[]; notForNavigation: boolean } {
+  const { baseLayer, overlays } = useMapStore.getState();
+  const credits: string[] = [];
+  let notForNavigation = false;
+  if (baseLayer === "osm") credits.push("Kort: OpenStreetMap-bidragydere (ODbL)");
+  for (const o of overlays) {
+    if (!o.enabled) continue;
+    const src = OVERLAY_SOURCES[o.id];
+    if (src.credit) credits.push(src.credit);
+    if (src.notForNavigation) notForNavigation = true;
+  }
+  return { credits, notForNavigation };
+}
+
 type DeclinationDiagram = typeof import("./declinationDiagram");
 
 /** Loads the declination model on demand, and only when the diagram is switched on. */
@@ -609,6 +688,8 @@ async function generateMultiPagePdf({
         assembled: assembledSizeCm(layout, gridCols, gridRows, overlapMm),
       });
       drawAttribution(pdf, layout, scale, null, "Oversigt, ikke i målestok");
+      const credits = overviewCreditsBox(layout.marginMm, place);
+      drawThirdPartyCredits(pdf, credits.x, credits.y, credits.width);
     }
 
     for (let i = 0; i < cells.length; i++) {
@@ -663,6 +744,8 @@ async function generateMultiPagePdf({
       drawControlLine(pdf, layout);
 
       drawAttribution(pdf, layout, scale, gridInfo);
+      // Once on the assembled map (sheet A1), not a white box on every sheet.
+      if (i === 0) drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm));
       drawDeclination(declinationDiagram, pdf, layout, cell.bounds, gridInfo, bearing);
     }
   } finally {

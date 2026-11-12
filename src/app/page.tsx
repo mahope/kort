@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Sidebar } from "@/components/sidebar/Sidebar";
 import { LoadingOverlay } from "@/components/map/LoadingOverlay";
 import { MapControls } from "@/components/map/MapControls";
+import { SeaBadge } from "@/components/map/SeaNotice";
 import { CoordinateReadout } from "@/components/map/CoordinateReadout";
 import { KeyboardShortcuts } from "@/components/map/KeyboardShortcuts";
 import { UrlSync } from "@/components/map/UrlSync";
@@ -41,6 +42,7 @@ export default function Home() {
       <main className="relative flex-1">
         <MapContainer />
         <MapControls />
+        <SeaBadge />
         <CoordinateReadout />
         <LoadingOverlay />
       </main>

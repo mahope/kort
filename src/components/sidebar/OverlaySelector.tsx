@@ -1,14 +1,8 @@
 "use client";
 
 import { useMapStore } from "@/stores/mapStore";
-import type { OverlayId } from "@/types/map";
-
-const OVERLAY_LABELS: Record<OverlayId, string> = {
-  contours: "Højdekurver (0,5 m)",
-  hillshade: "Skyggekort (terræn)",
-  stednavne: "Stednavne",
-  matrikel: "Matrikelskel",
-};
+import { OVERLAY_LABELS } from "@/lib/map/sources";
+import { SeaNotice } from "@/components/map/SeaNotice";
 
 export function OverlaySelector() {
   const overlays = useMapStore((s) => s.overlays);
@@ -52,6 +46,7 @@ export function OverlaySelector() {
           </div>
         ))}
       </div>
+      <SeaNotice />
     </div>
   );
 }
