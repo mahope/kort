@@ -90,23 +90,20 @@ function trackTileProgress(map: maplibregl.Map, onProgress: TileProgress) {
 // work for raster tiles (#66): as "expired" it counts as having data and was
 // drawn without a texture ("reading 'bind'"); as "loading" MapLibre dropped
 // some of them before they arrived, and the PDF was refused as incomplete.
-type Manager = {
-  _removeTile?: (id: number | string) => void;
-  update?: (transform: unknown, terrain: unknown) => void;
-};
+type Manager = { _removeTile?: (id: number | string) => void };
 
 function retryTiles(map: maplibregl.Map, tiles: Iterable<FailedTile>) {
   const managers = (map as unknown as { style?: { tileManagers?: Record<string, Manager> } }).style?.tileManagers;
-  const touched = new Set<Manager>();
+  let removed = 0;
   for (const { sourceId, tileKey } of tiles) {
     const manager = managers?.[sourceId];
     if (tileKey === undefined || !manager?._removeTile) continue;
     manager._removeTile(tileKey);
-    touched.add(manager);
+    removed++;
   }
-  const internals = map as unknown as { transform?: unknown; terrain?: unknown };
-  for (const manager of touched) manager.update?.(internals.transform, internals.terrain);
-  if (touched.size > 0) map.triggerRepaint();
+  // Marks the sources dirty and repaints; the next frame updates every source
+  // with the camera's transform and requests the missing tiles.
+  if (removed > 0) (map as unknown as { _update?: () => void })._update?.();
 }
 
 function sleep(ms: number) {

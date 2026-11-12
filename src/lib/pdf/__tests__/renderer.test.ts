@@ -42,16 +42,6 @@ class FakeMap {
           ctl.removed.push(key);
           this.removed.push(key);
         },
-        // update() requests the removed (now missing) tiles again.
-        update: () => {
-          const src = this.style.tileManagers.src;
-          for (const key of src.removed) {
-            if (ctl.failOnReload.includes(key)) this.emit("error", { sourceId: "src", tile: { tileID: { key } } });
-            else this.emit("data", { dataType: "source", sourceId: "src", tile: { tileID: { key } } });
-          }
-          ctl.updates++;
-          src.removed = [];
-        },
       },
     },
   };
@@ -71,7 +61,16 @@ class FakeMap {
   }
   emit(n: string, e: unknown) { [...(this.handlers[n] ?? [])].forEach((h) => h(e)); }
   isStyleLoaded() { return true; }
-  triggerRepaint() {}
+  // _update() marks sources dirty; the next frame requests the removed tiles again.
+  _update() {
+    const src = this.style.tileManagers.src;
+    for (const key of src.removed) {
+      if (ctl.failOnReload.includes(key)) this.emit("error", { sourceId: "src", tile: { tileID: { key } } });
+      else this.emit("data", { dataType: "source", sourceId: "src", tile: { tileID: { key } } });
+    }
+    ctl.updates++;
+    src.removed = [];
+  }
   areTilesLoaded() { return true; }
   addSource() {}
   addLayer() {}
@@ -144,7 +143,7 @@ describe("renderMapToImage tile errors", () => {
     ctl.failOnLoad = ["1", "2"];
     expect(await run()).toHaveProperty("v");
     expect(ctl.removed).toEqual(["1", "2"]);
-    expect(ctl.updates).toBe(1); // one update for the source, not one per tile
+    expect(ctl.updates).toBe(1); // one map update per retry round, not one per tile
   });
 
   it("throws with the number of missing tiles after retries are exhausted", async () => {
