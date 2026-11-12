@@ -25,14 +25,10 @@ function liveText(progress: PdfProgress | null, page: number, totalPages: number
 
 /** 0-1 share of the work done, for the bar behind the button text. */
 function progressFraction(progress: PdfProgress | null, page: number, totalPages: number): number {
-  const pageShare = (p: number) => {
-    if (!p || p.valueOf() < 0) return 0;
-    return p;
-  };
   let inPage = 0.05;
   if (progress?.stage === "assemble") inPage = 0.95;
   else if (progress && progress.tilesTotal > 0) inPage = 0.05 + 0.85 * (progress.tilesLoaded / progress.tilesTotal);
-  if (totalPages > 1 && page > 0) return (pageShare(page - 1) + inPage) / totalPages;
+  if (totalPages > 1 && page > 0) return (Math.max(0, page - 1) + inPage) / totalPages;
   return inPage;
 }
 

@@ -26,3 +26,15 @@ describe("zoomToFitGround", () => {
     expect(zoomToFitGround(4750, 6925, 0, 500, 56)).toBe(17);
   });
 });
+
+describe("rotatedExtent", () => {
+  it("grows the frame's bounding box when the map is turned", async () => {
+    const { rotatedExtent } = await import("@/lib/map/focusPrintArea");
+    expect(rotatedExtent(100, 200, 0)).toEqual({ widthM: 100, heightM: 200 });
+    const q = rotatedExtent(100, 200, 90);
+    expect(q.widthM).toBeCloseTo(200, 6);
+    expect(q.heightM).toBeCloseTo(100, 6);
+    const d = rotatedExtent(100, 200, 45);
+    expect(d.widthM).toBeCloseTo(300 * Math.SQRT1_2, 6);
+  });
+});

@@ -5,6 +5,14 @@ import type { MapViewState, MapStyle, BaseLayer, OverlayId, OverlayState } from 
 import { DENMARK_CENTER, DEFAULT_ZOOM, DEFAULT_STYLE } from "@/lib/map/styles";
 import type { GridSpacing, GridLabelFormat, UtmZoneMode } from "@/lib/geo/utmGrid";
 
+/** Map padding to land on, so a fly started while the sheet moves ends without a jump. */
+export interface FlyPadding {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+}
+
 const DEFAULT_OVERLAYS: OverlayState[] = [
   { id: "contours", enabled: false, opacity: 1 },
   { id: "hillshade", enabled: false, opacity: 0.5 },
@@ -24,7 +32,7 @@ interface MapStore {
   showGridLabels: boolean;
   gridLabelFormat: GridLabelFormat;
   utmZoneMode: UtmZoneMode;
-  flyToTarget: { lng: number; lat: number; zoom: number } | null;
+  flyToTarget: { lng: number; lat: number; zoom: number; padding?: FlyPadding } | null;
   setViewState: (viewState: MapViewState) => void;
   setStyle: (style: MapStyle) => void;
   setBaseLayer: (baseLayer: BaseLayer) => void;
@@ -37,7 +45,7 @@ interface MapStore {
   setShowGridLabels: (show: boolean) => void;
   setGridLabelFormat: (format: GridLabelFormat) => void;
   setUtmZoneMode: (mode: UtmZoneMode) => void;
-  flyTo: (lng: number, lat: number, zoom?: number) => void;
+  flyTo: (lng: number, lat: number, zoom?: number, padding?: FlyPadding) => void;
   clearFlyTo: () => void;
 }
 
@@ -87,6 +95,6 @@ export const useMapStore = create<MapStore>()(persist((set) => ({
   setShowGridLabels: (showGridLabels) => set({ showGridLabels }),
   setGridLabelFormat: (gridLabelFormat) => set({ gridLabelFormat }),
   setUtmZoneMode: (utmZoneMode) => set({ utmZoneMode }),
-  flyTo: (lng, lat, zoom = 14) => set({ flyToTarget: { lng, lat, zoom } }),
+  flyTo: (lng, lat, zoom = 14, padding) => set({ flyToTarget: { lng, lat, zoom, padding } }),
   clearFlyTo: () => set({ flyToTarget: null }),
 }), { name: "kort-grid", partialize: (s) => ({ gridSystem: s.gridSystem }) }));

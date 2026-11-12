@@ -5,10 +5,7 @@ import { searchAddresses, resolveCoordinates } from "@/lib/api/address";
 import { useUiStore } from "@/stores/uiStore";
 import type { SearchResult } from "@/types/map";
 import { flyToPrintArea } from "@/lib/map/focusPrintArea";
-
-/** Below md the sheet is a bottom sheet; opening it fully keeps results above the keyboard. */
-const isSheetLayout = () =>
-  typeof window !== "undefined" && typeof window.matchMedia === "function" && !window.matchMedia("(min-width: 768px)").matches;
+import { isSheetLayout } from "@/lib/ui/sheet";
 
 export function SearchBar() {
   const [query, setQuery] = useState("");
@@ -91,7 +88,7 @@ export function SearchBar() {
       setSheetPosition("mid");
     }
     if (result.coordinates) {
-      flyToPrintArea(result.coordinates[0], result.coordinates[1]);
+      flyToPrintArea(result.coordinates[0], result.coordinates[1], "mid");
       return;
     }
     // Adressevælger results carry no coordinates — resolve them on select.
@@ -99,7 +96,7 @@ export function SearchBar() {
     try {
       const coords = await resolveCoordinates(result);
       if (coords) {
-        flyToPrintArea(coords[0], coords[1]);
+        flyToPrintArea(coords[0], coords[1], "mid");
       } else {
         useUiStore.getState().addToast("error", "Kunne ikke finde adressens placering");
       }

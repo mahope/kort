@@ -57,7 +57,7 @@ export function ScaleSelector() {
             label: s.value.toLocaleString("da-DK"),
             ariaLabel: s.label,
           })),
-          { value: CUSTOM_VALUE, label: "Andet", ariaLabel: "Brugerdefineret målestok" },
+          { value: CUSTOM_VALUE, label: "Andet", ariaLabel: "Andet (brugerdefineret målestok)" },
         ]}
       />
 

@@ -2,6 +2,7 @@
 
 import { useRef, useCallback, useEffect, useState, type ReactNode } from "react";
 import { useUiStore, type SheetPosition } from "@/stores/uiStore";
+import { SNAP_MAX_FRAC, SNAP_MIN_PX, sheetHeightPx } from "@/lib/ui/sheet";
 
 interface BottomSheetProps {
   children: ReactNode;
@@ -9,15 +10,9 @@ interface BottomSheetProps {
   footer?: ReactNode;
 }
 
-// Heights live in CSS (globals.css: --sheet-min/mid/max) so the first server
-// render already has the final layout and dvh follows resize and rotation.
-const SNAP_MIN_PX = 108;
-const SNAP_MID_FRAC = 0.4;
-const SNAP_MAX_FRAC = 0.6;
-
 function snapPointsPx(): Record<SheetPosition, number> {
   const vh = window.innerHeight;
-  return { min: SNAP_MIN_PX, mid: vh * SNAP_MID_FRAC, max: vh * SNAP_MAX_FRAC };
+  return { min: sheetHeightPx("min", vh), mid: sheetHeightPx("mid", vh), max: sheetHeightPx("max", vh) };
 }
 
 function nearestPosition(heightPx: number): SheetPosition {
@@ -60,8 +55,12 @@ export function BottomSheet({ children, footer }: BottomSheetProps) {
   // its centre into the visible area above the sheet. 0 when it is a sidebar.
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)");
-    const publish = () => {
-      const px = mq.matches ? 0 : Math.round(snapPointsPx()[position]);
+    const publish = (e?: Event) => {
+      // An on-screen keyboard shrinks the viewport while typing; re-padding
+      // the map then would make it jump under the user's eyes.
+      const el = document.activeElement;
+      if (e?.type === "resize" && el instanceof HTMLElement && el.matches("input, textarea, select")) return;
+      const px = mq.matches ? 0 : snapPointsPx()[position];
       setSheetPx(px);
       document.documentElement.style.setProperty("--map-pad-bottom", `${px}px`);
     };
