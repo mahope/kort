@@ -75,7 +75,7 @@ for (const label of BASE_LAYERS) {
 await page.getByText("Skærmkort", { exact: false }).first().click();
 await page.waitForTimeout(1500);
 
-await page.getByRole("button", { name: /^Avancerede indstillinger/ }).click();
+await page.getByRole("button", { name: /^Alle indstillinger/ }).click();
 for (const label of OVERLAYS) {
   await page.getByLabel(new RegExp(label)).first().check();
   await page.waitForTimeout(3000);

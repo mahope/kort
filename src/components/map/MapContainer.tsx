@@ -13,6 +13,7 @@ import Map, {
   type ViewStateChangeEvent,
 } from "react-map-gl/maplibre";
 import { useMapStore } from "@/stores/mapStore";
+import { useUiStore } from "@/stores/uiStore";
 import { useDrawStore } from "@/stores/drawStore";
 import { MAP_STYLES, DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
 import { BLANK_STYLE, getRasterBaseLayers, OVERLAY_SOURCES } from "@/lib/map/sources";
@@ -35,6 +36,15 @@ configureMaplibreWorker();
 
 const RASTER_BASE_LAYERS = getRasterBaseLayers("screen");
 
+/**
+ * MapLibre opens the compact attribution on load; on phones the open text
+ * runs under the zoom buttons. Start it folded (the (i) button opens it).
+ */
+function collapseAttributionOnTouch(e: { target: import("maplibre-gl").Map }) {
+  if (!window.matchMedia("(pointer: coarse)").matches) return;
+  e.target.getContainer().querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show");
+}
+
 export function MapContainer() {
   // MapLibre fetches tiles/style with CORS, so the connection must be opened
   // with crossOrigin to be reused. Runs in an effect: this component is
@@ -51,6 +61,10 @@ export function MapContainer() {
   const overlays = useMapStore((s) => s.overlays);
   const flyToTarget = useMapStore((s) => s.flyToTarget);
   const clearFlyTo = useMapStore((s) => s.clearFlyTo);
+  // Below md the sheet covers the bottom of the map; padding moves the map
+  // centre (and with it the print frame) into the visible part.
+  const sheetPx = useUiStore((s) => s.sheetPx);
+  const padding = useMemo(() => ({ top: 0, left: 0, right: 0, bottom: sheetPx }), [sheetPx]);
   const needsDrawing = useDrawStore((s) => s.activeMode !== null || s.features.length > 0);
 
   const mapStyle = useMemo(() => {
@@ -99,7 +113,9 @@ export function MapContainer() {
     <Map
       ref={mapRef}
       {...viewState}
+      padding={padding}
       onMove={onMove}
+      onLoad={collapseAttributionOnTouch}
       mapStyle={mapStyle}
       transformRequest={transformRequest}
       maxBounds={[...DENMARK_BOUNDS[0], ...DENMARK_BOUNDS[1]]}
@@ -146,6 +162,7 @@ export function MapContainer() {
       <ScaleControl position="bottom-right" unit="metric" />
       <AttributionControl
         position="bottom-left"
+        compact
         customAttribution="&copy; Klimadatastyrelsen"
       />
       <GeolocationButton mapRef={mapRef} />

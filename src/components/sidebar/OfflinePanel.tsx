@@ -221,7 +221,7 @@ export function OfflinePanel() {
         </p>
       )}
       {check.needsConfirm && !check.tooLarge && phase === "idle" && (
-        <label className="flex items-start gap-2 text-xs cursor-pointer">
+        <label className="flex items-start gap-2 text-xs cursor-pointer pointer-coarse:min-h-11 pointer-coarse:items-center">
           <input
             type="checkbox"
             checked={confirmed}

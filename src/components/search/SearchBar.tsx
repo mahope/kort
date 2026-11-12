@@ -2,9 +2,13 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { searchAddresses, resolveCoordinates } from "@/lib/api/address";
-import { useMapStore } from "@/stores/mapStore";
 import { useUiStore } from "@/stores/uiStore";
 import type { SearchResult } from "@/types/map";
+import { flyToPrintArea } from "@/lib/map/focusPrintArea";
+
+/** Below md the sheet is a bottom sheet; opening it fully keeps results above the keyboard. */
+const isSheetLayout = () =>
+  typeof window !== "undefined" && typeof window.matchMedia === "function" && !window.matchMedia("(min-width: 768px)").matches;
 
 export function SearchBar() {
   const [query, setQuery] = useState("");
@@ -14,7 +18,7 @@ export function SearchBar() {
   const [hasSearched, setHasSearched] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const flyTo = useMapStore((s) => s.flyTo);
+  const setSheetPosition = useUiStore((s) => s.setSheetPosition);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
@@ -82,8 +86,12 @@ export function SearchBar() {
   const selectResult = async (result: SearchResult) => {
     setQuery(result.text);
     setIsOpen(false);
+    if (isSheetLayout()) {
+      inputRef.current?.blur();
+      setSheetPosition("mid");
+    }
     if (result.coordinates) {
-      flyTo(result.coordinates[0], result.coordinates[1]);
+      flyToPrintArea(result.coordinates[0], result.coordinates[1]);
       return;
     }
     // Adressevælger results carry no coordinates — resolve them on select.
@@ -91,7 +99,7 @@ export function SearchBar() {
     try {
       const coords = await resolveCoordinates(result);
       if (coords) {
-        flyTo(coords[0], coords[1]);
+        flyToPrintArea(coords[0], coords[1]);
       } else {
         useUiStore.getState().addToast("error", "Kunne ikke finde adressens placering");
       }
@@ -147,7 +155,7 @@ export function SearchBar() {
   return (
     <div ref={containerRef} className="relative">
       <label htmlFor="search-input" className="block text-sm font-medium mb-1">
-        Adressesøgning
+        Find sted
       </label>
       <div className="relative">
         <svg
@@ -177,8 +185,16 @@ export function SearchBar() {
           value={query}
           onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          onFocus={() => hasSearched && setIsOpen(true)}
-          placeholder="Søg efter adresse eller stednavn..."
+          onFocus={() => {
+            if (hasSearched) setIsOpen(true);
+            if (isSheetLayout()) {
+              // Open the sheet fully and lift the field to its top, so the
+              // results are not hidden behind the keyboard or the footer.
+              setSheetPosition("max");
+              requestAnimationFrame(() => containerRef.current?.scrollIntoView({ block: "start" }));
+            }
+          }}
+          placeholder="Søg efter adresse eller stednavn"
           className="w-full rounded-lg border border-border pl-8 pr-16 py-2 text-sm pointer-coarse:min-h-11 pointer-coarse:pr-20 pointer-coarse:text-base bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
         {isLoading && (
@@ -209,7 +225,7 @@ export function SearchBar() {
         <ul
           id={listboxId}
           role="listbox"
-          className="absolute z-50 mt-1 w-full rounded-lg border border-border bg-surface shadow-lg max-h-60 overflow-y-auto"
+          className="absolute z-50 mt-1 w-full rounded-lg border border-border bg-surface shadow-lg max-h-60 max-md:max-h-[min(15rem,40dvh)] overflow-y-auto"
         >
           {hasError ? (
             <li className="px-3 py-2 text-sm text-danger">
@@ -222,7 +238,7 @@ export function SearchBar() {
                 id={`search-option-${i}`}
                 role="option"
                 aria-selected={i === activeIndex}
-                className={`cursor-pointer px-3 py-2 text-sm transition-colors pointer-coarse:min-h-11 ${
+                className={`cursor-pointer px-3 py-2 text-sm transition-colors pointer-coarse:min-h-11 pointer-coarse:py-2.5 ${
                   i === activeIndex ? "bg-primary/10" : "hover:bg-surface-secondary"
                 }`}
                 onMouseEnter={() => setActiveIndex(i)}

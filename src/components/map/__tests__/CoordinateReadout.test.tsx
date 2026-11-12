@@ -21,6 +21,11 @@ describe("CoordinateReadout declination", () => {
       details.open = true;
       details.dispatchEvent(new Event("toggle"));
     });
+    // The model is a dynamic import; wait for it instead of hoping it lands
+    // within the fake 300 ms (it did not on a loaded machine).
+    await act(async () => {
+      await import("@/lib/geo/declination");
+    });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(300);
     });

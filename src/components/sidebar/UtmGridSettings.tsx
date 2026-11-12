@@ -57,12 +57,12 @@ export function UtmGridSettings() {
 
   return (
     <div className="space-y-2">
-      <label className="flex items-center gap-2 cursor-pointer">
+      <label className="flex items-center gap-2 cursor-pointer pointer-coarse:min-h-11">
         <input
           type="checkbox"
           checked={showUtmGrid}
           onChange={toggleUtmGrid}
-          className="accent-primary"
+          className="accent-primary pointer-coarse:h-5 pointer-coarse:w-5"
         />
         <span className="text-sm">Koordinatgitter</span>
       </label>
@@ -102,12 +102,12 @@ export function UtmGridSettings() {
             {" "}Hver 10 km-linje er kraftigere.
           </p>
 
-          <label className="flex items-center gap-2 cursor-pointer">
+          <label className="flex items-center gap-2 cursor-pointer pointer-coarse:min-h-11">
             <input
               type="checkbox"
               checked={showGridLabels}
               onChange={(e) => setShowGridLabels(e.target.checked)}
-              className="accent-primary"
+              className="accent-primary pointer-coarse:h-5 pointer-coarse:w-5"
             />
             <span className="text-sm">Koordinater langs kanten</span>
           </label>
@@ -154,12 +154,12 @@ export function UtmGridSettings() {
           </div>}
         </div>
       )}
-      <label className="flex items-center gap-2 cursor-pointer">
+      <label className="flex items-center gap-2 cursor-pointer pointer-coarse:min-h-11">
         <input
           type="checkbox"
           checked={showDeclination}
           onChange={(e) => setShowDeclination(e.target.checked)}
-          className="accent-primary"
+          className="accent-primary pointer-coarse:h-5 pointer-coarse:w-5"
         />
         <span className="text-sm">Misvisning i printet</span>
       </label>

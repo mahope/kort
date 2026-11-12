@@ -58,13 +58,16 @@ export function CoordinateReadout() {
 
   return (
     <>
-      <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 text-slate-900" style={{ filter: "drop-shadow(0 0 2px white)" }}>
+      <div aria-hidden="true" className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 text-slate-900" style={{ top: "calc((100% - var(--map-pad-bottom, 0px)) / 2)", filter: "drop-shadow(0 0 2px white)" }}>
         <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M14 0v10m0 8v10M0 14h10m8 0h10" /><circle cx="14" cy="14" r="3" />
         </svg>
       </div>
-      <details onToggle={(e) => e.currentTarget.open && setOpened(true)} className="absolute top-20 right-2 z-20 w-[min(19rem,calc(100%-1rem))] rounded-lg bg-surface/95 shadow-md backdrop-blur-sm md:top-8 md:right-3">
-        <summary className="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-primary">Koordinat ved sigtekorset</summary>
+      <details onToggle={(e) => e.currentTarget.open && setOpened(true)} className="group absolute top-3 right-3 z-20 max-w-[calc(100%-5rem)] rounded-lg bg-surface/95 shadow-md backdrop-blur-sm open:w-[min(19rem,calc(100%-5rem))] md:top-8 md:right-3 md:w-[min(19rem,calc(100%-1rem))]">
+        <summary className="flex min-h-11 cursor-pointer items-center px-3 py-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-primary">
+          <span className="md:hidden group-open:hidden">Koordinat</span>
+          <span className="max-md:hidden max-md:group-open:inline">Koordinat ved sigtekorset</span>
+        </summary>
         <div className="px-3 pb-3">
           <p className="mb-2 text-xs text-text-secondary">Flyt kortet, så punktet ligger i sigtekorset.</p>
           {coordinates.map(({ name, value }) => (

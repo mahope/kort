@@ -12,6 +12,12 @@
     min-width: 44px;
   }
 
+  /* The (i) icon is a 24px background; at 44px it tiled into four icons. */
+  .maplibregl-ctrl-attrib-button {
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
   /* The zoom group is 44px wide and would sit under the (40px) geolocation button
      stacked above it; shift it left so neither obscures the other (axe target-size). */
   .maplibregl-ctrl-bottom-right .maplibregl-ctrl-group:has(.maplibregl-ctrl-zoom-in) {

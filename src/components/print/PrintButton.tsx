@@ -23,6 +23,19 @@ function liveText(progress: PdfProgress | null, page: number, totalPages: number
   return progressText(progress, page, totalPages);
 }
 
+/** 0-1 share of the work done, for the bar behind the button text. */
+function progressFraction(progress: PdfProgress | null, page: number, totalPages: number): number {
+  const pageShare = (p: number) => {
+    if (!p || p.valueOf() < 0) return 0;
+    return p;
+  };
+  let inPage = 0.05;
+  if (progress?.stage === "assemble") inPage = 0.95;
+  else if (progress && progress.tilesTotal > 0) inPage = 0.05 + 0.85 * (progress.tilesLoaded / progress.tilesTotal);
+  if (totalPages > 1 && page > 0) return (pageShare(page - 1) + inPage) / totalPages;
+  return inPage;
+}
+
 export function PrintButton() {
   const { frameBounds, scale, paperFormat, orientation, dpi, isGenerating, setIsGenerating, generatingPage, totalPages } =
     usePrintStore();
@@ -55,11 +68,18 @@ export function PrintButton() {
         onClick={handleClick}
         disabled={isGenerating || noArea}
         title={noArea ? "Vælg et område på kortet først" : undefined}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-on-primary transition-colors hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
+        className="relative flex min-h-12 w-full items-center justify-center gap-2 overflow-hidden rounded-lg bg-primary px-4 py-3 text-base font-semibold text-on-primary transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50 data-[busy=true]:opacity-100 md:text-sm"
+        data-busy={isGenerating}
       >
         {isGenerating ? (
           <>
-            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+            <span
+              aria-hidden="true"
+              data-testid="pdf-progress-bar"
+              className="absolute inset-y-0 left-0 bg-on-primary/20 transition-[width] duration-300 ease-out"
+              style={{ width: `${Math.round(progressFraction(progress, generatingPage, totalPages) * 100)}%` }}
+            />
+            <svg className="relative animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
               <circle
                 className="opacity-25"
                 cx="12"
@@ -74,7 +94,7 @@ export function PrintButton() {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
               />
             </svg>
-            <span aria-hidden="true">{progressText(progress, generatingPage, totalPages)}</span>
+            <span aria-hidden="true" className="relative tabular-nums">{progressText(progress, generatingPage, totalPages)}</span>
             <span role="status" className="sr-only">{liveText(progress, generatingPage, totalPages)}</span>
           </>
         ) : (
