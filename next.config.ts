@@ -10,6 +10,8 @@ const ANALYTICS = "https://analytics.holstjensen.eu";
 // Optional sea layers (see src/lib/map/sources.ts).
 const EMODNET = "https://ows.emodnet-bathymetry.eu";
 const OPENSEAMAP = "https://tiles.openseamap.org";
+// Our own 5/10 m contours (PMTiles, read with range requests; src/lib/map/contours.ts).
+const KORT_TILES = "https://tiles.mahoje.dk";
 
 // The app has two inline <script>s (theme + JSON-LD), so script-src keeps
 // 'unsafe-inline'. MapLibre runs its workers from blob: URLs. Network-facing
@@ -20,7 +22,7 @@ export const csp = [
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${DATAFORSYNINGEN_API} ${DATAFORSYNINGEN_CDN} ${OSM_TILES} ${EMODNET} ${OPENSEAMAP}`,
   "font-src 'self' data:",
-  `connect-src 'self' ${DATAFORSYNINGEN_API} ${DATAFORSYNINGEN_CDN} ${ADRESSEVAELGER} ${OSM_TILES} ${EMODNET} ${OPENSEAMAP} ${ANALYTICS}`,
+  `connect-src 'self' ${DATAFORSYNINGEN_API} ${DATAFORSYNINGEN_CDN} ${ADRESSEVAELGER} ${OSM_TILES} ${EMODNET} ${OPENSEAMAP} ${KORT_TILES} ${ANALYTICS}`,
   "worker-src 'self' blob:",
   "frame-ancestors 'self'",
   "base-uri 'self'",
