@@ -16,7 +16,7 @@ interface ChipGroupProps {
   value: string;
   options: ChipOption[];
   onChange: (value: string) => void;
-  columns?: 3 | 4;
+  columns?: 3 | 4 | 5;
 }
 
 /**
@@ -44,7 +44,7 @@ export function ChipGroup({ label, hint, value, options, onChange, columns = 4 }
         {label}
         {hint && <span className="ml-1 font-normal text-text-muted">{hint}</span>}
       </span>
-      <div role="radiogroup" aria-labelledby={labelId} className={`grid gap-1.5 ${columns === 3 ? "grid-cols-3" : "grid-cols-4"}`}>
+      <div role="radiogroup" aria-labelledby={labelId} className={`grid gap-1.5 ${columns === 3 ? "grid-cols-3" : columns === 5 ? "grid-cols-5" : "grid-cols-4"}`}>
         {options.map((opt, i) => {
           const checked = opt.value === value;
           return (

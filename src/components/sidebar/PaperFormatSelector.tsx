@@ -3,7 +3,7 @@
 import { ChipGroup } from "@/components/ui/ChipGroup";
 import { Toggle } from "@/components/ui/Toggle";
 import { usePrintStore } from "@/stores/printStore";
-import { PAPER_FORMAT_OPTIONS } from "@/constants/paperFormats";
+import { PAPER_FORMAT_OPTIONS, LARGE_FORMATS, LARGE_FORMAT_MAX_DPI } from "@/constants/paperFormats";
 import type { PaperFormat, Orientation } from "@/types/print";
 
 export function PaperFormatSelector() {
@@ -23,7 +23,13 @@ export function PaperFormatSelector() {
           ariaLabel: f.label,
         }))}
         onChange={(v) => setPaperFormat(v as PaperFormat)}
+        columns={3}
       />
+      {LARGE_FORMATS.includes(paperFormat) && (
+        <p className="text-xs text-text-secondary" role="note">
+          {paperFormat} er ét stort ark til et trykkeri eller en plotter. Det laves med {LARGE_FORMAT_MAX_DPI} dpi, som er rigeligt til et kort, man står og kigger på.
+        </p>
+      )}
       <Toggle
         label="Orientering"
         value={orientation}

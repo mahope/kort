@@ -1,6 +1,11 @@
 "use client";
 
 import { usePrintStore } from "@/stores/printStore";
+import { ChipGroup } from "@/components/ui/ChipGroup";
+import { calculatePdfLayout } from "@/lib/pdf/layout";
+import { assembledSizeCm } from "@/lib/pdf/assembly";
+
+const COUNTS = [1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: String(n) }));
 
 export function MultiPageSelector() {
   const multiPage = usePrintStore((s) => s.multiPage);
@@ -11,8 +16,11 @@ export function MultiPageSelector() {
   const setGridRows = usePrintStore((s) => s.setGridRows);
   const overlapMm = usePrintStore((s) => s.overlapMm);
   const setOverlapMm = usePrintStore((s) => s.setOverlapMm);
+  const paperFormat = usePrintStore((s) => s.paperFormat);
+  const orientation = usePrintStore((s) => s.orientation);
 
   const totalPages = gridCols * gridRows;
+  const size = assembledSizeCm(calculatePdfLayout(paperFormat, orientation), gridCols, gridRows, overlapMm);
 
   return (
     <div>
@@ -23,48 +31,34 @@ export function MultiPageSelector() {
           onChange={(e) => setMultiPage(e.target.checked)}
           className="accent-primary pointer-coarse:h-5 pointer-coarse:w-5"
         />
-        <span className="text-sm font-medium">Flersidet udskrift</span>
+        <span className="text-sm font-medium">Flersidet udskrift (gulvkort)</span>
       </label>
 
       {multiPage && (
-        <div className="mt-2 ml-6 space-y-2">
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-text-muted w-16">Kolonner</label>
+        <div className="mt-2 space-y-3" data-testid="multipage-settings">
+          <ChipGroup label="Ark på tværs" value={String(gridCols)} options={COUNTS} columns={5} onChange={(v) => setGridCols(Number(v))} />
+          <ChipGroup label="Ark på langs" value={String(gridRows)} options={COUNTS} columns={5} onChange={(v) => setGridRows(Number(v))} />
+          <div>
+            <label htmlFor="multipage-overlap" className="mb-1 flex justify-between text-sm font-medium">
+              Overlap <span className="font-normal text-text-secondary tabular-nums">{overlapMm} mm</span>
+            </label>
             <input
-              type="number"
-              min={1}
-              max={5}
-              value={gridCols}
-              onChange={(e) => setGridCols(Math.max(1, Math.min(5, Number(e.target.value))))}
-              className="w-14 rounded border border-border px-1 py-0.5 text-xs text-center bg-surface"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-text-muted w-16">Rækker</label>
-            <input
-              type="number"
-              min={1}
-              max={5}
-              value={gridRows}
-              onChange={(e) => setGridRows(Math.max(1, Math.min(5, Number(e.target.value))))}
-              className="w-14 rounded border border-border px-1 py-0.5 text-xs text-center bg-surface"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-text-muted w-16">Overlap</label>
-            <input
+              id="multipage-overlap"
               type="range"
               min={0}
               max={20}
               step={1}
               value={overlapMm}
               onChange={(e) => setOverlapMm(Number(e.target.value))}
-              className="flex-1 h-1 accent-primary"
+              className="w-full accent-primary pointer-coarse:h-11"
             />
-            <span className="text-xs text-text-secondary w-10 text-right">{overlapMm} mm</span>
           </div>
-          <p className="text-[10px] text-text-muted">
-            {totalPages} sider ({gridCols}&times;{gridRows})
+          <p className="text-xs text-text-secondary" data-testid="multipage-summary">
+            {totalPages} ark i {paperFormat} ({gridCols} × {gridRows}). Samlet kort ca.{" "}
+            <span className="font-medium text-foreground tabular-nums">
+              {Math.round(size.widthCm)} × {Math.round(size.heightCm)} cm
+            </span>
+            {totalPages > 1 && ". PDF'en starter med en oversigtsside, og hvert ark har hjørnemærker og navnet på nabo-arkene."}
           </p>
         </div>
       )}
