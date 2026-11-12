@@ -31,7 +31,7 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 - **Bogmærker & historik** - Gem dine yndlingssteder og se tidligere udskrifter
 - **Simpel/avanceret tilstand** - Overskuelig for nye brugere, med alle funktioner tilgængelige
 - **Mørkt tema** - Light, dark og system-følgende tema
-- **Responsivt design** - Desktop sidebar + mobil bottom sheet med snap-points
+- **Responsivt design** - Desktop sidebar + mobil bottom sheet med snap-points. Kortet centreres over arket, og en søgning zoomer, så hele printrammen ses. Målestok og papir vælges med store knapper, og genveje under "Værktøjer" åbner tegning, GPX, flere ark, deling og offline direkte (se `docs/ux/2026-11-mobil/`)
 - **PWA** - Installerbar som app, virker offline med cached tiles
 - **Gem området offline** - Under Avanceret kan printrammen (zoom 12-16 plus kant) gemmes, så kortet kan panoreres og zoomes uden net. PDF-generering kræver stadig internet. Se `docs/offline-tests.md`
 - **Del-funktion** - Del et kortudsnit via URL
