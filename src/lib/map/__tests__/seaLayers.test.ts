@@ -2,7 +2,8 @@ import { describe, it, expect, afterEach } from "vitest";
 import { OVERLAY_LABELS, OVERLAY_SOURCES, SEA_OVERLAYS } from "../sources";
 import { offlineLayerIds } from "@/lib/offline/tiles";
 import { deserializeState, serializeState } from "@/lib/url/urlState";
-import { thirdPartyCredits, drawThirdPartyCredits } from "@/lib/pdf/generator";
+import { thirdPartyCredits, drawThirdPartyCredits, overviewCreditsBox } from "@/lib/pdf/generator";
+import { overviewPlacement } from "@/lib/pdf/assembly";
 import { calculatePdfLayout } from "@/lib/pdf/layout";
 import { jsPDF } from "jspdf";
 import { useMapStore } from "@/stores/mapStore";
@@ -88,5 +89,19 @@ describe("PDF credits", () => {
       expect(t.x + t.w).toBeLessThanOrEqual(bx + bw + 0.01);
       expect(t.y).toBeLessThan(by + bh);
     }
+  });
+
+  it("places the overview credits beside a narrow sheet strip instead of squeezing them", () => {
+    const layout = calculatePdfLayout("A5", "portrait", 150);
+    // 1 x 5 sheets on A5: a tall, narrow overview image.
+    const place = overviewPlacement(layout, 1000, 5000);
+    const box = overviewCreditsBox(layout.marginMm, place);
+    expect(box.width).toBeGreaterThanOrEqual(40);
+    expect(box.x + box.width).toBeLessThanOrEqual(place.x);
+    // A wide image keeps the box inside it.
+    const wide = overviewPlacement(calculatePdfLayout("A4", "portrait", 150), 3000, 3000);
+    const inside = overviewCreditsBox(10, wide);
+    expect(inside.x).toBeGreaterThan(wide.x);
+    expect(inside.x + inside.width).toBeLessThan(wide.x + wide.w);
   });
 });

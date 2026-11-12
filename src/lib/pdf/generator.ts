@@ -540,9 +540,27 @@ export function drawThirdPartyCredits(pdf: jsPDF, x: number, y: number, maxWidth
   pdf.setFont("helvetica", "normal");
 }
 
+const MIN_CREDITS_MM = 40;
+
 /** Credit box width: clear of the north arrow in the top-right corner. */
 function creditsWidthMm(mapWidthMm: number): number {
-  return Math.min(110, mapWidthMm - 24);
+  return Math.max(MIN_CREDITS_MM, Math.min(110, mapWidthMm - 24));
+}
+
+/**
+ * Where the credits go on the overview page: inside the image when it is wide
+ * enough, otherwise in the free page area left of a narrow (centred) image.
+ */
+export function overviewCreditsBox(
+  marginMm: number,
+  place: { x: number; y: number; w: number }
+): { x: number; y: number; width: number } {
+  if (place.w - 24 >= MIN_CREDITS_MM) {
+    return { x: place.x + 1.5, y: place.y + 1.5, width: Math.min(110, place.w - 24) };
+  }
+  const beside = place.x - marginMm - 2;
+  if (beside >= MIN_CREDITS_MM) return { x: marginMm, y: place.y, width: Math.min(110, beside) };
+  return { x: place.x + 1.5, y: place.y + 1.5, width: MIN_CREDITS_MM };
 }
 
 /** Credits for non-KDS data in the print: OSM base map and third-party overlays. */
@@ -670,7 +688,8 @@ async function generateMultiPagePdf({
         assembled: assembledSizeCm(layout, gridCols, gridRows, overlapMm),
       });
       drawAttribution(pdf, layout, scale, null, "Oversigt, ikke i målestok");
-      drawThirdPartyCredits(pdf, place.x + 1.5, place.y + 1.5, creditsWidthMm(place.w));
+      const credits = overviewCreditsBox(layout.marginMm, place);
+      drawThirdPartyCredits(pdf, credits.x, credits.y, credits.width);
     }
 
     for (let i = 0; i < cells.length; i++) {
@@ -725,7 +744,8 @@ async function generateMultiPagePdf({
       drawControlLine(pdf, layout);
 
       drawAttribution(pdf, layout, scale, gridInfo);
-      drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm));
+      // Once on the assembled map (sheet A1), not a white box on every sheet.
+      if (i === 0) drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm));
       drawDeclination(declinationDiagram, pdf, layout, cell.bounds, gridInfo, bearing);
     }
   } finally {
