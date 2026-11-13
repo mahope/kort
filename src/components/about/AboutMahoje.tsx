@@ -90,7 +90,7 @@ export default function AboutMahoje() {
               </li>
               <li className="flex gap-2">
                 <span className="text-primary mt-0.5">&#10003;</span>
-                UTM-gitter med koordinater &mdash; til orientering i felten
+                UTM-, MGRS- eller DKTM-gitter med koordinater &mdash; til orientering i felten og landmåling
               </li>
               <li className="flex gap-2">
                 <span className="text-primary mt-0.5">&#10003;</span>

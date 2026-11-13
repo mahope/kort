@@ -41,8 +41,9 @@ function useSettledDeclination(lat: number, lng: number, enabled: boolean): stri
 export function CoordinateReadout() {
   const longitude = useMapStore((s) => s.viewState.longitude);
   const latitude = useMapStore((s) => s.viewState.latitude);
+  const gridSystem = useMapStore((s) => s.gridSystem);
   const addToast = useUiStore((s) => s.addToast);
-  const coordinates = pointCoordinates(latitude, longitude);
+  const coordinates = pointCoordinates(latitude, longitude, gridSystem);
   const [opened, setOpened] = useState(false);
   const declination = useSettledDeclination(latitude, longitude, opened);
   const declinationNote = wmmStatusNote(wmmStatus());

@@ -19,7 +19,7 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 - **5 basiskort** - Skærmkort, Ortofoto, OpenStreetMap, Høje & Lave Målebordsblade
 - **7 målestoksforhold** - 1:5.000, 1:10.000, 1:25.000, 1:50.000, 1:100.000, 1:250.000, 1:500.000 og valgfri fra 1:1.000 til 1:1.000.000 ("Andet"). Ved 1:5.000 er skærmkort og ortofoto skarpest; topografisk kort 1:25.000 bliver forstørret fem gange
 - **6 papirformater** - A5, A4, A3, A2 i stående eller liggende, plus A1 og A0 som ét stort ark til trykkeri/plotter (150 dpi)
-- **UTM-gitter** - Grid-linjer og koordinater på kort og PDF, til orientering i felten
+- **Koordinatgitter** - UTM, MGRS eller DKTM1-4 (dansk Transversal Mercator) som grid-linjer og koordinater på kort og PDF, til orientering i felten og landmåling
 - **Overlays** - Højdekurver (0,25 m, 0,5 m og roligere 2,5 m fra Dataforsyningen, plus egne 5 og 10 m-kurver med højdetal fra ca. 1:25.000 på skærmen og 1:50.000 på PDF'en; kurverne vises fra zoom 11, ca. 1:80.000 på skærmen), skyggekort, matrikelskel og stednavne
 - **Havlag** - Havdybder i danske farvande fra Danmarks Dybdemodel (Geodatastyrelsen, 50 m), grovere dybder uden for Danmark fra EMODnet Bathymetry (CC BY 4.0) og sømærker (OpenSeaMap). Ikke til navigation: det står i appen og på PDF'en
 - **Import** - Indlæs GPX, GeoJSON og KML-filer og print dem direkte
@@ -154,7 +154,7 @@ src/
 │   ├── pdf/              # PDF layout, renderer og generator
 │   ├── api/              # Søgeklient (Adressevælger + /api/stednavne)
 │   ├── stednavne/        # Stednavne-indeks, søgning og rate-limit
-│   ├── geo/              # Geometriske beregninger, UTM
+│   ├── geo/              # Geometriske beregninger, UTM/DKTM
 │   └── hooks/            # Custom React hooks
 ├── stores/               # Zustand stores (map, print, ui, import, draw, history)
 ├── types/                # TypeScript type-definitioner
@@ -184,24 +184,37 @@ Kortdata leveres af [Klimadatastyrelsen](https://www.klimadatastyrelsen.dk/) via
 
 ## Coordinate grids and point coordinates
 
-Enable **Koordinatgitter**, then choose **UTM** or **MGRS · WGS84**.
-MGRS uses standard UTM zones (32 west of 12°E, 33 east of it, including
-Copenhagen and Bornholm). Grid lines are clipped at zone boundaries on screen
-and in single/multi-page PDFs. The existing Danish UTM zone-32 convention is
-still available explicitly. Grid spacing, density guards and heavier 10 km
-lines work in both systems. Edge labels include the MGRS 100 km square letters
-and the kilometre digits within that square.
+Enable **Koordinatgitter**, then choose **UTM**, **MGRS · WGS84** or one of
+**DKTM1-4 · ETRS89**. MGRS uses standard UTM zones (32 west of 12°E, 33 east
+of it, including Copenhagen and Bornholm). Grid lines are clipped at zone
+boundaries on screen and in single/multi-page PDFs. The existing Danish UTM
+zone-32 convention is still available explicitly. Grid spacing, density
+guards and heavier 10 km lines work in all systems. Edge labels include the
+MGRS 100 km square letters and the kilometre digits within that square.
 At 100 km boundaries, square letters use the line's exact UTM ordinate so
 polyline interpolation cannot select the preceding square on screen or in PDFs.
 
-The system choice is stored in localStorage and shared in the `cs=utm|mgrs`
-URL parameter. Old `g=1` links still select UTM. Open **Koordinat ved sigtekorset**
-and pan the map to read/copy the same centre point as MGRS (1 m and 10 m),
-standard-zone UTM and decimal latitude/longitude. This also works on mobile.
-The displayed precision describes the coordinate format, not GPS/map accuracy.
+**DKTM1-4** ("Dansk Transversal Mercator", EPSG:4093-4096) are four ETRS89
+transverse Mercator zones used in Danish surveying. Unlike UTM's 6° zones,
+each DKTM zone is defined to cover the whole country, so its grid is never
+split at a zone boundary. Pick the zone that matches the area: DKTM1 for
+Jutland west of ~9°45'E, DKTM2 for Jutland east of that plus Funen, DKTM3 for
+Zealand and Lolland-Falster, DKTM4 for Bornholm — any zone is mathematically
+valid anywhere in Denmark, but accuracy is best close to its own area.
+Labels use the same metre-based short/full formatting as UTM.
+
+The system choice is stored in localStorage and shared in the
+`cs=utm|mgrs|dktm1|dktm2|dktm3|dktm4` URL parameter. Old `g=1` links still
+select UTM. Open **Koordinat ved sigtekorset** and pan the map to read/copy
+the same centre point as MGRS (1 m and 10 m), standard-zone UTM and decimal
+latitude/longitude; a DKTM row is added there too when a DKTM zone is the
+active grid system. This also works on mobile. The displayed precision
+describes the coordinate format, not GPS/map accuracy.
 
 MGRS conversion uses pinned `mgrs@2.2.0` from proj4js. Reference tests compare
 Rådhuspladsen and Rønne against GeographicLib GeoConvert (WGS84, standard zone).
+DKTM1-4 parameters are verified against the EPSG registry (epsg.io/4093-4096);
+reference tests compare against PROJ (pyproj) at several Danish towns per zone.
 
 ## Misvisning (magnetic declination)
 

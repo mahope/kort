@@ -25,8 +25,8 @@ import {
   overviewPlacement,
   sheetNeighbours,
 } from "./assembly";
-import { computeZonedGrid, gridIntersections, type ZonedGridLine } from "@/lib/geo/zoneGrid";
-import { mgrsSquare, type GridSystem } from "@/lib/geo/coordinates";
+import { computeZonedGrid, computeDktmGrid, gridIntersections, type ZonedGridLine } from "@/lib/geo/zoneGrid";
+import { mgrsSquare, isDktmSystem, dktmZoneOf, type GridSystem } from "@/lib/geo/coordinates";
 import {
   dropOverlapping,
   formatGridLabel,
@@ -284,6 +284,7 @@ interface GridOptions {
 
 function gridOptionsFromStore(zoneLng: number, zoneLat: number, bearing: number): GridOptions {
   const m = useMapStore.getState();
+  const dktm = isDktmSystem(m.gridSystem) ? dktmZoneOf(m.gridSystem) : null;
   return {
     system: m.gridSystem,
     zoneMode: m.gridSystem === "mgrs" ? "std" : m.utmZoneMode,
@@ -291,7 +292,8 @@ function gridOptionsFromStore(zoneLng: number, zoneLat: number, bearing: number)
     spacing: m.gridSpacing,
     showLabels: m.showGridLabels,
     labelFormat: m.gridLabelFormat,
-    zone: resolveUtmZone(zoneLng, zoneLat, m.gridSystem === "mgrs" ? "std" : m.utmZoneMode),
+    // DKTM's zone is fixed by the system choice, not the location.
+    zone: dktm ?? resolveUtmZone(zoneLng, zoneLat, m.gridSystem === "mgrs" ? "std" : m.utmZoneMode),
     bearing,
   };
 }
@@ -339,7 +341,7 @@ function drawUtmGrid(
     south: Math.min(...corners.map((c) => c.lat)),
     north: Math.max(...corners.map((c) => c.lat)),
   };
-  const lines = computeZonedGrid(cover, spacing, opts.zoneMode, zone);
+  const lines = isDktmSystem(opts.system) ? computeDktmGrid(cover, spacing, dktmZoneOf(opts.system)) : computeZonedGrid(cover, spacing, opts.zoneMode, zone);
 
   // Clip lines to the map area so nothing spills into the label margin.
   pdf.saveGraphicsState();
@@ -490,7 +492,7 @@ export function drawAttribution(
   // Scale text on left
   let scaleText = `1:${scale.toLocaleString("da-DK")}`;
   if (grid) {
-    scaleText += grid.system === "mgrs" ? ` | MGRS ${grid.square} / WGS84` : ` | UTM ${grid.zone}N / ETRS89`;
+    scaleText += grid.system === "mgrs" ? ` | MGRS ${grid.square} / WGS84` : isDktmSystem(grid.system) ? ` | DKTM${grid.zone} / ETRS89` : ` | UTM ${grid.zone}N / ETRS89`;
     if (grid.spacing) scaleText += ` | Gitter ${formatSpacing(grid.spacing)}`;
   }
   pdf.text(leftText ?? scaleText, layout.marginMm, y);

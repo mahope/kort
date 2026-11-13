@@ -1,6 +1,7 @@
 import { getUtmZone, latlngToUtm, utmToLatlng } from "./utm";
 import { mgrsSquare, type GridSystem } from "./coordinates";
-import { computeGridLines, formatGridLabel, type GridLabelFormat, type GridLine, type LngLatBounds, type UtmZoneMode } from "./utmGrid";
+import { computeGridLines, computeGridLinesTm, formatGridLabel, type GridLabelFormat, type GridLine, type LngLatBounds, type UtmZoneMode } from "./utmGrid";
+import { DKTM_PARAMS, type DktmZone } from "./dktm";
 
 export interface ZonedGridLine extends GridLine { zone: number }
 type Point = [number, number];
@@ -22,6 +23,14 @@ function clipSegment(a: Point, b: Point, bounds: LngLatBounds): [Point, Point] |
   }
   const at = (t: number): Point => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
   return [at(lo), at(hi)];
+}
+
+/**
+ * Grid for a DKTM zone: one projection for the whole bounds, no zone
+ * splitting — DKTM1-4 (unlike UTM) are each defined to cover all of Denmark.
+ */
+export function computeDktmGrid(bounds: LngLatBounds, spacing: number, zone: DktmZone): ZonedGridLine[] {
+  return computeGridLinesTm(bounds, DKTM_PARAMS[zone], spacing).map((line) => ({ ...line, zone }));
 }
 
 /** Partition before projecting: no segment ever connects coordinates from different zones. */
