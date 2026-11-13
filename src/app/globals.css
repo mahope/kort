@@ -218,3 +218,19 @@ html:has(aside[data-dragging="true"]) .maplibregl-ctrl-bottom-left,
 html:has(aside[data-dragging="true"]) .maplibregl-ctrl-bottom-right {
   transition: none;
 }
+/* The attribution's "(i)" button defaults to a round pill with no shadow,
+   unlike every other (square, radius 4px, outlined) map control; match
+   them so it reads as one family of controls in both themes. */
+.maplibregl-ctrl-attrib.maplibregl-compact,
+.maplibregl-ctrl-attrib.maplibregl-compact-show {
+  border-radius: 4px !important;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+/* The scale bar floats directly next to the zoom buttons with a heavy black
+   border; give it room and a softer, theme-aware line instead. */
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-scale {
+  margin-right: 56px;
+  border-color: var(--border);
+  background-color: var(--surface);
+  color: var(--text-secondary);
+}
