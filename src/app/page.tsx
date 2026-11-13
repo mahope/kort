@@ -7,6 +7,7 @@ import { LoadingOverlay } from "@/components/map/LoadingOverlay";
 import { MapControls } from "@/components/map/MapControls";
 import { SeaBadge } from "@/components/map/SeaNotice";
 import { CoordinateReadout } from "@/components/map/CoordinateReadout";
+import { ZoomToPrintAreaButton } from "@/components/map/ZoomToPrintAreaButton";
 import { KeyboardShortcuts } from "@/components/map/KeyboardShortcuts";
 import { UrlSync } from "@/components/map/UrlSync";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
@@ -44,6 +45,7 @@ export default function Home() {
         <MapControls />
         <SeaBadge />
         <CoordinateReadout />
+        <ZoomToPrintAreaButton />
         <LoadingOverlay />
       </main>
       <UrlSync />

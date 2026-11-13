@@ -5,6 +5,7 @@ import { Source, Layer, Marker } from "react-map-gl/maplibre";
 import { useMapStore } from "@/stores/mapStore";
 import { usePrintStore } from "@/stores/printStore";
 import { calculatePrintArea, groundExtentToBounds, calculateMultiPageGrid } from "@/lib/geo/calculations";
+import { isFrameTooSmallToSee, maskOpacityForAreaShare, usePrintFrameAreaShare } from "@/lib/map/printFrameVisibility";
 
 /**
  * Rotate a point around a center by a given angle (in degrees, clockwise).
@@ -41,6 +42,12 @@ function PrintFrameImpl() {
   const viewState = useMapStore((s) => s.viewState);
   const { paperFormat, orientation, scale, setFrameBounds, multiPage, gridCols, gridRows, overlapMm } = usePrintStore();
   const bearing = viewState.bearing;
+
+  // When zoomed out, the frame shrinks to a speck under the dimming mask.
+  // Fade the mask away and make the border stand out instead of hiding it.
+  const areaShare = usePrintFrameAreaShare();
+  const frameTooSmall = areaShare !== null && isFrameTooSmallToSee(areaShare);
+  const maskOpacity = areaShare === null ? 0.3 : maskOpacityForAreaShare(areaShare);
 
   // Single-page bounds
   const singleBounds = useMemo(() => {
@@ -166,7 +173,8 @@ function PrintFrameImpl() {
           type="fill"
           paint={{
             "fill-color": "#000000",
-            "fill-opacity": 0.3,
+            "fill-opacity": maskOpacity,
+            "fill-opacity-transition": { duration: 300 },
           }}
         />
       </Source>
@@ -176,8 +184,11 @@ function PrintFrameImpl() {
           type="line"
           paint={{
             "line-color": "#dc2626",
-            "line-width": 2,
-            "line-dasharray": [4, 3],
+            "line-width": frameTooSmall ? 3 : 2,
+            // A small frame needs a solid line to stay visible; the dashed
+            // style only reads well once it is comfortably large.
+            ...(frameTooSmall ? {} : { "line-dasharray": [4, 3] }),
+            "line-width-transition": { duration: 300 },
           }}
         />
       </Source>
