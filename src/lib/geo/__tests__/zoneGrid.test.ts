@@ -71,18 +71,12 @@ describe("zone-clipped grid shared by screen and PDF", () => {
 describe("computeDktmGrid (DKTM1-4: one zone, no splitting)", () => {
   it("covers the requested bounds with 1 km lines tagged with the given zone, like UTM 'dk' mode", () => {
     // Zealand, DKTM3 (central meridian 11.75°E) — well inside the zone's intended area.
+    // Unclipped, like UTM's "dk" mode (computeZonedGrid only clips in "std" mode).
     const lines = computeDktmGrid(bounds, 1000, 3);
     expect(lines.length).toBeGreaterThan(0);
     expect(lines.every((line) => line.zone === 3)).toBe(true);
     expect(lines.every((line) => line.value % 1000 === 0)).toBe(true);
-    for (const line of lines) {
-      for (const [lng, lat] of line.coords) {
-        expect(lng).toBeGreaterThanOrEqual(bounds.west - 1e-9);
-        expect(lng).toBeLessThanOrEqual(bounds.east + 1e-9);
-        expect(lat).toBeGreaterThanOrEqual(bounds.south - 1e-9);
-        expect(lat).toBeLessThanOrEqual(bounds.north + 1e-9);
-      }
-    }
+    for (const line of lines) expect(line.coords.length).toBeGreaterThanOrEqual(2);
   });
 
   it("never splits at a meridian the way UTM's 'std' mode does — Bornholm stays in one zone", () => {
