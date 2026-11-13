@@ -23,13 +23,18 @@ export function ZoomToPrintAreaButton() {
       <button
         type="button"
         onClick={() => flyToPrintArea(longitude, latitude, sheetPosition)}
-        className="flex items-center gap-1.5 rounded-lg bg-surface/90 px-3 py-2 pointer-coarse:min-h-11 text-sm font-medium text-foreground shadow-md backdrop-blur-sm hover:bg-surface transition-colors"
+        aria-label="Zoom til printområde"
+        title="Zoom til printområde"
+        className="flex items-center gap-1.5 rounded-lg bg-surface/90 px-3 py-2 pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:justify-center text-sm font-medium text-foreground shadow-md backdrop-blur-sm hover:bg-surface transition-colors"
       >
-        <svg className="w-4 h-4 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+        <svg className="w-4 h-4 text-danger shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
           <rect x="4" y="4" width="16" height="16" rx="2" strokeDasharray="4 3" />
           <path strokeLinecap="round" d="M9 15l6-6M9 9h6v6" />
         </svg>
-        Zoom til printområde
+        {/* Full label on desktop; icon-only on mobile (title/aria-label carry
+            it) — some fonts wrap it onto two lines at 390px, crowding the
+            "Kortlag"/"Koordinat" buttons either side. */}
+        <span className="max-md:hidden">Zoom til printområde</span>
       </button>
     </div>
   );

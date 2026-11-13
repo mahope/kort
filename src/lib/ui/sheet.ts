@@ -2,7 +2,9 @@ import type { SheetPosition } from "@/stores/uiStore";
 
 // Heights live in CSS (globals.css: --sheet-min/mid/max) so the first server
 // render already has the final layout; these mirror them for JS.
-export const SNAP_MIN_PX = 108;
+// 108px fit exactly the drag handle + "Download PDF" footer; the print
+// summary line added above that button needs the extra room.
+export const SNAP_MIN_PX = 136;
 export const SNAP_MID_FRAC = 0.4;
 export const SNAP_MAX_FRAC = 0.6;
 
