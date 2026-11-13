@@ -161,6 +161,11 @@ describe("coordinate system links", () => {
     expect(deserializeState("?g=1").gridSystem).toBe("utm");
     expect(deserializeState("?cs=invalid").gridSystem).toBeUndefined();
   });
+  it.each(["dktm1", "dktm2", "dktm3", "dktm4"] as const)("round trips %s", (system) => {
+    const qs = serializeState({ gridSystem: system });
+    expect(qs).toContain(`cs=${system}`);
+    expect(deserializeState(qs).gridSystem).toBe(system);
+  });
 });
 
 describe("deserializeState validation of numeric params", () => {

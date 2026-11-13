@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeZonedGrid, gridIntersections } from "../zoneGrid";
+import { computeZonedGrid, computeDktmGrid, gridIntersections } from "../zoneGrid";
 import { createPaperProjector } from "@/lib/pdf/gridProjection";
 
 const bounds = { west: 11.94, east: 12.06, south: 55.64, north: 55.76 };
@@ -65,5 +65,34 @@ describe("zone-clipped grid shared by screen and PDF", () => {
     const lines = computeZonedGrid({ west: 14.65, east: 14.8, south: 55.05, north: 55.15 }, 1000, "std", 32);
     expect(lines.length).toBeGreaterThan(0);
     expect(lines.every((line) => line.zone === 33)).toBe(true);
+  });
+});
+
+describe("computeDktmGrid (DKTM1-4: one zone, no splitting)", () => {
+  it("covers the requested bounds with 1 km lines tagged with the given zone, like UTM 'dk' mode", () => {
+    // Zealand, DKTM3 (central meridian 11.75°E) — well inside the zone's intended area.
+    const lines = computeDktmGrid(bounds, 1000, 3);
+    expect(lines.length).toBeGreaterThan(0);
+    expect(lines.every((line) => line.zone === 3)).toBe(true);
+    expect(lines.every((line) => line.value % 1000 === 0)).toBe(true);
+    for (const line of lines) {
+      for (const [lng, lat] of line.coords) {
+        expect(lng).toBeGreaterThanOrEqual(bounds.west - 1e-9);
+        expect(lng).toBeLessThanOrEqual(bounds.east + 1e-9);
+        expect(lat).toBeGreaterThanOrEqual(bounds.south - 1e-9);
+        expect(lat).toBeLessThanOrEqual(bounds.north + 1e-9);
+      }
+    }
+  });
+
+  it("never splits at a meridian the way UTM's 'std' mode does — Bornholm stays in one zone", () => {
+    const box = { west: 11.9, east: 15.1, south: 55.0, north: 55.8 };
+    const lines = computeDktmGrid(box, 10000, 2);
+    expect(lines.length).toBeGreaterThan(0);
+    expect(new Set(lines.map((l) => l.zone))).toEqual(new Set([2]));
+  });
+
+  it("refuses absurd line counts instead of freezing, same guard as computeGridLines", () => {
+    expect(computeDktmGrid({ west: 8, east: 15.2, south: 54.5, north: 57.8 }, 100, 1)).toEqual([]);
   });
 });

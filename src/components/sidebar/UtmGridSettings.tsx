@@ -10,6 +10,7 @@ import {
   type GridLabelFormat,
   type UtmZoneMode,
 } from "@/lib/geo/utmGrid";
+import { isDktmSystem, type GridSystem } from "@/lib/geo/coordinates";
 import { wmmStatus, wmmStatusNote } from "@/lib/geo/declinationValidity";
 
 const SPACING_OPTIONS: { value: string; label: string }[] = [
@@ -70,12 +71,17 @@ export function UtmGridSettings() {
       {showUtmGrid && (
         <div className="ml-6 space-y-2" data-testid="utm-grid-settings">
           <label className="block text-sm" htmlFor="grid-system">Koordinatsystem</label>
-          <select id="grid-system" value={gridSystem} onChange={(e) => setGridSystem(e.target.value as "utm" | "mgrs")}
+          <select id="grid-system" value={gridSystem} onChange={(e) => setGridSystem(e.target.value as GridSystem)}
             className="w-full min-h-11 rounded-lg border border-border px-2 text-base bg-surface focus-visible:outline-2 focus-visible:outline-primary">
             <option value="utm">UTM</option>
             <option value="mgrs">MGRS · WGS84</option>
+            <option value="dktm1">DKTM1 · ETRS89</option>
+            <option value="dktm2">DKTM2 · ETRS89</option>
+            <option value="dktm3">DKTM3 · ETRS89</option>
+            <option value="dktm4">DKTM4 · ETRS89</option>
           </select>
           {gridSystem === "mgrs" && <p className="text-xs text-text-muted">100 km-kvadrater vises med bogstaver. Zoner følger GPS, også ved 12° øst.</p>}
+          {isDktmSystem(gridSystem) && <p className="text-xs text-text-muted">Dansk Transversal Mercator. Hele landet i én zone, uden UTM&apos;s 6°-zonegrænser.</p>}
           <div className="flex items-center gap-2">
             <label htmlFor="utm-grid-spacing" className="text-sm shrink-0">
               Gitterstørrelse
@@ -112,7 +118,7 @@ export function UtmGridSettings() {
             <span className="text-sm">Koordinater langs kanten</span>
           </label>
 
-          {showGridLabels && gridSystem === "utm" && (
+          {showGridLabels && (gridSystem === "utm" || isDktmSystem(gridSystem)) && (
             <div role="radiogroup" aria-label="Talformat" className="flex rounded-lg border border-border overflow-hidden">
               {(
                 [

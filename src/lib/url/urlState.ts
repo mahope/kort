@@ -1,5 +1,5 @@
 import type { BaseLayer, MapStyle, OverlayId } from "@/types/map";
-import type { GridSystem } from "@/lib/geo/coordinates";
+import { isGridSystem, type GridSystem } from "@/lib/geo/coordinates";
 import type { PaperFormat, Orientation, DpiOption } from "@/types/print";
 import { DENMARK_BOUNDS } from "@/lib/map/styles";
 import { MIN_CUSTOM_SCALE, MAX_CUSTOM_SCALE } from "@/constants/scales";
@@ -147,7 +147,7 @@ export function deserializeState(search: string): UrlState {
   const params = new URLSearchParams(search);
   const state: UrlState = {};
   const cs = params.get("cs");
-  if (cs === "utm" || cs === "mgrs") state.gridSystem = cs;
+  if (cs && isGridSystem(cs)) state.gridSystem = cs;
   else if (params.get("g") === "1") state.gridSystem = "utm";
 
   const c = params.get("c");
