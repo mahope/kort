@@ -28,7 +28,7 @@ const TECH: { name: string; text: string }[] = [
   },
   {
     name: "Søgning",
-    text: "Adresser kommer fra Adressevælger. Stednavne søges i et øjebliksbillede af Danske Stednavne, som ligger på vores egen server, fordi DAWA lukker.",
+    text: "Adresser kommer fra Adressevælger. Stednavne søges i et øjebliksbillede af Danske Stednavne, som ligger på vores egen server, fordi DAWA lukker. Norske stednavne kommer fra Kartverkets stednavne-API.",
   },
   {
     name: "Rammen omkring",

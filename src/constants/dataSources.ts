@@ -190,6 +190,16 @@ export const DATA_SOURCES: DataSource[] = [
     layers: ["kurverNorge"],
   },
   {
+    id: "ssr",
+    name: "Sentralt stedsnavnregister (SSR)",
+    provider: "Kartverket (Norge)",
+    usedFor: "Søgning efter norske stednavne (fjelde, søer, dale, byer).",
+    delivery: "JSON-API (api.kartverket.no/stedsnavn) direkte fra browseren, kun mens du søger.",
+    licence: "CC BY 4.0 (Kartverkets gratisprodukter)",
+    licenceUrl: "https://www.kartverket.no/api-og-data/vilkar-for-bruk",
+    credit: "Kartverket krediteres på denne side; søgeresultater vises ikke på kortet eller i PDF'en.",
+  },
+  {
     id: "opentopomap",
     name: "OpenTopoMap",
     provider: "OpenTopoMap, OpenStreetMap-bidragydere og SRTM",

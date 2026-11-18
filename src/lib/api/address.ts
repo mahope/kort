@@ -1,5 +1,6 @@
 import type { SearchResult } from "@/types/map";
 import { utmToLatlng } from "@/lib/geo/utm";
+import { fetchNorwegianPlaces } from "./norwegianPlaces";
 
 // Address search: Klimadatastyrelsens Adressevælger (DAWA's replacement).
 // DAWA (dawa.aws.dk / api.dataforsyningen.dk/adresser) is being decommissioned
@@ -35,9 +36,10 @@ async function fetchWithTimeout(url: string): Promise<Response> {
 export async function searchAddresses(query: string): Promise<SearchResult[]> {
   if (query.trim().length < 2) return [];
 
-  const [addressResults, placeResults] = await Promise.allSettled([
+  const [addressResults, placeResults, norwayResults] = await Promise.allSettled([
     fetchAdressevaelger(query),
     fetchPlaces(query),
+    fetchNorwegianPlaces(query),
   ]);
 
   const addresses =
@@ -45,7 +47,10 @@ export async function searchAddresses(query: string): Promise<SearchResult[]> {
   const places =
     placeResults.status === "fulfilled" ? placeResults.value : [];
 
-  return [...addresses, ...places].slice(0, 10);
+  // Norwegian places after the Danish ones, but always room for a couple.
+  const norway = norwayResults.status === "fulfilled" ? norwayResults.value : [];
+  const danish = [...addresses, ...places].slice(0, norway.length > 0 ? 8 : 10);
+  return [...danish, ...norway].slice(0, 10);
 }
 
 interface AdressevaelgerHit {
