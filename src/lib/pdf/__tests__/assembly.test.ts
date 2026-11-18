@@ -135,16 +135,17 @@ describe("generatePdf floor map", () => {
     vi.useRealTimers();
   });
 
-  // PROJ meridian convergence at 55.6761°N, 12.5683°E, rounded as in the PDF.
+  // PROJ meridian convergence around Copenhagen, rounded as in the PDF.
+  // The wider multi-page extent gives each sheet a distinct printed value.
   it.each([
-    ["dktm1", false, "2,9° Ø"],
-    ["dktm2", false, "2,1° Ø"],
-    ["dktm3", false, "0,7° Ø"],
-    ["dktm4", false, "2,0° V"],
-    ["utm", false, "2,9° Ø"],
-    ["mgrs", false, "2,0° V"],
-    ["dktm3", true, "0,7° Ø"],
-  ] as const)("prints %s grid north (multiPage: %s)", async (gridSystem, multiPage, convergence) => {
+    ["dktm1", false, 5000, "2,9° Ø"],
+    ["dktm2", false, 5000, "2,1° Ø"],
+    ["dktm3", false, 5000, "0,7° Ø"],
+    ["dktm4", false, 5000, "2,0° V"],
+    ["utm", false, 5000, "2,9° Ø"],
+    ["mgrs", false, 5000, "2,0° V"],
+    ["dktm3", true, 100000, "0,6° Ø", "0,8° Ø"],
+  ] as const)("prints %s grid north (multiPage: %s)", async (gridSystem, multiPage, scale, ...convergence) => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(Date.UTC(2026, 10, 18)));
     useMapStore.setState({
@@ -153,16 +154,16 @@ describe("generatePdf floor map", () => {
       utmZoneMode: "dk",
       viewState: { ...useMapStore.getState().viewState, latitude: 55.6761, longitude: 12.5683, bearing: 0 },
     });
-    usePrintStore.setState({ showDeclination: true, multiPage, gridCols: 2, gridRows: 1 });
+    usePrintStore.setState({ showDeclination: true, multiPage, gridCols: 2, gridRows: 1, overlapMm: 10 });
 
     await generatePdf({
       bounds: { west: 12.5633, east: 12.5733, south: 55.6711, north: 55.6811 },
-      scale: 5000, paperFormat: "A4", orientation: "portrait", dpi: 150,
+      scale, paperFormat: "A4", orientation: "portrait", dpi: 150,
     });
 
     const file = Buffer.from(await blobs[0].arrayBuffer()).toString("latin1");
     const gridNorthValues = Array.from(file.matchAll(/\(Gitternord\) Tj\s+ET\s+BT[^]*?\(([^()]*)\) Tj/g), (match) => match[1]);
-    expect(gridNorthValues).toEqual(multiPage ? [convergence, convergence] : [convergence]);
+    expect(gridNorthValues).toEqual(convergence);
   });
 
   it.each([false, true])("uses optional print aids on each sheet (multiPage: %s)", async (multiPage) => {
