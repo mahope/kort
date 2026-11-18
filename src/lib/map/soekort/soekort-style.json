@@ -1,0 +1,62 @@
+{
+  "$comment": "Design tokens for the vector sea chart (base map 'Søkort'). Colours are named; sizes are millimetres on paper and are scaled to pixels per print (style.ts). Depth bands are keyed by their shallow edge in metres: '0' is 0-1 m, '3' is 3-5 m, '20' is 20-50 m. Deeper water is the background.",
+  "colors": {
+    "deepWater": "#f6fafd",
+    "depth": {
+      "0": "#86bfe5",
+      "1": "#98c9ea",
+      "2": "#aad3ee",
+      "3": "#bcddf2",
+      "5": "#cde6f5",
+      "10": "#dcedf8",
+      "20": "#e9f3fa"
+    },
+    "depthContour": "#ffffff",
+    "depthContourText": "#6d93b3",
+    "sounding": "#5c6670",
+    "land": "#e9e5dc",
+    "builtUp": "#d9d3c8",
+    "forest": "#d2dfc3",
+    "nature": "#dfe5d1",
+    "lake": "#c7e0f1",
+    "lakeContour": "#5f93c2",
+    "stream": "#8cb7d8",
+    "coast": "#4a4e52",
+    "beach": "#dccf86",
+    "natura": "#3f8b45",
+    "fairway": "#6b6f8f",
+    "wreck": "#5a5f66",
+    "harbour": "#2f5f8f",
+    "placeText": "#383838",
+    "islandText": "#4d4a44",
+    "waterText": "#3b6d98",
+    "halo": "#ffffff",
+    "landHalo": "#f2efe8"
+  },
+  "fonts": {
+    "regular": ["Open Sans Regular"],
+    "italic": ["Open Sans Italic"],
+    "bold": ["Open Sans Bold"]
+  },
+  "mm": {
+    "coast": 0.16,
+    "beach": 0.7,
+    "depthContour": 0.18,
+    "lakeContour": 0.13,
+    "stream": 0.15,
+    "river": 0.3,
+    "natura": 0.3,
+    "fairway": 0.25,
+    "soundingText": 2.0,
+    "depthContourText": 1.7,
+    "waterText": 2.8,
+    "seaText": 3.4,
+    "placeText": [3.6, 3.0, 2.4],
+    "islandText": 2.6,
+    "naturaText": 2.1,
+    "wreckText": 1.7,
+    "harbourText": 1.9,
+    "icon": 3.2,
+    "halo": 0.3
+  }
+}

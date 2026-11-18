@@ -10,7 +10,8 @@ import { useHistoryStore } from "@/stores/historyStore";
 import { calculatePdfLayout } from "./layout";
 import { getBrand } from "@/config/brand";
 import { renderMapToImage } from "./renderer";
-import { NAVIGATION_WARNING, OVERLAY_SOURCES, SEA_DATA_NOTE, kdsPrintCredit } from "@/lib/map/sources";
+import { NAVIGATION_WARNING, OVERLAY_SOURCES, SEA_DATA_NOTE, isSeaBaseLayer, kdsPrintCredit } from "@/lib/map/sources";
+import { SOEKORT_CREDITS } from "@/lib/map/soekort/style";
 import { timed, yieldToMain } from "./timing";
 import { applyPrintPreferences, drawControlLine } from "./controlLine";
 import { calculateMultiPageGrid, calculatePrintArea } from "@/lib/geo/calculations";
@@ -584,6 +585,10 @@ export function thirdPartyCredits(): { credits: string[]; notForNavigation: bool
   const credits: string[] = [];
   let notForNavigation = false;
   if (baseLayer === "osm") credits.push("Kort: OpenStreetMap-bidragydere (ODbL)");
+  if (isSeaBaseLayer(baseLayer)) {
+    credits.push(...SOEKORT_CREDITS);
+    notForNavigation = true;
+  }
   for (const o of overlays) {
     if (!o.enabled) continue;
     const src = OVERLAY_SOURCES[o.id];

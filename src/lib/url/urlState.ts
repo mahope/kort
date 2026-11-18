@@ -63,6 +63,7 @@ const BASE_LAYER_CODES: Record<string, BaseLayer> = {
   dtk: "dtk25",
   hh: "historisk_hoeje",
   hl: "historisk_lave",
+  so: "soekort",
 };
 
 const BASE_LAYER_TO_CODE: Record<BaseLayer, string> = Object.fromEntries(

@@ -18,7 +18,9 @@ function sourceFiles(dir: string): string[] {
 
 describe("raster base layers", () => {
   it("covers every selectable raster base map", () => {
-    const expected = BASE_LAYERS.map((l) => l.value).filter((v) => v !== "skaermkort" && v !== "none");
+    // Skærmkort and Søkort are vector styles; "none" has no tiles.
+    const vector = ["skaermkort", "soekort", "none"];
+    const expected = BASE_LAYERS.map((l) => l.value).filter((v) => !vector.includes(v));
     expect(Object.keys(getRasterBaseLayers("screen")).sort()).toEqual([...expected].sort());
     expect(Object.keys(getRasterBaseLayers("print")).sort()).toEqual([...expected].sort());
   });

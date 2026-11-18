@@ -9,6 +9,7 @@ import { getBaseMapStyle, getRasterBaseLayers, OVERLAY_SOURCES, sourceZoomLimit 
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
 import { contourLayers, contourSourceUrl, ensurePmtilesProtocol, SCREEN_PX_PER_MM } from "@/lib/map/contours";
 import { vectorOverlayLayers, vectorOverlaySource } from "@/lib/map/vectorOverlays";
+import { attachSoekortIcons } from "@/lib/map/soekort/icons";
 import { timed } from "./timing";
 
 const PRINT_RASTER_BASE_LAYERS = getRasterBaseLayers("print");
@@ -189,7 +190,9 @@ export async function renderMapToImage({
 
   let map: maplibregl.Map | undefined;
   try {
-    const mapStyle = getBaseMapStyle(baseLayer, style);
+    // The sea chart's lines and text are sized in millimetres on paper.
+    if (baseLayer === "soekort") ensurePmtilesProtocol();
+    const mapStyle = getBaseMapStyle(baseLayer, style, pxPerMm);
 
     const centerLng = (bounds.west + bounds.east) / 2;
     const centerLat = (bounds.north + bounds.south) / 2;
@@ -231,6 +234,7 @@ export async function renderMapToImage({
 
     configureMaplibreWorker();
     map = new maplibregl.Map(mapOptions);
+    if (baseLayer === "soekort") attachSoekortIcons(map, pxPerMm);
     const failedSources = new Set<string>();
     const failedTiles = trackFailedTiles(map, failedSources);
     if (onTileProgress) trackTileProgress(map, onTileProgress);

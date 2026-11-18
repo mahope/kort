@@ -1,6 +1,7 @@
 import type { BaseLayer, MapStyle, OverlayId } from "@/types/map";
 import { DATAFORSYNINGEN_TOKEN, MAP_STYLES } from "./styles";
 import { soekortDataUrl, type VectorOverlayKind } from "./vectorOverlays";
+import { buildSoekortStyle } from "./soekort/style";
 
 /**
  * Ortofoto WMTS tile URL template.
@@ -194,9 +195,31 @@ function blankStyle(backgroundColor: string) {
 const RASTER_STYLE = blankStyle("#f0f0f0");
 const NO_BASE_STYLE = blankStyle("#ffffff");
 
-export function getBaseMapStyle(baseLayer: BaseLayer, style: MapStyle) {
+/** One style object per scale, so the live map gets the same object on every render. */
+const soekortStyles = new Map<number, ReturnType<typeof buildSoekortStyle>>();
+function soekortStyle(pxPerMm: number | undefined) {
+  const key = pxPerMm ?? 0;
+  let s = soekortStyles.get(key);
+  if (!s) {
+    s = pxPerMm === undefined ? buildSoekortStyle() : buildSoekortStyle(pxPerMm);
+    soekortStyles.set(key, s);
+  }
+  return s;
+}
+
+/**
+ * The style for a base map. `pxPerMm` sizes the vector sea chart's lines and
+ * text for the target (the PDF passes its print scale; default is the screen).
+ */
+export function getBaseMapStyle(baseLayer: BaseLayer, style: MapStyle, pxPerMm?: number) {
   if (baseLayer === "skaermkort") return MAP_STYLES[style].url;
+  if (baseLayer === "soekort") return soekortStyle(pxPerMm);
   return baseLayer === "none" ? NO_BASE_STYLE : RASTER_STYLE;
+}
+
+/** Base maps that are sea charts: the navigation warning shows with them as with the sea overlays. */
+export function isSeaBaseLayer(baseLayer: BaseLayer): boolean {
+  return baseLayer === "soekort";
 }
 
 export interface RasterSourceConfig {

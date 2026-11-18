@@ -1,11 +1,17 @@
 "use client";
 
 import { useMapStore } from "@/stores/mapStore";
-import { DDM_TERMS_URL, NAVIGATION_WARNING, SEA_OVERLAYS, SOURCES_PAGE_PATH } from "@/lib/map/sources";
+import type { BaseLayer, OverlayState } from "@/types/map";
+import { DDM_TERMS_URL, NAVIGATION_WARNING, SEA_OVERLAYS, SOURCES_PAGE_PATH, isSeaBaseLayer } from "@/lib/map/sources";
+
+/** A sea overlay or the "Søkort" base map is on. */
+function seaShown(s: { overlays: OverlayState[]; baseLayer: BaseLayer }): boolean {
+  return isSeaBaseLayer(s.baseLayer) || s.overlays.some((o) => o.enabled && SEA_OVERLAYS.includes(o.id));
+}
 
 /** Shown while a sea layer is on: what the data is, and that it is not a chart. */
 export function SeaNotice() {
-  const seaOn = useMapStore((s) => s.overlays.some((o) => o.enabled && SEA_OVERLAYS.includes(o.id)));
+  const seaOn = useMapStore(seaShown);
   if (!seaOn) return null;
   return (
     <p className="mt-2 rounded border border-border bg-surface-secondary px-2 py-1.5 text-xs text-text-secondary" role="note">
@@ -15,7 +21,8 @@ export function SeaNotice() {
       <a href={DDM_TERMS_URL} target="_blank" rel="noopener noreferrer" className="underline">
         vilkår
       </a>
-      ), grovere dybder fra EMODnet, sømærker fra OpenSeaMap, dybdekurver i 80 søer fra Miljøportalen, vrag fra EMODnet
+      ), grovere dybder fra EMODnet (også i basiskortet Søkort, med land og havne fra OpenStreetMap og Natura
+      2000 fra Miljøportalen), sømærker fra OpenSeaMap, dybdekurver i 80 søer fra Miljøportalen, vrag fra EMODnet
       og historiske indsøkort, som kommer med som ekstra sider i PDF&apos;en. Kortet er til orientering og
       turplanlægning. Advarslen står også på PDF&apos;en.{" "}
       <a href={SOURCES_PAGE_PATH} className="underline">
@@ -30,7 +37,7 @@ export function SeaNotice() {
  * link). Starts right of the 44 px strip where the grid puts its northing labels.
  */
 export function SeaBadge() {
-  const seaOn = useMapStore((s) => s.overlays.some((o) => o.enabled && SEA_OVERLAYS.includes(o.id)));
+  const seaOn = useMapStore(seaShown);
   if (!seaOn) return null;
   return (
     <div

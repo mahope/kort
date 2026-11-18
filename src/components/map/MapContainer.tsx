@@ -17,7 +17,8 @@ import { useUiStore } from "@/stores/uiStore";
 import { useDrawStore } from "@/stores/drawStore";
 import { DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
 import { getBaseMapStyle, getRasterBaseLayers, KDS_MAP_ATTRIBUTION, OVERLAY_SOURCES, sourceZoomLimit } from "@/lib/map/sources";
-import { contourLayers, contourSourceUrl, ensurePmtilesProtocol } from "@/lib/map/contours";
+import { contourLayers, contourSourceUrl, ensurePmtilesProtocol, SCREEN_PX_PER_MM } from "@/lib/map/contours";
+import { attachSoekortIcons } from "@/lib/map/soekort/icons";
 import { vectorOverlayLayers, vectorOverlaySource } from "@/lib/map/vectorOverlays";
 import { LakeChartPopup } from "./LakeChartPopup";
 import { PrintFrame } from "./PrintFrame";
@@ -38,6 +39,12 @@ const DrawingTools = dynamic(
 configureMaplibreWorker();
 
 const RASTER_BASE_LAYERS = getRasterBaseLayers("screen");
+
+/** The sea chart's icons are drawn on demand; also covers a later switch to "Søkort". */
+function onMapLoad(e: { target: import("maplibre-gl").Map }) {
+  attachSoekortIcons(e.target, SCREEN_PX_PER_MM, window.devicePixelRatio || 1);
+  collapseAttributionOnTouch(e);
+}
 
 /**
  * MapLibre opens the compact attribution on load; on phones the open text
@@ -70,6 +77,8 @@ export function MapContainer() {
   const padding = useMemo(() => ({ top: 0, left: 0, right: 0, bottom: sheetPx }), [sheetPx]);
   const needsDrawing = useDrawStore((s) => s.activeMode !== null || s.features.length > 0);
 
+  // The vector sea chart reads our PMTiles through the pmtiles:// protocol.
+  if (baseLayer === "soekort") ensurePmtilesProtocol();
   const mapStyle = getBaseMapStyle(baseLayer, style);
   const rasterBase = RASTER_BASE_LAYERS[baseLayer];
 
@@ -119,7 +128,7 @@ export function MapContainer() {
       {...viewState}
       padding={padding}
       onMove={onMove}
-      onLoad={collapseAttributionOnTouch}
+      onLoad={onMapLoad}
       mapStyle={mapStyle}
       transformRequest={transformRequest}
       maxBounds={[...DENMARK_BOUNDS[0], ...DENMARK_BOUNDS[1]]}

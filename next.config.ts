@@ -13,6 +13,9 @@ const OPENSEAMAP = "https://tiles.openseamap.org";
 // Our own 5/10 m contours (PMTiles, read with range requests; src/lib/map/contours.ts).
 // Host of the contour PMTiles; follows NEXT_PUBLIC_CONTOURS_URL like src/lib/map/contours.ts.
 const KORT_TILES = new URL(process.env.NEXT_PUBLIC_CONTOURS_URL || "https://tiles.mahoje.dk/kurver-5m.pmtiles").origin;
+// The vector sea chart (src/lib/map/soekort/style.ts); same host unless NEXT_PUBLIC_SOEKORT_URL moves it.
+const SOEKORT_TILES = new URL(process.env.NEXT_PUBLIC_SOEKORT_URL || "https://tiles.mahoje.dk/soekort-v1.pmtiles").origin;
+const OWN_TILES = [...new Set([KORT_TILES, SOEKORT_TILES])].join(" ");
 
 // The app has two inline <script>s (theme + JSON-LD), so script-src keeps
 // 'unsafe-inline'. MapLibre runs its workers from blob: URLs. Network-facing
@@ -23,7 +26,7 @@ export const csp = [
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${DATAFORSYNINGEN_API} ${DATAFORSYNINGEN_CDN} ${OSM_TILES} ${EMODNET} ${OPENSEAMAP}`,
   "font-src 'self' data:",
-  `connect-src 'self' ${DATAFORSYNINGEN_API} ${DATAFORSYNINGEN_CDN} ${ADRESSEVAELGER} ${OSM_TILES} ${EMODNET} ${OPENSEAMAP} ${KORT_TILES} ${ANALYTICS}`,
+  `connect-src 'self' ${DATAFORSYNINGEN_API} ${DATAFORSYNINGEN_CDN} ${ADRESSEVAELGER} ${OSM_TILES} ${EMODNET} ${OPENSEAMAP} ${OWN_TILES} ${ANALYTICS}`,
   "worker-src 'self' blob:",
   "frame-ancestors 'self'",
   "base-uri 'self'",

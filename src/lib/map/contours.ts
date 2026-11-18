@@ -17,6 +17,11 @@ export const SCREEN_PX_PER_MM = 96 / 25.4;
 
 const COLOR = "#a15c2b";
 
+/** The archive URL behind a pmtiles:// request ("pmtiles://<url>" or "pmtiles://<url>/z/x/y"). */
+export function pmtilesArchive(requestUrl: string): string {
+  return requestUrl.replace(/^pmtiles:\/\//, "").replace(/\/\d+\/\d+\/\d+$/, "");
+}
+
 let registered = false;
 /** MapLibre reads pmtiles:// URLs through this protocol; register once per page. */
 export function ensurePmtilesProtocol(): void {
@@ -29,7 +34,7 @@ export function ensurePmtilesProtocol(): void {
     try {
       return await protocol.tile(params, abort);
     } catch (err) {
-      if (!abort.signal.aborted) protocol.tiles.delete(CONTOURS_URL);
+      if (!abort.signal.aborted) protocol.tiles.delete(pmtilesArchive(params.url));
       throw err;
     }
   });

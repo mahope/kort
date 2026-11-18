@@ -222,6 +222,23 @@ export const DATA_SOURCES: DataSource[] = [
     retrieved: SOEKORT_RETRIEVED,
   },
   {
+    id: "soekort",
+    name: "Søkort (eget vektorkort over danske farvande)",
+    provider:
+      "Bygget af kort.mahoje.dk af EMODnet Bathymetry, OpenStreetMap-bidragydere, Miljøstyrelsen/Danmarks Miljøportal (Natura 2000 og NOVANA) og EMODnet Human Activities (vrag)",
+    usedFor:
+      "Basiskortet Søkort: dybdebånd (0-1, 1-2, 2-3, 3-5, 5-10, 10-20 og 20-50 m), dybdekurver og dybdetal på havet, land, by, skov, søer og vandløb, kystlinje, Natura 2000-områder, vrag, lystbådehavne, ankerpladser og sejlrender. Tegnet roligt til print i 1:25.000 og 1:50.000.",
+    delivery:
+      "Egne vector tiles i én PMTiles-fil på tiles.mahoje.dk (scripts/soekort-vektor). Dybderne er EMODnets digitale terrænmodel (DTM, ca. 115 m celler), som i danske farvande bygger på Geodatastyrelsens opmålinger; vi har udglattet den til 50 m, lavet bånd, kurver og dybdetal af den og trukket dybderne ud til OpenStreetMaps kystlinje. Dybdetallene er afrundet ned til hele tiendedele. Natura 2000 er Miljøportalens habitat- og fuglebeskyttelsesområder (WFS), samlet til én stiplet grænse. Søkortets OpenStreetMap-data stilles til rådighed under ODbL i selve PMTiles-filen.",
+    licence:
+      "Dybder CC BY 4.0 (EMODnet), land, havne og render ODbL (OpenStreetMap), Natura 2000 og sødybder efter vilkår for brug af danske offentlige data, vrag CC BY 4.0 og OGL v3.0",
+    licenceUrl: "https://www.openstreetmap.org/copyright",
+    credit:
+      "Alle kilder står i kortets kreditering og på PDF'en, med at dybderne er bearbejdet af os (CC BY) og \"Indeholder data, som benyttes i henhold til vilkår for brug af danske offentlige data\" for Miljøportalens data. \"Må ikke bruges til navigation. Brug officielle søkort.\" står på kortet og PDF'en.",
+    layers: ["soekort"],
+    notForNavigation: true,
+  },
+  {
     id: "osm",
     name: "OpenStreetMap",
     provider: "OpenStreetMap-bidragydere (OpenStreetMap Foundation)",
