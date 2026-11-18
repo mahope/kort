@@ -16,7 +16,7 @@ import { useMapStore } from "@/stores/mapStore";
 import { useUiStore } from "@/stores/uiStore";
 import { useDrawStore } from "@/stores/drawStore";
 import { DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
-import { getBaseMapStyle, getRasterBaseLayers, OVERLAY_SOURCES, sourceZoomLimit } from "@/lib/map/sources";
+import { getBaseMapStyle, getRasterBaseLayers, KDS_MAP_ATTRIBUTION, OVERLAY_SOURCES, sourceZoomLimit } from "@/lib/map/sources";
 import { contourLayers, contourSourceUrl, ensurePmtilesProtocol } from "@/lib/map/contours";
 import { PrintFrame } from "./PrintFrame";
 import { GeolocationButton } from "./GeolocationButton";
@@ -188,7 +188,7 @@ export function MapContainer() {
       <AttributionControl
         position="bottom-left"
         compact
-        customAttribution="&copy; Klimadatastyrelsen"
+        customAttribution={KDS_MAP_ATTRIBUTION}
       />
       <GeolocationButton mapRef={mapRef} />
     </Map>

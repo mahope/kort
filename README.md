@@ -22,7 +22,7 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 - **UTM-gitter** - Grid-linjer og koordinater på kort og PDF, til orientering i felten
 - **Kort til orienteringsløb** - Vælg **Intet basiskort** under **Kortlag → Basiskort**, og slå fx 5 m- eller 10 m-højdekurver til under **Ekstra lag** i samme menu. Kortvisningen og PDF’en får hvid baggrund med de valgte lag. Tilføj gitter eller egne poster efter behov. Under **Alle indstillinger og værktøjer → Udskrivning** kan du vælge målestokslineal og nordpil til eller fra. Uden basiskort er begge slået fra som standard, ligesom misvisningsdiagrammet. Valget følger med i delingslinket.
 - **Overlays** - Højdekurver (0,25 m, 0,5 m og roligere 2,5 m fra Dataforsyningen, plus egne 5 og 10 m-kurver med højdetal fra ca. 1:25.000 på skærmen og 1:50.000 på PDF'en; kurverne vises fra zoom 11, ca. 1:80.000 på skærmen), skyggekort, matrikelskel og stednavne
-- **Havlag** - Havdybder i danske farvande fra Danmarks Dybdemodel (Geodatastyrelsen, 50 m), grovere dybder uden for Danmark fra EMODnet Bathymetry (CC BY 4.0) og sømærker (OpenSeaMap). Ikke til navigation: det står i appen og på PDF'en
+- **Havlag** - Havdybder og havbundens relief (skyggekort) i danske farvande fra Danmarks Dybdemodel (Geodatastyrelsen, 50 m), grovere dybder uden for Danmark fra EMODnet Bathymetry (CC BY 4.0) og sømærker (OpenSeaMap). Ikke til navigation: det står i appen og på PDF'en
 - **Import** - Indlæs GPX, GeoJSON og KML-filer og print dem direkte
 - **Tegning & mål** - Tegn ruter og mål afstande direkte på kortet
 - **Multi-page print og gulvkort** - Udskriv store områder over op til 5 × 5 ark med overlap. PDF'en starter med en oversigtsside (arkgitter, samlet størrelse og vejledning), og hvert ark har hjørnemærker, "Ark B2 (side 6 af 10)", en stiplet linje hvor naboarket lægges, og navnene på nabo-arkene i margenen
@@ -38,6 +38,7 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 - **Gem området offline** - Under Avanceret kan printrammen (zoom 12-16 plus kant) gemmes, så kortet kan panoreres og zoomes uden net. PDF-generering kræver stadig internet. Se `docs/offline-tests.md`
 - **Del-funktion** - Del et kortudsnit via URL
 - **Ingen login** - Ingen konto, ingen tracking, ingen cookies
+- **Datakilder** - Siden `/kilder` lister alle datakilder med licens og kreditering og forklarer, hvordan kortet er bygget. Listen står i `src/constants/dataSources.ts`, og en test sikrer, at hvert lag er med
 
 ## Tech Stack
 

@@ -34,6 +34,7 @@ export type OverlayId =
   | "stednavne"
   | "matrikel"
   | "dybdemodel"
+  | "havbund"
   | "havdybder"
   | "soemaerker";
 
