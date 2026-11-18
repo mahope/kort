@@ -193,7 +193,7 @@ export const DATA_SOURCES: DataSource[] = [
     name: "Historiske indsøkort",
     provider: "Geodatastyrelsen (opmålt af Thorkild Høy 1950-1990 og ældre kort fra Geodætisk Institut)",
     usedFor:
-      "Laget Historiske indsøkort: en markør på 264 kort over danske søer. Kortene er skannede og ikke georefererede, så de kommer med som ekstra sider bag kortet i PDF'en (højst fire), når søen er inden for udskriften.",
+      "Laget Historiske indsøkort: en markør på 231 kort over danske søer (264 skanninger; nogle opmålinger findes i to tryk). Kortene er skannede og ikke georefererede, så de kommer med som ekstra sider bag kortet i PDF'en (højst fire), når søen er inden for udskriften.",
     delivery:
       "Et indeks fra Geodatastyrelsens arkiv (arkivmeta, kortværket Indsøkort) som GeoJSON på vores server. Skanningerne hentes fra historiskekort.dk's billedtjeneste (IIIF) hos Dataforsyningen med det offentlige token.",
     licence: "CC BY 4.0 (Dataforsyningens vilkår)",

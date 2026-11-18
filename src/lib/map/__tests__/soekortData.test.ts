@@ -31,7 +31,7 @@ describe("sea and lake snapshots in public/data/soekort", () => {
     expect(fc.metadata.licence).toMatch(/CC BY 4\.0/);
     for (const f of fc.features) {
       expect(f.geometry.type).toBe("Point");
-      if ("n" in f.properties) expect(f.properties.n).not.toBe("N/A");
+      if ("n" in f.properties) expect(f.properties.n).not.toMatch(/^N\/A$| Or /);
     }
   });
 
@@ -42,8 +42,9 @@ describe("sea and lake snapshots in public/data/soekort", () => {
     expect(charts.length).toBeGreaterThan(200);
     for (const c of charts) expect(c.iiif).toMatch(/^https:\/\/api\.dataforsyningen\.dk\/rest\/arkivkort\/iiif\/3\//);
     // The archive placed one copy at Mossø by Skanderborg (56.04 N); the scan shows Rold Skov.
+    // It is also in the archive twice (1981 original, 1997 print): one marker.
     const rold = charts.filter((c) => c.title === "Mossø (Rold Skov)");
-    expect(rold.length).toBe(2);
+    expect(rold.length).toBe(1);
     for (const c of rold) expect(c.lat).toBeCloseTo(56.807, 2);
   });
 });

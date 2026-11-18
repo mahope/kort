@@ -119,7 +119,7 @@ async function wrecks() {
     if (/lifted|dead|doubtful/.test(p.status)) continue;
     const [lon, lat] = f.geometry.coordinates;
     const props = {};
-    if (p.name && p.name !== "n/a") props.n = titleCase(p.name.replace(/\s*\(POSSIBLY\)/i, "?"));
+    if (p.name && p.name !== "n/a") props.n = titleCase(p.name.replace(/\s*\(POSSIBLY\)/i, "?")).replace(/ Or /g, " eller ");
     if (/^\d{8}$/.test(p.date_sunk)) props.y = Number(p.date_sunk.slice(0, 4));
     const depth = Number(p.depth);
     if (p.depth !== "n/a" && Number.isFinite(depth)) props.d = depth;
@@ -190,8 +190,16 @@ async function lakeCharts() {
       geometry: { type: "Point", coordinates: at },
     });
   }
-  features.sort((a, b) => a.properties.t.localeCompare(b.properties.t, "da"));
-  return collection(features, {
+  // Some surveys are in the archive twice (original and a later print): one marker each.
+  const seen = new Set();
+  const unique = features.filter(({ properties: p }) => {
+    const key = `${p.t}|${p.a ?? ""}|${p.y ?? ""}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  unique.sort((a, b) => a.properties.t.localeCompare(b.properties.t, "da"));
+  return collection(unique, {
     name: "Historiske indsøkort (kortværk Indsøkort)",
     source: "Geodatastyrelsen/Klimadatastyrelsen, historiskekort.dk via api.dataforsyningen.dk/rest/arkivmeta",
     licence: "CC BY 4.0",
