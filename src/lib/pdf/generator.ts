@@ -38,6 +38,8 @@ import {
   type GridLineClass,
   type GridSpacing,
 } from "@/lib/geo/utmGrid";
+import { DKTM_PARAMS } from "@/lib/geo/dktm";
+import { utmCentralMeridian } from "@/lib/geo/utm";
 import { createPaperProjector, type PaperProjector } from "./gridProjection";
 
 /** Build the download filename shared by single- and multi-page output. */
@@ -588,7 +590,7 @@ export async function loadDeclinationDiagram(showDeclination: boolean): Promise<
   return showDeclination ? import("./declinationDiagram") : null;
 }
 
-/** Misvisning diagram for the frame centre; grid north only when a UTM/MGRS grid is on. */
+/** Misvisning diagram for the frame centre; grid north only when a coordinate grid is on. */
 export function drawDeclination(
   diagram: DeclinationDiagram | null,
   pdf: jsPDF,
@@ -598,10 +600,16 @@ export function drawDeclination(
   bearing: number
 ) {
   if (!diagram) return;
+  let centralMeridian: number | null = null;
+  if (gridInfo) {
+    centralMeridian = isDktmSystem(gridInfo.system)
+      ? DKTM_PARAMS[dktmZoneOf(gridInfo.system)].lon0
+      : utmCentralMeridian(gridInfo.zone);
+  }
   const info = diagram.computeDeclinationInfo(
     (bounds.north + bounds.south) / 2,
     (bounds.west + bounds.east) / 2,
-    gridInfo ? gridInfo.zone : null
+    centralMeridian
   );
   if (info) diagram.drawDeclinationDiagram(pdf, layout, info, bearing);
 }

@@ -121,9 +121,9 @@ describe("model validity window", () => {
 
 describe("meridianConvergence", () => {
   it("is zero on the central meridian and positive east of it", () => {
-    expect(meridianConvergence(56, 9, 32)).toBeCloseTo(0, 6);
-    expect(meridianConvergence(55.6761, 12.5683, 32)).toBeCloseTo(2.95, 1);
-    expect(meridianConvergence(55.6761, 7, 32)).toBeLessThan(0);
+    expect(meridianConvergence(56, 9, 9)).toBeCloseTo(0, 6);
+    expect(meridianConvergence(55.6761, 12.5683, 9)).toBeCloseTo(2.95, 1);
+    expect(meridianConvergence(55.6761, 7, 9)).toBeLessThan(0);
   });
 });
 

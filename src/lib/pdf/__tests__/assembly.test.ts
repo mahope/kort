@@ -130,10 +130,39 @@ describe("generatePdf floor map", () => {
     HTMLAnchorElement.prototype.click = () => {};
   });
   afterEach(() => {
-    useMapStore.setState({ viewState: { ...useMapStore.getState().viewState, bearing: 0 } });
-    useMapStore.setState({ baseLayer: useMapStore.getInitialState().baseLayer });
+    useMapStore.setState(useMapStore.getInitialState());
     usePrintStore.setState(usePrintStore.getInitialState());
     vi.useRealTimers();
+  });
+
+  // PROJ meridian convergence at 55.6761°N, 12.5683°E, rounded as in the PDF.
+  it.each([
+    ["dktm1", false, "2,9° Ø"],
+    ["dktm2", false, "2,1° Ø"],
+    ["dktm3", false, "0,7° Ø"],
+    ["dktm4", false, "2,0° V"],
+    ["utm", false, "2,9° Ø"],
+    ["mgrs", false, "2,0° V"],
+    ["dktm3", true, "0,7° Ø"],
+  ] as const)("prints %s grid north (multiPage: %s)", async (gridSystem, multiPage, convergence) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(Date.UTC(2026, 10, 18)));
+    useMapStore.setState({
+      gridSystem,
+      showUtmGrid: true,
+      utmZoneMode: "dk",
+      viewState: { ...useMapStore.getState().viewState, latitude: 55.6761, longitude: 12.5683, bearing: 0 },
+    });
+    usePrintStore.setState({ showDeclination: true, multiPage, gridCols: 2, gridRows: 1 });
+
+    await generatePdf({
+      bounds: { west: 12.5633, east: 12.5733, south: 55.6711, north: 55.6811 },
+      scale: 5000, paperFormat: "A4", orientation: "portrait", dpi: 150,
+    });
+
+    const file = Buffer.from(await blobs[0].arrayBuffer()).toString("latin1");
+    const gridNorthValues = Array.from(file.matchAll(/\(Gitternord\) Tj\s+ET\s+BT[^]*?\(([^()]*)\) Tj/g), (match) => match[1]);
+    expect(gridNorthValues).toEqual(multiPage ? [convergence, convergence] : [convergence]);
   });
 
   it.each([false, true])("uses optional print aids on each sheet (multiPage: %s)", async (multiPage) => {

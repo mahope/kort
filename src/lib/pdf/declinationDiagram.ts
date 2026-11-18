@@ -13,22 +13,22 @@ export const DECLINATION_BOX = { widthMm: 54, heightMm: 25, insetMm: 3 } as cons
 export interface DeclinationInfo {
   /** Degrees, east positive. */
   declination: number;
-  /** Meridian convergence in degrees (east positive), null without a UTM grid. */
+  /** Meridian convergence in degrees (east positive), null without a grid. */
   convergence: number | null;
   year: number;
 }
 
-/** Declination (and grid convergence when a UTM zone is given) for the frame centre; null when the model is out of validity. */
+/** Declination (and grid convergence when a central meridian is given) for the frame centre; null when the model is out of validity. */
 export function computeDeclinationInfo(
   lat: number,
   lng: number,
-  zone: number | null,
+  centralMeridian: number | null,
   date: Date = new Date()
 ): DeclinationInfo | null {
   if (!isWithinWmmValidity(decimalYear(date))) return null;
   return {
     declination: magneticDeclination(lat, lng, date),
-    convergence: zone === null ? null : meridianConvergence(lat, lng, zone),
+    convergence: centralMeridian === null ? null : meridianConvergence(lat, lng, centralMeridian),
     year: date.getUTCFullYear(),
   };
 }

@@ -15,9 +15,12 @@ import { forwardTm, inverseTm, WGS84, type TmParams } from "./tm";
 
 const k0 = 0.9996; // UTM scale factor
 
+export function utmCentralMeridian(zone: number): number {
+  return (zone - 1) * 6 - 180 + 3;
+}
+
 function zoneParams(zone: number): TmParams {
-  const centralMeridian = (zone - 1) * 6 - 180 + 3;
-  return { lon0: centralMeridian, k0, falseEasting: 500000, falseNorthing: 0, ellipsoid: WGS84 };
+  return { lon0: utmCentralMeridian(zone), k0, falseEasting: 500000, falseNorthing: 0, ellipsoid: WGS84 };
 }
 
 /**
