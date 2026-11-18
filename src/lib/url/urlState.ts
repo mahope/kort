@@ -43,6 +43,7 @@ const OVERLAY_CODES: Record<string, OverlayId> = {
   sn: "stednavne",
   mk: "matrikel",
   dd: "dybdemodel",
+  hb: "havbund",
   hd: "havdybder",
   sm: "soemaerker",
   kn: "kurverNorge",
@@ -53,6 +54,7 @@ const OVERLAY_TO_CODE = Object.fromEntries(
 ) as Record<OverlayId, string>;
 
 const BASE_LAYER_CODES: Record<string, BaseLayer> = {
+  n: "none",
   sk: "skaermkort",
   of: "ortofoto",
   osm: "osm",

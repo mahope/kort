@@ -4,9 +4,9 @@ import type { MapStyle, BaseLayer, OverlayState } from "@/types/map";
 import { configureMaplibreWorker } from "@/lib/map/workerUrl";
 import type { ImportedLayer } from "@/stores/importStore";
 import type { DrawnFeature } from "@/stores/drawStore";
-import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
+import { transformRequest } from "@/lib/map/styles";
 import {
-  BLANK_STYLE,
+  getBaseMapStyle,
   getRasterBaseLayers,
   NORDIC_TOPO_SOURCES,
   OVERLAY_SOURCES,
@@ -203,7 +203,7 @@ export async function renderMapToImage({
   try {
     // The frame centre decides (as on screen) unless given: outside Denmark the Nordic topo replaces the Danish base maps.
     const nordic = usesNordicTopo(baseLayer, region ?? mapRegionForBounds(bounds));
-    const mapStyle = baseLayer === "skaermkort" && !nordic ? MAP_STYLES[style].url : BLANK_STYLE;
+    const mapStyle = getBaseMapStyle(baseLayer, style, nordic);
     // Paper resolution, for WMS servers that scale symbols by it (Kartverket).
     const dpi = pxPerMm * 25.4;
     const rasterSourceSpec = (cfg: RasterSourceConfig) => ({

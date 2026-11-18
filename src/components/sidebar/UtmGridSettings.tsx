@@ -40,7 +40,8 @@ export function UtmGridSettings() {
   const setUtmZoneMode = useMapStore((s) => s.setUtmZoneMode);
   const nordic = useMapRegion() === "nordic";
   const scale = usePrintStore((s) => s.scale);
-  const showDeclination = usePrintStore((s) => s.showDeclination);
+  const hasBasemap = useMapStore((s) => s.baseLayer !== "none");
+  const showDeclination = usePrintStore((s) => s.showDeclination) ?? hasBasemap;
   const setShowDeclination = usePrintStore((s) => s.setShowDeclination);
   const declinationNote = wmmStatusNote(wmmStatus());
   const gridSystem = useMapStore((s) => s.gridSystem);

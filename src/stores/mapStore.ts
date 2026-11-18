@@ -24,6 +24,8 @@ const DEFAULT_OVERLAYS: OverlayState[] = [
   // Later overlays draw on top: the finer Danish model covers EMODnet.
   { id: "havdybder", enabled: false, opacity: 0.6 },
   { id: "dybdemodel", enabled: false, opacity: 0.8 },
+  // Grey relief over the blue depths, so both read together.
+  { id: "havbund", enabled: false, opacity: 0.45 },
   { id: "soemaerker", enabled: false, opacity: 1 },
   { id: "kurverNorge", enabled: false, opacity: 1 },
 ];

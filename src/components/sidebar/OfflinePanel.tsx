@@ -195,7 +195,7 @@ export function OfflinePanel() {
         <p className="text-xs text-text-muted">Din browser understøtter ikke offline-kort.</p>
       )}
 
-      {!baseSaveable && (
+      {baseLayer !== "none" && !baseSaveable && (
         <p className="text-xs text-text-secondary" role="note">
           {nordic
             ? "Kortene over Norge og Sverige (Kartverket, OpenTopoMap) må ikke hentes i bulk, så baggrundskortet gemmes ikke."

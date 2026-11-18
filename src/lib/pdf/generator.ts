@@ -10,7 +10,7 @@ import { useHistoryStore } from "@/stores/historyStore";
 import { calculatePdfLayout } from "./layout";
 import { getBrand } from "@/config/brand";
 import { renderMapToImage } from "./renderer";
-import { KARTVERKET_TOPO_SOURCE, OPENTOPOMAP_SOURCE, OVERLAY_SOURCES, usesNordicTopo } from "@/lib/map/sources";
+import { KARTVERKET_TOPO_SOURCE, OPENTOPOMAP_SOURCE, OVERLAY_SOURCES, kdsPrintCredit, nordicPrintCredit, usesNordicTopo } from "@/lib/map/sources";
 import { boundsTouchSweden, mapRegionAt, mapRegionForBounds, nordicSourcesInBounds, type MapRegion } from "@/lib/geo/regions";
 import { timed, yieldToMain } from "./timing";
 import { applyPrintPreferences, drawControlLine } from "./controlLine";
@@ -165,9 +165,9 @@ export async function generatePdf({
   }
 
   // Draw decorations
-  const declinationDiagram = await loadDeclinationDiagram();
-  drawScaleBar(pdf, layout, scale);
-  drawNorthArrow(pdf, layout, bearing);
+  const declinationDiagram = await loadDeclinationDiagram(printState.showDeclination ?? (baseLayer !== "none"));
+  if (printState.showScaleBar ?? (baseLayer !== "none")) drawScaleBar(pdf, layout, scale);
+  if (printState.showNorthArrow ?? (baseLayer !== "none")) drawNorthArrow(pdf, layout, bearing);
   drawControlLine(pdf, layout);
   const where = { region, bounds };
   drawAttribution(pdf, layout, scale, gridInfo, undefined, mapDataCredit(baseLayer, where));
@@ -494,8 +494,8 @@ export function drawAttribution(
   grid: GridInfo | null,
   /** Replaces the scale/grid text on the left (e.g. on the overview page). */
   leftText?: string,
-  /** Who made the map data; Klimadatastyrelsen unless the print is outside Denmark. */
-  dataCredit = "Kortdata: Klimadatastyrelsen"
+  /** Who made the map data outside Denmark (mapDataCredit); the KDS credit when absent. */
+  dataCredit?: string
 ) {
   pdf.setFontSize(6);
   pdf.setTextColor(100);
@@ -512,7 +512,8 @@ export function drawAttribution(
   pdf.text(leftText ?? scaleText, layout.marginMm, y);
 
   // Attribution on right
-  const attribution = `${dataCredit} | ${getBrand().credit.short}`;
+  const domain = getBrand().credit.short;
+  const attribution = dataCredit ? nordicPrintCredit(dataCredit, domain) : kdsPrintCredit(domain);
   pdf.text(attribution, layout.pageWidthMm - layout.marginMm, y, {
     align: "right",
   });
@@ -586,9 +587,13 @@ interface PrintPlace {
   bounds: PrintFrameBounds;
 }
 
-/** Footer credit for the map data: Klimadatastyrelsen in Denmark, else the Nordic sources shown. */
-export function mapDataCredit(baseLayer: BaseLayer, where: PrintPlace): string {
-  if (where.region === "dk") return "Kortdata: Klimadatastyrelsen";
+/**
+ * Footer credit for the map data outside Denmark: the Nordic sources the print
+ * shows. Undefined in Denmark, where the footer keeps the KDS credit.
+ */
+export function mapDataCredit(baseLayer: BaseLayer, where: PrintPlace): string | undefined {
+  if (where.region === "dk") return undefined;
+  if (baseLayer === "none") return "Intet basiskort"; // overlay credits are in the box on the map
   if (!usesNordicTopo(baseLayer, where.region)) return "Kortdata: OpenStreetMap-bidragydere";
   const shown = nordicSourcesInBounds(where.bounds);
   const names = [shown.kartverket && "Kartverket", shown.openTopoMap && "OpenTopoMap/OpenStreetMap"].filter(Boolean);
@@ -618,8 +623,8 @@ export function thirdPartyCredits(where?: PrintPlace): { credits: string[]; notF
 type DeclinationDiagram = typeof import("./declinationDiagram");
 
 /** Loads the declination model on demand, and only when the diagram is switched on. */
-export async function loadDeclinationDiagram(): Promise<DeclinationDiagram | null> {
-  return usePrintStore.getState().showDeclination ? import("./declinationDiagram") : null;
+export async function loadDeclinationDiagram(showDeclination: boolean): Promise<DeclinationDiagram | null> {
+  return showDeclination ? import("./declinationDiagram") : null;
 }
 
 /** Misvisning diagram for the frame centre; grid north only when a UTM/MGRS grid is on. */
@@ -688,7 +693,7 @@ async function generateMultiPagePdf({
 
   let declinationDiagram: DeclinationDiagram | null = null;
   try {
-    declinationDiagram = await loadDeclinationDiagram();
+    declinationDiagram = await loadDeclinationDiagram(printState.showDeclination ?? (baseLayer !== "none"));
     if (withOverview) {
       printState.setGeneratingPage(1);
       const area = calculatePrintArea(paperFormat, orientation, scale);
@@ -782,8 +787,8 @@ async function generateMultiPagePdf({
       // After the grid, so the white box keeps grid lines off the hint.
       drawAssemblyMarks(pdf, layout, sheetNeighbours(cell, gridCols, gridRows), overlapMm);
 
-      drawScaleBar(pdf, layout, scale);
-      drawNorthArrow(pdf, layout, bearing);
+      if (printState.showScaleBar ?? (baseLayer !== "none")) drawScaleBar(pdf, layout, scale);
+      if (printState.showNorthArrow ?? (baseLayer !== "none")) drawNorthArrow(pdf, layout, bearing);
       drawControlLine(pdf, layout);
 
       const sheetPlace = { region, bounds: cell.bounds };
