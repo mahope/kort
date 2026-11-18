@@ -182,7 +182,7 @@ export const DATA_SOURCES: DataSource[] = [
     usedFor:
       "Basiskortet i Norge: uden for Danmark skifter kortet selv til Kartverkets topografiske kort, når midten af kortet er i Norge. Desuden laget Højdekurver Norge.",
     delivery:
-      "WMTS-cache (cache.kartverket.no, laget topo) på skærmen. PDF'en bruger WMS (wms.geonorge.no, wms.topo) i papirets opløsning, så signaturer, tekst og kurver passer til målestokken. Gemmes aldrig offline: Kartverket må ikke kopieres i bulk.",
+      "WMTS-cache (cache.kartverket.no, laget topo) på skærmen. PDF'en bruger WMS (wms.geonorge.no, wms.topo) i papirets opløsning, så signaturer, tekst og kurver passer til målestokken, men kun Kartverkets egne lag (N50 og grovere): de detaljerede Geovekst-data (FKB) må vises, ikke kopieres, så de kommer hverken i PDF'en eller offline.",
     licence: "CC BY 4.0 (Kartverkets gratisprodukter)",
     licenceUrl: "https://www.kartverket.no/api-og-data/vilkar-for-bruk",
     credit:

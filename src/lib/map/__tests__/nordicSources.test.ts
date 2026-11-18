@@ -6,7 +6,9 @@ import {
   NORDIC_TOPO_SOURCES,
   OPENTOPOMAP_SOURCE,
   OVERLAY_SOURCES,
+  kartverketPrintMaxzoom,
   printTilesFor,
+  printZoomLimit,
   usesNordicTopo,
 } from "../sources";
 import { MAP_STYLES } from "../styles";
@@ -44,7 +46,7 @@ describe("Nordic topo sources", () => {
     ]);
     const [print] = printTilesFor(KARTVERKET_TOPO_SOURCE, 300);
     expect(print).toMatch(/^https:\/\/wms\.geonorge\.no\/skwms1\/wms\.topo\?/);
-    expect(print).toContain("LAYERS=topo");
+    expect(print).toContain("LAYERS=kd_hoydelag,");
     expect(print).toContain("MAP_RESOLUTION=300");
     expect(print).toContain("TRANSPARENT=TRUE"); // OpenTopoMap shows through outside Norway
     expect(print).toContain("BBOX={bbox-epsg-3857}");
@@ -59,6 +61,31 @@ describe("Nordic topo sources", () => {
     expect(cfg.tiles[0]).not.toContain("MAP_RESOLUTION");
     expect(printTilesFor(cfg, 200)[0]).toContain("MAP_RESOLUTION=200");
     expect(cfg.tiles[0]).toContain("LAYERS=kd_hoydekurver,fkb_hoydekurver");
+  });
+
+  it("prints only Kartverket's own layers, never Geovekst (FKB) data", () => {
+    for (const cfg of [KARTVERKET_TOPO_SOURCE, OVERLAY_SOURCES.kurverNorge]) {
+      const [print] = printTilesFor(cfg, 300);
+      const layers = new URL(print.replace("{bbox-epsg-3857}", "0")).searchParams.get("LAYERS")!.split(",");
+      expect(layers.length).toBeGreaterThan(0);
+      for (const layer of layers) {
+        expect(layer).not.toBe("topo");
+        expect(layer).not.toMatch(/^fkb/i);
+      }
+    }
+  });
+
+  it("keeps the PDF's WMS scale at or above 1:12.000, where FKB starts", () => {
+    const wmsScale = (z: number, dpi: number) => ((40075016.686 / 256 / 2 ** z) * dpi) / 0.0254;
+    for (const dpi of [100, 150, 200, 300]) {
+      const z = kartverketPrintMaxzoom(dpi);
+      expect(wmsScale(z, dpi)).toBeGreaterThanOrEqual(12000);
+      expect(wmsScale(z + 1, dpi)).toBeLessThan(12000);
+    }
+    expect(kartverketPrintMaxzoom(300)).toBe(17);
+    expect(printZoomLimit(KARTVERKET_TOPO_SOURCE, 150)).toEqual({ maxzoom: 16 });
+    expect(printZoomLimit(OVERLAY_SOURCES.kurverNorge, 150)).toEqual({ maxzoom: 16 });
+    expect(printZoomLimit(OPENTOPOMAP_SOURCE, 300)).toEqual({ maxzoom: 17 });
   });
 
   it("keeps the Danish print tiles exactly as before", () => {

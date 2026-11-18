@@ -88,6 +88,8 @@ describe("renderMapToImage in Norway and Sweden", () => {
     const kartverket = addSource.mock.calls.find(([id]) => id === "nordic-kartverket")?.[1];
     expect(kartverket.tiles[0]).toContain("MAP_RESOLUTION=300");
     expect(kartverket.bounds).toEqual([4.0, 57.8, 31.3, 71.3]);
+    // Above it the WMS would draw Geovekst (FKB) data; MapLibre enlarges N50 instead.
+    expect(kartverket.maxzoom).toBe(17);
   });
 
   it("replaces the vector Skærmkort as well", async () => {

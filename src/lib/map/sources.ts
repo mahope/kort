@@ -224,11 +224,18 @@ export interface RasterSourceConfig {
    * their symbols and pick their data by it. Without it the PDF uses `tiles`.
    */
   printTiles?: (dpi: number) => string[];
+  /** Highest tile zoom the PDF requests at this paper resolution; MapLibre enlarges above it. */
+  printMaxzoom?: (dpi: number) => number;
 }
 
 /** The tile templates the PDF requests for a source at this paper resolution. */
 export function printTilesFor(cfg: RasterSourceConfig, dpi: number): string[] {
   return cfg.printTiles ? cfg.printTiles(dpi) : cfg.tiles;
+}
+
+/** `{ maxzoom }` for the PDF at this paper resolution: `printMaxzoom` when set, else as on screen. */
+export function printZoomLimit(cfg: RasterSourceConfig, dpi: number): { maxzoom?: number } {
+  return cfg.printMaxzoom ? { maxzoom: cfg.printMaxzoom(dpi) } : sourceZoomLimit(cfg);
 }
 
 /** `{ maxzoom }` for sources that set one, else nothing (MapLibre rejects `maxzoom: undefined`). */
@@ -292,9 +299,15 @@ export function getRasterBaseLayers(target: RasterBaseLayerTarget): Record<strin
 /**
  * Kartverket (Norway), open data under CC BY 4.0, no key. The screen uses the
  * WMTS cache; the PDF asks the topo WMS with MAP_RESOLUTION = paper dpi, so
- * MapServer draws symbols, text and the right contour set (N50 at 1:25.000
- * instead of the dense 5 m FKB lines) for the paper scale. Both are
- * transparent outside Norway, so OpenTopoMap shows through there.
+ * MapServer draws symbols, text and the right data set (N50 at 1:25.000) for
+ * the paper scale. Both are transparent outside Norway, so OpenTopoMap shows
+ * through there.
+ *
+ * The detailed levels hold Geovekst data (FKB), which the terms let us show
+ * but not copy without the rights holders' permission. A PDF is a copy, so
+ * the PDF names Kartverket's own layers (the N series, `kd_*`, plus hillshade
+ * and depths) instead of `topo`, and never asks for a WMS scale under 1:12.000,
+ * where only FKB is drawn: a finer print gets N50 enlarged.
  * Terms: https://www.kartverket.no/api-og-data/vilkar-for-bruk
  */
 const KARTVERKET_TOPO_WMTS_URL = "https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png";
@@ -308,6 +321,27 @@ function kartverketWms(layers: string, dpi?: number): string {
   return `${KARTVERKET_WMS_BASE}&LAYERS=${layers}${resolution}&BBOX={bbox-epsg-3857}`;
 }
 
+/** The children of `topo` that are Kartverket's own data, in its drawing order (no `fkb_*`). */
+const KARTVERKET_PRINT_LAYERS = [
+  "kd_hoydelag", "kd_arealdekkeflate", "kd_hoydekurver", "fjellskygge", "kd_vannflate", "kd_elver",
+  "Dybdelag", "Dybdekontur", "kd_vannkontur", "kd_administrative_grenser", "kd_andre_grenser",
+  "kd_verneomradegrense", "kd_veger", "kd_jernbane", "kd_ferger", "kd_anleggslinjer", "kd_bygninger",
+  "kd_spesiell_detalj", "kd_hoydepunkt", "kd_jernbanestasjon", "kd_anleggspunkt", "kd_bygningspunkt",
+  "kd_turisthytte", "kd_arealdekkepunkt", "kd_tettsted", "kd_stedsnavn",
+].join(",");
+
+/** Smallest WMS scale denominator the PDF asks for: the N50 layers end and FKB begins below it. */
+const KARTVERKET_MIN_PRINT_SCALE = 12000;
+
+/**
+ * Highest tile zoom whose WMS scale stays at or above 1:12.000 at this dpi.
+ * MapServer measures 256 px tiles in EPSG:3857 metres at MAP_RESOLUTION.
+ */
+export function kartverketPrintMaxzoom(dpi: number): number {
+  const metresPerPxAtZ0 = 40075016.686 / 256;
+  return Math.floor(Math.log2((metresPerPxAtZ0 * dpi) / 0.0254 / KARTVERKET_MIN_PRINT_SCALE));
+}
+
 /** Mainland Norway with its waters; the cache has nothing to draw outside. */
 const NORWAY_TILE_BOUNDS: [number, number, number, number] = [4.0, 57.8, 31.3, 71.3];
 
@@ -315,7 +349,8 @@ const KARTVERKET_ATTRIBUTION = "&copy; <a href='https://www.kartverket.no/'>Kart
 
 export const KARTVERKET_TOPO_SOURCE: RasterSourceConfig = {
   tiles: [KARTVERKET_TOPO_WMTS_URL],
-  printTiles: (dpi) => [kartverketWms("topo", dpi)],
+  printTiles: (dpi) => [kartverketWms(KARTVERKET_PRINT_LAYERS, dpi)],
+  printMaxzoom: kartverketPrintMaxzoom,
   tileSize: 256,
   maxzoom: 18,
   bounds: NORWAY_TILE_BOUNDS,
@@ -434,10 +469,11 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
   },
   // Kartverket's contour layers: MapServer picks N50 (20 m) to N2000 by scale,
   // and FKB (5 m, 1 m) only on very large scales. With MAP_RESOLUTION the PDF
-  // gets the set for its paper scale, as on the screen.
+  // gets the set for its paper scale; FKB (Geovekst) stays on the screen.
   kurverNorge: {
     tiles: [kartverketWms("kd_hoydekurver,fkb_hoydekurver")],
-    printTiles: (dpi) => [kartverketWms("kd_hoydekurver,fkb_hoydekurver", dpi)],
+    printTiles: (dpi) => [kartverketWms("kd_hoydekurver", dpi)],
+    printMaxzoom: kartverketPrintMaxzoom,
     tileSize: 256,
     bounds: NORWAY_TILE_BOUNDS,
     attribution: "Højdekurver Norge: " + KARTVERKET_ATTRIBUTION,

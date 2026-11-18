@@ -198,15 +198,21 @@ fordi Kartverkets fliser er gennemsigtige uden for Norge. Det giver et sømløst
 
 | | Skærm | PDF | Licens og kreditering |
 | --- | --- | --- | --- |
-| Norge | Kartverket WMTS-cache `cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator` | Kartverket WMS `wms.geonorge.no/skwms1/wms.topo` med `MAP_RESOLUTION` = papirets dpi | CC BY 4.0, "© Kartverket" |
+| Norge | Kartverket WMTS-cache `cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator` | Kartverket WMS `wms.geonorge.no/skwms1/wms.topo` med `MAP_RESOLUTION` = papirets dpi, kun Kartverkets egne lag (`kd_*`, uden FKB) | CC BY 4.0, "© Kartverket" |
 | Sverige | OpenTopoMap `tile.opentopomap.org` (til zoom 17) | samme fliser | CC-BY-SA, "Kortdata: © OpenStreetMap-bidragydere, SRTM \| Kortdesign: © OpenTopoMap" |
-| Højdekurver Norge | Kartverket WMS (`kd_hoydekurver,fkb_hoydekurver`) | samme med `MAP_RESOLUTION` | CC BY 4.0 |
+| Højdekurver Norge | Kartverket WMS (`kd_hoydekurver,fkb_hoydekurver`) | `kd_hoydekurver` med `MAP_RESOLUTION` | CC BY 4.0 |
 | Stednavne Norge | `api.kartverket.no/stedsnavn/v1/navn` (kun ved søgning) | - | CC BY 4.0 |
 
 **Hvorfor WMS i PDF'en?** MapServer bag Kartverkets WMS vælger data og signaturstørrelse efter målestokken. Med
 `MAP_RESOLUTION=300` regner den med papirets opløsning, så et print i 1:25.000 får N50-kortets 20 m-kurver og tekst i
 læsbar størrelse i stedet for de tætte 5 m FKB-kurver, som et 256 px-felt ellers ville udløse. PDF'en henter kun de kilder,
 udsnittet kan vise: ingen Kartverket-kald for et print i Sverige, ingen OpenTopoMap-kald midt i Norge.
+
+**Ingen Geovekst-data i PDF'en.** Kartverkets [vilkår](https://www.kartverket.no/api-og-data/vilkar-for-bruk) siger, at
+WMS og cache på de detaljerede niveauer viser Geovekst-data (FKB), som må vises, men ikke kopieres uden tilladelse fra
+rettighedshaverne. En PDF er en kopi, så PDF'en beder ikke om `topo`, men om Kartverkets egne lag (N50 til N5000, `kd_*`,
+plus fjeldskygge og dybder), og aldrig om en WMS-målestok under 1:12.000, hvor kun FKB tegnes. Et print i 1:5.000 eller
+1:10.000 i Norge får derfor N50-kortet forstørret, ikke de detaljerede FKB-data, som skærmen viser.
 
 **Kreditering.** På skærmen viser MapLibre kildernes egne tekster plus et link til `/kilder`. I PDF'en står
 "Kortdata: Kartverket" og/eller "Kortdata: OpenTopoMap/OpenStreetMap" i foden, og licenslinjerne står i boksen øverst til

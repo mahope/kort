@@ -11,6 +11,7 @@ import {
   NORDIC_TOPO_SOURCES,
   OVERLAY_SOURCES,
   printTilesFor,
+  printZoomLimit,
   sourceZoomLimit,
   usesNordicTopo,
   type RasterSourceConfig,
@@ -216,7 +217,7 @@ export async function renderMapToImage({
       type: "raster" as const,
       tiles: printTilesFor(cfg, dpi),
       tileSize: cfg.tileSize,
-      ...sourceZoomLimit(cfg),
+      ...printZoomLimit(cfg, dpi),
       ...(cfg.bounds ? { bounds: cfg.bounds } : {}),
     });
 
