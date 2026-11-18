@@ -10,7 +10,7 @@ function draw(showDeclination: boolean, zone: number | null) {
   const pdf = new jsPDF({ unit: "mm", format: [l.pageWidthMm, l.pageHeightMm] });
   const text = vi.spyOn(pdf, "text");
   return loadDeclinationDiagram(showDeclination).then((diagram) => {
-    drawDeclination(diagram, pdf, l, bounds, zone === null ? null : ({ zone } as never), 0);
+    drawDeclination(diagram, pdf, l, bounds, zone === null ? null : { system: "utm", zone, square: "", spacing: null }, 0);
     return text.mock.calls.map((c) => String(c[0]));
   });
 }
@@ -20,7 +20,7 @@ describe("PDF declination integration", () => {
     vi.useRealTimers();
   });
 
-  it("draws the diagram (called once per page, so also on page 2+) when switched on", async () => {
+  it("draws the diagram when switched on", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(Date.UTC(2026, 10, 5)));
     const texts = await draw(true, 32);

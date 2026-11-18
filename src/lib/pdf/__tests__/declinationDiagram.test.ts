@@ -32,12 +32,12 @@ describe("declination diagram placement", () => {
 
   it("draws without throwing, with and without grid north, and with a rotated map", () => {
     const l = calculatePdfLayout("A4", "portrait", 150);
-    for (const zone of [null, 32]) {
+    for (const centralMeridian of [null, 9]) {
       for (const bearing of [0, 37]) {
         const pdf = new jsPDF({ unit: "mm", format: [l.pageWidthMm, l.pageHeightMm] });
-        const info = computeDeclinationInfo(55.68, 12.57, zone, new Date(Date.UTC(2026, 10, 5)));
+        const info = computeDeclinationInfo(55.68, 12.57, centralMeridian, new Date(Date.UTC(2026, 10, 5)));
         expect(info).not.toBeNull();
-        expect(info?.convergence === null).toBe(zone === null);
+        expect(info?.convergence === null).toBe(centralMeridian === null);
         drawDeclinationDiagram(pdf, l, info!, bearing);
       }
     }
@@ -54,7 +54,7 @@ describe("declination diagram placement", () => {
         pts.push([x1, y1], [x2, y2]);
         return line(x1, y1, x2, y2);
       };
-      const info = computeDeclinationInfo(55.68, 12.57, 32, new Date(Date.UTC(2026, 10, 5)))!;
+      const info = computeDeclinationInfo(55.68, 12.57, 9, new Date(Date.UTC(2026, 10, 5)))!;
       drawDeclinationDiagram(pdf, l, info, bearing);
       const diagram = pts.filter(([x]) => x < box.left + 20);
       expect(diagram.length).toBeGreaterThan(0);
