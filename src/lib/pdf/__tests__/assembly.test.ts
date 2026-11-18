@@ -130,10 +130,40 @@ describe("generatePdf floor map", () => {
     HTMLAnchorElement.prototype.click = () => {};
   });
   afterEach(() => {
-    useMapStore.setState({ viewState: { ...useMapStore.getState().viewState, bearing: 0 } });
-    useMapStore.setState({ baseLayer: useMapStore.getInitialState().baseLayer });
+    useMapStore.setState(useMapStore.getInitialState());
     usePrintStore.setState(usePrintStore.getInitialState());
     vi.useRealTimers();
+  });
+
+  // PROJ meridian convergence around Copenhagen, rounded as in the PDF.
+  // The wider multi-page extent gives each sheet a distinct printed value.
+  it.each([
+    ["dktm1", false, 5000, "2,9° Ø"],
+    ["dktm2", false, 5000, "2,1° Ø"],
+    ["dktm3", false, 5000, "0,7° Ø"],
+    ["dktm4", false, 5000, "2,0° V"],
+    ["utm", false, 5000, "2,9° Ø"],
+    ["mgrs", false, 5000, "2,0° V"],
+    ["dktm3", true, 100000, "0,6° Ø", "0,8° Ø"],
+  ] as const)("prints %s grid north (multiPage: %s)", async (gridSystem, multiPage, scale, ...convergence) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(Date.UTC(2026, 10, 18)));
+    useMapStore.setState({
+      gridSystem,
+      showUtmGrid: true,
+      utmZoneMode: "dk",
+      viewState: { ...useMapStore.getState().viewState, latitude: 55.6761, longitude: 12.5683, bearing: 0 },
+    });
+    usePrintStore.setState({ showDeclination: true, multiPage, gridCols: 2, gridRows: 1, overlapMm: 10 });
+
+    await generatePdf({
+      bounds: { west: 12.5633, east: 12.5733, south: 55.6711, north: 55.6811 },
+      scale, paperFormat: "A4", orientation: "portrait", dpi: 150,
+    });
+
+    const file = Buffer.from(await blobs[0].arrayBuffer()).toString("latin1");
+    const gridNorthValues = Array.from(file.matchAll(/\(Gitternord\) Tj\s+ET\s+BT[^]*?\(([^()]*)\) Tj/g), (match) => match[1]);
+    expect(gridNorthValues).toEqual(convergence);
   });
 
   it.each([false, true])("uses optional print aids on each sheet (multiPage: %s)", async (multiPage) => {
@@ -213,5 +243,19 @@ describe("generatePdf floor map", () => {
     });
     expect(renderMapToImage).toHaveBeenCalledTimes(3);
     for (const [opts] of renderMapToImage.mock.calls) expect(opts.bearing).toBe(0);
+  });
+
+  it("gives every sheet the sheet set's region, also where sheets cross a border", async () => {
+    // Øresund: the eastern sheets reach into Sweden, but the set is centred in Denmark.
+    usePrintStore.setState({ multiPage: true, gridCols: 2, gridRows: 2, overlapMm: 10 });
+    useMapStore.setState({ viewState: { ...useMapStore.getState().viewState, longitude: 12.65, latitude: 55.61 } });
+    await generatePdf({
+      bounds: { west: 12.5, east: 12.8, south: 55.5, north: 55.7 },
+      scale: 100000, paperFormat: "A4", orientation: "landscape", dpi: 150,
+    });
+    expect(renderMapToImage).toHaveBeenCalledTimes(5);
+    const regions = renderMapToImage.mock.calls.map(([opts]) => opts.region);
+    expect(regions[0]).toBeDefined();
+    expect(new Set(regions).size).toBe(1);
   });
 });

@@ -182,19 +182,13 @@ export function magneticDeclination(lat: number, lng: number, date: Date = new D
   return magneticDeclinationAtYear(lat, lng, decimalYear(date));
 }
 
-/** UTM central meridian (degrees) of a zone. */
-function utmCentralMeridian(zone: number): number {
-  return (zone - 1) * 6 - 180 + 3;
-}
-
 /**
- * Meridian convergence in degrees for a position in a UTM zone (first-order,
- * accurate to well under 0.01° inside the zone; not meant for positions
- * outside the zone's 6° band). Positive east of the central
- * meridian: grid north then lies east of true north.
+ * Approximate meridian convergence in degrees near a Transverse Mercator
+ * grid's central meridian (longitude in degrees). Positive values indicate
+ * that grid north lies east of true north.
  */
-export function meridianConvergence(lat: number, lng: number, zone: number): number {
-  return Math.atan(Math.tan((lng - utmCentralMeridian(zone)) * RAD) * Math.sin(lat * RAD)) / RAD;
+export function meridianConvergence(lat: number, lng: number, centralMeridian: number): number {
+  return Math.atan(Math.tan((lng - centralMeridian) * RAD) * Math.sin(lat * RAD)) / RAD;
 }
 
 /** "3,9° Ø" / "1,2° V" with Danish decimal comma. */

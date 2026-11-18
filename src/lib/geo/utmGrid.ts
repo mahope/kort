@@ -5,6 +5,7 @@
  * so everything is unit-testable.
  */
 import { latlngToUtm, utmToLatlng, getUtmZone } from "./utm";
+import { forwardTm, inverseTm, type TmParams } from "./tm";
 
 /** Selectable grid spacings in metres. */
 export const GRID_SPACINGS = [100, 500, 1000, 2000, 5000, 10000] as const;
@@ -123,15 +124,18 @@ export interface GridLine {
   coords: [number, number][];
 }
 
-/** UTM extent covering a lng/lat box (corners and edge midpoints, since grid convergence skews it). */
-function utmExtent(b: LngLatBounds, zone: number) {
+type Forward = (lat: number, lng: number) => { easting: number; northing: number };
+type Inverse = (easting: number, northing: number) => { lat: number; lng: number };
+
+/** Projected extent of a lng/lat box (corners and edge midpoints, since grid convergence skews it). */
+function projectedExtent(b: LngLatBounds, forward: Forward) {
   const pts: [number, number][] = [];
   for (const lat of [b.south, (b.south + b.north) / 2, b.north]) {
     for (const lng of [b.west, (b.west + b.east) / 2, b.east]) pts.push([lat, lng]);
   }
   let minE = Infinity, maxE = -Infinity, minN = Infinity, maxN = -Infinity;
   for (const [lat, lng] of pts) {
-    const u = latlngToUtm(lat, lng, zone);
+    const u = forward(lat, lng);
     minE = Math.min(minE, u.easting);
     maxE = Math.max(maxE, u.easting);
     minN = Math.min(minN, u.northing);
@@ -141,16 +145,20 @@ function utmExtent(b: LngLatBounds, zone: number) {
 }
 
 /**
- * Grid lines covering `bounds`. Lines are sampled so the slight curvature of
- * UTM lines in Web Mercator is kept (max ~20 samples per line).
+ * Grid lines covering `bounds` for any transverse Mercator projection given
+ * as a forward/inverse pair. Lines are sampled so the slight curvature of
+ * TM lines in Web Mercator is kept (max ~20 samples per line). Shared by
+ * `computeGridLines` (UTM zones) and `computeGridLinesTm` (DKTM1-4 etc.) so
+ * the geometry/sampling logic exists exactly once.
  */
-export function computeGridLines(
+function gridLinesForProjection(
   bounds: LngLatBounds,
-  zone: number,
+  forward: Forward,
+  inverse: Inverse,
   spacing: number,
-  maxLinesPerAxis = 1000
+  maxLinesPerAxis: number
 ): GridLine[] {
-  const ext = utmExtent(bounds, zone);
+  const ext = projectedExtent(bounds, forward);
   const minE = Math.floor(ext.minE / spacing) * spacing;
   const maxE = Math.ceil(ext.maxE / spacing) * spacing;
   const minN = Math.floor(ext.minN / spacing) * spacing;
@@ -166,10 +174,10 @@ export function computeGridLines(
   for (const e of eVals) {
     const coords: [number, number][] = [];
     for (let n = minN; n < maxN; n += nStep) {
-      const ll = utmToLatlng(e, n, zone);
+      const ll = inverse(e, n);
       coords.push([ll.lng, ll.lat]);
     }
-    const end = utmToLatlng(e, maxN, zone);
+    const end = inverse(e, maxN);
     coords.push([end.lng, end.lat]);
     lines.push({ axis: "E", value: e, cls: classifyGridLine(e, spacing), coords });
   }
@@ -178,14 +186,54 @@ export function computeGridLines(
   for (const n of nVals) {
     const coords: [number, number][] = [];
     for (let e = minE; e < maxE; e += eStep) {
-      const ll = utmToLatlng(e, n, zone);
+      const ll = inverse(e, n);
       coords.push([ll.lng, ll.lat]);
     }
-    const end = utmToLatlng(maxE, n, zone);
+    const end = inverse(maxE, n);
     coords.push([end.lng, end.lat]);
     lines.push({ axis: "N", value: n, cls: classifyGridLine(n, spacing), coords });
   }
   return lines;
+}
+
+/**
+ * Grid lines covering `bounds` in a single UTM zone. Lines are sampled so
+ * the slight curvature of UTM lines in Web Mercator is kept (max ~20
+ * samples per line).
+ */
+export function computeGridLines(
+  bounds: LngLatBounds,
+  zone: number,
+  spacing: number,
+  maxLinesPerAxis = 1000
+): GridLine[] {
+  return gridLinesForProjection(
+    bounds,
+    (lat, lng) => latlngToUtm(lat, lng, zone),
+    (e, n) => utmToLatlng(e, n, zone),
+    spacing,
+    maxLinesPerAxis
+  );
+}
+
+/**
+ * Grid lines covering `bounds` for an arbitrary transverse Mercator zone
+ * (e.g. DKTM1-4, which — unlike UTM — need no zone splitting since each
+ * zone already covers the whole country).
+ */
+export function computeGridLinesTm(
+  bounds: LngLatBounds,
+  params: TmParams,
+  spacing: number,
+  maxLinesPerAxis = 1000
+): GridLine[] {
+  return gridLinesForProjection(
+    bounds,
+    (lat, lng) => forwardTm(lat, lng, params),
+    (e, n) => inverseTm(e, n, params),
+    spacing,
+    maxLinesPerAxis
+  );
 }
 
 // ---------------------------------------------------------------------------

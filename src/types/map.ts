@@ -37,6 +37,7 @@ export type OverlayId =
   | "havbund"
   | "havdybder"
   | "soemaerker"
+  | "kurverNorge"
   | "soedybder"
   | "indsoekort"
   | "vrag";
