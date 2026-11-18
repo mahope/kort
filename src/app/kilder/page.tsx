@@ -88,10 +88,14 @@ export default function SourcesPage() {
                     </dd>
                     <dt className="font-medium">Kreditering</dt>
                     <dd className="text-text-secondary">{s.credit}</dd>
-                    <dt className="font-medium">Hentet</dt>
-                    <dd className="text-text-secondary">
-                      {s.retrieved ? `${formatDate(s.retrieved)} (øjebliksbillede på vores server)` : "Løbende, direkte fra kilden"}
-                    </dd>
+                    {s.retrieved && (
+                      <>
+                        <dt className="font-medium">Hentet</dt>
+                        <dd className="text-text-secondary">
+                          {formatDate(s.retrieved)} (øjebliksbillede på vores server)
+                        </dd>
+                      </>
+                    )}
                   </dl>
                   {s.notForNavigation && <p className="mt-2 text-sm font-semibold">{NAVIGATION_WARNING}</p>}
                 </li>

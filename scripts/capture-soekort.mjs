@@ -8,7 +8,7 @@ import path from "node:path";
 import assert from "node:assert/strict";
 
 const { chromium } = await import(process.env.KORT_PLAYWRIGHT_MODULE || "playwright");
-const port = 3000 + Math.floor(Math.random() * 1000) + 3000;
+const port = 6000 + Math.floor(Math.random() * 1000);
 const base = `http://localhost:${port}`;
 const OUT = "docs/screenshots/soekort-runde2";
 

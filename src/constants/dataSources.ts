@@ -22,8 +22,9 @@ export interface DataSource {
   layers?: (BaseLayer | OverlayId)[];
   notForNavigation?: boolean;
   /**
-   * When our snapshot was fetched (ISO date), for data we serve ourselves.
-   * Without it the layer is fetched live from the source on every view.
+   * When our snapshot was fetched (ISO date), shown as "Hentet" on /kilder.
+   * Left out where no single date applies (live services, or data built or
+   * bundled at another time, see `delivery`).
    */
   retrieved?: string;
 }

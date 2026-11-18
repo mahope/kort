@@ -47,14 +47,20 @@ export function drawLakeChartPage(
   pdf.setTextColor(0);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(12);
-  pdf.text(`Bilag: historisk indsøkort over ${chart.title}`, m, y);
-  y += 5;
+  // Titles run up to ~90 characters, so heading and details wrap to the page width.
+  const heading = pdf.splitTextToSize(`Bilag: historisk indsøkort over ${chart.title}`, w) as string[];
+  pdf.text(heading, m, y);
+  y += heading.length * 5;
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(8);
   const details = lakeChartDetails(chart);
   if (details) {
-    pdf.text(`${details}${chart.scale ? " (målestok på originalen, ikke på dette ark)" : ""}`, m, y);
-    y += 4;
+    const lines = pdf.splitTextToSize(
+      `${details}${chart.scale ? " (målestok på originalen, ikke på dette ark)" : ""}`,
+      w
+    ) as string[];
+    pdf.text(lines, m, y);
+    y += lines.length * 3.4 + 0.6;
   }
 
   // The warning in a box of its own, so it cannot be missed or cut off.

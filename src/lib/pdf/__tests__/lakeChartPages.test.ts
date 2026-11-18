@@ -87,6 +87,37 @@ describe("historical lake charts in the PDF", () => {
     expect(pdf.getNumberOfPages()).toBe(2);
   });
 
+  it("wraps a long title and detail line inside the margins, even on A5", async () => {
+    const { drawLakeChartPage } = await import("../lakeChartPages");
+    const longChart = {
+      id: "9",
+      title: "Skanderborg søerne (Tåning Sø, Vrol Sø, Hylke Sø, Storesø, Lillesø og Ringkloster Sø)",
+      author: "Farvandsdirektoratets nautiske afdeling, Thorkild Høy",
+      year: 1995,
+      scale: "1:20000",
+      iiif: "https://x/iiif/3/skb",
+      lng: 9.9,
+      lat: 56.0,
+    };
+    for (const [format, orientation] of [["A4", "landscape"], ["A4", "portrait"], ["A5", "portrait"]] as const) {
+      const l = calculatePdfLayout(format, orientation, 150);
+      const pdf = new jsPDF({ unit: "mm", format: format.toLowerCase(), orientation });
+      const lines: string[] = [];
+      const orig = pdf.text.bind(pdf);
+      pdf.text = ((t: string | string[], x: number, y: number, o?: object) => {
+        for (const line of Array.isArray(t) ? t : [t]) {
+          lines.push(line);
+          expect(x + pdf.getTextWidth(line)).toBeLessThanOrEqual(l.pageWidthMm - l.marginMm + 0.01);
+        }
+        return orig(t, x, y, o);
+      }) as typeof pdf.text;
+      drawLakeChartPage(pdf, l, { chart: longChart, data: TINY_JPEG });
+      const joined = lines.join(" ");
+      expect(joined).toContain("Ringkloster Sø)");
+      expect(joined).toContain("ikke på dette ark)");
+    }
+  });
+
   it("adds nothing when no chart is inside the print", async () => {
     mockFetch();
     const { addLakeChartPages } = await import("../lakeChartPages");
