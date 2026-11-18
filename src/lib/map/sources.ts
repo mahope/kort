@@ -1,5 +1,5 @@
-import type { OverlayId } from "@/types/map";
-import { DATAFORSYNINGEN_TOKEN } from "./styles";
+import type { BaseLayer, MapStyle, OverlayId } from "@/types/map";
+import { DATAFORSYNINGEN_TOKEN, MAP_STYLES } from "./styles";
 
 /**
  * Ortofoto WMTS tile URL template.
@@ -167,21 +167,28 @@ export function kdsPrintCredit(domain: string): string {
   return `Kortdata: Klimadatastyrelsen, CC BY 4.0 | Kilder: ${domain}${SOURCES_PAGE_PATH}`;
 }
 
-/**
- * Minimal blank MapLibre style for use with ortofoto raster base layer.
- */
-export const BLANK_STYLE = {
-  version: 8 as const,
-  glyphs: "https://cdn.dataforsyningen.dk/assets/vector_tiles_assets/latest/glyphs/{fontstack}/{range}.pbf",
-  sources: {},
-  layers: [
-    {
-      id: "background",
-      type: "background" as const,
-      paint: { "background-color": "#f0f0f0" },
-    },
-  ],
-};
+function blankStyle(backgroundColor: string) {
+  return {
+    version: 8 as const,
+    glyphs: "https://cdn.dataforsyningen.dk/assets/vector_tiles_assets/latest/glyphs/{fontstack}/{range}.pbf",
+    sources: {},
+    layers: [
+      {
+        id: "background",
+        type: "background" as const,
+        paint: { "background-color": backgroundColor },
+      },
+    ],
+  };
+}
+
+const RASTER_STYLE = blankStyle("#f0f0f0");
+const NO_BASE_STYLE = blankStyle("#ffffff");
+
+export function getBaseMapStyle(baseLayer: BaseLayer, style: MapStyle) {
+  if (baseLayer === "skaermkort") return MAP_STYLES[style].url;
+  return baseLayer === "none" ? NO_BASE_STYLE : RASTER_STYLE;
+}
 
 export interface RasterSourceConfig {
   tiles: string[];

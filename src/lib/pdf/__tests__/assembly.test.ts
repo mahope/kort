@@ -131,6 +131,34 @@ describe("generatePdf floor map", () => {
   });
   afterEach(() => {
     useMapStore.setState({ viewState: { ...useMapStore.getState().viewState, bearing: 0 } });
+    useMapStore.setState({ baseLayer: useMapStore.getInitialState().baseLayer });
+    usePrintStore.setState(usePrintStore.getInitialState());
+    vi.useRealTimers();
+  });
+
+  it.each([false, true])("uses optional print aids on each sheet (multiPage: %s)", async (multiPage) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(Date.UTC(2026, 10, 18)));
+    useMapStore.setState({ baseLayer: "none" });
+    usePrintStore.setState({ multiPage, gridCols: 2, gridRows: 1 });
+    const options = {
+      bounds: { west: 10, east: 10.1, south: 56, north: 56.1 },
+      scale: 5000, paperFormat: "A4", orientation: "portrait", dpi: 150,
+    } as const;
+
+    for (const [index, settings] of [
+      {},
+      { showScaleBar: true },
+      { showScaleBar: false, showNorthArrow: true },
+    ].entries()) {
+      usePrintStore.setState(settings);
+      await generatePdf(options);
+      const file = Buffer.from(await blobs[index].arrayBuffer()).toString("latin1");
+      const sheetCount = multiPage ? 2 : 1;
+      expect(file.match(/\(100 m\) Tj/g) ?? []).toHaveLength(index === 1 ? sheetCount : 0);
+      expect(file.match(/\(N\) Tj/g) ?? []).toHaveLength(index === 2 ? sheetCount : 0);
+      expect(file).not.toContain("Magnetisk nord");
+    }
   });
 
   it("adds an overview page and numbered sheets for a 3 x 3 grid", async () => {

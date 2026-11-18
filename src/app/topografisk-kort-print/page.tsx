@@ -129,7 +129,7 @@ export default function LandingPage() {
               },
               {
                 title: "Højdekurver og skyggekort",
-                desc: "Tilføj højdekurver (også roligere 2,5 m-kurver), skyggekort, matrikelskel og stednavne som overlay. Til vandet: havdybder og sømærker (ikke til navigation).",
+                desc: "Tilføj højdekurver, skyggekort, matrikelskel og stednavne som overlay. Til orienteringsløb kan du vælge Intet basiskort og slå fx 5 m- eller 10 m-højdekurver til. Så får både kortet og PDF’en hvid baggrund. Til vandet: havdybder og sømærker (ikke til navigation).",
               },
               {
                 title: "Importer ruter",

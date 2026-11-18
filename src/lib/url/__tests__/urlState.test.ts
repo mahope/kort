@@ -29,6 +29,15 @@ describe("serializeState → deserializeState round-trip", () => {
     expect(round.dpi).toBe(200);
   });
 
+  it("preserves no base map with 5 m contours and scale 1:5.000", () => {
+    const state = {
+      baseLayer: "none",
+      overlays: [{ id: "kurver5", opacity: 1 }],
+      scale: 5000,
+    } as const;
+    expect(deserializeState(serializeState({ ...state, overlays: [...state.overlays] }))).toMatchObject(state);
+  });
+
   it("omits bearing when zero", () => {
     const qs = serializeState({ bearing: 0 });
     expect(qs).not.toContain("b=");

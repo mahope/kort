@@ -19,7 +19,9 @@ interface PrintStore {
   frameBounds: PrintFrameBounds | null;
   isGenerating: boolean;
   multiPage: boolean;
-  showDeclination: boolean;
+  showScaleBar: boolean | null;
+  showNorthArrow: boolean | null;
+  showDeclination: boolean | null;
   gridCols: number;
   gridRows: number;
   overlapMm: number;
@@ -32,6 +34,8 @@ interface PrintStore {
   setFrameBounds: (bounds: PrintFrameBounds) => void;
   setIsGenerating: (isGenerating: boolean) => void;
   setMultiPage: (multiPage: boolean) => void;
+  setShowScaleBar: (show: boolean) => void;
+  setShowNorthArrow: (show: boolean) => void;
   setShowDeclination: (show: boolean) => void;
   setGridCols: (cols: number) => void;
   setGridRows: (rows: number) => void;
@@ -48,7 +52,10 @@ export const usePrintStore = create<PrintStore>((set) => ({
   frameBounds: null,
   isGenerating: false,
   multiPage: false,
-  showDeclination: true,
+  // Without an explicit choice, print aids follow the basemap selection.
+  showScaleBar: null,
+  showNorthArrow: null,
+  showDeclination: null,
   gridCols: 2,
   gridRows: 2,
   overlapMm: 10,
@@ -61,6 +68,8 @@ export const usePrintStore = create<PrintStore>((set) => ({
   setFrameBounds: (frameBounds) => set({ frameBounds }),
   setIsGenerating: (isGenerating) => set({ isGenerating }),
   setMultiPage: (multiPage) => set({ multiPage }),
+  setShowScaleBar: (showScaleBar) => set({ showScaleBar }),
+  setShowNorthArrow: (showNorthArrow) => set({ showNorthArrow }),
   setShowDeclination: (showDeclination) => set({ showDeclination }),
   setGridCols: (gridCols) => set({ gridCols }),
   setGridRows: (gridRows) => set({ gridRows }),
