@@ -38,6 +38,8 @@ type Opts = Parameters<typeof renderMapToImage>[0];
 
 const JOTUNHEIMEN = { west: 8.25, east: 8.37, south: 61.6, north: 61.68 };
 const KOEBENHAVN = { west: 12.5, east: 12.62, south: 55.64, north: 55.72 };
+const SVINESUND = { west: 11.06, east: 11.46, south: 59.0, north: 59.2 };
+const DALSLAND = { west: 12.64, east: 12.76, south: 59.01, north: 59.09 };
 
 const base = {
   bounds: JOTUNHEIMEN,
@@ -66,9 +68,19 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers());
 
 describe("renderMapToImage in Norway and Sweden", () => {
-  it("draws OpenTopoMap under Kartverket instead of DTK25 in Norway", async () => {
+  it("draws Kartverket instead of DTK25 inside Norway, without OpenTopoMap requests", async () => {
     expect(await run()).toHaveProperty("v");
+    expect(ids()).toEqual(["nordic-kartverket"]);
+  });
+
+  it("draws OpenTopoMap under Kartverket across the border", async () => {
+    await run({ bounds: SVINESUND });
     expect(ids()).toEqual(["nordic-opentopomap", "nordic-kartverket"]);
+  });
+
+  it("asks Kartverket nothing for a print in Sweden", async () => {
+    await run({ bounds: DALSLAND });
+    expect(ids()).toEqual(["nordic-opentopomap"]);
   });
 
   it("asks Kartverket's WMS at the paper resolution", async () => {
@@ -81,7 +93,7 @@ describe("renderMapToImage in Norway and Sweden", () => {
   it("replaces the vector Skærmkort as well", async () => {
     await run({ baseLayer: "skaermkort" });
     expect(ctl.lastOptions?.style).toMatchObject({ sources: {}, layers: [{ type: "background" }] });
-    expect(ids()).toEqual(["nordic-opentopomap", "nordic-kartverket"]);
+    expect(ids()).toEqual(["nordic-kartverket"]);
   });
 
   it("keeps OpenStreetMap when the user chose it", async () => {
@@ -97,7 +109,7 @@ describe("renderMapToImage in Norway and Sweden", () => {
 
   it("follows the region it is given (one for all sheets of a multi-page print)", async () => {
     await run({ bounds: KOEBENHAVN, region: "nordic" });
-    expect(ids()).toEqual(["nordic-opentopomap", "nordic-kartverket"]);
+    expect(ids()).toEqual(["nordic-opentopomap"]);
   });
 
   it("leaves Denmark on DTK25", async () => {

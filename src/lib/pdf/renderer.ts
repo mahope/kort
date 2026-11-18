@@ -15,7 +15,7 @@ import {
   usesNordicTopo,
   type RasterSourceConfig,
 } from "@/lib/map/sources";
-import { mapRegionForBounds, type MapRegion } from "@/lib/geo/regions";
+import { mapRegionForBounds, nordicSourcesInBounds, type MapRegion } from "@/lib/geo/regions";
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
 import { contourLayers, contourSourceUrl, ensurePmtilesProtocol, SCREEN_PX_PER_MM } from "@/lib/map/contours";
 import { timed } from "./timing";
@@ -137,6 +137,12 @@ function retryTiles(map: maplibregl.Map, failed: Map<string, FailedTile>) {
   // hidden tab no frame at all) in which areTilesLoaded() saw nothing missing.
   internals._update();
   internals.redraw?.();
+}
+
+function padBounds(b: PrintFrameBounds, ratio: number): PrintFrameBounds {
+  const dx = (b.east - b.west) * ratio;
+  const dy = (b.north - b.south) * ratio;
+  return { west: b.west - dx, east: b.east + dx, south: b.south - dy, north: b.north + dy };
 }
 
 function sleep(ms: number) {
@@ -263,7 +269,13 @@ export async function renderMapToImage({
     // Add raster base layer if not skaermkort
     const rasterSource = PRINT_RASTER_BASE_LAYERS[baseLayer];
     if (nordic) {
+      // Only the sources this print can show: no Kartverket requests for a
+      // print in Sweden, no OpenTopoMap ones inside Norway. Padded, since a
+      // rotated map shows more than the frame's bounding box.
+      const shown = nordicSourcesInBounds(padBounds(bounds, 0.5));
+      const wanted = { "nordic-opentopomap": shown.openTopoMap, "nordic-kartverket": shown.kartverket };
       for (const { id, cfg } of NORDIC_TOPO_SOURCES) {
+        if (!wanted[id as keyof typeof wanted]) continue;
         map.addSource(id, rasterSourceSpec(cfg));
         map.addLayer({ id: `${id}-layer`, type: "raster", source: id });
       }

@@ -73,6 +73,17 @@ describe("nordicSourcesInBounds", () => {
     expect(nordicSourcesInBounds(around(12.7, 59.05))).toEqual({ kartverket: false, openTopoMap: true });
   });
 
+  it("credits only OpenTopoMap at Kebnekaise, 20 km inside Sweden", () => {
+    expect(nordicSourcesInBounds({ west: 18.3, east: 18.82, south: 67.85, north: 67.95 })).toEqual({
+      kartverket: false,
+      openTopoMap: true,
+    });
+  });
+
+  it("credits Kartverket for Norwegian waters off the coast", () => {
+    expect(nordicSourcesInBounds(around(4.75, 60.4)).kartverket).toBe(true); // west of Bergen
+  });
+
   it("credits both across the border at Svinesund", () => {
     expect(nordicSourcesInBounds(around(11.3, 59.1, 0.2, 0.1))).toEqual({ kartverket: true, openTopoMap: true });
   });

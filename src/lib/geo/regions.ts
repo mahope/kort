@@ -111,9 +111,11 @@ function samplePoints(b: LngLatBounds): [number, number][] {
   return pts;
 }
 
-// Kartverket's topo also covers Norwegian waters (12 nm, about 22 km) and the
-// outline is coarse: count a print as showing Kartverket data this close.
+// Kartverket's topo also covers Norwegian waters (12 nm, about 22 km): count a
+// print as showing Kartverket data this close to Norway at sea. Over Swedish
+// land it stops at the border, so there only the outline's slack (about 2 km) counts.
 const NORWAY_COVERAGE_KM = 25;
+const NORWAY_COVERAGE_OVER_SWEDEN_KM = 3;
 
 /**
  * Which Nordic sources a print of these bounds shows, for the credits.
@@ -129,7 +131,8 @@ export function nordicSourcesInBounds(b: LngLatBounds): { kartverket: boolean; o
       continue;
     }
     const km = distanceToCountryKm(lng, lat, "no");
-    if (km <= NORWAY_COVERAGE_KM) kartverket = true;
+    const reach = isInCountry(lng, lat, "se") ? NORWAY_COVERAGE_OVER_SWEDEN_KM : NORWAY_COVERAGE_KM;
+    if (km <= reach) kartverket = true;
     // Inside the coverage band either source may show: credit both.
     openTopoMap = true;
     if (kartverket && openTopoMap) break;
