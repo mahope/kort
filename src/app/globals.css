@@ -186,7 +186,7 @@ body {
    BottomSheet sets --sheet-h on <html>; --sheet-offset is what the map
    controls sit above (0 when the sheet is a sidebar). */
 :root {
-  --sheet-min: 108px;
+  --sheet-min: 136px;
   --sheet-mid: 40vh;
   --sheet-max: 60vh;
   --sheet-h: var(--sheet-mid);
@@ -217,4 +217,22 @@ body {
 html:has(aside[data-dragging="true"]) .maplibregl-ctrl-bottom-left,
 html:has(aside[data-dragging="true"]) .maplibregl-ctrl-bottom-right {
   transition: none;
+}
+/* The attribution's "(i)" button defaults to a round pill with no shadow,
+   unlike every other (square, radius 4px, outlined) map control; match
+   them so it reads as one family of controls in both themes. */
+.maplibregl-ctrl-attrib.maplibregl-compact,
+.maplibregl-ctrl-attrib.maplibregl-compact-show {
+  border-radius: 4px !important;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+/* The scale bar floats directly next to the zoom buttons with a heavy black
+   border; give it room and a softer line. Stays white like the zoom/attribution
+   controls beside it (MapLibre's own chrome, not themed to the app) rather
+   than only the scale bar going dark and clashing with them in dark mode. */
+.maplibregl-ctrl-bottom-right .maplibregl-ctrl-scale {
+  margin-right: 56px;
+  border-color: rgba(0, 0, 0, 0.35);
+  background-color: rgba(255, 255, 255, 0.85);
+  color: rgba(0, 0, 0, 0.75);
 }
