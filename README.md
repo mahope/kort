@@ -15,6 +15,7 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 ## Features
 
 - **Interaktivt kort** - Danske topografiske kort via Dataforsyningens vector tiles (MapLibre GL JS)
+- **Norge og Sverige** - Flyt kortet til Norge eller Sverige, så skifter det selv kilde: Kartverkets topografiske kort i Norge og OpenTopoMap i Sverige. Gitter (UTM 32-35 og MGRS), misvisning, PDF, flere ark og "Intet basiskort" med norske højdekurver virker som i Danmark, og norske stednavne kan søges. Se [Norge og Sverige](#norge-og-sverige)
 - **4 kortstilarter** - Klassisk, Dæmpet, Grå og Mørkt skærmkort
 - **5 basiskort** - Skærmkort, Ortofoto, OpenStreetMap, Høje & Lave Målebordsblade
 - **7 målestoksforhold** - 1:5.000, 1:10.000, 1:25.000, 1:50.000, 1:100.000, 1:250.000, 1:500.000 og valgfri fra 1:1.000 til 1:1.000.000 ("Andet"). Ved 1:5.000 er skærmkort og ortofoto skarpest; topografisk kort 1:25.000 bliver forstørret fem gange
@@ -29,7 +30,7 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 - **PDF-generering** - Client-side PDF med målestok-lineal, nordpil og attribution
 - **Misvisning** - Magnetisk misvisning ved sigtekorset på kortet og som diagram (retvisende, gitter- og magnetisk nord) på PDF'en. Se [Misvisning](#misvisning-magnetic-declination)
 - **Kortrotation** - Drej kortet til en valgfri bearing/retning
-- **Adressesøgning** - Søg efter adresser (Adressevælger) og stednavne (Danske Stednavne)
+- **Adressesøgning** - Søg efter adresser (Adressevælger) og stednavne (Danske Stednavne, og norske stednavne fra Kartverket)
 - **Bogmærker & historik** - Gem dine yndlingssteder og se tidligere udskrifter
 - **Simpel/avanceret tilstand** - Overskuelig for nye brugere, med alle funktioner tilgængelige
 - **Mørkt tema** - Light, dark og system-følgende tema
@@ -59,7 +60,9 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 - **Kortdata:** [Dataforsyningen](https://dataforsyningen.dk/) (Klimadatastyrelsen) - Vector tiles i EPSG:3857
 - **Adressesøgning:** [Adressevælger](https://confluence.sdfi.dk/pages/viewpage.action?pageId=234782998) (Klimadatastyrelsen) - adresser og veje, EPSG:25832 konverteres til WGS84
 - **Stednavne:** [Danske Stednavne](https://www.klimadatastyrelsen.dk/data/danske-stednavne) (Klimadatastyrelsen) - snapshot i `data/stednavne.tsv.gz`, søges server-side via `/api/stednavne`
-- Alle data er frie offentlige geodata under dansk lovgivning
+- **Norge:** [Kartverket](https://www.kartverket.no/api-og-data/vilkar-for-bruk) - Topografisk norgeskart (WMTS-cache og WMS), høydekurver og stednavne (SSR), CC BY 4.0, ingen nøgle
+- **Sverige:** [OpenTopoMap](https://opentopomap.org/about) - OpenStreetMap-data og SRTM-højder, CC-BY-SA. Lantmäteriet bruges ikke (se [Norge og Sverige](#norge-og-sverige))
+- De danske data er frie offentlige geodata (CC BY 4.0). Alle kilder med licens og kreditering står på `/kilder`
 
 ## Kom i gang
 
@@ -183,6 +186,58 @@ MIT
 ## Attribution
 
 Kortdata leveres af [Klimadatastyrelsen](https://www.klimadatastyrelsen.dk/) via [Dataforsyningen](https://dataforsyningen.dk/).
+Uden for Danmark: © [Kartverket](https://www.kartverket.no/) (CC BY 4.0) og © [OpenTopoMap](https://opentopomap.org/) (CC-BY-SA) med data fra © OpenStreetMap-bidragydere og SRTM.
+
+## Norge og Sverige
+
+Kortet vælger selv kilde ud fra midten af kortet (`src/lib/geo/regions.ts`, grove landegrænser fra Natural Earth i
+`regionPolygons.ts`, lavet med `scripts/build-region-polygons.mjs`). Er midten i Danmark eller nærmest Danmark, er alt som før.
+Er den i Norge eller Sverige, erstattes de danske basiskort af et nordisk topokort: OpenTopoMap nederst og Kartverket ovenpå,
+fordi Kartverkets fliser er gennemsigtige uden for Norge. Det giver et sømløst kort hen over grænsen. OpenStreetMap og
+"Intet basiskort" bliver, som brugeren har valgt. Et print med flere ark bruger én kilde for alle ark.
+
+| | Skærm | PDF | Licens og kreditering |
+| --- | --- | --- | --- |
+| Norge | Kartverket WMTS-cache `cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator` | Kartverket WMS `wms.geonorge.no/skwms1/wms.topo` med `MAP_RESOLUTION` = papirets dpi | CC BY 4.0, "© Kartverket" |
+| Sverige | OpenTopoMap `tile.opentopomap.org` (til zoom 17) | samme fliser | CC-BY-SA, "Kortdata: © OpenStreetMap-bidragydere, SRTM \| Kortdesign: © OpenTopoMap" |
+| Højdekurver Norge | Kartverket WMS (`kd_hoydekurver,fkb_hoydekurver`) | samme med `MAP_RESOLUTION` | CC BY 4.0 |
+| Stednavne Norge | `api.kartverket.no/stedsnavn/v1/navn` (kun ved søgning) | - | CC BY 4.0 |
+
+**Hvorfor WMS i PDF'en?** MapServer bag Kartverkets WMS vælger data og signaturstørrelse efter målestokken. Med
+`MAP_RESOLUTION=300` regner den med papirets opløsning, så et print i 1:25.000 får N50-kortets 20 m-kurver og tekst i
+læsbar størrelse i stedet for de tætte 5 m FKB-kurver, som et 256 px-felt ellers ville udløse. PDF'en henter kun de kilder,
+udsnittet kan vise: ingen Kartverket-kald for et print i Sverige, ingen OpenTopoMap-kald midt i Norge.
+
+**Kreditering.** På skærmen viser MapLibre kildernes egne tekster plus et link til `/kilder`. I PDF'en står
+"Kortdata: Kartverket" og/eller "Kortdata: OpenTopoMap/OpenStreetMap" i foden, og licenslinjerne står i boksen øverst til
+venstre på kortet. Hvilke kilder et print viser, afgøres ud fra udsnittet (Kartverket ud til 25 km fra Norge til søs, 3 km over svensk land).
+
+**Gitter og misvisning.** Uden for Danmark følger gitteret altid GPS'ens zoner (32, 33, 34 og 35, også MGRS), uanset valget
+"32 – hele Danmark". Ligger et print i zone 33 og dækker svensk land, står der "(= SWEREF 99 TM)" i foden, fordi SWEREF 99 TM
+har samme projektion som UTM 33. Misvisningen regnes med WMM2025 for udsnittets midte, så den gælder også i Norge og Sverige.
+
+**Kun højdekurver.** Vælg "Intet basiskort" og slå "Højdekurver Norge (Kartverket)" til. Der findes ikke en fri
+højdekurvetjeneste for Sverige; der må man bruge OpenTopoMap, som har kurverne indbygget.
+
+### Begrænsninger
+
+- **Sverige har ikke Lantmäteriets kort.** Det eneste gratis webkort, *Topografisk webbkarta Visning, översiktlig*
+  (CC0, kræver et gratis API-token fra Geotorget), går kun til zoom 14 (ca. 10 m pr. pixel), er for groft til print i
+  1:25.000 og lukker 31. december 2026 ([Lantmäteriet, 20/5-2026](https://www.lantmateriet.se/sv/geodata/vara-produkter/Produktnyheter/Geografisk-information/avveckling-av-produkten-topografisk-webbkarta-visning-oversiktlig/)).
+  Det detaljerede *Topografisk webbkarta Visning, cache* koster penge. Derfor er der ikke bygget et token-proxy-led, og
+  intet token skal oprettes. Den varige vej er *Topografisk webbkarta Nedladdning, raster* (gratis under vilkårene for
+  värdefulla datamängder): hent cachen via en Geotorget-konto og læg den som PMTiles på `tiles.mahoje.dk`, ligesom de danske
+  5/10 m-kurver. Det kræver, at Mads opretter en konto på [geotorget.lantmateriet.se](https://geotorget.lantmateriet.se),
+  bestiller produktet og godkender lagerpladsen.
+- **OpenTopoMap** kører på en lille server og beder om, at den ikke belastes med masse-download. Fliserne gemmes derfor
+  aldrig offline, og et stort print med mange ark henter mange fliser. Kartverkets fliser gemmes heller ikke offline:
+  zoom 12-20 indeholder Geovekst-data, som må vises, men ikke kopieres uden særskilt tilladelse.
+- **De danske lag** (Skærmkort-stilarter, ortofoto, DHM-kurver, matrikel, Danske Stednavne) har ingen data uden for Danmark.
+  Ortofoto findes ikke gratis for Norge (Norge i bilder kræver aftale) eller Sverige (Ortofoto Visning koster penge).
+- **Søgning i Sverige**: Lantmäteriets ortnamn kræver konto og token, og Nominatim tillader ikke søg-mens-du-skriver.
+  Svenske steder findes ved at panorere kortet.
+- På skærmen viser krediteringen både Kartverket og OpenTopoMap, når man er uden for Danmark, også hvor kun den ene ses.
+  PDF'en krediterer præcist.
 
 ## Coordinate grids and point coordinates
 
