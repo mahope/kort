@@ -186,7 +186,7 @@ export const DATA_SOURCES: DataSource[] = [
     licence: "CC BY 4.0 (Kartverkets gratisprodukter)",
     licenceUrl: "https://www.kartverket.no/api-og-data/vilkar-for-bruk",
     credit:
-      ""© Kartverket" med link på kortet, "Kortdata: Kartverket" i PDF'ens fod og "Kort over Norge: © Kartverket (CC BY 4.0)" i boksen på kortet.",
+      "\"© Kartverket\" med link på kortet, \"Kortdata: Kartverket\" i PDF'ens fod og \"Kort over Norge: © Kartverket (CC BY 4.0)\" i boksen på kortet.",
     layers: ["kurverNorge"],
   },
   {
@@ -200,7 +200,7 @@ export const DATA_SOURCES: DataSource[] = [
     licence: "Kortfliser CC-BY-SA, data ODbL (OpenStreetMap)",
     licenceUrl: "https://opentopomap.org/about",
     credit:
-      ""Kortdata: © OpenStreetMap-bidragydere, SRTM | Kortdesign: © OpenTopoMap (CC-BY-SA)" på kortet og i boksen på PDF'en.",
+      "\"Kortdata: © OpenStreetMap-bidragydere, SRTM | Kortdesign: © OpenTopoMap (CC-BY-SA)\" på kortet og i boksen på PDF'en.",
   },
   {
     id: "wmm",
