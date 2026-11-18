@@ -1,5 +1,6 @@
 import type { BaseLayer, MapStyle, OverlayId } from "@/types/map";
 import { DATAFORSYNINGEN_TOKEN, MAP_STYLES } from "./styles";
+import { soekortDataUrl, type VectorOverlayKind } from "./vectorOverlays";
 
 /**
  * Ortofoto WMTS tile URL template.
@@ -125,12 +126,20 @@ const DDM_DEPTH_URL =
  */
 const DDM_RELIEF_URL = DDM_DEPTH_URL.replace("LAYERS=ddm_50m_dybde_relief", "LAYERS=ddm_50m_skyggekort_overdrevet");
 
+/**
+ * The DDM50 terms themselves (PDF, May 2024). They say a copy must be made
+ * available to third parties, e.g. by a link, so screen and /kilder link the
+ * document. The PDF prints the agency's short page address instead (the terms
+ * PDF is the first link there): the document URL is 190 characters of %-codes.
+ */
 export const DDM_TERMS_URL =
+  "https://dataforsyningen.dk/asset/PDF/rettigheder_vilkaar/Vilk%C3%A5r%20og%20betingelser%20for%20brug%20af%20marine%20data%20indeholdt%20i%20Danmarks%20Dybdemodel%2050%20m%20opl%C3%B8sning.pdf";
+export const DDM_TERMS_PAGE_URL =
   "https://gst.dk/ansvarsomraader/soekort-og-marine-data/soeopmaaling-og-dybdedata/danmarks-dybdemodel";
 
 /** The three items Geodatastyrelsen's DDM50 terms (May 2024) require, plus the terms link. */
 const DDM_ATTRIBUTION = `Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning. Indeholder WMS-tjeneste (<a href='${DDM_TERMS_URL}'>vilkår</a>). Model og data er ikke egnet til navigation`;
-const DDM_CREDIT = `Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning. Indeholder WMS-tjeneste. Model og data er ikke egnet til navigation. Vilkår: ${DDM_TERMS_URL}`;
+const DDM_CREDIT = `Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning. Indeholder WMS-tjeneste. Model og data er ikke egnet til navigation. Vilkår: ${DDM_TERMS_PAGE_URL}`;
 
 /**
  * EMODnet Bathymetry (CC BY 4.0), mean depth, transparent over land. The
@@ -206,6 +215,8 @@ export interface RasterSourceConfig {
   contourInterval?: 5 | 10;
   /** Highest zoom the server has; MapLibre enlarges these tiles above it instead of failing on 404. */
   maxzoom?: number;
+  /** Our own GeoJSON snapshot (public/data/soekort, see vectorOverlays.ts) instead of raster tiles. */
+  vector?: VectorOverlayKind;
 }
 
 /** `{ maxzoom }` for sources that set one, else nothing (MapLibre rejects `maxzoom: undefined`). */
@@ -347,6 +358,38 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     noOffline: true,
     notForNavigation: true,
   },
+  // Vector snapshots from public/data/soekort: `tiles` is unused, the layers come from vectorOverlays.ts.
+  soedybder: {
+    tiles: [soekortDataUrl("soedybder")],
+    tileSize: 512,
+    vector: "soedybder",
+    attribution:
+      "Sødybder: <a href='https://arealdata.miljoeportal.dk/'>Danmarks Miljøportal</a> (NOVANA). Indeholder data, som benyttes i henhold til <a href='https://miljoeportal.dk/dataansvar/vilkaar-for-brug/'>vilkår for brug af danske offentlige data</a>. Ikke til navigation",
+    credit:
+      "Sødybder: Miljøstyrelsen/Danmarks Miljøportal (NOVANA), forenklet af kort.mahoje.dk. Indeholder data, som benyttes i henhold til vilkår for brug af danske offentlige data",
+    noOffline: true,
+    notForNavigation: true,
+  },
+  indsoekort: {
+    tiles: [soekortDataUrl("indsoekort")],
+    tileSize: 512,
+    vector: "indsoekort",
+    attribution: `Historiske indsøkort: &copy; Geodatastyrelsen (Thorkild Høy m.fl.), <a href='${KDS_LICENCE_URL}'>CC BY 4.0</a>. Historiske kort, ikke til navigation`,
+    credit: "Historiske indsøkort: Geodatastyrelsen (Thorkild Høy m.fl.), CC BY 4.0. Historiske kort, ikke egnet til navigation",
+    noOffline: true,
+    notForNavigation: true,
+  },
+  vrag: {
+    tiles: [soekortDataUrl("vrag")],
+    tileSize: 512,
+    vector: "vrag",
+    attribution:
+      "Vrag: <a href='https://emodnet.ec.europa.eu/en/human-activities'>EMODnet Human Activities</a> (CC BY 4.0), data fra UK Hydrographic Office (<a href='https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/'>OGL v3.0</a>). Ikke til navigation",
+    credit:
+      "Vrag: EMODnet Human Activities (CC BY 4.0). Indeholder data fra UK Hydrographic Office, Open Government Licence v3.0",
+    noOffline: true,
+    notForNavigation: true,
+  },
 };
 
 /** Overlays shown in the UI, in order, with their labels. */
@@ -362,6 +405,24 @@ export const OVERLAY_LABELS: Record<OverlayId, string> = {
   havbund: "Havbundens relief (Dybdemodel, skyggekort)",
   havdybder: "Havdybder Europa (EMODnet, grovere)",
   soemaerker: "Sømærker (OpenSeaMap)",
+  soedybder: "Sødybder (dybdekurver i 80 søer)",
+  indsoekort: "Historiske indsøkort (dybdekort over søer som bilag)",
+  vrag: "Skibsvrag (EMODnet)",
 };
 
-export const SEA_OVERLAYS: readonly OverlayId[] = ["dybdemodel", "havbund", "havdybder", "soemaerker"];
+/** The warning on every sea and lake layer, on screen and on the PDF. */
+export const NAVIGATION_WARNING = "Må ikke bruges til navigation. Brug officielle søkort.";
+
+/** Under the warning: what the map is for, in our own words (like marinekort.dk's note). */
+export const SEA_DATA_NOTE =
+  "Havets og søernes data er bearbejdet og forenklet til kortet. Kortet er til orientering og turplanlægning.";
+
+export const SEA_OVERLAYS: readonly OverlayId[] = [
+  "dybdemodel",
+  "havbund",
+  "havdybder",
+  "soemaerker",
+  "soedybder",
+  "indsoekort",
+  "vrag",
+];

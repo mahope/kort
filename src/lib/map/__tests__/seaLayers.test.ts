@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { DDM_TERMS_URL, OVERLAY_LABELS, OVERLAY_SOURCES, SEA_OVERLAYS, kdsPrintCredit, sourceZoomLimit } from "../sources";
+import { DDM_TERMS_PAGE_URL, DDM_TERMS_URL, NAVIGATION_WARNING, OVERLAY_LABELS, OVERLAY_SOURCES, SEA_OVERLAYS, kdsPrintCredit, sourceZoomLimit } from "../sources";
 import { offlineLayerIds } from "@/lib/offline/tiles";
 import { deserializeState, serializeState } from "@/lib/url/urlState";
 import { thirdPartyCredits, drawThirdPartyCredits, overviewCreditsBox } from "@/lib/pdf/generator";
@@ -27,9 +27,11 @@ describe("overlay layers", () => {
     // Credit text, "WMS-tjeneste", not for navigation, and a link to the terms.
     expect(src.credit).toContain("Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning");
     expect(src.credit).toContain("Indeholder WMS-tjeneste");
-    expect(src.credit).toContain(`Vilkår: ${DDM_TERMS_URL}`);
+    // The terms must be made available: the PDF names the agency's page, the map links the document.
+    expect(src.credit).toContain(`Vilkår: ${DDM_TERMS_PAGE_URL}`);
     expect(src.credit).toContain("ikke egnet til navigation");
-    expect(src.attribution).toContain("href='https://gst.dk/");
+    expect(src.attribution).toContain(`href='${DDM_TERMS_URL}'`);
+    expect(DDM_TERMS_URL).toMatch(/^https:\/\/dataforsyningen\.dk\/asset\/PDF\/.*Dybdemodel.*\.pdf$/);
   });
 
   it("serves the seabed relief from Dybdemodellen with the same terms-compliant credit", () => {
@@ -127,7 +129,8 @@ describe("PDF credits", () => {
     }) as typeof pdf.rect;
     const m = layout.marginMm;
     drawThirdPartyCredits(pdf, m + 1.5, m + 1.5, Math.min(110, layout.mapWidthMm - 24));
-    expect(texts[0].t).toBe("IKKE TIL NAVIGATION");
+    expect(texts[0].t).toBe(NAVIGATION_WARNING);
+    expect(texts.map((t) => t.t).join(" ")).toMatch(/orientering og turplanlægning/);
     expect(texts.map((t) => t.t).join(" ")).toMatch(/EMODnet/);
     expect(texts.length).toBeGreaterThan(3); // the OSM/EMODnet/OpenSeaMap credits wrap on A5
     const [bx, by, bw, bh] = rects[0];
