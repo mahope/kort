@@ -69,6 +69,7 @@ export function MapContainer() {
   const needsDrawing = useDrawStore((s) => s.activeMode !== null || s.features.length > 0);
 
   const mapStyle = getBaseMapStyle(baseLayer, style);
+  const rasterBase = RASTER_BASE_LAYERS[baseLayer];
 
   const onMove = useCallback(
     (evt: ViewStateChangeEvent) => {
@@ -87,18 +88,16 @@ export function MapContainer() {
   // (react-map-gl doesn't reliably diff the tiles prop on raster sources)
   useEffect(() => {
     const map = mapRef.current?.getMap();
-    if (!map || baseLayer === "skaermkort") return;
-    const cfg = RASTER_BASE_LAYERS[baseLayer];
-    if (!cfg) return;
+    if (!map || !rasterBase) return;
     const source = map.getSource("base-raster");
     if (source && "setTiles" in source) {
       const raster = source as import("maplibre-gl").RasterTileSource;
       // The source is created once, so its zoom limit must follow the layer too
       // (OSM stops at 19, ortofoto goes to 20); setTiles reloads with it.
-      raster.maxzoom = cfg.maxzoom ?? 22;
-      raster.setTiles(cfg.tiles);
+      raster.maxzoom = rasterBase.maxzoom ?? 22;
+      raster.setTiles(rasterBase.tiles);
     }
-  }, [baseLayer]);
+  }, [rasterBase]);
 
   useEffect(() => {
     if (flyToTarget && mapRef.current) {
@@ -127,14 +126,14 @@ export function MapContainer() {
       style={{ width: "100%", height: "100%" }}
     >
       {/* Raster base layer (ortofoto, dtk25, osm, historiske kort) */}
-      {baseLayer !== "skaermkort" && RASTER_BASE_LAYERS[baseLayer] && (
+      {rasterBase && (
         <Source
           id="base-raster"
           type="raster"
-          tiles={RASTER_BASE_LAYERS[baseLayer].tiles}
-          tileSize={RASTER_BASE_LAYERS[baseLayer].tileSize}
-          {...sourceZoomLimit(RASTER_BASE_LAYERS[baseLayer])}
-          attribution={RASTER_BASE_LAYERS[baseLayer].attribution}
+          tiles={rasterBase.tiles}
+          tileSize={rasterBase.tileSize}
+          {...sourceZoomLimit(rasterBase)}
+          attribution={rasterBase.attribution}
         >
           <Layer id="base-raster-layer" type="raster" />
         </Source>

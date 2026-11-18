@@ -8,6 +8,7 @@ import { ScaleSelector } from "./ScaleSelector";
 import { PaperFormatSelector } from "./PaperFormatSelector";
 import { CoverageInfo } from "./CoverageInfo";
 import { PrintPreview } from "./PrintPreview";
+import { PrintAids } from "./PrintAids";
 import { DpiSelector } from "./DpiSelector";
 import { BearingSelector } from "./BearingSelector";
 import { MultiPageSelector } from "./MultiPageSelector";
@@ -238,6 +239,7 @@ function SidebarContent() {
           <CollapsibleSection id="udskrivning" title="Udskrivning">
             <BearingSelector />
             <DpiSelector />
+            <PrintAids />
             <MultiPageSelector />
           </CollapsibleSection>
 
