@@ -25,6 +25,12 @@ describe("sources page data", () => {
     }
   });
 
+  it("dates every snapshot we serve ourselves", () => {
+    for (const id of ["soedybder", "indsoekort", "vrag"]) {
+      expect(DATA_SOURCES.find((s) => s.layers?.includes(id as OverlayId))?.retrieved).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+  });
+
   it("marks exactly the not-for-navigation overlays as such", () => {
     for (const s of DATA_SOURCES) {
       for (const id of s.layers ?? []) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMapStore } from "@/stores/mapStore";
-import { DDM_TERMS_URL, SEA_OVERLAYS } from "@/lib/map/sources";
+import { DDM_TERMS_URL, NAVIGATION_WARNING, SEA_OVERLAYS, SOURCES_PAGE_PATH } from "@/lib/map/sources";
 
 /** Shown while a sea layer is on: what the data is, and that it is not a chart. */
 export function SeaNotice() {
@@ -9,12 +9,18 @@ export function SeaNotice() {
   if (!seaOn) return null;
   return (
     <p className="mt-2 rounded border border-border bg-surface-secondary px-2 py-1.5 text-xs text-text-secondary" role="note">
-      <strong className="font-semibold text-foreground">Ikke til navigation.</strong> Officielle søkort er ophavsretligt
-      beskyttede og sælges af Geodatastyrelsen. Her vises frie data: dybder og havbundens relief fra Danmarks Dybdemodel (50 m,{" "}
+      <strong className="font-semibold text-foreground">{NAVIGATION_WARNING}</strong> Officielle søkort er ophavsretligt
+      beskyttede og sælges af Geodatastyrelsen. Her vises frie data, bearbejdet og forenklet til kortet: dybder og
+      havbundens relief fra Danmarks Dybdemodel (50 m,{" "}
       <a href={DDM_TERMS_URL} target="_blank" rel="noopener noreferrer" className="underline">
         vilkår
       </a>
-      ), grovere dybder fra EMODnet uden for Danmark og sømærker fra OpenSeaMap. Det står også på PDF&apos;en.
+      ), grovere dybder fra EMODnet, sømærker fra OpenSeaMap, dybdekurver i 80 søer fra Miljøportalen, vrag fra EMODnet
+      og historiske indsøkort, som kommer med som ekstra sider i PDF&apos;en. Kortet er til orientering og
+      turplanlægning. Advarslen står også på PDF&apos;en.{" "}
+      <a href={SOURCES_PAGE_PATH} className="underline">
+        Alle kilder
+      </a>
     </p>
   );
 }
@@ -32,7 +38,7 @@ export function SeaBadge() {
       role="note"
       data-testid="sea-badge"
     >
-      Ikke til navigation
+      Må ikke bruges til navigation
     </div>
   );
 }

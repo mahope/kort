@@ -47,6 +47,9 @@ const OVERLAY_CODES: Record<string, OverlayId> = {
   hd: "havdybder",
   sm: "soemaerker",
   kn: "kurverNorge",
+  sd: "soedybder",
+  ik: "indsoekort",
+  vr: "vrag",
 };
 
 const OVERLAY_TO_CODE = Object.fromEntries(

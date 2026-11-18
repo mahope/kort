@@ -19,6 +19,7 @@ import {
 import { mapRegionForBounds, nordicSourcesInBounds, type MapRegion } from "@/lib/geo/regions";
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
 import { contourLayers, contourSourceUrl, ensurePmtilesProtocol, SCREEN_PX_PER_MM } from "@/lib/map/contours";
+import { vectorOverlayLayers, vectorOverlaySource } from "@/lib/map/vectorOverlays";
 import { timed } from "./timing";
 
 const PRINT_RASTER_BASE_LAYERS = getRasterBaseLayers("print");
@@ -295,6 +296,11 @@ export async function renderMapToImage({
     for (const overlay of activeOverlays) {
       const sourceConfig = OVERLAY_SOURCES[overlay.id];
       const sourceId = `${overlay.id}-overlay`;
+      if (sourceConfig.vector) {
+        map.addSource(sourceId, vectorOverlaySource(sourceConfig.vector));
+        for (const layer of vectorOverlayLayers(sourceConfig.vector, sourceId, overlay.opacity, pxPerMm)) map.addLayer(layer);
+        continue;
+      }
       if (sourceConfig.contourInterval) {
         ensurePmtilesProtocol();
         map.addSource(sourceId, { type: "vector", url: contourSourceUrl() });
@@ -392,7 +398,11 @@ export async function renderMapToImage({
 
     // Wait for all tiles (including raster overlays) to load
     const tileMap = map;
+    const vectorSources = activeOverlays.filter((o) => OVERLAY_SOURCES[o.id].vector).map((o) => `${o.id}-overlay`);
     await timed("tiles", async () => {
+      // A GeoJSON source has no tiles until its file has arrived, so the tile
+      // check alone would pass before the wrecks or lake depths are drawn.
+      await waitForSourcesLoaded(tileMap, vectorSources, failedSources);
       await waitForTilesLoaded(tileMap);
       for (let attempt = 1; failedTiles.size > 0 && attempt <= TILE_RETRIES; attempt++) {
         if (isOffline()) break;
@@ -478,6 +488,24 @@ function waitForMapLoad(map: maplibregl.Map): Promise<void> {
       clearTimeout(timeout);
       resolve();
     });
+  });
+}
+
+/** Resolves once every listed source has its data (or has failed, which is reported after). */
+function waitForSourcesLoaded(map: maplibregl.Map, sourceIds: string[], failed: Set<string>): Promise<void> {
+  if (sourceIds.length === 0) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      clearInterval(check);
+      reject(new Error("Tile-loading timeout (60s)"));
+    }, 60000);
+    const check = setInterval(() => {
+      if (sourceIds.every((id) => failed.has(id) || map.isSourceLoaded(id))) {
+        clearInterval(check);
+        clearTimeout(timeout);
+        resolve();
+      }
+    }, 100);
   });
 }
 

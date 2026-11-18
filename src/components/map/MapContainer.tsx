@@ -28,6 +28,8 @@ import {
 } from "@/lib/map/sources";
 import { useMapRegion } from "@/lib/hooks/useMapRegion";
 import { contourLayers, contourSourceUrl, ensurePmtilesProtocol } from "@/lib/map/contours";
+import { vectorOverlayLayers, vectorOverlaySource } from "@/lib/map/vectorOverlays";
+import { LakeChartPopup } from "./LakeChartPopup";
 import { PrintFrame } from "./PrintFrame";
 import { GeolocationButton } from "./GeolocationButton";
 import { ImportedLayers } from "./ImportedLayers";
@@ -179,6 +181,22 @@ export function MapContainer() {
 
       {/* Overlays (generic loop) */}
       {overlays.filter((o) => o.enabled).map((overlay) => {
+        const vector = OVERLAY_SOURCES[overlay.id].vector;
+        if (vector) {
+          const sourceId = `${overlay.id}-overlay`;
+          return (
+            <Source
+              key={overlay.id}
+              id={sourceId}
+              {...vectorOverlaySource(vector)}
+              attribution={OVERLAY_SOURCES[overlay.id].attribution}
+            >
+              {vectorOverlayLayers(vector, sourceId, overlay.opacity).map((layer) => (
+                <Layer key={layer.id} {...layer} />
+              ))}
+            </Source>
+          );
+        }
         const interval = OVERLAY_SOURCES[overlay.id].contourInterval;
         if (interval) {
           ensurePmtilesProtocol();
@@ -218,6 +236,7 @@ export function MapContainer() {
       })}
 
       <ImportedLayers />
+      {overlays.some((o) => o.id === "indsoekort" && o.enabled) && !needsDrawing && <LakeChartPopup />}
       {needsDrawing && <DrawingTools />}
       <UtmGrid />
       <PrintFrame />

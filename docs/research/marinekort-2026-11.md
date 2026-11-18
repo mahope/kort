@@ -110,3 +110,40 @@ marinekort.dk er en planlægnings- og live-app (AIS, vejr, EfS, ruter med login)
 3. **Skibsruter (anbefaling 5).** Spørg Søfartsstyrelsen om licensen for datasættet bag `sfs_waterway_inspire`.
 
 Det nye lag i denne gren bruger det Dataforsyningen-token, som appen allerede har (`NEXT_PUBLIC_DATAFORSYNINGEN_TOKEN`, se `docs/tokens.md`). Der skal ikke oprettes nogen ny nøgle.
+
+## Runde 2 (18. november 2026): indsøkort, sødybder, vrag og DDM-vilkår
+
+Mads har indsat marinekort.dk/attribution, så listen over deres datasæt er nu kendt. Denne runde gennemgår dem, der giver mening på et udskrevet kort til kano, kajak og sejlads.
+
+### Bygget
+
+| Lag | Kilde og distribution | Licens og kreditering | Hentet |
+| --- | --- | --- | --- |
+| Sødybder (dybdekurver pr. hele meter med tal) | Miljøstyrelsen/SGAV, "Dybdekort over danske søer (NOVANA)" via Danmarks Miljøportal. WFS `geodata.fvm.dk/geoserver/NOVANA`, lag `Soe_dybdekort_konturer` (0,5 m-bånd som polygoner, 144 MB). Forenklet til hele meter med 1,5 m tolerance: 1,3 MB GeoJSON i `public/data/soekort/` | Danmarks Miljøportals "Vilkår for brug af danske offentlige data": gratis, må ændres og bruges kommercielt. Kildetekst: "Indeholder data, som benyttes i henhold til vilkår for brug af danske offentlige data". Datasættet "må ikke anvendes til navigation eller sejlads" | 18/11-2026 |
+| Historiske indsøkort | Geodatastyrelsen, kortværket "Indsøkort" i arkivet bag historiskekort.dk: `api.dataforsyningen.dk/rest/arkivmeta/v3/kort?kortvaerk=Indsøkort` (264 skanninger, 231 opmålinger) og billederne via IIIF (`/rest/arkivkort/iiif/3/…`, CORS og CSP er i orden). Kortene er ikke georefererede, så laget er en markør pr. sø, og PDF'en får de skannede kort som ekstra sider (højst fire) | CC BY 4.0 (Dataforsyningens vilkår). Skanningerne bærer "© Kort & Matrikelstyrelsen … Opmålt af Thorkild Høy" | 18/11-2026 |
+| Skibsvrag | EMODnet Human Activities, WFS `emodnet:wwshipwrecks` (UKHO-udtræk). 1.838 vrag i boksen 7,5-15,8 Ø / 54,3-58,0 N; hævede, ikke genfundne og tvivlsomme vrag er udeladt | CC BY 4.0 (EMODnet), UKHO-data under Open Government Licence v3.0, som kræver kreditering af UKHO | 18/11-2026 |
+
+Fund undervejs:
+
+- **EMODnet Heritage Shipwrecks har ingen vrag i Danmark.** Laget `emodnet:heritageshipwrecks` dækker Frankrig, Irland, Italien, UK m.fl. (7.073 vrag, 0 i den danske boks). Vragene omkring Skandinavien ligger i `wwshipwrecks`.
+- **Indsøkortenes placering er arkivets søomrids**, ikke en georeferering. Et automatisk tjek mod Danske Stednavne fandt én reel fejl: posten "Mossø" (århus) er en kopi af kortet over Mossø i Rold Skov (fil `is_110c`), men har omridset af Mossø ved Skanderborg. Den er rettet i `CHART_FIXES` i byggescriptet. Tjekkets øvrige advarsler (Tranemose i Ringkøbing amt, Rude Skov-søerne og Hampen Sø) er navnesammenfald og korrekte.
+- **NOVANA dækker 80 søer**, mest små søer og nye vådområder, men også Tjele Langsø, Hinge Sø og Mossø i Rold Skov. Furesø, Esrum Sø og de store søer er ikke opmålt endnu; dér er indsøkortet det, der findes. Kurverne for Mossø svarer til Thorkild Høys kort fra 1981.
+
+### Danmarks Dybdemodel: vilkårene tjekket
+
+Vilkårsdokumentet (maj 2024, sagsnr. 340-3058) kræver et synligt sted på mediet: (1) "Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning", (2) hentedato eller "Indeholder WMS-tjeneste", (3) "Model og data er ikke egnet til navigation". Desuden skal en kopi af vilkårene stilles til rådighed, evt. via et link, og brugen må ikke se ud som om Geodatastyrelsen anbefaler os.
+
+Vores lag `dybdemodel` og `havbund` er DDM50 (`wms/ddm`, `ddm_50m_dybde_relief` og `ddm_50m_skyggekort_overdrevet`) og opfyldte 1-3 på kortet og i PDF'en. Linket gik til gst.dk's side om Dybdemodellen, hvor vilkårsdokumentet er første link. Det er rettet: kortet, sidepanelet og `/kilder` linker nu direkte til vilkårsdokumentet hos Dataforsyningen. PDF'en beholder den korte gst.dk-adresse, fordi dokumentets URL er 190 tegn %-koder. Vi videredistribuerer ikke DDM-data (WMS live, ingen offline-gemning), så kravet om hentedato gælder ikke.
+
+### Vurderet og fravalgt
+
+| Kilde | Hvorfor ikke |
+| --- | --- |
+| EMODnet-dybdekurver (`emodnet:contours`) | Kun 50, 100, 200 og 500 m … og tegnes hvide. Intet i Kattegat og Bælterne, lidt i Skagerrak. Dybdemodellen og EMODnet-dybdefarverne, som vi har, viser mere |
+| EMODnet Bathymetry som nyt lag | Vi har allerede `emodnet:mean_multicolour` (laget Havdybder Europa). DDM50 er finere i danske farvande; EMODnet bruges kun udenfor |
+| Forsvarets skyde- og øvelsesområder | Findes som åbne polygoner (ArcGIS `maritime.gst.dk/…/tojdvhtipl_v2/MapServer`, Forsvarets Joint GEOMETOC Support Centre), men metadata siger kun "Opendata" uden licens, og områderne har ingen navne eller numre i data. Skal afklares med Forsvaret, før det bygges. Om et område er aktivt, står alligevel kun i Efterretninger for Søfarende |
+| AIS, vejr, bølger, vandstand, navigationsadvarsler | Live-data hører ikke til et papirkort |
+| Dybdekurver for Skanderborg Sø (Skanderborg Kommune) | Kommunale vilkår og én sø. Det historiske indsøkort over Skanderborgsøerne er med |
+| Officielle søkort (ENC/papir) | Uændret: ophavsret og salg, kræver reproduktionstilladelse |
+
+Skærmbilleder: `docs/screenshots/soekort-runde2/` (Mossø i Rold Skov 1:5.000, Tjele Langsø 1:25.000, Øresund ud for Hellebæk 1:50.000, bilagssiderne og `/kilder`).

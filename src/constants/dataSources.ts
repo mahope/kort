@@ -21,7 +21,16 @@ export interface DataSource {
   /** Base maps and overlays served from this source. */
   layers?: (BaseLayer | OverlayId)[];
   notForNavigation?: boolean;
+  /**
+   * When our snapshot was fetched (ISO date), shown as "Hentet" on /kilder.
+   * Left out where no single date applies (live services, or data built or
+   * bundled at another time, see `delivery`).
+   */
+  retrieved?: string;
 }
+
+/** Date of the sea/lake snapshots in public/data/soekort (scripts/soekort/build-soekort-data.mjs). */
+export const SOEKORT_RETRIEVED = "2026-11-18";
 
 const KDS_CC_BY = "CC BY 4.0 (frie geografiske data, fra 16. maj 2024)";
 const KDS_CREDIT =
@@ -136,7 +145,7 @@ export const DATA_SOURCES: DataSource[] = [
     licence: "Geodatastyrelsens vilkår for DDM50 (maj 2024): gratis, også kommercielt, men ikke til navigation",
     licenceUrl: DDM_TERMS_URL,
     credit:
-      "\"Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning. Indeholder WMS-tjeneste. Model og data er ikke egnet til navigation\" med link til vilkårene, både på kortet og på PDF'en.",
+      "\"Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning. Indeholder WMS-tjeneste. Model og data er ikke egnet til navigation\", både på kortet og på PDF'en. Vilkårene skal stilles til rådighed: kortet og denne side linker til vilkårsdokumentet, og PDF'en har adressen på Geodatastyrelsens side om Dybdemodellen, hvor dokumentet ligger.",
     layers: ["dybdemodel", "havbund"],
     notForNavigation: true,
   },
@@ -163,6 +172,54 @@ export const DATA_SOURCES: DataSource[] = [
     credit: "\"Sømærker: © OpenSeaMap, © OpenStreetMap-bidragydere. Ikke til navigation\" på kortet og PDF'en.",
     layers: ["soemaerker"],
     notForNavigation: true,
+  },
+  {
+    id: "soedybder",
+    name: "Dybdekort over danske søer (NOVANA)",
+    provider: "Miljøstyrelsen (SGAV) via Danmarks Miljøportal (Arealdata)",
+    usedFor:
+      "Laget Sødybder: dybdekurver for hver hele meter med dybdetal i de 80 søer, der er opmålt i overvågningsprogrammet NOVANA (fx Mossø i Rold Skov og Tjele Langsø). Ikke Furesø og de store søer endnu.",
+    delivery:
+      "Øjebliksbillede af WFS-laget NOVANA:Soe_dybdekort_konturer (geodata.fvm.dk), forenklet til hele meter (1,5 m tolerance) og lagt som GeoJSON på vores egen server.",
+    licence: "Vilkår for brug af danske offentlige data (Danmarks Miljøportal): gratis, må ændres og bruges kommercielt",
+    licenceUrl: "https://miljoeportal.dk/dataansvar/vilkaar-for-brug/",
+    credit:
+      "\"Indeholder data, som benyttes i henhold til vilkår for brug af danske offentlige data\" (den tekst vilkårene kræver) med Miljøportalen og NOVANA på kortet, og at kurverne er forenklet af os på PDF'en. Datasættet må efter Miljøstyrelsens egen beskrivelse ikke bruges til navigation eller sejlads.",
+    layers: ["soedybder"],
+    notForNavigation: true,
+    retrieved: SOEKORT_RETRIEVED,
+  },
+  {
+    id: "indsoekort",
+    name: "Historiske indsøkort",
+    provider: "Geodatastyrelsen (opmålt af Thorkild Høy 1950-1990 og ældre kort fra Geodætisk Institut)",
+    usedFor:
+      "Laget Historiske indsøkort: en markør på 231 kort over danske søer (264 skanninger; nogle opmålinger findes i to tryk). Kortene er skannede og ikke georefererede, så de kommer med som ekstra sider bag kortet i PDF'en (højst fire), når søen er inden for udskriften.",
+    delivery:
+      "Et indeks fra Geodatastyrelsens arkiv (arkivmeta, kortværket Indsøkort) som GeoJSON på vores server. Skanningerne hentes fra historiskekort.dk's billedtjeneste (IIIF) hos Dataforsyningen med det offentlige token.",
+    licence: "CC BY 4.0 (Dataforsyningens vilkår)",
+    licenceUrl: KDS_LICENCE_URL,
+    credit:
+      "\"Historiske indsøkort: Geodatastyrelsen (Thorkild Høy m.fl.), CC BY 4.0\" på kortet og PDF'en og på hver bilagsside. Kortene er historiske og ikke egnede til navigation; det står på kortet og øverst på hver bilagsside. Markørens placering kommer fra arkivets metadata og er rettet, hvor den var forkert (Mossø i Rold Skov).",
+    layers: ["indsoekort"],
+    notForNavigation: true,
+    retrieved: SOEKORT_RETRIEVED,
+  },
+  {
+    id: "vrag",
+    name: "EMODnet Human Activities: vrag",
+    provider: "EMODnet Human Activities (EU), data fra UK Hydrographic Office",
+    usedFor:
+      "Laget Skibsvrag: kendte vrag i og omkring danske farvande med navn og forlisår, hvor de kendes. Hævede og ikke genfundne vrag er udeladt. Sjovt til poster på vandet, men ikke en sikkerhedsoplysning.",
+    delivery:
+      "Øjebliksbillede af WFS-laget emodnet:wwshipwrecks (ows.emodnet-humanactivities.eu) som GeoJSON på vores server. EMODnets andet vraglag (kulturarvsvrag) har ingen vrag i Danmark.",
+    licence: "CC BY 4.0 (EMODnet); UKHO-data under Open Government Licence v3.0",
+    licenceUrl: "https://emodnet.ec.europa.eu/en/terms-use-emodnet-online-services-data-and-data-products",
+    credit:
+      "\"Vrag: EMODnet Human Activities (CC BY 4.0). Indeholder data fra UK Hydrographic Office, Open Government Licence v3.0\" på kortet og PDF'en.",
+    layers: ["vrag"],
+    notForNavigation: true,
+    retrieved: SOEKORT_RETRIEVED,
   },
   {
     id: "osm",
@@ -221,5 +278,26 @@ export const DATA_SOURCES: DataSource[] = [
     licence: "Offentlig ejendom (amerikansk statsværk)",
     licenceUrl: "https://www.ncei.noaa.gov/products/world-magnetic-model",
     credit: "Modellen nævnes ved navn i PDF'ens misvisningsdiagram.",
+  },
+];
+
+/** Sources we looked at for the sea layers and left out, with the reason (shown on /kilder). */
+export const DECLINED_SOURCES: { name: string; reason: string }[] = [
+  {
+    name: "Officielle søkort (ENC og papir), Geodatastyrelsen",
+    reason: "Ophavsretligt beskyttede og sælges; gengivelse kræver en særskilt tilladelse.",
+  },
+  {
+    name: "EMODnet-dybdekurver",
+    reason: "Findes kun fra 50 m og dybere og tegnes hvide. Danske farvande er lavere; Dybdemodellen viser dem bedre.",
+  },
+  {
+    name: "Forsvarets skyde- og øvelsesområder",
+    reason:
+      "Findes som åbne polygoner hos Geodatastyrelsen, men uden angivet licens og uden navne på områderne. Vi venter på en afklaring. Om et område er aktivt, står i Efterretninger for Søfarende.",
+  },
+  {
+    name: "Live-data: AIS, vejr, vandstand og navigationsadvarsler",
+    reason: "Hører til en navigationsapp, ikke et udskrevet kort, der er forældet, når det bruges.",
   },
 ];

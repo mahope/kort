@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getBrand } from "@/config/brand";
-import { DATA_SOURCES } from "@/constants/dataSources";
+import { DATA_SOURCES, DECLINED_SOURCES } from "@/constants/dataSources";
+import { NAVIGATION_WARNING, SEA_DATA_NOTE } from "@/lib/map/sources";
 
 const brand = getBrand();
 
@@ -13,10 +14,17 @@ export const metadata: Metadata = {
 
 const linkClass = "text-primary hover:text-primary-hover underline underline-offset-2";
 
+/** "18. november 2026" from an ISO date, without depending on the server's locale data. */
+function formatDate(iso: string): string {
+  const months = ["januar", "februar", "marts", "april", "maj", "juni", "juli", "august", "september", "oktober", "november", "december"];
+  const [y, m, d] = iso.split("-").map(Number);
+  return `${d}. ${months[m - 1]} ${y}`;
+}
+
 const TECH: { name: string; text: string }[] = [
   {
     name: "Kortet i browseren",
-    text: "MapLibre GL JS tegner kortet med WebGL. Basiskort og lag hentes som fliser direkte fra kilderne: vector tiles til Skærmkortet, WMS og WMTS til de øvrige kort, og PMTiles til vores egne højdekurver.",
+    text: "MapLibre GL JS tegner kortet med WebGL. Basiskort og lag hentes som fliser direkte fra kilderne: vector tiles til Skærmkortet, WMS og WMTS til de øvrige kort, og PMTiles til vores egne højdekurver. Sødybder, vrag og indsøkort-markører er små GeoJSON-filer på vores egen server.",
   },
   {
     name: "PDF'en",
@@ -80,10 +88,16 @@ export default function SourcesPage() {
                     </dd>
                     <dt className="font-medium">Kreditering</dt>
                     <dd className="text-text-secondary">{s.credit}</dd>
+                    {s.retrieved && (
+                      <>
+                        <dt className="font-medium">Hentet</dt>
+                        <dd className="text-text-secondary">
+                          {formatDate(s.retrieved)} (øjebliksbillede på vores server)
+                        </dd>
+                      </>
+                    )}
                   </dl>
-                  {s.notForNavigation && (
-                    <p className="mt-2 text-sm font-semibold">Ikke til navigation.</p>
-                  )}
+                  {s.notForNavigation && <p className="mt-2 text-sm font-semibold">{NAVIGATION_WARNING}</p>}
                 </li>
               ))}
             </ul>
@@ -95,14 +109,27 @@ export default function SourcesPage() {
             </h2>
             <p className="text-text-secondary mb-3">
               De officielle danske søkort (papirkort og elektroniske ENC-søkort) laves af Geodatastyrelsen. De er
-              ophavsretligt beskyttede og sælges, så dem viser vi ikke. Havlagene her bygger på frie data: dybder og
-              havbundens relief fra Danmarks Dybdemodel, grovere dybder fra EMODnet uden for danske farvande og sømærker
-              fra OpenSeaMap, som frivillige kortlægger.
+              ophavsretligt beskyttede og sælges, så dem viser vi ikke. Hav- og søkortlagene her bygger på frie data:
+              dybder og havbundens relief fra Danmarks Dybdemodel, grovere dybder fra EMODnet uden for danske farvande,
+              sømærker fra OpenSeaMap, som frivillige kortlægger, dybdekurver i 80 søer fra Miljøstyrelsens
+              overvågning, vrag fra EMODnet og Geodatastyrelsens historiske indsøkort.
             </p>
-            <p className="text-text-secondary">
-              Ingen af havlagene er søkort, og de må ikke bruges til navigation. Det står i appen, på kortet og på
-              PDF&apos;en, så længe et havlag er slået til.
+            <p className="mb-3 rounded border border-border p-3 font-semibold">
+              {NAVIGATION_WARNING} {SEA_DATA_NOTE}
             </p>
+            <p className="text-text-secondary mb-3">
+              Vi henter, omregner og forenkler data, så de kan vises og udskrives: kurver bliver glattet, punkter
+              udtyndet og skannede kort formindsket. Noget kan derfor være unøjagtigt, forældet eller mangle. Advarslen
+              står i appen, på kortet og på PDF&apos;en, så længe et af lagene er slået til.
+            </p>
+            <h3 className="font-semibold mb-2">Kilder vi har valgt fra</h3>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-text-secondary">
+              {DECLINED_SOURCES.map((d) => (
+                <li key={d.name}>
+                  <span className="font-medium text-foreground">{d.name}:</span> {d.reason}
+                </li>
+              ))}
+            </ul>
           </section>
 
           <section aria-labelledby="norden">

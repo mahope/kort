@@ -37,7 +37,10 @@ export type OverlayId =
   | "havbund"
   | "havdybder"
   | "soemaerker"
-  | "kurverNorge";
+  | "kurverNorge"
+  | "soedybder"
+  | "indsoekort"
+  | "vrag";
 
 export interface OverlayState {
   id: OverlayId;

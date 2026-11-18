@@ -23,7 +23,7 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 - **Koordinatgitter** - UTM, MGRS eller DKTM1-4 (dansk Transversal Mercator) som grid-linjer og koordinater på kort og PDF, til orientering i felten og landmåling
 - **Kort til orienteringsløb** - Vælg **Intet basiskort** under **Kortlag → Basiskort**, og slå fx 5 m- eller 10 m-højdekurver til under **Ekstra lag** i samme menu. Kortvisningen og PDF’en får hvid baggrund med de valgte lag. Tilføj gitter eller egne poster efter behov. Under **Alle indstillinger og værktøjer → Udskrivning** kan du vælge målestokslineal og nordpil til eller fra. Uden basiskort er begge slået fra som standard, ligesom misvisningsdiagrammet. Valget følger med i delingslinket.
 - **Overlays** - Højdekurver (0,25 m, 0,5 m og roligere 2,5 m fra Dataforsyningen, plus egne 5 og 10 m-kurver med højdetal fra ca. 1:25.000 på skærmen og 1:50.000 på PDF'en; kurverne vises fra zoom 11, ca. 1:80.000 på skærmen), skyggekort, matrikelskel og stednavne
-- **Havlag** - Havdybder og havbundens relief (skyggekort) i danske farvande fra Danmarks Dybdemodel (Geodatastyrelsen, 50 m), grovere dybder uden for Danmark fra EMODnet Bathymetry (CC BY 4.0) og sømærker (OpenSeaMap). Ikke til navigation: det står i appen og på PDF'en
+- **Hav- og søkortlag** - Havdybder og havbundens relief (skyggekort) i danske farvande fra Danmarks Dybdemodel (Geodatastyrelsen, 50 m), grovere dybder uden for Danmark fra EMODnet Bathymetry (CC BY 4.0) og sømærker (OpenSeaMap). Til kano, kajak og sejlads også dybdekurver med tal i 80 søer (Miljøstyrelsens NOVANA-opmåling via Danmarks Miljøportal), skibsvrag med navn (EMODnet Human Activities, CC BY 4.0) og Geodatastyrelsens historiske indsøkort (CC BY 4.0): en markør pr. sø på kortet, og de skannede kort kommer med som ekstra sider bag kortet i PDF'en. "Må ikke bruges til navigation. Brug officielle søkort." står i appen, på kortet, på PDF'en og på hver indsøkort-side
 - **Import** - Indlæs GPX, GeoJSON og KML-filer og print dem direkte
 - **Tegning & mål** - Tegn ruter og mål afstande direkte på kortet
 - **Multi-page print og gulvkort** - Udskriv store områder over op til 5 × 5 ark med overlap. PDF'en starter med en oversigtsside (arkgitter, samlet størrelse og vejledning), og hvert ark har hjørnemærker, "Ark B2 (side 6 af 10)", en stiplet linje hvor naboarket lægges, og navnene på nabo-arkene i margenen
@@ -62,6 +62,7 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 - **Stednavne:** [Danske Stednavne](https://www.klimadatastyrelsen.dk/data/danske-stednavne) (Klimadatastyrelsen) - snapshot i `data/stednavne.tsv.gz`, søges server-side via `/api/stednavne`
 - **Norge:** [Kartverket](https://www.kartverket.no/api-og-data/vilkar-for-bruk) - Topografisk norgeskart (WMTS-cache og WMS), høydekurver og stednavne (SSR), CC BY 4.0, ingen nøgle
 - **Sverige:** [OpenTopoMap](https://opentopomap.org/about) - OpenStreetMap-data og højdedata fra SRTM og Sonny, CC-BY-SA. Lantmäteriet bruges ikke (se [Norge og Sverige](#norge-og-sverige))
+- **Sødybder, vrag og indsøkort-indeks:** øjebliksbilleder i `public/data/soekort/` (hentet 18/11-2026), bygget med `DATAFORSYNINGEN_TOKEN=… node scripts/soekort/build-soekort-data.mjs`. Ret `SOEKORT_RETRIEVED` i `src/constants/dataSources.ts`, når de bygges igen. Skærmbilleder: `node scripts/capture-soekort.mjs` (efter `npm run build`)
 - De danske data er frie offentlige geodata (CC BY 4.0). Alle kilder med licens og kreditering står på `/kilder`
 
 ## Kom i gang
@@ -169,7 +170,8 @@ src/
 ## Arkitektur
 
 - **Kort:** Dataforsyningens vector tiles i Web Mercator (EPSG:3857) renderes direkte i MapLibre GL JS - ingen reprojektion nødvendig
-- **PDF:** En skjult MapLibre-instans oprettes ved fuld target-opløsning (300 DPI), renderer tiles, og eksporterer som JPEG til jsPDF
+- **PDF:** En skjult MapLibre-instans oprettes ved fuld target-opløsning (300 DPI), renderer tiles, og eksporterer som JPEG til jsPDF. Med laget Historiske indsøkort tilføjes op til fire sider med de skannede indsøkort for søer i udsnittet (hentet fra Dataforsyningens IIIF-billedtjeneste)
+- **Egne vektorlag:** Sødybder, vrag og indsøkort-markører er små GeoJSON-filer, som appen selv serverer (`src/lib/map/vectorOverlays.ts`). Stregtykkelser og tekst er angivet i mm på papir, så de ser ens ud på skærm og i 300 dpi
 - **Søgning:** Parallel fetch fra Adressevælger (adresser) og appens egen `/api/stednavne` (stednavne). DAWA lukker 1. oktober 2026, og der findes ingen officiel live-afløser med fritekstsøgning i stednavne: Gsearch står på Klimadatastyrelsens lukkeliste, og Datafordelerens DS-GraphQL kan kun slå eksakte navne op. Registret Danske Stednavne er ikke opdateret siden september 2025, så et snapshot er lige så aktuelt. Indekset genbygges med `node scripts/build-stednavne-index.mjs <stednavne2.json>`
 - **State:** Zustand stores for kort-state, print-indstillinger og UI-state med localStorage persistence
 

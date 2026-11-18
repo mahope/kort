@@ -21,6 +21,8 @@ const ctl = {
   gpuCalls: [] as string[],
   tiles: [] as string[], // tile keys that load fine (for progress counting)
   lastOptions: null as Record<string, unknown> | null,
+  sourceBusyPolls: 0, // isSourceLoaded() is false this many times (a GeoJSON file still on its way)
+  sourcePolls: 0,
 };
 
 function fakeGl() {
@@ -78,6 +80,7 @@ class FakeMap {
     src.removed = [];
   }
   areTilesLoaded() { return true; }
+  isSourceLoaded() { ctl.sourcePolls++; return ctl.sourceBusyPolls-- <= 0; }
   addSource = addSource;
   addLayer() {}
   remove() {}
@@ -121,7 +124,7 @@ async function run(opts = base) {
 beforeEach(() => {
   vi.useFakeTimers();
   addSource.mockClear();
-  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], errorsWithoutTile: [], reloads: 0, removed: [], updates: 0, notNeeded: [], noUpdate: false, maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [] });
+  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], errorsWithoutTile: [], reloads: 0, removed: [], updates: 0, notNeeded: [], noUpdate: false, maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [], sourceBusyPolls: 0, sourcePolls: 0 });
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
 });
 afterEach(() => vi.useRealTimers());
@@ -150,6 +153,27 @@ describe("renderMapToImage base map", () => {
       layers: [{ type: "background", paint: { "background-color": "#ffffff" } }],
     });
     expect(addSource.mock.calls.map(([id]) => id)).toEqual(["kurver5-overlay"]);
+  });
+});
+
+describe("renderMapToImage vector overlays", () => {
+  const overlays = [{ id: "vrag", enabled: true, opacity: 1 }] as typeof base.overlays;
+
+  it("adds our GeoJSON snapshot by absolute URL and waits until its data has arrived", async () => {
+    ctl.sourceBusyPolls = 5;
+    expect(await run({ ...base, overlays })).toHaveProperty("v");
+    const [id, spec] = addSource.mock.calls.find(([sid]) => sid === "vrag-overlay")!;
+    expect(id).toBe("vrag-overlay");
+    expect(spec).toEqual({ type: "geojson", data: `${window.location.origin}/data/soekort/vrag.geojson` });
+    expect(ctl.sourcePolls).toBeGreaterThan(5);
+  });
+
+  it("refuses the PDF when the snapshot cannot be fetched", async () => {
+    ctl.sourceBusyPolls = Infinity;
+    ctl.errorsWithoutTile = [{ sourceId: "vrag-overlay", error: new Error("404") }];
+    expect(((await run({ ...base, overlays })) as { error: Error }).error.message).toBe(
+      "Et kortlag kunne ikke hentes, så PDF'en ville mangle det. Prøv igen."
+    );
   });
 });
 

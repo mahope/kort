@@ -10,7 +10,16 @@ import { useHistoryStore } from "@/stores/historyStore";
 import { calculatePdfLayout } from "./layout";
 import { getBrand } from "@/config/brand";
 import { renderMapToImage } from "./renderer";
-import { KARTVERKET_TOPO_SOURCE, OPENTOPOMAP_SOURCE, OVERLAY_SOURCES, kdsPrintCredit, nordicPrintCredit, usesNordicTopo } from "@/lib/map/sources";
+import {
+  KARTVERKET_TOPO_SOURCE,
+  NAVIGATION_WARNING,
+  OPENTOPOMAP_SOURCE,
+  OVERLAY_SOURCES,
+  SEA_DATA_NOTE,
+  kdsPrintCredit,
+  nordicPrintCredit,
+  usesNordicTopo,
+} from "@/lib/map/sources";
 import { boundsTouchSweden, mapRegionAt, mapRegionForBounds, nordicSourcesInBounds, type MapRegion } from "@/lib/geo/regions";
 import { timed, yieldToMain } from "./timing";
 import { applyPrintPreferences, drawControlLine } from "./controlLine";
@@ -42,6 +51,12 @@ import {
 import { DKTM_PARAMS } from "@/lib/geo/dktm";
 import { utmCentralMeridian } from "@/lib/geo/utm";
 import { createPaperProjector, type PaperProjector } from "./gridProjection";
+import { addLakeChartPages } from "./lakeChartPages";
+
+/** The historical lake charts are on: the PDF gets them as extra pages. */
+function lakeChartsOn(overlays: OverlayState[]): boolean {
+  return overlays.some((o) => o.id === "indsoekort" && o.enabled);
+}
 
 /** Build the download filename shared by single- and multi-page output. */
 function buildFilename(
@@ -175,6 +190,7 @@ export async function generatePdf({
   drawAttribution(pdf, layout, scale, gridInfo, undefined, mapDataCredit(baseLayer, where));
   drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm), where);
   drawDeclination(declinationDiagram, pdf, layout, bounds, gridInfo, bearing);
+  if (lakeChartsOn(overlays)) await addLakeChartPages(pdf, layout, orientation, bounds);
 
   // Record in print history
   useHistoryStore.getState().addEntry({
@@ -525,7 +541,7 @@ export function drawAttribution(
 
 /**
  * Third-party credits (OSM base map, EMODnet, OpenSeaMap) and, for sea
- * layers, a bold "IKKE TIL NAVIGATION", in a white box in the top-left corner
+ * layers, the bold navigation warning and a note on the data, in a white box in the top-left corner
  * of the map image: the margins hold the grid labels and the footer. Text is
  * wrapped to the box width so it also fits A5.
  */
@@ -535,9 +551,16 @@ export function drawThirdPartyCredits(pdf: jsPDF, x: number, y: number, maxWidth
   const pad = 1.2;
   const textW = maxWidthMm - 2 * pad;
   const lines: { text: string; bold: boolean; pt: number }[] = [];
-  if (extra.notForNavigation) lines.push({ text: "IKKE TIL NAVIGATION", bold: true, pt: 7 });
   pdf.setFont("helvetica", "normal");
   pdf.setFontSize(6);
+  if (extra.notForNavigation) {
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(7);
+    for (const l of pdf.splitTextToSize(NAVIGATION_WARNING, textW) as string[]) lines.push({ text: l, bold: true, pt: 7 });
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(6);
+    for (const l of pdf.splitTextToSize(SEA_DATA_NOTE, textW) as string[]) lines.push({ text: l, bold: false, pt: 6 });
+  }
   for (const c of extra.credits) {
     for (const l of pdf.splitTextToSize(c, textW) as string[]) lines.push({ text: l, bold: false, pt: 6 });
   }
@@ -811,6 +834,14 @@ async function generateMultiPagePdf({
         drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm), { region, bounds: totalBounds });
       }
       drawDeclination(declinationDiagram, pdf, layout, cell.bounds, gridInfo, bearing);
+    }
+    if (lakeChartsOn(overlays)) {
+      await addLakeChartPages(pdf, layout, orientation, {
+        west: Math.min(...cells.map((c) => c.bounds.west)),
+        east: Math.max(...cells.map((c) => c.bounds.east)),
+        south: Math.min(...cells.map((c) => c.bounds.south)),
+        north: Math.max(...cells.map((c) => c.bounds.north)),
+      });
     }
   } finally {
     // Reset progress state even if a page render throws, so the UI does not
