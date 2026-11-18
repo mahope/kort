@@ -8,7 +8,8 @@ describe("sources page data", () => {
   const listed = DATA_SOURCES.flatMap((s) => s.layers ?? []);
 
   it("lists every base map and overlay, so no layer ships without its licence", () => {
-    for (const b of BASE_LAYERS) expect(listed).toContain(b.value);
+    // "none" (Intet basiskort) draws no data, so there is nothing to credit.
+    for (const b of BASE_LAYERS) if (b.value !== "none") expect(listed).toContain(b.value);
     for (const id of Object.keys(OVERLAY_SOURCES) as OverlayId[]) expect(listed).toContain(id);
   });
 
