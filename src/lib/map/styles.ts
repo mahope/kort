@@ -41,7 +41,8 @@ export const DEFAULT_STYLE: MapStyle = "klassisk";
 export const DENMARK_CENTER: [number, number] = [10.4, 56.0];
 export const DEFAULT_ZOOM = 7;
 
-export const DENMARK_BOUNDS: [[number, number], [number, number]] = [
+/** How far the map pans: Denmark as before, plus Norway and Sweden (Nordkapp, Finnmark). */
+export const MAP_BOUNDS: [[number, number], [number, number]] = [
   [3.0, 54.0],
-  [16.0, 58.5],
+  [32.0, 71.5],
 ];

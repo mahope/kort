@@ -25,6 +25,7 @@ const DEFAULT_OVERLAYS: OverlayState[] = [
   { id: "havdybder", enabled: false, opacity: 0.6 },
   { id: "dybdemodel", enabled: false, opacity: 0.8 },
   { id: "soemaerker", enabled: false, opacity: 1 },
+  { id: "kurverNorge", enabled: false, opacity: 1 },
 ];
 
 interface MapStore {

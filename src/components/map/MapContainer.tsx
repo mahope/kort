@@ -15,8 +15,9 @@ import Map, {
 import { useMapStore } from "@/stores/mapStore";
 import { useUiStore } from "@/stores/uiStore";
 import { useDrawStore } from "@/stores/drawStore";
-import { MAP_STYLES, DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
-import { BLANK_STYLE, getRasterBaseLayers, OVERLAY_SOURCES, sourceZoomLimit } from "@/lib/map/sources";
+import { MAP_STYLES, MAP_BOUNDS, transformRequest } from "@/lib/map/styles";
+import { BLANK_STYLE, getRasterBaseLayers, NORDIC_TOPO_SOURCES, OVERLAY_SOURCES, sourceZoomLimit, usesNordicTopo } from "@/lib/map/sources";
+import { useMapRegion } from "@/lib/hooks/useMapRegion";
 import { contourLayers, contourSourceUrl, ensurePmtilesProtocol } from "@/lib/map/contours";
 import { PrintFrame } from "./PrintFrame";
 import { GeolocationButton } from "./GeolocationButton";
@@ -67,11 +68,14 @@ export function MapContainer() {
   const sheetPx = useUiStore((s) => s.sheetPx);
   const padding = useMemo(() => ({ top: 0, left: 0, right: 0, bottom: sheetPx }), [sheetPx]);
   const needsDrawing = useDrawStore((s) => s.activeMode !== null || s.features.length > 0);
+  // Outside Denmark: Kartverket over OpenTopoMap instead of the Danish maps.
+  const region = useMapRegion();
+  const nordic = usesNordicTopo(baseLayer, region);
 
   const mapStyle = useMemo(() => {
-    if (baseLayer !== "skaermkort") return BLANK_STYLE;
+    if (baseLayer !== "skaermkort" || nordic) return BLANK_STYLE;
     return MAP_STYLES[style].url;
-  }, [baseLayer, style]);
+  }, [baseLayer, style, nordic]);
 
   const onMove = useCallback(
     (evt: ViewStateChangeEvent) => {
@@ -124,12 +128,30 @@ export function MapContainer() {
       onLoad={collapseAttributionOnTouch}
       mapStyle={mapStyle}
       transformRequest={transformRequest}
-      maxBounds={[...DENMARK_BOUNDS[0], ...DENMARK_BOUNDS[1]]}
+      maxBounds={[...MAP_BOUNDS[0], ...MAP_BOUNDS[1]]}
       attributionControl={false}
       canvasContextAttributes={{ preserveDrawingBuffer: true }}
       style={{ width: "100%", height: "100%" }}
     >
+      {/* Nordic topo (OpenTopoMap, Kartverket on top). Always mounted so its
+          layers stay under everything else; hidden in Denmark (no requests). */}
+      {NORDIC_TOPO_SOURCES.map(({ id, cfg }) => (
+        <Source
+          key={id}
+          id={id}
+          type="raster"
+          tiles={cfg.tiles}
+          tileSize={cfg.tileSize}
+          {...sourceZoomLimit(cfg)}
+          {...(cfg.bounds ? { bounds: cfg.bounds } : {})}
+          attribution={cfg.attribution}
+        >
+          <Layer id={`${id}-layer`} type="raster" layout={{ visibility: nordic ? "visible" : "none" }} />
+        </Source>
+      ))}
+
       {/* Raster base layer (ortofoto, dtk25, osm, historiske kort) */}
+      {/* Hidden, not unmounted, outside Denmark: a remount would add it on top of the overlays. */}
       {baseLayer !== "skaermkort" && RASTER_BASE_LAYERS[baseLayer] && (
         <Source
           id="base-raster"
@@ -139,7 +161,7 @@ export function MapContainer() {
           {...sourceZoomLimit(RASTER_BASE_LAYERS[baseLayer])}
           attribution={RASTER_BASE_LAYERS[baseLayer].attribution}
         >
-          <Layer id="base-raster-layer" type="raster" />
+          <Layer id="base-raster-layer" type="raster" layout={{ visibility: nordic ? "none" : "visible" }} />
         </Source>
       )}
 
@@ -171,6 +193,7 @@ export function MapContainer() {
           tiles={OVERLAY_SOURCES[overlay.id].tiles}
           tileSize={OVERLAY_SOURCES[overlay.id].tileSize}
           {...sourceZoomLimit(OVERLAY_SOURCES[overlay.id])}
+          {...(OVERLAY_SOURCES[overlay.id].bounds ? { bounds: OVERLAY_SOURCES[overlay.id].bounds } : {})}
           attribution={OVERLAY_SOURCES[overlay.id].attribution}
         >
           <Layer
@@ -192,7 +215,7 @@ export function MapContainer() {
       <AttributionControl
         position="bottom-left"
         compact
-        customAttribution="&copy; Klimadatastyrelsen"
+        customAttribution={nordic ? undefined : "&copy; Klimadatastyrelsen"}
       />
       <GeolocationButton mapRef={mapRef} />
     </Map>

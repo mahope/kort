@@ -10,6 +10,11 @@ const ANALYTICS = "https://analytics.holstjensen.eu";
 // Optional sea layers (see src/lib/map/sources.ts).
 const EMODNET = "https://ows.emodnet-bathymetry.eu";
 const OPENSEAMAP = "https://tiles.openseamap.org";
+// Norway and Sweden (src/lib/map/sources.ts): Kartverket cache + WMS, OpenTopoMap.
+const KARTVERKET_CACHE = "https://cache.kartverket.no";
+const KARTVERKET_WMS = "https://wms.geonorge.no";
+const OPENTOPOMAP = "https://tile.opentopomap.org";
+const NORDIC = `${KARTVERKET_CACHE} ${KARTVERKET_WMS} ${OPENTOPOMAP}`;
 // Our own 5/10 m contours (PMTiles, read with range requests; src/lib/map/contours.ts).
 // Host of the contour PMTiles; follows NEXT_PUBLIC_CONTOURS_URL like src/lib/map/contours.ts.
 const KORT_TILES = new URL(process.env.NEXT_PUBLIC_CONTOURS_URL || "https://tiles.mahoje.dk/kurver-5m.pmtiles").origin;
@@ -21,9 +26,9 @@ export const csp = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: ${DATAFORSYNINGEN_API} ${DATAFORSYNINGEN_CDN} ${OSM_TILES} ${EMODNET} ${OPENSEAMAP}`,
+  `img-src 'self' data: blob: ${DATAFORSYNINGEN_API} ${DATAFORSYNINGEN_CDN} ${OSM_TILES} ${EMODNET} ${OPENSEAMAP} ${NORDIC}`,
   "font-src 'self' data:",
-  `connect-src 'self' ${DATAFORSYNINGEN_API} ${DATAFORSYNINGEN_CDN} ${ADRESSEVAELGER} ${OSM_TILES} ${EMODNET} ${OPENSEAMAP} ${KORT_TILES} ${ANALYTICS}`,
+  `connect-src 'self' ${DATAFORSYNINGEN_API} ${DATAFORSYNINGEN_CDN} ${ADRESSEVAELGER} ${OSM_TILES} ${EMODNET} ${OPENSEAMAP} ${NORDIC} ${KORT_TILES} ${ANALYTICS}`,
   "worker-src 'self' blob:",
   "frame-ancestors 'self'",
   "base-uri 'self'",

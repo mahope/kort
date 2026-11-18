@@ -4,6 +4,7 @@ import { useMapStore } from "@/stores/mapStore";
 import { MAP_STYLES } from "@/lib/map/styles";
 import { BASE_LAYERS } from "@/constants/baseLayers";
 import type { MapStyle } from "@/types/map";
+import { useMapRegion } from "@/lib/hooks/useMapRegion";
 
 const STYLE_KEYS = Object.keys(MAP_STYLES) as MapStyle[];
 
@@ -12,6 +13,7 @@ export function LayerSelector() {
   const setBaseLayer = useMapStore((s) => s.setBaseLayer);
   const currentStyle = useMapStore((s) => s.style);
   const setStyle = useMapStore((s) => s.setStyle);
+  const nordic = useMapRegion() === "nordic";
 
   return (
     <div>
@@ -46,6 +48,12 @@ export function LayerSelector() {
           </div>
         ))}
       </div>
+      {nordic && (
+        <p className="mt-2 text-xs text-text-secondary" role="note">
+          Uden for Danmark viser kortet Kartverkets topografiske kort i Norge og OpenTopoMap i Sverige.
+          OpenStreetMap kan stadig vælges.
+        </p>
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
-import type { OverlayId } from "@/types/map";
+import type { BaseLayer, OverlayId } from "@/types/map";
+import type { MapRegion } from "@/lib/geo/regions";
 import { DATAFORSYNINGEN_TOKEN } from "./styles";
 
 /**
@@ -172,6 +173,18 @@ export interface RasterSourceConfig {
   contourInterval?: 5 | 10;
   /** Highest zoom the server has; MapLibre enlarges these tiles above it instead of failing on 404. */
   maxzoom?: number;
+  /** [west, south, east, north]: MapLibre requests no tiles outside it. */
+  bounds?: [number, number, number, number];
+  /**
+   * Print tiles for a given paper resolution (dpi), for WMS servers that scale
+   * their symbols and pick their data by it. Without it the PDF uses `tiles`.
+   */
+  printTiles?: (dpi: number) => string[];
+}
+
+/** The tile templates the PDF requests for a source at this paper resolution. */
+export function printTilesFor(cfg: RasterSourceConfig, dpi: number): string[] {
+  return cfg.printTiles ? cfg.printTiles(dpi) : cfg.tiles;
 }
 
 /** `{ maxzoom }` for sources that set one, else nothing (MapLibre rejects `maxzoom: undefined`). */
@@ -231,6 +244,68 @@ export function getRasterBaseLayers(target: RasterBaseLayerTarget): Record<strin
     historisk_lave: HISTORISK_LAVE_SOURCE,
   };
 }
+
+/**
+ * Kartverket (Norway), open data under CC BY 4.0, no key. The screen uses the
+ * WMTS cache; the PDF asks the topo WMS with MAP_RESOLUTION = paper dpi, so
+ * MapServer draws symbols, text and the right contour set (N50 at 1:25.000
+ * instead of the dense 5 m FKB lines) for the paper scale. Both are
+ * transparent outside Norway, so OpenTopoMap shows through there.
+ * Terms: https://www.kartverket.no/api-og-data/vilkar-for-bruk
+ */
+const KARTVERKET_TOPO_WMTS_URL = "https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png";
+const KARTVERKET_WMS_BASE =
+  "https://wms.geonorge.no/skwms1/wms.topo?service=WMS&version=1.1.1&request=GetMap" +
+  "&SRS=EPSG:3857&WIDTH=256&HEIGHT=256&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE";
+
+function kartverketWms(layers: string, dpi?: number): string {
+  // MapServer's resolution parameter; 90.7 dpi (its default) when absent.
+  const resolution = dpi ? `&MAP_RESOLUTION=${Math.round(dpi)}` : "";
+  return `${KARTVERKET_WMS_BASE}&LAYERS=${layers}${resolution}&BBOX={bbox-epsg-3857}`;
+}
+
+/** Mainland Norway with its waters; the cache has nothing to draw outside. */
+const NORWAY_TILE_BOUNDS: [number, number, number, number] = [4.0, 57.8, 31.3, 71.3];
+
+const KARTVERKET_ATTRIBUTION = "&copy; <a href='https://www.kartverket.no/'>Kartverket</a>";
+
+export const KARTVERKET_TOPO_SOURCE: RasterSourceConfig = {
+  tiles: [KARTVERKET_TOPO_WMTS_URL],
+  printTiles: (dpi) => [kartverketWms("topo", dpi)],
+  tileSize: 256,
+  maxzoom: 18,
+  bounds: NORWAY_TILE_BOUNDS,
+  attribution: KARTVERKET_ATTRIBUTION,
+  credit: "Kort over Norge: © Kartverket (CC BY 4.0)",
+  // Zoom 12-20 holds Geovekst data that may be shown, not copied: no bulk saving.
+  noOffline: true,
+};
+
+/**
+ * OpenTopoMap (CC-BY-SA, OSM data and SRTM heights): topographic style with
+ * contours, used for Sweden and as the layer under Kartverket. Free to embed
+ * as long as the server is not hammered (opentopomap.org/about#faq), so no
+ * offline saving. Lantmäteriet has no free detailed web map (see README).
+ */
+export const OPENTOPOMAP_SOURCE: RasterSourceConfig = {
+  tiles: ["https://tile.opentopomap.org/{z}/{x}/{y}.png"],
+  tileSize: 256,
+  maxzoom: 17,
+  attribution:
+    "Kortdata: &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>-bidragydere, SRTM | Kortdesign: &copy; <a href='https://opentopomap.org'>OpenTopoMap</a> (<a href='https://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA</a>)",
+  credit: "Kortdata: © OpenStreetMap-bidragydere, SRTM | Kortdesign: © OpenTopoMap (CC-BY-SA)",
+  noOffline: true,
+};
+
+/**
+ * The Nordic topographic map, bottom to top: OpenTopoMap everywhere, then
+ * Kartverket where it has data (Norway). Used outside Denmark for every base
+ * layer except OpenStreetMap, which the user chose on purpose.
+ */
+export const NORDIC_TOPO_SOURCES: readonly { id: string; cfg: RasterSourceConfig }[] = [
+  { id: "nordic-opentopomap", cfg: OPENTOPOMAP_SOURCE },
+  { id: "nordic-kartverket", cfg: KARTVERKET_TOPO_SOURCE },
+];
 
 export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
   contours: {
@@ -305,6 +380,18 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     noOffline: true,
     notForNavigation: true,
   },
+  // Kartverket's contour layers: MapServer picks N50 (20 m) to N2000 by scale,
+  // and FKB (5 m, 1 m) only on very large scales. With MAP_RESOLUTION the PDF
+  // gets the set for its paper scale, as on the screen.
+  kurverNorge: {
+    tiles: [kartverketWms("kd_hoydekurver,fkb_hoydekurver")],
+    printTiles: (dpi) => [kartverketWms("kd_hoydekurver,fkb_hoydekurver", dpi)],
+    tileSize: 256,
+    bounds: NORWAY_TILE_BOUNDS,
+    attribution: "Højdekurver Norge: " + KARTVERKET_ATTRIBUTION,
+    credit: "Højdekurver Norge: © Kartverket (CC BY 4.0)",
+    noOffline: true,
+  },
 };
 
 /** Overlays shown in the UI, in order, with their labels. */
@@ -319,6 +406,16 @@ export const OVERLAY_LABELS: Record<OverlayId, string> = {
   dybdemodel: "Havdybder Danmark (Dybdemodel 50 m)",
   havdybder: "Havdybder Europa (EMODnet, grovere)",
   soemaerker: "Sømærker (OpenSeaMap)",
+  kurverNorge: "Højdekurver Norge (Kartverket)",
 };
 
 export const SEA_OVERLAYS: readonly OverlayId[] = ["dybdemodel", "havdybder", "soemaerker"];
+
+/**
+ * Outside Denmark the Danish base maps have nothing to show, so every base
+ * layer except OpenStreetMap (chosen on purpose, covers everything) becomes the
+ * Nordic topographic map. Denmark is untouched.
+ */
+export function usesNordicTopo(baseLayer: BaseLayer, region: MapRegion): boolean {
+  return region === "nordic" && baseLayer !== "osm";
+}

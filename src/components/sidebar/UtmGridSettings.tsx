@@ -11,6 +11,7 @@ import {
   type UtmZoneMode,
 } from "@/lib/geo/utmGrid";
 import { wmmStatus, wmmStatusNote } from "@/lib/geo/declinationValidity";
+import { useMapRegion } from "@/lib/hooks/useMapRegion";
 
 const SPACING_OPTIONS: { value: string; label: string }[] = [
   { value: "auto", label: "Auto" },
@@ -37,6 +38,7 @@ export function UtmGridSettings() {
   const setGridLabelFormat = useMapStore((s) => s.setGridLabelFormat);
   const utmZoneMode = useMapStore((s) => s.utmZoneMode);
   const setUtmZoneMode = useMapStore((s) => s.setUtmZoneMode);
+  const nordic = useMapRegion() === "nordic";
   const scale = usePrintStore((s) => s.scale);
   const showDeclination = usePrintStore((s) => s.showDeclination);
   const setShowDeclination = usePrintStore((s) => s.setShowDeclination);
@@ -138,7 +140,12 @@ export function UtmGridSettings() {
             </div>
           )}
 
-          {gridSystem === "utm" && <div className="flex items-center gap-2">
+          {gridSystem === "utm" && nordic && (
+            <p className="text-xs text-text-secondary" role="note">
+              Zone som GPS (32, 33, 34 eller 35). Zone 33 er samme net som svenske SWEREF 99 TM.
+            </p>
+          )}
+          {gridSystem === "utm" && !nordic && <div className="flex items-center gap-2">
             <label htmlFor="utm-zone-mode" className="text-sm shrink-0">
               Zone
             </label>
