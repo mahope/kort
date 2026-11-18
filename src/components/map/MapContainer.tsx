@@ -15,8 +15,8 @@ import Map, {
 import { useMapStore } from "@/stores/mapStore";
 import { useUiStore } from "@/stores/uiStore";
 import { useDrawStore } from "@/stores/drawStore";
-import { MAP_STYLES, DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
-import { BLANK_STYLE, getRasterBaseLayers, OVERLAY_SOURCES, sourceZoomLimit } from "@/lib/map/sources";
+import { DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
+import { getBaseMapStyle, getRasterBaseLayers, OVERLAY_SOURCES, sourceZoomLimit } from "@/lib/map/sources";
 import { contourLayers, contourSourceUrl, ensurePmtilesProtocol } from "@/lib/map/contours";
 import { PrintFrame } from "./PrintFrame";
 import { GeolocationButton } from "./GeolocationButton";
@@ -68,10 +68,8 @@ export function MapContainer() {
   const padding = useMemo(() => ({ top: 0, left: 0, right: 0, bottom: sheetPx }), [sheetPx]);
   const needsDrawing = useDrawStore((s) => s.activeMode !== null || s.features.length > 0);
 
-  const mapStyle = useMemo(() => {
-    if (baseLayer !== "skaermkort") return BLANK_STYLE;
-    return MAP_STYLES[style].url;
-  }, [baseLayer, style]);
+  const mapStyle = getBaseMapStyle(baseLayer, style);
+  const rasterBase = RASTER_BASE_LAYERS[baseLayer];
 
   const onMove = useCallback(
     (evt: ViewStateChangeEvent) => {
@@ -90,18 +88,16 @@ export function MapContainer() {
   // (react-map-gl doesn't reliably diff the tiles prop on raster sources)
   useEffect(() => {
     const map = mapRef.current?.getMap();
-    if (!map || baseLayer === "skaermkort") return;
-    const cfg = RASTER_BASE_LAYERS[baseLayer];
-    if (!cfg) return;
+    if (!map || !rasterBase) return;
     const source = map.getSource("base-raster");
     if (source && "setTiles" in source) {
       const raster = source as import("maplibre-gl").RasterTileSource;
       // The source is created once, so its zoom limit must follow the layer too
       // (OSM stops at 19, ortofoto goes to 20); setTiles reloads with it.
-      raster.maxzoom = cfg.maxzoom ?? 22;
-      raster.setTiles(cfg.tiles);
+      raster.maxzoom = rasterBase.maxzoom ?? 22;
+      raster.setTiles(rasterBase.tiles);
     }
-  }, [baseLayer]);
+  }, [rasterBase]);
 
   useEffect(() => {
     if (flyToTarget && mapRef.current) {
@@ -130,14 +126,14 @@ export function MapContainer() {
       style={{ width: "100%", height: "100%" }}
     >
       {/* Raster base layer (ortofoto, dtk25, osm, historiske kort) */}
-      {baseLayer !== "skaermkort" && RASTER_BASE_LAYERS[baseLayer] && (
+      {rasterBase && (
         <Source
           id="base-raster"
           type="raster"
-          tiles={RASTER_BASE_LAYERS[baseLayer].tiles}
-          tileSize={RASTER_BASE_LAYERS[baseLayer].tileSize}
-          {...sourceZoomLimit(RASTER_BASE_LAYERS[baseLayer])}
-          attribution={RASTER_BASE_LAYERS[baseLayer].attribution}
+          tiles={rasterBase.tiles}
+          tileSize={rasterBase.tileSize}
+          {...sourceZoomLimit(rasterBase)}
+          attribution={rasterBase.attribution}
         >
           <Layer id="base-raster-layer" type="raster" />
         </Source>

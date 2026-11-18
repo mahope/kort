@@ -23,7 +23,7 @@ export interface SearchResult {
 
 export type MapStyle = "klassisk" | "daempet" | "graa" | "moerkt";
 
-export type BaseLayer = "skaermkort" | "ortofoto" | "osm" | "dtk25" | "historisk_hoeje" | "historisk_lave";
+export type BaseLayer = "none" | "skaermkort" | "ortofoto" | "osm" | "dtk25" | "historisk_hoeje" | "historisk_lave";
 
 export type OverlayId =
   | "contours"

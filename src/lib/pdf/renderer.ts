@@ -4,8 +4,8 @@ import type { MapStyle, BaseLayer, OverlayState } from "@/types/map";
 import { configureMaplibreWorker } from "@/lib/map/workerUrl";
 import type { ImportedLayer } from "@/stores/importStore";
 import type { DrawnFeature } from "@/stores/drawStore";
-import { MAP_STYLES, transformRequest } from "@/lib/map/styles";
-import { BLANK_STYLE, getRasterBaseLayers, OVERLAY_SOURCES, sourceZoomLimit } from "@/lib/map/sources";
+import { transformRequest } from "@/lib/map/styles";
+import { getBaseMapStyle, getRasterBaseLayers, OVERLAY_SOURCES, sourceZoomLimit } from "@/lib/map/sources";
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
 import { contourLayers, contourSourceUrl, ensurePmtilesProtocol, SCREEN_PX_PER_MM } from "@/lib/map/contours";
 import { timed } from "./timing";
@@ -188,7 +188,7 @@ export async function renderMapToImage({
 
   let map: maplibregl.Map | undefined;
   try {
-    const mapStyle = baseLayer === "skaermkort" ? MAP_STYLES[style].url : BLANK_STYLE;
+    const mapStyle = getBaseMapStyle(baseLayer, style);
 
     const centerLng = (bounds.west + bounds.east) / 2;
     const centerLat = (bounds.north + bounds.south) / 2;
