@@ -10,7 +10,7 @@ import { useHistoryStore } from "@/stores/historyStore";
 import { calculatePdfLayout } from "./layout";
 import { getBrand } from "@/config/brand";
 import { renderMapToImage } from "./renderer";
-import { OVERLAY_SOURCES } from "@/lib/map/sources";
+import { OVERLAY_SOURCES, kdsPrintCredit } from "@/lib/map/sources";
 import { timed, yieldToMain } from "./timing";
 import { applyPrintPreferences, drawControlLine } from "./controlLine";
 import { calculateMultiPageGrid, calculatePrintArea } from "@/lib/geo/calculations";
@@ -496,7 +496,7 @@ export function drawAttribution(
   pdf.text(leftText ?? scaleText, layout.marginMm, y);
 
   // Attribution on right
-  const attribution = `Kortdata: Klimadatastyrelsen | ${getBrand().credit.short}`;
+  const attribution = kdsPrintCredit(getBrand().credit.short);
   pdf.text(attribution, layout.pageWidthMm - layout.marginMm, y, {
     align: "right",
   });

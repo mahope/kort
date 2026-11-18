@@ -280,6 +280,13 @@ export default function LandingPage() {
               Om projektet
             </Link>
             {" "}&middot;{" "}
+            <Link
+              href="/kilder"
+              className="hover:text-text-secondary underline underline-offset-2"
+            >
+              Datakilder
+            </Link>
+            {" "}&middot;{" "}
             <a
               href={getBrand().github}
               target="_blank"

@@ -263,6 +263,8 @@ function SidebarContent() {
         <div className="flex flex-wrap items-center gap-x-2 text-xs text-text-muted">
           <span>Kortdata &copy; Klimadatastyrelsen</span>
           <span>&middot;</span>
+          <a href="/kilder" className="inline-flex items-center justify-center pointer-coarse:min-h-11 hover:text-text-secondary underline underline-offset-2">Datakilder</a>
+          <span>&middot;</span>
           <a href="/om" className="inline-flex items-center justify-center pointer-coarse:min-h-11 pointer-coarse:min-w-11 hover:text-text-secondary underline underline-offset-2">Om</a>
           {brand.id === "solaris" && (
             <>
