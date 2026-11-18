@@ -683,6 +683,13 @@ async function generateMultiPagePdf({
   const totalPages = cells.length + (withOverview ? 1 : 0);
   printState.setTotalPages(totalPages);
   const { gridCols, gridRows, overlapMm } = printState;
+  // The ground the whole sheet set covers: the overview's extent and the credits' scope.
+  const totalBounds = {
+    west: Math.min(...cells.map((c) => c.bounds.west)),
+    east: Math.max(...cells.map((c) => c.bounds.east)),
+    south: Math.min(...cells.map((c) => c.bounds.south)),
+    north: Math.max(...cells.map((c) => c.bounds.north)),
+  };
 
   const pdf = new jsPDF({
     orientation: orientation === "landscape" ? "landscape" : "portrait",
@@ -701,12 +708,6 @@ async function generateMultiPagePdf({
       const groundW = area.groundWidthM + (gridCols - 1) * (area.groundWidthM - overlapM);
       const groundH = area.groundHeightM + (gridRows - 1) * (area.groundHeightM - overlapM);
       const place = overviewPlacement(layout, groundW, groundH);
-      const totalBounds = {
-        west: Math.min(...cells.map((c) => c.bounds.west)),
-        east: Math.max(...cells.map((c) => c.bounds.east)),
-        south: Math.min(...cells.map((c) => c.bounds.south)),
-        north: Math.max(...cells.map((c) => c.bounds.north)),
-      };
       onProgress?.({ stage: "render", tilesLoaded: 0, tilesTotal: 0 });
       // A small, quick render: the overview is for orientation, not for reading.
       const overviewImg = await renderMapToImage({
@@ -761,6 +762,7 @@ async function generateMultiPagePdf({
         importedLayers,
         drawnFeatures,
         bearing,
+        region,
       });
 
       onProgress?.({ stage: "assemble", tilesLoaded: 0, tilesTotal: 0 });
@@ -796,13 +798,7 @@ async function generateMultiPagePdf({
       // Once on the assembled map (sheet A1), not a white box on every sheet.
       // Its credits cover every sheet, since the box speaks for the whole map.
       if (i === 0) {
-        const allBounds = {
-          west: Math.min(...cells.map((c) => c.bounds.west)),
-          east: Math.max(...cells.map((c) => c.bounds.east)),
-          south: Math.min(...cells.map((c) => c.bounds.south)),
-          north: Math.max(...cells.map((c) => c.bounds.north)),
-        };
-        drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm), { region, bounds: allBounds });
+        drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm), { region, bounds: totalBounds });
       }
       drawDeclination(declinationDiagram, pdf, layout, cell.bounds, gridInfo, bearing);
     }
