@@ -5,6 +5,7 @@ import { useMapStore } from "@/stores/mapStore";
 import { useUiStore } from "@/stores/uiStore";
 import { pointCoordinates } from "@/lib/geo/coordinates";
 import { decimalYear, isWithinWmmValidity, wmmStatus, wmmStatusNote } from "@/lib/geo/declinationValidity";
+import { isFrameTooSmallToSee, usePrintFrameAreaShare } from "@/lib/map/printFrameVisibility";
 
 type DeclinationModule = typeof import("@/lib/geo/declination");
 
@@ -46,6 +47,10 @@ export function CoordinateReadout() {
   const [opened, setOpened] = useState(false);
   const declination = useSettledDeclination(latitude, longitude, opened);
   const declinationNote = wmmStatusNote(wmmStatus());
+  // The crosshair sits exactly where a small print frame also is; faded out
+  // of the way, it is not confused for part of that (barely visible) frame.
+  const areaShare = usePrintFrameAreaShare();
+  const crosshairDimmed = areaShare !== null && isFrameTooSmallToSee(areaShare);
 
   const copy = async (value: string) => {
     try {
@@ -58,7 +63,15 @@ export function CoordinateReadout() {
 
   return (
     <>
-      <div aria-hidden="true" className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 text-slate-900" style={{ top: "calc((100% - var(--map-pad-bottom, 0px)) / 2)", filter: "drop-shadow(0 0 2px white)" }}>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 text-slate-900 transition-opacity duration-300"
+        style={{
+          top: "calc((100% - var(--map-pad-bottom, 0px)) / 2)",
+          filter: "drop-shadow(0 0 2px white)",
+          opacity: crosshairDimmed ? 0.25 : 1,
+        }}
+      >
         <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M14 0v10m0 8v10M0 14h10m8 0h10" /><circle cx="14" cy="14" r="3" />
         </svg>

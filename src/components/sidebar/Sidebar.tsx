@@ -13,6 +13,7 @@ import { DpiSelector } from "./DpiSelector";
 import { BearingSelector } from "./BearingSelector";
 import { MultiPageSelector } from "./MultiPageSelector";
 import { PrintButton } from "@/components/print/PrintButton";
+import { PrintSummaryLine } from "@/components/print/PrintSummaryLine";
 import { getBrand } from "@/config/brand";
 import { FileImport } from "./FileImport";
 import { ImportedLayerList } from "./ImportedLayerList";
@@ -293,7 +294,14 @@ function SidebarContent() {
 
 export function Sidebar() {
   return (
-    <BottomSheet footer={<PrintButton />}>
+    <BottomSheet
+      footer={
+        <>
+          <PrintSummaryLine />
+          <PrintButton />
+        </>
+      }
+    >
       <SidebarContent />
     </BottomSheet>
   );
