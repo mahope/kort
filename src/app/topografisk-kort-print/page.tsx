@@ -27,7 +27,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Hvad er UTM-gitter, og hvorfor er det nyttigt?",
-    a: "UTM-gitteret er et koordinatsystem der deler kortet op i firkanter. Det bruges til at angive præcise positioner i felten, f.eks. ved orientering, eftersøgning eller militære øvelser.",
+    a: "UTM-gitteret er et koordinatsystem der deler kortet op i firkanter. Det bruges til at angive præcise positioner i felten, f.eks. ved orientering, eftersøgning eller militære øvelser. Du kan også vælge MGRS eller DKTM1-4, som bruges i dansk landmåling.",
   },
   {
     q: "Hvilke papirformater understøttes?",
@@ -120,8 +120,8 @@ export default function LandingPage() {
                 desc: "Fra detaljeret 1:5.000 til overblik 1:500.000. Vælg det der passer til din tur.",
               },
               {
-                title: "UTM-gitter og koordinater",
-                desc: "Præcist koordinatgitter på kortet til orientering, eftersøgning og positionsangivelse.",
+                title: "UTM-, MGRS- og DKTM-gitter",
+                desc: "Præcist koordinatgitter på kortet til orientering, eftersøgning, positionsangivelse og landmåling.",
               },
               {
                 title: "A5 til A0 papirformat",

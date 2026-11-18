@@ -26,8 +26,8 @@ import {
   overviewPlacement,
   sheetNeighbours,
 } from "./assembly";
-import { computeZonedGrid, gridIntersections, type ZonedGridLine } from "@/lib/geo/zoneGrid";
-import { mgrsSquare, type GridSystem } from "@/lib/geo/coordinates";
+import { computeZonedGrid, computeDktmGrid, gridIntersections, type ZonedGridLine } from "@/lib/geo/zoneGrid";
+import { mgrsSquare, isDktmSystem, dktmZoneOf, type GridSystem } from "@/lib/geo/coordinates";
 import {
   dropOverlapping,
   formatGridLabel,
@@ -39,6 +39,8 @@ import {
   type GridLineClass,
   type GridSpacing,
 } from "@/lib/geo/utmGrid";
+import { DKTM_PARAMS } from "@/lib/geo/dktm";
+import { utmCentralMeridian } from "@/lib/geo/utm";
 import { createPaperProjector, type PaperProjector } from "./gridProjection";
 
 /** Build the download filename shared by single- and multi-page output. */
@@ -290,6 +292,7 @@ function gridOptionsFromStore(zoneLng: number, zoneLat: number, bearing: number,
   const m = useMapStore.getState();
   // Outside Denmark the grid follows the GPS zones; "32 for all of Denmark" is Danish only.
   const zoneMode = m.gridSystem === "mgrs" || region === "nordic" ? "std" : m.utmZoneMode;
+  const dktm = isDktmSystem(m.gridSystem) ? dktmZoneOf(m.gridSystem) : null;
   return {
     system: m.gridSystem,
     zoneMode,
@@ -297,7 +300,8 @@ function gridOptionsFromStore(zoneLng: number, zoneLat: number, bearing: number,
     spacing: m.gridSpacing,
     showLabels: m.showGridLabels,
     labelFormat: m.gridLabelFormat,
-    zone: resolveUtmZone(zoneLng, zoneLat, zoneMode),
+    // DKTM's zone is fixed by the system choice, not the location.
+    zone: dktm ?? resolveUtmZone(zoneLng, zoneLat, zoneMode),
     bearing,
   };
 }
@@ -345,7 +349,7 @@ function drawUtmGrid(
     south: Math.min(...corners.map((c) => c.lat)),
     north: Math.max(...corners.map((c) => c.lat)),
   };
-  const lines = computeZonedGrid(cover, spacing, opts.zoneMode, zone);
+  const lines = isDktmSystem(opts.system) ? computeDktmGrid(cover, spacing, dktmZoneOf(opts.system)) : computeZonedGrid(cover, spacing, opts.zoneMode, zone);
 
   // Clip lines to the map area so nothing spills into the label margin.
   pdf.saveGraphicsState();
@@ -505,7 +509,7 @@ export function drawAttribution(
   // Scale text on left
   let scaleText = `1:${scale.toLocaleString("da-DK")}`;
   if (grid) {
-    scaleText += grid.system === "mgrs" ? ` | MGRS ${grid.square} / WGS84` : ` | UTM ${grid.zone}N / ETRS89`;
+    scaleText += grid.system === "mgrs" ? ` | MGRS ${grid.square} / WGS84` : isDktmSystem(grid.system) ? ` | DKTM${grid.zone} / ETRS89` : ` | UTM ${grid.zone}N / ETRS89`;
     if (grid.sweref) scaleText += " (= SWEREF 99 TM)";
     if (grid.spacing) scaleText += ` | Gitter ${formatSpacing(grid.spacing)}`;
   }
@@ -627,7 +631,7 @@ export async function loadDeclinationDiagram(showDeclination: boolean): Promise<
   return showDeclination ? import("./declinationDiagram") : null;
 }
 
-/** Misvisning diagram for the frame centre; grid north only when a UTM/MGRS grid is on. */
+/** Misvisning diagram for the frame centre; grid north only when a coordinate grid is on. */
 export function drawDeclination(
   diagram: DeclinationDiagram | null,
   pdf: jsPDF,
@@ -637,10 +641,16 @@ export function drawDeclination(
   bearing: number
 ) {
   if (!diagram) return;
+  let centralMeridian: number | null = null;
+  if (gridInfo) {
+    centralMeridian = isDktmSystem(gridInfo.system)
+      ? DKTM_PARAMS[dktmZoneOf(gridInfo.system)].lon0
+      : utmCentralMeridian(gridInfo.zone);
+  }
   const info = diagram.computeDeclinationInfo(
     (bounds.north + bounds.south) / 2,
     (bounds.west + bounds.east) / 2,
-    gridInfo ? gridInfo.zone : null
+    centralMeridian
   );
   if (info) diagram.drawDeclinationDiagram(pdf, layout, info, bearing);
 }

@@ -52,7 +52,7 @@ export default function AboutSolaris() {
                 "Udskriv danske topografiske kort som PDF i flere målestoksforhold",
                 "Vælg mellem papirformater fra A5 til A2, stående eller liggende, eller A1 og A0 til trykkeriet",
                 "Print et stort område over flere ark og saml dem til et gulvkort, med oversigtsside og samlemærker",
-                "UTM-gitter med koordinater — til orientering i felten",
+                "UTM-, MGRS- eller DKTM-gitter med koordinater — til orientering i felten og landmåling",
                 "Højdekurver, skyggekort, matrikelskel og stednavne som overlay",
                 "Havdybder og sømærker til ture på vandet (ikke til navigation)",
                 "Importer GPX- og GeoJSON-ruter og print dem direkte",
