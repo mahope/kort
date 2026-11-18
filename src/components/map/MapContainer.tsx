@@ -112,6 +112,13 @@ export function MapContainer() {
     }
   }, [rasterBase]);
 
+  // The attribution control is recreated per region (keyed below), and a new
+  // compact control opens expanded: fold it again on touch, as on load.
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (map) collapseAttributionOnTouch({ target: map });
+  }, [region]);
+
   useEffect(() => {
     if (flyToTarget && mapRef.current) {
       mapRef.current.flyTo({
@@ -217,7 +224,9 @@ export function MapContainer() {
 
       <NavigationControl position="bottom-right" />
       <ScaleControl position="bottom-right" unit="metric" />
+      {/* Keyed: react-map-gl reads customAttribution only when it creates the control. */}
       <AttributionControl
+        key={region}
         position="bottom-left"
         compact
         customAttribution={region === "nordic" ? NORDIC_MAP_ATTRIBUTION : KDS_MAP_ATTRIBUTION}
