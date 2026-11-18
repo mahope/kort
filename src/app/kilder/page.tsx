@@ -112,7 +112,7 @@ export default function SourcesPage() {
             <p className="text-text-secondary mb-3">
               Flytter du kortet til Norge eller Sverige, skifter det selv kilde ud fra midten af kortet. I Norge viser det
               Kartverkets topografiske kort, og i Sverige og langs grænsen OpenTopoMap, som bygger på OpenStreetMap og
-              højdedata fra SRTM. Gitter, misvisning og PDF virker som i Danmark, med UTM-zone 32 til 35 som på en GPS.
+              højdedata fra SRTM og Sonny. Gitter, misvisning og PDF virker som i Danmark, med UTM-zone 32 til 35 som på en GPS.
             </p>
             <p className="text-text-secondary">
               Lantmäteriet har ikke et gratis, detaljeret webkort: det gratis oversigtskort er for groft til print i 1:25.000 og

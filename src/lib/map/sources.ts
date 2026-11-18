@@ -361,7 +361,7 @@ export const KARTVERKET_TOPO_SOURCE: RasterSourceConfig = {
 };
 
 /**
- * OpenTopoMap (CC-BY-SA, OSM data and SRTM heights): topographic style with
+ * OpenTopoMap (CC-BY-SA, OSM data, SRTM and Sonny heights): topographic style with
  * contours, used for Sweden and as the layer under Kartverket. Free to embed
  * as long as the server is not hammered (opentopomap.org/about#faq), so no
  * offline saving. Lantmäteriet has no free detailed web map (see README).
@@ -371,8 +371,8 @@ export const OPENTOPOMAP_SOURCE: RasterSourceConfig = {
   tileSize: 256,
   maxzoom: 17,
   attribution:
-    "Kortdata: &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>-bidragydere, SRTM | Kortdesign: &copy; <a href='https://opentopomap.org'>OpenTopoMap</a> (<a href='https://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA</a>)",
-  credit: "Kortdata: © OpenStreetMap-bidragydere, SRTM | Kortdesign: © OpenTopoMap (CC-BY-SA)",
+    "Kortdata: &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>-bidragydere | Højdedata: <a href='https://viewfinderpanoramas.org'>SRTM</a>, <a href='https://sonny.4lima.de/'>Sonny</a> | Kortdesign: &copy; <a href='https://opentopomap.org'>OpenTopoMap</a> (<a href='https://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA</a>)",
+  credit: "Kortdata: © OpenStreetMap-bidragydere | Højdedata: SRTM, Sonny | Kortdesign: © OpenTopoMap (CC-BY-SA)",
   noOffline: true,
 };
 

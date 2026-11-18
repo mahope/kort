@@ -103,6 +103,8 @@ describe("Nordic topo sources", () => {
     expect(KARTVERKET_TOPO_SOURCE.credit).toContain("CC BY 4.0");
     expect(OPENTOPOMAP_SOURCE.attribution).toContain("OpenStreetMap");
     expect(OPENTOPOMAP_SOURCE.attribution).toContain("SRTM");
+    expect(OPENTOPOMAP_SOURCE.attribution).toContain("Sonny");
+    expect(OPENTOPOMAP_SOURCE.credit).toContain("SRTM, Sonny");
     expect(OPENTOPOMAP_SOURCE.credit).toContain("OpenTopoMap (CC-BY-SA)");
   });
 });

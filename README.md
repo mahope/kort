@@ -61,7 +61,7 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 - **Adressesøgning:** [Adressevælger](https://confluence.sdfi.dk/pages/viewpage.action?pageId=234782998) (Klimadatastyrelsen) - adresser og veje, EPSG:25832 konverteres til WGS84
 - **Stednavne:** [Danske Stednavne](https://www.klimadatastyrelsen.dk/data/danske-stednavne) (Klimadatastyrelsen) - snapshot i `data/stednavne.tsv.gz`, søges server-side via `/api/stednavne`
 - **Norge:** [Kartverket](https://www.kartverket.no/api-og-data/vilkar-for-bruk) - Topografisk norgeskart (WMTS-cache og WMS), høydekurver og stednavne (SSR), CC BY 4.0, ingen nøgle
-- **Sverige:** [OpenTopoMap](https://opentopomap.org/about) - OpenStreetMap-data og SRTM-højder, CC-BY-SA. Lantmäteriet bruges ikke (se [Norge og Sverige](#norge-og-sverige))
+- **Sverige:** [OpenTopoMap](https://opentopomap.org/about) - OpenStreetMap-data og højdedata fra SRTM og Sonny, CC-BY-SA. Lantmäteriet bruges ikke (se [Norge og Sverige](#norge-og-sverige))
 - De danske data er frie offentlige geodata (CC BY 4.0). Alle kilder med licens og kreditering står på `/kilder`
 
 ## Kom i gang
@@ -186,7 +186,7 @@ MIT
 ## Attribution
 
 Kortdata leveres af [Klimadatastyrelsen](https://www.klimadatastyrelsen.dk/) via [Dataforsyningen](https://dataforsyningen.dk/).
-Uden for Danmark: © [Kartverket](https://www.kartverket.no/) (CC BY 4.0) og © [OpenTopoMap](https://opentopomap.org/) (CC-BY-SA) med data fra © OpenStreetMap-bidragydere og SRTM.
+Uden for Danmark: © [Kartverket](https://www.kartverket.no/) (CC BY 4.0) og © [OpenTopoMap](https://opentopomap.org/) (CC-BY-SA) med data fra © OpenStreetMap-bidragydere og højdedata fra SRTM og [Sonny](https://sonny.4lima.de/).
 
 ## Norge og Sverige
 
@@ -199,7 +199,7 @@ fordi Kartverkets fliser er gennemsigtige uden for Norge. Det giver et sømløst
 | | Skærm | PDF | Licens og kreditering |
 | --- | --- | --- | --- |
 | Norge | Kartverket WMTS-cache `cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator` | Kartverket WMS `wms.geonorge.no/skwms1/wms.topo` med `MAP_RESOLUTION` = papirets dpi, kun Kartverkets egne lag (`kd_*`, uden FKB) | CC BY 4.0, "© Kartverket" |
-| Sverige | OpenTopoMap `tile.opentopomap.org` (til zoom 17) | samme fliser | CC-BY-SA, "Kortdata: © OpenStreetMap-bidragydere, SRTM \| Kortdesign: © OpenTopoMap" |
+| Sverige | OpenTopoMap `tile.opentopomap.org` (til zoom 17) | samme fliser | CC-BY-SA, "Kortdata: © OpenStreetMap-bidragydere \| Højdedata: SRTM, Sonny \| Kortdesign: © OpenTopoMap" |
 | Højdekurver Norge | Kartverket WMS (`kd_hoydekurver,fkb_hoydekurver`) | `kd_hoydekurver` med `MAP_RESOLUTION` | CC BY 4.0 |
 | Stednavne Norge | `api.kartverket.no/stedsnavn/v1/navn` (kun ved søgning) | - | CC BY 4.0 |
 

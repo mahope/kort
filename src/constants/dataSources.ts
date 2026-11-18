@@ -202,7 +202,7 @@ export const DATA_SOURCES: DataSource[] = [
   {
     id: "opentopomap",
     name: "OpenTopoMap",
-    provider: "OpenTopoMap, OpenStreetMap-bidragydere og SRTM",
+    provider: "OpenTopoMap, OpenStreetMap-bidragydere, SRTM og Sonny (højdedata)",
     usedFor:
       "Basiskortet i Sverige og under Kartverkets kort langs grænsen. Lantmäteriet har ikke et gratis detaljeret webkort (se README).",
     delivery:
@@ -210,7 +210,7 @@ export const DATA_SOURCES: DataSource[] = [
     licence: "Kortfliser CC-BY-SA, data ODbL (OpenStreetMap)",
     licenceUrl: "https://opentopomap.org/about",
     credit:
-      "\"Kortdata: © OpenStreetMap-bidragydere, SRTM | Kortdesign: © OpenTopoMap (CC-BY-SA)\" på kortet og i boksen på PDF'en.",
+      "\"Kortdata: © OpenStreetMap-bidragydere | Højdedata: SRTM, Sonny | Kortdesign: © OpenTopoMap (CC-BY-SA)\" på kortet og i boksen på PDF'en.",
   },
   {
     id: "wmm",
