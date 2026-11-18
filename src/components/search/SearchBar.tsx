@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { searchAddresses, resolveCoordinates } from "@/lib/api/address";
+import { searchAddresses, searchNorwegianPlaces, resolveCoordinates } from "@/lib/api/address";
 import { useUiStore } from "@/stores/uiStore";
 import type { SearchResult } from "@/types/map";
 import { flyToPrintArea } from "@/lib/map/focusPrintArea";
@@ -33,6 +33,8 @@ export function SearchBar() {
     }
     setIsLoading(true);
     const version = ++searchVersionRef.current;
+    // In parallel, but the Danish list does not wait for it.
+    const norway = searchNorwegianPlaces(q);
     try {
       const res = await searchAddresses(q);
       if (version !== searchVersionRef.current) return;
@@ -41,6 +43,10 @@ export function SearchBar() {
       setIsOpen(true);
       setHasSearched(true);
       setActiveIndex(-1);
+      void norway.then((places) => {
+        if (version !== searchVersionRef.current || places.length === 0) return;
+        setResults((current) => [...current, ...places]);
+      });
     } catch {
       if (version !== searchVersionRef.current) return;
       setResults([]);

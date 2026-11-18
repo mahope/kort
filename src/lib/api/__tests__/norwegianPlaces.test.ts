@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { fetchNorwegianPlaces, norwegianPlacesUrl } from "../norwegianPlaces";
-import { searchAddresses } from "../address";
+import { searchAddresses, searchNorwegianPlaces } from "../address";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -51,7 +51,7 @@ describe("fetchNorwegianPlaces", () => {
 });
 
 describe("searchAddresses with Norway", () => {
-  it("lists Danish results first and keeps room for Norwegian places", async () => {
+  it("leaves the Danish search alone and finds Norwegian places apart", async () => {
     const danishPlaces = Array.from({ length: 12 }, (_, i) => ({
       id: `dk-${i}`,
       text: `Sted ${i}`,
@@ -59,17 +59,20 @@ describe("searchAddresses with Norway", () => {
       coordinates: [10, 56],
       type: "place",
     }));
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async (url: string) => {
-        if (url.startsWith("/api/stednavne")) return new Response(JSON.stringify(danishPlaces));
-        if (url.startsWith("https://api.kartverket.no")) return new Response(JSON.stringify({ navn: [galdhoepiggen] }));
-        return new Response(JSON.stringify({ status: "ok", fund: [] }));
-      })
-    );
-    const res = await searchAddresses("Galdhøp");
-    expect(res).toHaveLength(9);
-    expect(res[0].id).toBe("dk-0");
-    expect(res[res.length - 1].text).toBe("Galdhøpiggen");
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.startsWith("/api/stednavne")) return new Response(JSON.stringify(danishPlaces));
+      if (url.startsWith("https://api.kartverket.no")) return new Response(JSON.stringify({ navn: [galdhoepiggen] }));
+      return new Response(JSON.stringify({ status: "ok", fund: [] }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const danish = await searchAddresses("Galdhøp");
+    expect(danish.map((r) => r.id)).toEqual(danishPlaces.slice(0, 10).map((p) => p.id));
+    expect(fetchMock.mock.calls.some(([url]) => url.startsWith("https://api.kartverket.no"))).toBe(false);
+    expect((await searchNorwegianPlaces("Galdhøp")).map((r) => r.text)).toEqual(["Galdhøpiggen"]);
+  });
+
+  it("gives no Norwegian places, and no error, when Kartverket fails", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("offline"); }));
+    expect(await searchNorwegianPlaces("Galdhøp")).toEqual([]);
   });
 });

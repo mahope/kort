@@ -36,10 +36,9 @@ async function fetchWithTimeout(url: string): Promise<Response> {
 export async function searchAddresses(query: string): Promise<SearchResult[]> {
   if (query.trim().length < 2) return [];
 
-  const [addressResults, placeResults, norwayResults] = await Promise.allSettled([
+  const [addressResults, placeResults] = await Promise.allSettled([
     fetchAdressevaelger(query),
     fetchPlaces(query),
-    fetchNorwegianPlaces(query),
   ]);
 
   const addresses =
@@ -47,10 +46,21 @@ export async function searchAddresses(query: string): Promise<SearchResult[]> {
   const places =
     placeResults.status === "fulfilled" ? placeResults.value : [];
 
-  // Norwegian places after the Danish ones, but always room for a couple.
-  const norway = norwayResults.status === "fulfilled" ? norwayResults.value : [];
-  const danish = [...addresses, ...places].slice(0, norway.length > 0 ? 8 : 10);
-  return [...danish, ...norway].slice(0, 10);
+  return [...addresses, ...places].slice(0, 10);
+}
+
+/**
+ * Norwegian places (Kartverket), searched apart from the Danish results so a
+ * slow Kartverket neither holds them back nor pushes any of them out: the
+ * search bar shows the Danish list first and appends these when they arrive.
+ * Never throws.
+ */
+export async function searchNorwegianPlaces(query: string): Promise<SearchResult[]> {
+  try {
+    return await fetchNorwegianPlaces(query);
+  } catch {
+    return [];
+  }
 }
 
 interface AdressevaelgerHit {
