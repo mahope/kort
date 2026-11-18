@@ -66,8 +66,9 @@ def main() -> None:
         elev[elev == nodata] = np.nan
 
     water = ~land
-    # Sea by OSM but land (or nothing) by the model: a shallow fringe.
-    fix = water & ~(elev < -0.05)
+    # Sea by OSM but land by the model: a shallow fringe. Cells without data (the
+    # grid's corners past the downloaded tiles) stay empty; NaN compares False.
+    fix = water & (elev > -0.05)
     elev[fix] = -0.5
     print(f"kystkant rettet: {fix.sum()} celler", flush=True)
 

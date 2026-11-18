@@ -25,6 +25,9 @@ mkdir -p "$W/dl" "$W/work" "$W/osm" "$W/layers"
 
 # Denmark's waters with Skagerrak, the western Baltic and Bornholm.
 LON0=7; LON1=16; LAT0=54; LAT1=58
+# Land and coast reach one degree further, so the Swedish and German coasts around
+# the chart are land, not deep water, when the map is moved past the depths.
+LAND_BOX="$((LON0-1)) $((LAT0-1)) $((LON1+1)) $((LAT1+1))"
 EMOD_RES=0.0010416666666667 # 1/16 arc minute, EMODnet's native grid
 
 dk() { docker run --rm -u "$(id -u):$(id -g)" -v "$W:/w" -v "$HERE:/s:ro" -v "$REPO/public/data/soekort:/r:ro" -w /w "$IMG" "$@"; }
@@ -66,17 +69,17 @@ done
 step "Land: klip og saml landpolygoner"
 if [ ! -s "$W/work/land.gpkg" ]; then
   dk ogr2ogr -q -f GPKG /w/work/land-split.gpkg /w/dl/land-polygons-split-4326/land_polygons.shp \
-    -spat $((LON0-1)) $((LAT0-1)) $((LON1+1)) $((LAT1+1)) -nln land
+    -spat $LAND_BOX -nln land
   # One polygon per island: the 1-degree split lines would show as seams in the fill.
   dk ogr2ogr -q -f GPKG /w/work/land.gpkg /w/work/land-split.gpkg -nln land -explodecollections \
     -dialect SQLITE -sql "SELECT ST_Union(geom) AS geom FROM land"
 fi
 if [ ! -s "$W/layers/kyst.geojsons" ]; then
   dk ogr2ogr -q -f GeoJSONSeq /w/layers/kyst.geojsons /w/dl/coastlines-split-4326/lines.shp \
-    -spat $LON0 $LAT0 $LON1 $LAT1 -clipsrc $LON0 $LAT0 $LON1 $LAT1 -select "" -lco RS=NO
+    -spat $LAND_BOX -clipsrc $LAND_BOX -select "" -lco RS=NO
 fi
 if [ ! -s "$W/layers/land.geojsons" ]; then
-  dk ogr2ogr -q -f GeoJSONSeq /w/layers/land.geojsons /w/work/land.gpkg -clipsrc $LON0 $LAT0 $LON1 $LAT1 -lco RS=NO
+  dk ogr2ogr -q -f GeoJSONSeq /w/layers/land.geojsons /w/work/land.gpkg -clipsrc $LAND_BOX -lco RS=NO
 fi
 
 step "Dybdemodel: flet, 50 m i EPSG:3035"
@@ -93,7 +96,8 @@ if [ ! -s "$W/work/elev.tif" ]; then
     SRC=/w/work/merged.vrt
   fi
   # A cubic spline from the 115 m grid gives the soft band edges of a printed chart.
-  dk gdalwarp -q -t_srs EPSG:3035 -tr 50 50 -r cubicspline -te_srs EPSG:4326 -te $LON0 $LAT0 $LON1 $LAT1 \
+  # -dstnodata: the grid corners past the downloaded tiles are "no data", not 0 m.
+  dk gdalwarp -q -t_srs EPSG:3035 -tr 50 50 -r cubicspline -dstnodata -32768 -te_srs EPSG:4326 -te $LON0 $LAT0 $LON1 $LAT1 \
     -co COMPRESS=DEFLATE -co TILED=YES -co BIGTIFF=YES -co PREDICTOR=3 "$SRC" /w/work/elev.tif
 fi
 if [ ! -s "$W/work/land.tif" ]; then
