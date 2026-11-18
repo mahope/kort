@@ -1,7 +1,8 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { act, type ReactNode } from "react";
+import { act, useEffect, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { useMapStore } from "@/stores/mapStore";
+import { KDS_MAP_ATTRIBUTION, NORDIC_MAP_ATTRIBUTION } from "@/lib/map/sources";
 import { MapContainer } from "../MapContainer";
 
 vi.mock("maplibre-gl", () => ({ default: {}, setWorkerUrl: () => {} }));
@@ -13,8 +14,13 @@ vi.mock("react-map-gl/maplibre", () => ({
   Layer: ({ id }: { id: string }) => <div data-layer={id} />,
   NavigationControl: () => null,
   ScaleControl: () => null,
-  AttributionControl: () => null,
+  // Like react-map-gl: the options are read once, when the control is created.
+  AttributionControl: function AttributionControl({ customAttribution }: { customAttribution?: string }) {
+    useEffect(() => { attributionsAtCreation.push(customAttribution); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    return null;
+  },
 }));
+const attributionsAtCreation = vi.hoisted(() => [] as (string | undefined)[]);
 vi.mock("../PrintFrame", () => ({ PrintFrame: () => null }));
 vi.mock("../GeolocationButton", () => ({ GeolocationButton: () => null }));
 vi.mock("../ImportedLayers", () => ({ ImportedLayers: () => null }));
@@ -49,6 +55,23 @@ it("removes and restores the raster layer while keeping the selected contours", 
     act(() => setBaseLayer("dtk25"));
     expect(container.querySelector(rasterLayer)).not.toBeNull();
     expect(container.querySelector(contours)).not.toBeNull();
+  } finally {
+    act(() => root.unmount());
+  }
+});
+
+it("recreates the attribution control when the map moves to another region", () => {
+  const container = document.createElement("div");
+  const root = createRoot(container);
+  attributionsAtCreation.length = 0;
+  try {
+    act(() => useMapStore.setState({ viewState: { ...useMapStore.getState().viewState, longitude: 10.5, latitude: 56 } }));
+    act(() => root.render(<MapContainer />));
+    expect(attributionsAtCreation).toEqual([KDS_MAP_ATTRIBUTION]);
+
+    // Oslo
+    act(() => useMapStore.setState({ viewState: { ...useMapStore.getState().viewState, longitude: 10.75, latitude: 59.91 } }));
+    expect(attributionsAtCreation).toEqual([KDS_MAP_ATTRIBUTION, NORDIC_MAP_ATTRIBUTION]);
   } finally {
     act(() => root.unmount());
   }

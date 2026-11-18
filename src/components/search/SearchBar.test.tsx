@@ -6,11 +6,13 @@ import { useMapStore } from "@/stores/mapStore";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
+const searchNorwegianPlaces = vi.hoisted(() => vi.fn(async (): Promise<unknown[]> => []));
 vi.mock("@/lib/api/address", () => ({
   searchAddresses: vi.fn(async () => [
     { id: "a", text: "Vej 1", description: "Adresse", coordinates: [10, 55], type: "address" },
     { id: "b", text: "Vej 2", description: "Adresse", coordinates: [11, 56], type: "address" },
   ]),
+  searchNorwegianPlaces,
   resolveCoordinates: vi.fn(),
 }));
 
@@ -85,5 +87,18 @@ describe("SearchBar keyboard flow", () => {
     });
     // Zoom is chosen so the whole print frame fits the visible map.
     expect(flyTo).toHaveBeenCalledWith(11, 56, expect.any(Number), expect.objectContaining({ bottom: 0 }));
+  });
+
+  it("shows the Danish results without waiting for Kartverket, then appends Norwegian places", async () => {
+    let answer: (places: unknown[]) => void = () => {};
+    searchNorwegianPlaces.mockImplementationOnce(() => new Promise((resolve) => { answer = resolve; }));
+    await openResults();
+    await act(async () => {
+      answer([{ id: "no-1", text: "Vejfjellet", description: "Fjell, Norge", coordinates: [8, 61], type: "place" }]);
+    });
+    const options = [...host.querySelectorAll("[role=option]")].map((o) => o.textContent);
+    expect(options).toHaveLength(3);
+    expect(options[0]).toContain("Vej 1");
+    expect(options[2]).toContain("Vejfjellet");
   });
 });

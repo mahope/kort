@@ -19,6 +19,8 @@ import {
 } from "@/lib/offline/tiles";
 import { findMissingAreas, OFFLINE_CACHE_NAME } from "@/lib/offline/areas";
 import { deleteTiles, downloadTiles, type DownloadProgress } from "@/lib/offline/download";
+import { usesNordicTopo } from "@/lib/map/sources";
+import { useMapRegion } from "@/lib/hooks/useMapRegion";
 
 const LAYER_LABELS: Record<string, string> = {
   dtk25: "Topografisk kort",
@@ -77,7 +79,13 @@ export function OfflinePanel() {
   const pausedRef = useRef(false);
   const cancelledRef = useRef(false);
 
-  const layerIds = useMemo(() => offlineLayerIds(baseLayer, overlays), [baseLayer, overlays]);
+  // Outside Denmark the base is Kartverket/OpenTopoMap, which may not be bulk-saved.
+  const region = useMapRegion();
+  const nordic = usesNordicTopo(baseLayer, region);
+  const layerIds = useMemo(
+    () => offlineLayerIds(baseLayer, overlays).filter((id) => !(nordic && id === baseLayer)),
+    [baseLayer, overlays, nordic]
+  );
   const urls = useMemo(
     () => (frameBounds ? areaTileUrls(frameBounds, layerIds) : []),
     [frameBounds, layerIds]
@@ -101,7 +109,7 @@ export function OfflinePanel() {
   const planKey = `${urls.length}:${layerIds.join(",")}`;
   const confirmed = confirmedFor === planKey;
 
-  const baseSaveable = isBaseLayerSaveable(baseLayer);
+  const baseSaveable = !nordic && isBaseLayerSaveable(baseLayer);
   const supported = typeof navigator !== "undefined" && "serviceWorker" in navigator;
   const canStart =
     supported &&
@@ -189,7 +197,9 @@ export function OfflinePanel() {
 
       {baseLayer !== "none" && !baseSaveable && (
         <p className="text-xs text-text-secondary" role="note">
-          {baseLayer === "osm"
+          {nordic
+            ? "Kortene over Norge og Sverige (Kartverket, OpenTopoMap) må ikke hentes i bulk, så baggrundskortet gemmes ikke."
+            : baseLayer === "osm"
             ? "OpenStreetMap-fliser må ikke hentes i bulk, så baggrundskortet gemmes ikke."
             : "Skærmkortet kan ikke gemmes offline. Vælg fx Topografisk kort eller Ortofoto."}
         </p>

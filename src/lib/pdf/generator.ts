@@ -10,7 +10,8 @@ import { useHistoryStore } from "@/stores/historyStore";
 import { calculatePdfLayout } from "./layout";
 import { getBrand } from "@/config/brand";
 import { renderMapToImage } from "./renderer";
-import { OVERLAY_SOURCES, kdsPrintCredit } from "@/lib/map/sources";
+import { KARTVERKET_TOPO_SOURCE, OPENTOPOMAP_SOURCE, OVERLAY_SOURCES, kdsPrintCredit, nordicPrintCredit, usesNordicTopo } from "@/lib/map/sources";
+import { boundsTouchSweden, mapRegionAt, mapRegionForBounds, nordicSourcesInBounds, type MapRegion } from "@/lib/geo/regions";
 import { timed, yieldToMain } from "./timing";
 import { applyPrintPreferences, drawControlLine } from "./controlLine";
 import { calculateMultiPageGrid, calculatePrintArea } from "@/lib/geo/calculations";
@@ -122,6 +123,7 @@ export async function generatePdf({
 
   const showUtmGrid = mapState.showUtmGrid;
   const bearing = mapState.viewState.bearing;
+  const region = mapRegionForBounds(bounds);
 
   // Render map at target resolution (returns JPEG bytes)
   onProgress?.({ stage: "render", tilesLoaded: 0, tilesTotal: 0 });
@@ -137,6 +139,7 @@ export async function generatePdf({
     importedLayers,
     drawnFeatures,
     bearing,
+    region,
   }));
 
   onProgress?.({ stage: "assemble", tilesLoaded: 0, tilesTotal: 0 });
@@ -159,8 +162,8 @@ export async function generatePdf({
   await yieldToMain();
   let gridInfo: GridInfo | null = null;
   if (showUtmGrid) {
-    const opts = gridOptionsFromStore((bounds.west + bounds.east) / 2, (bounds.north + bounds.south) / 2, bearing);
-    gridInfo = { system: opts.system, square: opts.square, zone: opts.zone, spacing: drawUtmGrid(pdf, layout, bounds, scale, opts) };
+    const opts = gridOptionsFromStore((bounds.west + bounds.east) / 2, (bounds.north + bounds.south) / 2, bearing, region);
+    gridInfo = { ...gridInfoBase(opts, bounds), spacing: drawUtmGrid(pdf, layout, bounds, scale, opts) };
   }
 
   // Draw decorations
@@ -168,8 +171,9 @@ export async function generatePdf({
   if (printState.showScaleBar ?? (baseLayer !== "none")) drawScaleBar(pdf, layout, scale);
   if (printState.showNorthArrow ?? (baseLayer !== "none")) drawNorthArrow(pdf, layout, bearing);
   drawControlLine(pdf, layout);
-  drawAttribution(pdf, layout, scale, gridInfo);
-  drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm));
+  const where = { region, bounds };
+  drawAttribution(pdf, layout, scale, gridInfo, undefined, mapDataCredit(baseLayer, where));
+  drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm), where);
   drawDeclination(declinationDiagram, pdf, layout, bounds, gridInfo, bearing);
 
   // Record in print history
@@ -284,18 +288,20 @@ interface GridOptions {
   reserveTopLeftMm?: number;
 }
 
-function gridOptionsFromStore(zoneLng: number, zoneLat: number, bearing: number): GridOptions {
+function gridOptionsFromStore(zoneLng: number, zoneLat: number, bearing: number, region: MapRegion = "dk"): GridOptions {
   const m = useMapStore.getState();
+  // Outside Denmark the grid follows the GPS zones; "32 for all of Denmark" is Danish only.
+  const zoneMode = m.gridSystem === "mgrs" || region === "nordic" ? "std" : m.utmZoneMode;
   const dktm = isDktmSystem(m.gridSystem) ? dktmZoneOf(m.gridSystem) : null;
   return {
     system: m.gridSystem,
-    zoneMode: m.gridSystem === "mgrs" ? "std" : m.utmZoneMode,
+    zoneMode,
     square: mgrsSquare(zoneLat, zoneLng),
     spacing: m.gridSpacing,
     showLabels: m.showGridLabels,
     labelFormat: m.gridLabelFormat,
     // DKTM's zone is fixed by the system choice, not the location.
-    zone: dktm ?? resolveUtmZone(zoneLng, zoneLat, m.gridSystem === "mgrs" ? "std" : m.utmZoneMode),
+    zone: dktm ?? resolveUtmZone(zoneLng, zoneLat, zoneMode),
     bearing,
   };
 }
@@ -476,6 +482,13 @@ interface GridInfo {
   square: string;
   zone: number;
   spacing: number | null;
+  /** UTM 33 over Swedish land: the same grid as SWEREF 99 TM, so say so. */
+  sweref?: boolean;
+}
+
+function gridInfoBase(opts: GridOptions, bounds: PrintFrameBounds): Omit<GridInfo, "spacing"> {
+  const sweref = opts.system === "utm" && opts.zone === 33 && boundsTouchSweden(bounds);
+  return { system: opts.system, square: opts.square, zone: opts.zone, ...(sweref ? { sweref } : {}) };
 }
 
 export function drawAttribution(
@@ -484,7 +497,9 @@ export function drawAttribution(
   scale: number,
   grid: GridInfo | null,
   /** Replaces the scale/grid text on the left (e.g. on the overview page). */
-  leftText?: string
+  leftText?: string,
+  /** Who made the map data outside Denmark (mapDataCredit); the KDS credit when absent. */
+  dataCredit?: string
 ) {
   pdf.setFontSize(6);
   pdf.setTextColor(100);
@@ -495,12 +510,14 @@ export function drawAttribution(
   let scaleText = `1:${scale.toLocaleString("da-DK")}`;
   if (grid) {
     scaleText += grid.system === "mgrs" ? ` | MGRS ${grid.square} / WGS84` : isDktmSystem(grid.system) ? ` | DKTM${grid.zone} / ETRS89` : ` | UTM ${grid.zone}N / ETRS89`;
+    if (grid.sweref) scaleText += " (= SWEREF 99 TM)";
     if (grid.spacing) scaleText += ` | Gitter ${formatSpacing(grid.spacing)}`;
   }
   pdf.text(leftText ?? scaleText, layout.marginMm, y);
 
   // Attribution on right
-  const attribution = kdsPrintCredit(getBrand().credit.short);
+  const domain = getBrand().credit.short;
+  const attribution = dataCredit ? nordicPrintCredit(dataCredit, domain) : kdsPrintCredit(domain);
   pdf.text(attribution, layout.pageWidthMm - layout.marginMm, y, {
     align: "right",
   });
@@ -512,8 +529,8 @@ export function drawAttribution(
  * of the map image: the margins hold the grid labels and the footer. Text is
  * wrapped to the box width so it also fits A5.
  */
-export function drawThirdPartyCredits(pdf: jsPDF, x: number, y: number, maxWidthMm: number): void {
-  const extra = thirdPartyCredits();
+export function drawThirdPartyCredits(pdf: jsPDF, x: number, y: number, maxWidthMm: number, where?: PrintPlace): void {
+  const extra = thirdPartyCredits(where);
   if (extra.credits.length === 0 && !extra.notForNavigation) return;
   const pad = 1.2;
   const textW = maxWidthMm - 2 * pad;
@@ -568,12 +585,36 @@ export function overviewCreditsBox(
   return { x: place.x + 1.5, y: place.y + 1.5, width: MIN_CREDITS_MM };
 }
 
-/** Credits for non-KDS data in the print: OSM base map and third-party overlays. */
-export function thirdPartyCredits(): { credits: string[]; notForNavigation: boolean } {
+/** Where a print is: the source family and the area its credits are for. */
+interface PrintPlace {
+  region: MapRegion;
+  bounds: PrintFrameBounds;
+}
+
+/**
+ * Footer credit for the map data outside Denmark: the Nordic sources the print
+ * shows. Undefined in Denmark, where the footer keeps the KDS credit.
+ */
+export function mapDataCredit(baseLayer: BaseLayer, where: PrintPlace): string | undefined {
+  if (where.region === "dk") return undefined;
+  if (baseLayer === "none") return "Intet basiskort"; // overlay credits are in the box on the map
+  if (!usesNordicTopo(baseLayer, where.region)) return "Kortdata: OpenStreetMap-bidragydere";
+  const shown = nordicSourcesInBounds(where.bounds);
+  const names = [shown.kartverket && "Kartverket", shown.openTopoMap && "OpenTopoMap/OpenStreetMap"].filter(Boolean);
+  return `Kortdata: ${names.join(", ")}`;
+}
+
+/** Credits for non-KDS data in the print: OSM base map, Nordic topo and third-party overlays. */
+export function thirdPartyCredits(where?: PrintPlace): { credits: string[]; notForNavigation: boolean } {
   const { baseLayer, overlays } = useMapStore.getState();
   const credits: string[] = [];
   let notForNavigation = false;
   if (baseLayer === "osm") credits.push("Kort: OpenStreetMap-bidragydere (ODbL)");
+  if (where && usesNordicTopo(baseLayer, where.region)) {
+    const shown = nordicSourcesInBounds(where.bounds);
+    if (shown.kartverket && KARTVERKET_TOPO_SOURCE.credit) credits.push(KARTVERKET_TOPO_SOURCE.credit);
+    if (shown.openTopoMap && OPENTOPOMAP_SOURCE.credit) credits.push(OPENTOPOMAP_SOURCE.credit);
+  }
   for (const o of overlays) {
     if (!o.enabled) continue;
     const src = OVERLAY_SOURCES[o.id];
@@ -633,6 +674,8 @@ async function generateMultiPagePdf({
   // above it are refused) would turn each sheet about its own centre.
   const bearing = 0;
   const layout = calculatePdfLayout(paperFormat, orientation, dpi);
+  // One source family for the whole sheet set, from its centre: sheets must fit together.
+  const region = mapRegionAt(mapState.viewState.longitude, mapState.viewState.latitude);
 
   const { cells } = calculateMultiPageGrid(
     mapState.viewState.longitude,
@@ -650,6 +693,13 @@ async function generateMultiPagePdf({
   const totalPages = cells.length + (withOverview ? 1 : 0);
   printState.setTotalPages(totalPages);
   const { gridCols, gridRows, overlapMm } = printState;
+  // The ground the whole sheet set covers: the overview's extent and the credits' scope.
+  const totalBounds = {
+    west: Math.min(...cells.map((c) => c.bounds.west)),
+    east: Math.max(...cells.map((c) => c.bounds.east)),
+    south: Math.min(...cells.map((c) => c.bounds.south)),
+    north: Math.max(...cells.map((c) => c.bounds.north)),
+  };
 
   const pdf = new jsPDF({
     orientation: orientation === "landscape" ? "landscape" : "portrait",
@@ -668,12 +718,6 @@ async function generateMultiPagePdf({
       const groundW = area.groundWidthM + (gridCols - 1) * (area.groundWidthM - overlapM);
       const groundH = area.groundHeightM + (gridRows - 1) * (area.groundHeightM - overlapM);
       const place = overviewPlacement(layout, groundW, groundH);
-      const totalBounds = {
-        west: Math.min(...cells.map((c) => c.bounds.west)),
-        east: Math.max(...cells.map((c) => c.bounds.east)),
-        south: Math.min(...cells.map((c) => c.bounds.south)),
-        north: Math.max(...cells.map((c) => c.bounds.north)),
-      };
       onProgress?.({ stage: "render", tilesLoaded: 0, tilesTotal: 0 });
       // A small, quick render: the overview is for orientation, not for reading.
       const overviewImg = await renderMapToImage({
@@ -688,6 +732,7 @@ async function generateMultiPagePdf({
         importedLayers,
         drawnFeatures,
         bearing: 0,
+        region,
       });
       onProgress?.({ stage: "assemble", tilesLoaded: 0, tilesTotal: 0 });
       pdf.addImage(overviewImg, "JPEG", place.x, place.y, place.w, place.h);
@@ -699,9 +744,10 @@ async function generateMultiPagePdf({
         overlapMm,
         assembled: assembledSizeCm(layout, gridCols, gridRows, overlapMm),
       });
-      drawAttribution(pdf, layout, scale, null, "Oversigt, ikke i målestok");
+      const overviewPlace = { region, bounds: totalBounds };
+      drawAttribution(pdf, layout, scale, null, "Oversigt, ikke i målestok", mapDataCredit(baseLayer, overviewPlace));
       const credits = overviewCreditsBox(layout.marginMm, place);
-      drawThirdPartyCredits(pdf, credits.x, credits.y, credits.width);
+      drawThirdPartyCredits(pdf, credits.x, credits.y, credits.width, overviewPlace);
     }
 
     for (let i = 0; i < cells.length; i++) {
@@ -726,6 +772,7 @@ async function generateMultiPagePdf({
         importedLayers,
         drawnFeatures,
         bearing,
+        region,
       });
 
       onProgress?.({ stage: "assemble", tilesLoaded: 0, tilesTotal: 0 });
@@ -745,9 +792,9 @@ async function generateMultiPagePdf({
 
       let gridInfo: GridInfo | null = null;
       if (showUtmGrid) {
-        const opts = gridOptionsFromStore((cell.bounds.west + cell.bounds.east) / 2, (cell.bounds.south + cell.bounds.north) / 2, bearing);
+        const opts = gridOptionsFromStore((cell.bounds.west + cell.bounds.east) / 2, (cell.bounds.south + cell.bounds.north) / 2, bearing, region);
         opts.reserveTopLeftMm = pageLabelMm;
-        gridInfo = { system: opts.system, square: opts.square, zone: opts.zone, spacing: drawUtmGrid(pdf, layout, cell.bounds, scale, opts) };
+        gridInfo = { ...gridInfoBase(opts, cell.bounds), spacing: drawUtmGrid(pdf, layout, cell.bounds, scale, opts) };
       }
       // After the grid, so the white box keeps grid lines off the hint.
       drawAssemblyMarks(pdf, layout, sheetNeighbours(cell, gridCols, gridRows), overlapMm);
@@ -756,9 +803,13 @@ async function generateMultiPagePdf({
       if (printState.showNorthArrow ?? (baseLayer !== "none")) drawNorthArrow(pdf, layout, bearing);
       drawControlLine(pdf, layout);
 
-      drawAttribution(pdf, layout, scale, gridInfo);
+      const sheetPlace = { region, bounds: cell.bounds };
+      drawAttribution(pdf, layout, scale, gridInfo, undefined, mapDataCredit(baseLayer, sheetPlace));
       // Once on the assembled map (sheet A1), not a white box on every sheet.
-      if (i === 0) drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm));
+      // Its credits cover every sheet, since the box speaks for the whole map.
+      if (i === 0) {
+        drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm), { region, bounds: totalBounds });
+      }
       drawDeclination(declinationDiagram, pdf, layout, cell.bounds, gridInfo, bearing);
     }
   } finally {

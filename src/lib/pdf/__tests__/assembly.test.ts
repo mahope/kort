@@ -244,4 +244,18 @@ describe("generatePdf floor map", () => {
     expect(renderMapToImage).toHaveBeenCalledTimes(3);
     for (const [opts] of renderMapToImage.mock.calls) expect(opts.bearing).toBe(0);
   });
+
+  it("gives every sheet the sheet set's region, also where sheets cross a border", async () => {
+    // Øresund: the eastern sheets reach into Sweden, but the set is centred in Denmark.
+    usePrintStore.setState({ multiPage: true, gridCols: 2, gridRows: 2, overlapMm: 10 });
+    useMapStore.setState({ viewState: { ...useMapStore.getState().viewState, longitude: 12.65, latitude: 55.61 } });
+    await generatePdf({
+      bounds: { west: 12.5, east: 12.8, south: 55.5, north: 55.7 },
+      scale: 100000, paperFormat: "A4", orientation: "landscape", dpi: 150,
+    });
+    expect(renderMapToImage).toHaveBeenCalledTimes(5);
+    const regions = renderMapToImage.mock.calls.map(([opts]) => opts.region);
+    expect(regions[0]).toBeDefined();
+    expect(new Set(regions).size).toBe(1);
+  });
 });

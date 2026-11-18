@@ -5,7 +5,18 @@ import { configureMaplibreWorker } from "@/lib/map/workerUrl";
 import type { ImportedLayer } from "@/stores/importStore";
 import type { DrawnFeature } from "@/stores/drawStore";
 import { transformRequest } from "@/lib/map/styles";
-import { getBaseMapStyle, getRasterBaseLayers, OVERLAY_SOURCES, sourceZoomLimit } from "@/lib/map/sources";
+import {
+  getBaseMapStyle,
+  getRasterBaseLayers,
+  NORDIC_TOPO_SOURCES,
+  OVERLAY_SOURCES,
+  printTilesFor,
+  printZoomLimit,
+  sourceZoomLimit,
+  usesNordicTopo,
+  type RasterSourceConfig,
+} from "@/lib/map/sources";
+import { mapRegionForBounds, nordicSourcesInBounds, type MapRegion } from "@/lib/geo/regions";
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
 import { contourLayers, contourSourceUrl, ensurePmtilesProtocol, SCREEN_PX_PER_MM } from "@/lib/map/contours";
 import { timed } from "./timing";
@@ -129,6 +140,12 @@ function retryTiles(map: maplibregl.Map, failed: Map<string, FailedTile>) {
   internals.redraw?.();
 }
 
+function padBounds(b: PrintFrameBounds, ratio: number): PrintFrameBounds {
+  const dx = (b.east - b.west) * ratio;
+  const dy = (b.north - b.south) * ratio;
+  return { west: b.west - dx, east: b.east + dx, south: b.south - dy, north: b.north + dy };
+}
+
 function sleep(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
@@ -154,6 +171,8 @@ interface RenderOptions {
   /** Canvas pixels per millimetre on paper, for vector line widths (contours). */
   pxPerMm?: number;
   onTileProgress?: TileProgress;
+  /** Source family; defaults to the one at the centre of `bounds` (multi-page passes one for all sheets). */
+  region?: MapRegion;
 }
 
 /** Renders the map at target resolution and returns it as JPEG bytes. */
@@ -169,6 +188,7 @@ export async function renderMapToImage({
   bearing = 0,
   pxPerMm = SCREEN_PX_PER_MM,
   onTileProgress,
+  region,
 }: RenderOptions): Promise<Uint8Array> {
   if (isOffline()) throw new Error(OFFLINE_MESSAGE);
 
@@ -188,7 +208,18 @@ export async function renderMapToImage({
 
   let map: maplibregl.Map | undefined;
   try {
-    const mapStyle = getBaseMapStyle(baseLayer, style);
+    // The frame centre decides (as on screen) unless given: outside Denmark the Nordic topo replaces the Danish base maps.
+    const nordic = usesNordicTopo(baseLayer, region ?? mapRegionForBounds(bounds));
+    const mapStyle = getBaseMapStyle(baseLayer, style, nordic);
+    // Paper resolution, for WMS servers that scale symbols by it (Kartverket).
+    const dpi = pxPerMm * 25.4;
+    const rasterSourceSpec = (cfg: RasterSourceConfig) => ({
+      type: "raster" as const,
+      tiles: printTilesFor(cfg, dpi),
+      tileSize: cfg.tileSize,
+      ...printZoomLimit(cfg, dpi),
+      ...(cfg.bounds ? { bounds: cfg.bounds } : {}),
+    });
 
     const centerLng = (bounds.west + bounds.east) / 2;
     const centerLat = (bounds.north + bounds.south) / 2;
@@ -238,7 +269,18 @@ export async function renderMapToImage({
 
     // Add raster base layer if not skaermkort
     const rasterSource = PRINT_RASTER_BASE_LAYERS[baseLayer];
-    if (rasterSource) {
+    if (nordic) {
+      // Only the sources this print can show: no Kartverket requests for a
+      // print in Sweden, no OpenTopoMap ones inside Norway. Padded, since a
+      // rotated map shows more than the frame's bounding box.
+      const shown = nordicSourcesInBounds(padBounds(bounds, 0.5));
+      const wanted = { "nordic-opentopomap": shown.openTopoMap, "nordic-kartverket": shown.kartverket };
+      for (const { id, cfg } of NORDIC_TOPO_SOURCES) {
+        if (!wanted[id as keyof typeof wanted]) continue;
+        map.addSource(id, rasterSourceSpec(cfg));
+        map.addLayer({ id: `${id}-layer`, type: "raster", source: id });
+      }
+    } else if (rasterSource) {
       map.addSource(`base-${baseLayer}`, {
         type: "raster",
         tiles: rasterSource.tiles,
@@ -259,12 +301,7 @@ export async function renderMapToImage({
         for (const layer of contourLayers(sourceId, sourceConfig.contourInterval, overlay.opacity, pxPerMm)) map.addLayer(layer);
         continue;
       }
-      map.addSource(sourceId, {
-        type: "raster",
-        tiles: sourceConfig.tiles,
-        tileSize: sourceConfig.tileSize,
-        ...sourceZoomLimit(sourceConfig),
-      });
+      map.addSource(sourceId, rasterSourceSpec(sourceConfig));
       map.addLayer({
         id: `${sourceId}-layer`,
         type: "raster",

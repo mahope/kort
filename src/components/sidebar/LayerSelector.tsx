@@ -2,8 +2,9 @@
 
 import { useMapStore } from "@/stores/mapStore";
 import { MAP_STYLES } from "@/lib/map/styles";
-import { BASE_LAYERS } from "@/constants/baseLayers";
+import { baseLayerOptions, isBaseLayerSelected } from "@/constants/baseLayers";
 import type { MapStyle } from "@/types/map";
+import { useMapRegion } from "@/lib/hooks/useMapRegion";
 
 const STYLE_KEYS = Object.keys(MAP_STYLES) as MapStyle[];
 
@@ -12,18 +13,20 @@ export function LayerSelector() {
   const setBaseLayer = useMapStore((s) => s.setBaseLayer);
   const currentStyle = useMapStore((s) => s.style);
   const setStyle = useMapStore((s) => s.setStyle);
+  const region = useMapRegion();
+  const nordic = region === "nordic";
 
   return (
     <div>
       <span id="sidebar-baseLayer-label" className="block text-sm font-medium mb-1">Basiskort</span>
       <div role="radiogroup" aria-labelledby="sidebar-baseLayer-label" className="space-y-2">
-        {BASE_LAYERS.map((layer) => (
+        {baseLayerOptions(region).map((layer) => (
           <div key={layer.value}>
             <label className="flex items-center gap-2 cursor-pointer pointer-coarse:min-h-11">
               <input
                 type="radio"
                 name="sidebar-baseLayer"
-                checked={baseLayer === layer.value}
+                checked={isBaseLayerSelected(layer, baseLayer, region)}
                 onChange={() => setBaseLayer(layer.value)}
                 className="accent-primary pointer-coarse:h-5 pointer-coarse:w-5"
               />
@@ -46,6 +49,12 @@ export function LayerSelector() {
           </div>
         ))}
       </div>
+      {nordic && (
+        <p className="mt-2 text-xs text-text-secondary" role="note">
+          De danske kort findes kun i Danmark. Topografisk kort er Kartverkets kort i Norge og OpenTopoMap i Sverige.
+          OpenStreetMap kan stadig vælges.
+        </p>
+      )}
     </div>
   );
 }

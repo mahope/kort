@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, memo } from "react";
 import { Source, Layer, useMap } from "react-map-gl/maplibre";
 import type { Map as MaplibreMap } from "maplibre-gl";
 import { useMapStore } from "@/stores/mapStore";
+import { useMapRegion } from "@/lib/hooks/useMapRegion";
 import { computeZonedGrid, computeDktmGrid, gridIntersections, type ZonedGridLine } from "@/lib/geo/zoneGrid";
 import { mgrsSquare, isDktmSystem, dktmZoneOf, type GridSystem } from "@/lib/geo/coordinates";
 import {
@@ -67,8 +68,10 @@ function UtmGridImpl() {
   const labelFormat = useMapStore((s) => s.gridLabelFormat);
   const savedZoneMode = useMapStore((s) => s.utmZoneMode);
   const system = useMapStore((s) => s.gridSystem);
+  // Outside Denmark the grid follows the GPS zones; "32 for all of Denmark" is Danish only.
+  const nordic = useMapRegion() === "nordic";
   const dktmZone = isDktmSystem(system) ? dktmZoneOf(system) : null;
-  const zoneMode = system === "mgrs" ? "std" : savedZoneMode;
+  const zoneMode = system === "mgrs" || nordic ? "std" : savedZoneMode;
   const [view, setView] = useState<ViewInfo | null>(null);
 
   // Recompute the grid only when a move ends — not on every animation frame.

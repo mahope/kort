@@ -3,7 +3,8 @@
 import { usePrintStore } from "@/stores/printStore";
 import { useMapStore } from "@/stores/mapStore";
 import { useUiStore } from "@/stores/uiStore";
-import { BASE_LAYERS } from "@/constants/baseLayers";
+import { baseLayerLabel } from "@/constants/baseLayers";
+import { useMapRegion } from "@/lib/hooks/useMapRegion";
 import { isSheetLayout } from "@/lib/ui/sheet";
 
 /**
@@ -18,7 +19,8 @@ export function PrintSummaryLine() {
   const scale = usePrintStore((s) => s.scale);
   const baseLayer = useMapStore((s) => s.baseLayer);
   const setSheetPosition = useUiStore((s) => s.setSheetPosition);
-  const layerLabel = BASE_LAYERS.find((l) => l.value === baseLayer)?.label ?? baseLayer;
+  const region = useMapRegion();
+  const layerLabel = baseLayerLabel(baseLayer, region);
 
   const openSettings = () => {
     if (isSheetLayout()) setSheetPosition("mid");
