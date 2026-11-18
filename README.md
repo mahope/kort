@@ -231,10 +231,14 @@ højdekurvetjeneste for Sverige; der må man bruge OpenTopoMap, som har kurverne
   (CC0, kræver et gratis API-token fra Geotorget), går kun til zoom 14 (ca. 10 m pr. pixel), er for groft til print i
   1:25.000 og lukker 31. december 2026 ([Lantmäteriet, 20/5-2026](https://www.lantmateriet.se/sv/geodata/vara-produkter/Produktnyheter/Geografisk-information/avveckling-av-produkten-topografisk-webbkarta-visning-oversiktlig/)).
   Det detaljerede *Topografisk webbkarta Visning, cache* koster penge. Derfor er der ikke bygget et token-proxy-led, og
-  intet token skal oprettes. Den varige vej er *Topografisk webbkarta Nedladdning, raster* (gratis under vilkårene for
-  värdefulla datamängder): hent cachen via en Geotorget-konto og læg den som PMTiles på `tiles.mahoje.dk`, ligesom de danske
-  5/10 m-kurver. Det kræver, at Mads opretter en konto på [geotorget.lantmateriet.se](https://geotorget.lantmateriet.se),
-  bestiller produktet og godkender lagerpladsen.
+  intet token skal oprettes. En mulig vej er *Topografisk webbkarta Nedladdning, raster* (gratis under vilkårene for
+  värdefulla datamängder), lagt som PMTiles på `tiles.mahoje.dk` ligesom de danske 5/10 m-kurver. Men fra 6. oktober 2026
+  hentes produktet kun via et STAC-API, og adgangen bestilles særskilt i [Geotorget](https://geotorget.lantmateriet.se),
+  hvor man skal acceptere nye användningsvillkor, fordi Lantmäteriet nu regner dele af indholdet som personoplysninger
+  ([Lantmäteriet, 28/9-2026](https://www.lantmateriet.se/sv/geodata/vara-produkter/Produktnyheter/Geografisk-information/nytt-tillhandahallande-av-topografisk-webbkarta-nedladdning-raster/)).
+  Før noget bygges, skal Mads oprette kontoen, læse de vilkår og afklare, om de tillader at lægge kortet offentligt ud
+  som fliser og printe det. Personoplysninger i et offentligt kort kræver også en GDPR-vurdering. Indtil det er afklaret,
+  er vejen ikke bygget.
 - **OpenTopoMap** kører på en lille server og beder om, at den ikke belastes med masse-download. Fliserne gemmes derfor
   aldrig offline, og et stort print med mange ark henter mange fliser. Kartverkets fliser gemmes heller ikke offline:
   zoom 12-20 indeholder Geovekst-data, som må vises, men ikke kopieres uden særskilt tilladelse.
