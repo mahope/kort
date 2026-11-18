@@ -210,7 +210,7 @@ function soekortStyle(pxPerMm: number | undefined) {
   const key = pxPerMm ?? 0;
   let s = soekortStyles.get(key);
   if (!s) {
-    s = pxPerMm === undefined ? buildSoekortStyle() : buildSoekortStyle(pxPerMm);
+    s = buildSoekortStyle(pxPerMm);
     soekortStyles.set(key, s);
   }
   return s;

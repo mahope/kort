@@ -5,6 +5,7 @@ import { useMapStore } from "@/stores/mapStore";
 import { MAP_STYLES } from "@/lib/map/styles";
 import { baseLayerOptions, isBaseLayerSelected } from "@/constants/baseLayers";
 import { useMapRegion } from "@/lib/hooks/useMapRegion";
+import { useSoekortAvailability } from "@/lib/hooks/useSoekortAvailable";
 import { useIsMobile } from "@/lib/hooks/useIsMobile";
 import type { MapStyle } from "@/types/map";
 import { OVERLAY_LABELS } from "@/lib/map/sources";
@@ -23,6 +24,9 @@ export function MapControls() {
   const baseLayer = useMapStore((s) => s.baseLayer);
   const setBaseLayer = useMapStore((s) => s.setBaseLayer);
   const region = useMapRegion();
+  // Søkort only once its tiles answer, but keep it listed while it is the chosen map.
+  const soekortAvailability = useSoekortAvailability();
+  const showSoekort = soekortAvailability === "yes" || (soekortAvailability === "pending" && baseLayer === "soekort");
   const overlays = useMapStore((s) => s.overlays);
   const toggleOverlay = useMapStore((s) => s.toggleOverlay);
   const setOverlayOpacity = useMapStore((s) => s.setOverlayOpacity);
@@ -60,7 +64,7 @@ export function MapControls() {
           <div className="mb-3">
             <h2 id="map-baseLayer-label" className="text-xs font-semibold text-text-secondary mb-2">Basiskort</h2>
             <div role="radiogroup" aria-labelledby="map-baseLayer-label" className="space-y-1">
-              {baseLayerOptions(region).map((layer) => (
+              {baseLayerOptions(region, showSoekort).map((layer) => (
                 <div key={layer.value}>
                   <label className="flex items-center gap-2 cursor-pointer pointer-coarse:min-h-11">
                     <input

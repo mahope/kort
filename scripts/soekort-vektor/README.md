@@ -20,14 +20,15 @@ bash scripts/soekort-vektor/build-soekort-tiles.sh ~/dev/soekort-vektor
 Each step writes its output once and is skipped on the next run, so a failed run is
 resumed by running the script again. To redo a step, delete its output (for example
 `layers/tal.geojsons` for the soundings, or `dl/` to fetch fresh data). The image
-`kort-soekort` (GDAL, tippecanoe, osmium) is built from the `Dockerfile` here.
+`kort-soekort` (GDAL, tippecanoe, osmium) is built from the `Dockerfile` here; its base
+image is pinned by tag and digest, so bump it on purpose and compare the output.
 
 | Step | Source | Output |
 | --- | --- | --- |
 | Depths | EMODnet Bathymetry DTM (`emodnet:mean`, WCS, 1/16 arc minute, CC BY 4.0), 1 x 1 degree tiles for 7-16 E, 54-58 N | `work/elev.tif`: 50 m grid in EPSG:3035, cubic spline from the 115 m cells so band edges are soft |
 | Land | OSM land polygons and coastlines (osmdata.openstreetmap.de, ODbL) | `layers/land`, `layers/kyst`, `work/land.tif` (land burnt into the 50 m grid) |
 | Coast fix, soundings | `bathy.py` | water by OSM that the model calls land gets -0.5 m, so the 0-1 m band meets the drawn coast; soundings in tiers from 6.4 km (zoom 9) to 400 m (zoom 13): a shoal if the block hides one, else a deep hole, else the depth nearest the block's median, at least 100 m off the coast. Rounded down to tenths; `t` is the label with the tenths as a subscript ("17₄"), whole metres from 21 m |
-| Bands and contours | `gdal_contour` | bands 0-1, 1-2, 2-3, 3-5, 5-10, 10-20, 20-50 m (`dybde`, attribute `d` = shallow edge); lines at 1, 2, 3, 5, 10, 20, 30, 50 m (`kurve`) |
+| Bands and contours | `gdal_contour` | bands 0-1, 1-2, 2-3, 3-5, 5-10, 10-20, 20-50 m (`dybde`, attribute `d` = shallow edge); lines at 1, 2, 3, 5, 10 and 20 m (`kurve`, the ones the style draws) |
 | Land use, names, harbours | Geofabrik's Denmark extract (ODbL), `osmium tags-filter` + `osm_layers.py` | `by`, `skov`, `natur`, `vand`, `vandloeb`, `sted`, `oe`, `vandnavn`, `havn` (marinas and `seamark:type=anchorage`), `rende` (`seamark:type=fairway/recommended_track/navigation_line`) |
 | Natura 2000 | Miljøportalen WFS `dai:habitat_omr` and `dai:fugle_bes_omr` (frie data, no key) | `natura`: one dashed boundary around the union; `naturanavn`: one label per area |
 | Wrecks, lake depths | `public/data/soekort/vrag.geojson` and `soedybder.geojson` (round 2) | `vrag`, `soe` |
@@ -46,15 +47,23 @@ then say "Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløs
 date the data was fetched, and "Model og data er ikke egnet til navigation", and the
 terms must be linked.
 
-The GeoTIFF is only downloadable with a Dataforsyningen login (dataforsyningen.dk/data/4817),
-so the published file uses EMODnet's DTM, which in Danish waters is built from Geodatastyrelsen's
-surveys but is coarser (about 115 m). With the file at hand:
+**The published file does not use DDM50 yet: its depths are EMODnet's DTM**, which in
+Danish waters is built from Geodatastyrelsen's surveys but is coarser (about 115 m), so the
+coast and the shallow bands are smoother than on a chart drawn from DDM50. The reason:
+the depth values are only offered as a GeoTIFF download behind a Dataforsyningen login
+(dataforsyningen.dk/data/4817). With the free token there is only the WMS
+(`api.dataforsyningen.dk/wms/ddm`, which the "Havdybder Danmark" overlay uses), and it
+returns coloured PNGs, not depths; there is no WCS for DDM (checked 18/11-26:
+`/wcs/ddm` gives 404). Once the GeoTIFF is fetched with a login:
 
 ```sh
 DDM_TIF=/path/to/ddm_50m.tif bash scripts/soekort-vektor/build-soekort-tiles.sh
 ```
 
-lays DDM50 over EMODnet. This path has not been run yet: check the file's sign first
+warps DDM50 straight onto the 50 m grid and writes it into the EMODnet raster, so DDM50
+keeps its own resolution and EMODnet only fills in where DDM has no data. The merge was
+tried on synthetic rasters (50 m cells land unchanged, EMODnet stays outside), not yet on
+the real file: check the file's sign first
 (`DDM_CALC`, default `-A`, must turn it into elevation, negative below sea level), and add
 the DDM credit with the download date to `SOEKORT_ATTRIBUTION` and `SOEKORT_CREDITS` in
 `style.ts` and to the `soekort` entry in `src/constants/dataSources.ts`.
@@ -69,6 +78,10 @@ scp ~/dev/soekort-vektor/soekort.pmtiles hetzner-main:/opt/kort-tiles/html/soeko
 ssh hetzner-main 'mv /opt/kort-tiles/html/soekort-v1.pmtiles.ny /opt/kort-tiles/html/soekort-v1.pmtiles'
 curl -sI -H "Range: bytes=0-99" https://tiles.mahoje.dk/soekort-v1.pmtiles   # expect 206
 ```
+
+Until the file answers, the app leaves "Søkort" out of the base map pickers and moves a
+remembered "Søkort" back to the default map (`src/lib/map/soekort/availability.ts` reads the
+first bytes once per page load), so a deploy before the upload never shows an empty chart.
 
 A rebuild with a changed layout gets a new name (`soekort-v2.pmtiles`) and a new default in
 `SOEKORT_URL`, so a cached old app never reads a new file. The app reads the URL from

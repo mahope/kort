@@ -21,6 +21,7 @@ import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
 import { contourLayers, contourSourceUrl, ensurePmtilesProtocol, SCREEN_PX_PER_MM } from "@/lib/map/contours";
 import { vectorOverlayLayers, vectorOverlaySource } from "@/lib/map/vectorOverlays";
 import { attachSoekortIcons } from "@/lib/map/soekort/icons";
+import { SOEKORT_SOURCE_ID } from "@/lib/map/soekort/style";
 import { timed } from "./timing";
 
 const PRINT_RASTER_BASE_LAYERS = getRasterBaseLayers("print");
@@ -69,9 +70,10 @@ function trackFailedTiles(map: maplibregl.Map, failedSources: Set<string>) {
     // header) could not load. MapLibre then marks it loaded with no tiles, so the
     // tile wait would pass and the PDF would silently miss the layer.
     if (!ev.tile) {
-      // Only map overlays load from the net this way; a broken local import
-      // (GeoJSON worker error) is not "a layer that could not be fetched".
-      if (ev.sourceId.endsWith("-overlay")) failedSources.add(ev.sourceId);
+      // Only map overlays and the Søkort archive load from the net this way; a
+      // broken local import (GeoJSON worker error) is not "a layer that could not
+      // be fetched".
+      if (ev.sourceId.endsWith("-overlay") || ev.sourceId === SOEKORT_SOURCE_ID) failedSources.add(ev.sourceId);
       return;
     }
     const tileKey = ev.tile.tileID?.key;
@@ -403,6 +405,8 @@ export async function renderMapToImage({
     // Wait for all tiles (including raster overlays) to load
     const tileMap = map;
     const vectorSources = activeOverlays.filter((o) => OVERLAY_SOURCES[o.id].vector).map((o) => `${o.id}-overlay`);
+    // The Søkort archive's header must have loaded (or failed) before the tile check means anything.
+    if (baseLayer === "soekort" && !nordic) vectorSources.push(SOEKORT_SOURCE_ID);
     await timed("tiles", async () => {
       // A GeoJSON source has no tiles until its file has arrived, so the tile
       // check alone would pass before the wrecks or lake depths are drawn.

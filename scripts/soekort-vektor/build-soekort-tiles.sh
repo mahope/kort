@@ -85,20 +85,20 @@ fi
 step "Dybdemodel: flet, 50 m i EPSG:3035"
 if [ ! -s "$W/work/elev.tif" ]; then
   dk bash -c 'gdalbuildvrt -q /w/work/emodnet.vrt /w/dl/emodnet/*.tif'
-  SRC=/w/work/emodnet.vrt
+  # A cubic spline from the 115 m grid gives the soft band edges of a printed chart.
+  # -dstnodata: the grid corners past the downloaded tiles are "no data", not 0 m.
+  dk gdalwarp -q -t_srs EPSG:3035 -tr 50 50 -r cubicspline -dstnodata -32768 -te_srs EPSG:4326 -te $LON0 $LAT0 $LON1 $LAT1 \
+    -co COMPRESS=DEFLATE -co TILED=YES -co BIGTIFF=YES -co PREDICTOR=3 /w/work/emodnet.vrt /w/work/elev.tif.tmp.tif
   if [ -n "${DDM_TIF:-}" ]; then
     # Not run yet (the GeoTIFF needs a login). Check the file's sign first: DDM_CALC
     # must turn it into elevation (negative below sea level); "-A" if it holds depths.
     cp "$DDM_TIF" "$W/dl/ddm50.tif"
-    dk gdal_calc -A /w/dl/ddm50.tif --outfile=/w/work/ddm-elev.tif --calc="${DDM_CALC:--A}" --NoDataValue=-32768 --quiet
-    dk gdalwarp -q -t_srs EPSG:4326 -tr $EMOD_RES $EMOD_RES -r average /w/work/ddm-elev.tif /w/work/ddm-4326.tif
-    dk gdalbuildvrt -q /w/work/merged.vrt /w/work/emodnet.vrt /w/work/ddm-4326.tif
-    SRC=/w/work/merged.vrt
+    dk gdal_calc.py -A /w/dl/ddm50.tif --outfile=/w/work/ddm-elev.tif --calc="${DDM_CALC:--A}" --NoDataValue=-32768 --quiet
+    # Straight onto the 50 m grid, written into the EMODnet raster: DDM50 keeps its own
+    # resolution, and EMODnet only shows where DDM has no data (its nodata is skipped).
+    dk gdalwarp -q -r bilinear -srcnodata -32768 /w/work/ddm-elev.tif /w/work/elev.tif.tmp.tif
   fi
-  # A cubic spline from the 115 m grid gives the soft band edges of a printed chart.
-  # -dstnodata: the grid corners past the downloaded tiles are "no data", not 0 m.
-  dk gdalwarp -q -t_srs EPSG:3035 -tr 50 50 -r cubicspline -dstnodata -32768 -te_srs EPSG:4326 -te $LON0 $LAT0 $LON1 $LAT1 \
-    -co COMPRESS=DEFLATE -co TILED=YES -co BIGTIFF=YES -co PREDICTOR=3 "$SRC" /w/work/elev.tif
+  mv "$W/work/elev.tif.tmp.tif" "$W/work/elev.tif"
 fi
 if [ ! -s "$W/work/land.tif" ]; then
   dk ogr2ogr -q -f GPKG -t_srs EPSG:3035 /w/work/land-3035.gpkg /w/work/land-split.gpkg
@@ -119,7 +119,8 @@ if [ ! -s "$W/layers/dybde.geojsons" ]; then
     -dialect SQLITE -sql "SELECT CAST(-hi AS integer) AS d, geom FROM contour WHERE hi <= 0 AND hi > -50"
 fi
 if [ ! -s "$W/layers/kurve.geojsons" ]; then
-  dk gdal_contour -q -a e -fl -50 -30 -20 -10 -5 -3 -2 -1 /w/work/depth.tif /w/work/kurver.gpkg
+  # The lines the style draws (1, 2, 3, 5, 10 and 20 m); deeper ones would be dead weight.
+  dk gdal_contour -q -a e -fl -20 -10 -5 -3 -2 -1 /w/work/depth.tif /w/work/kurver.gpkg
   dk ogr2ogr -q -f GeoJSONSeq -t_srs EPSG:4326 -lco RS=NO /w/layers/kurve.geojsons /w/work/kurver.gpkg \
     -dialect SQLITE -sql "SELECT CAST(-e AS integer) AS d, geom FROM contour WHERE ST_Length(geom) > 300"
 fi

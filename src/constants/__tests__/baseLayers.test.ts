@@ -14,6 +14,11 @@ describe("base layer options per region", () => {
     expect(options.some((o) => o.hasStyles)).toBe(false); // no Skærmkort style picker
   });
 
+  it("leaves Søkort out while its tiles are not online", () => {
+    expect(baseLayerOptions("dk", false).map((o) => o.value)).not.toContain("soekort");
+    expect(baseLayerOptions("nordic", false).map((o) => o.value)).toEqual(["dtk25", "osm", "none"]);
+  });
+
   it("counts any Danish map as the topo map outside Denmark", () => {
     for (const chosen of ["ortofoto", "skaermkort", "historisk_lave", "dtk25"] as const) {
       expect(isBaseLayerSelected(NORDIC_TOPO_OPTION, chosen, "nordic")).toBe(true);

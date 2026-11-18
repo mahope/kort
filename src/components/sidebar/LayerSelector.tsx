@@ -5,6 +5,7 @@ import { MAP_STYLES } from "@/lib/map/styles";
 import { baseLayerOptions, isBaseLayerSelected } from "@/constants/baseLayers";
 import type { MapStyle } from "@/types/map";
 import { useMapRegion } from "@/lib/hooks/useMapRegion";
+import { useSoekortAvailability } from "@/lib/hooks/useSoekortAvailable";
 
 const STYLE_KEYS = Object.keys(MAP_STYLES) as MapStyle[];
 
@@ -14,13 +15,16 @@ export function LayerSelector() {
   const currentStyle = useMapStore((s) => s.style);
   const setStyle = useMapStore((s) => s.setStyle);
   const region = useMapRegion();
+  // Søkort only once its tiles answer, but keep it listed while it is the chosen map.
+  const soekortAvailability = useSoekortAvailability();
+  const showSoekort = soekortAvailability === "yes" || (soekortAvailability === "pending" && baseLayer === "soekort");
   const nordic = region === "nordic";
 
   return (
     <div>
       <span id="sidebar-baseLayer-label" className="block text-sm font-medium mb-1">Basiskort</span>
       <div role="radiogroup" aria-labelledby="sidebar-baseLayer-label" className="space-y-2">
-        {baseLayerOptions(region).map((layer) => (
+        {baseLayerOptions(region, showSoekort).map((layer) => (
           <div key={layer.value}>
             <label className="flex items-center gap-2 cursor-pointer pointer-coarse:min-h-11">
               <input

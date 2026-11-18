@@ -83,6 +83,8 @@ class FakeMap {
   isSourceLoaded() { ctl.sourcePolls++; return ctl.sourceBusyPolls-- <= 0; }
   addSource = addSource;
   addLayer() {}
+  setMissingStyleImageResolver() {}
+  hasImage() { return true; }
   remove() {}
   getCanvas() {
     return { width: ctl.canvasW, height: ctl.canvasH, getContext: () => fakeGl(), toBlob: (cb: (b: Blob | null) => void) => cb(ctl.blob ? new Blob([new Uint8Array([1, 2, 3])]) : null) };
@@ -239,6 +241,15 @@ describe("renderMapToImage tile errors", () => {
     // MapLibre marks the source loaded with no tiles, so the tile wait alone would pass.
     ctl.errorsWithoutTile = [{ sourceId: "kurver5-overlay", error: new Error("header") }];
     expect(((await run()) as { error: Error }).error.message).toBe("Et kortlag kunne ikke hentes, så PDF'en ville mangle det. Prøv igen.");
+  });
+
+  it("refuses the PDF when the Søkort base map's archive cannot be fetched", async () => {
+    // A missing soekort-v1.pmtiles would otherwise give an empty blue PDF without a word.
+    ctl.sourceBusyPolls = Infinity;
+    ctl.errorsWithoutTile = [{ sourceId: "soekort", error: new Error("404") }];
+    expect(((await run({ ...base, baseLayer: "soekort" })) as { error: Error }).error.message).toBe(
+      "Et kortlag kunne ikke hentes, så PDF'en ville mangle det. Prøv igen."
+    );
   });
 });
 

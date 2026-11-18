@@ -59,6 +59,15 @@ export function buildSoekortStyle(pxPerMm: number = SCREEN_PX_PER_MM): StyleSpec
       layout: { "line-join": "round" },
       paint: { "line-color": C.depthContour, "line-width": mm(MM.depthContour), "line-opacity": 0.9 },
     },
+    // Under the land: OSM's leading lines (navigation_line) run on from the water over
+    // towns to the lights, and only their part on the water belongs on a chart.
+    {
+      id: "sk-fairway",
+      type: "line",
+      source: src,
+      "source-layer": "rende",
+      paint: { "line-color": C.fairway, "line-width": mm(MM.fairway), "line-dasharray": [5, 3] },
+    },
     { id: "sk-land", type: "fill", source: src, "source-layer": "land", paint: { "fill-color": C.land } },
     { id: "sk-nature", type: "fill", source: src, "source-layer": "natur", paint: { "fill-color": C.nature } },
     { id: "sk-forest", type: "fill", source: src, "source-layer": "skov", paint: { "fill-color": C.forest } },
@@ -119,13 +128,6 @@ export function buildSoekortStyle(pxPerMm: number = SCREEN_PX_PER_MM): StyleSpec
         "line-dasharray": [4, 2.5],
         "line-opacity": 0.75,
       },
-    },
-    {
-      id: "sk-fairway",
-      type: "line",
-      source: src,
-      "source-layer": "rende",
-      paint: { "line-color": C.fairway, "line-width": mm(MM.fairway), "line-dasharray": [5, 3] },
     },
     {
       id: "sk-depth-contour-label",

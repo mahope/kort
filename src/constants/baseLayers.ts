@@ -34,10 +34,14 @@ export const BASE_LAYERS: BaseLayerOption[] = [
  */
 export const NORDIC_TOPO_OPTION: BaseLayerOption = { value: "dtk25", label: "Topografisk kort (Kartverket / OpenTopoMap)" };
 
-/** The base maps a picker offers in this region. */
-export function baseLayerOptions(region: MapRegion): BaseLayerOption[] {
-  if (region !== "nordic") return BASE_LAYERS;
-  return [NORDIC_TOPO_OPTION, ...BASE_LAYERS.filter((l) => !usesNordicTopo(l.value, region))];
+/**
+ * The base maps a picker offers in this region. `soekort` = false leaves out
+ * "Søkort" while its tiles are not (yet) reachable (lib/map/soekort/availability.ts).
+ */
+export function baseLayerOptions(region: MapRegion, soekort = true): BaseLayerOption[] {
+  const all = soekort ? BASE_LAYERS : BASE_LAYERS.filter((l) => l.value !== "soekort");
+  if (region !== "nordic") return all;
+  return [NORDIC_TOPO_OPTION, ...all.filter((l) => !usesNordicTopo(l.value, region))];
 }
 
 /** Whether `option` is the chosen one: in the Nordic region, any Danish map counts as the topo map. */

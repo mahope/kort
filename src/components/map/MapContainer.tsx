@@ -27,6 +27,7 @@ import {
   usesNordicTopo,
 } from "@/lib/map/sources";
 import { useMapRegion } from "@/lib/hooks/useMapRegion";
+import { useSoekortFallback } from "@/lib/hooks/useSoekortAvailable";
 import { contourLayers, contourSourceUrl, ensurePmtilesProtocol, SCREEN_PX_PER_MM } from "@/lib/map/contours";
 import { attachSoekortIcons } from "@/lib/map/soekort/icons";
 import { vectorOverlayLayers, vectorOverlaySource } from "@/lib/map/vectorOverlays";
@@ -89,6 +90,8 @@ export function MapContainer() {
   // Outside Denmark: Kartverket over OpenTopoMap instead of the Danish maps.
   const region = useMapRegion();
   const nordic = usesNordicTopo(baseLayer, region);
+  // Back to the default map if "soekort" is remembered but its tiles are not online.
+  useSoekortFallback();
 
   // The vector sea chart reads our PMTiles through the pmtiles:// protocol.
   if (baseLayer === "soekort") ensurePmtilesProtocol();

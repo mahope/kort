@@ -45,7 +45,7 @@ export function SeaBadge() {
       role="note"
       data-testid="sea-badge"
     >
-      Må ikke bruges til navigation
+      {NAVIGATION_WARNING}
     </div>
   );
 }
