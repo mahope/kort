@@ -1,4 +1,5 @@
 import type { BaseLayer, MapStyle, OverlayId } from "@/types/map";
+import type { MapRegion } from "@/lib/geo/regions";
 import { DATAFORSYNINGEN_TOKEN, MAP_STYLES } from "./styles";
 import { soekortDataUrl, type VectorOverlayKind } from "./vectorOverlays";
 import { buildSoekortStyle } from "./soekort/style";
@@ -177,6 +178,14 @@ export function kdsPrintCredit(domain: string): string {
   return `Kortdata: Klimadatastyrelsen, CC BY 4.0 | Kilder: ${domain}${SOURCES_PAGE_PATH}`;
 }
 
+/** On-map credit outside Denmark: the sources carry their own, plus the sources page. */
+export const NORDIC_MAP_ATTRIBUTION = `<a href='${SOURCES_PAGE_PATH}'>Datakilder</a>`;
+
+/** PDF footer outside Denmark: who made the map data shown, and where the sources are listed. */
+export function nordicPrintCredit(dataCredit: string, domain: string): string {
+  return `${dataCredit} | Kilder: ${domain}${SOURCES_PAGE_PATH}`;
+}
+
 function blankStyle(backgroundColor: string) {
   return {
     version: 8 as const,
@@ -208,10 +217,13 @@ function soekortStyle(pxPerMm: number | undefined) {
 }
 
 /**
- * The style for a base map. `pxPerMm` sizes the vector sea chart's lines and
- * text for the target (the PDF passes its print scale; default is the screen).
+ * The style for a base map. `nordic`: the Nordic topo replaces the base (see
+ * usesNordicTopo), drawn on the raster background. `pxPerMm` sizes the vector
+ * sea chart's lines and text for the target (the PDF passes its print scale;
+ * default is the screen).
  */
-export function getBaseMapStyle(baseLayer: BaseLayer, style: MapStyle, pxPerMm?: number) {
+export function getBaseMapStyle(baseLayer: BaseLayer, style: MapStyle, nordic = false, pxPerMm?: number) {
+  if (nordic) return RASTER_STYLE;
   if (baseLayer === "skaermkort") return MAP_STYLES[style].url;
   if (baseLayer === "soekort") return soekortStyle(pxPerMm);
   return baseLayer === "none" ? NO_BASE_STYLE : RASTER_STYLE;
@@ -240,6 +252,25 @@ export interface RasterSourceConfig {
   maxzoom?: number;
   /** Our own GeoJSON snapshot (public/data/soekort, see vectorOverlays.ts) instead of raster tiles. */
   vector?: VectorOverlayKind;
+  /** [west, south, east, north]: MapLibre requests no tiles outside it. */
+  bounds?: [number, number, number, number];
+  /**
+   * Print tiles for a given paper resolution (dpi), for WMS servers that scale
+   * their symbols and pick their data by it. Without it the PDF uses `tiles`.
+   */
+  printTiles?: (dpi: number) => string[];
+  /** Highest tile zoom the PDF requests at this paper resolution; MapLibre enlarges above it. */
+  printMaxzoom?: (dpi: number) => number;
+}
+
+/** The tile templates the PDF requests for a source at this paper resolution. */
+export function printTilesFor(cfg: RasterSourceConfig, dpi: number): string[] {
+  return cfg.printTiles ? cfg.printTiles(dpi) : cfg.tiles;
+}
+
+/** `{ maxzoom }` for the PDF at this paper resolution: `printMaxzoom` when set, else as on screen. */
+export function printZoomLimit(cfg: RasterSourceConfig, dpi: number): { maxzoom?: number } {
+  return cfg.printMaxzoom ? { maxzoom: cfg.printMaxzoom(dpi) } : sourceZoomLimit(cfg);
 }
 
 /** `{ maxzoom }` for sources that set one, else nothing (MapLibre rejects `maxzoom: undefined`). */
@@ -299,6 +330,96 @@ export function getRasterBaseLayers(target: RasterBaseLayerTarget): Record<strin
     historisk_lave: HISTORISK_LAVE_SOURCE,
   };
 }
+
+/**
+ * Kartverket (Norway), open data under CC BY 4.0, no key. The screen uses the
+ * WMTS cache; the PDF asks the topo WMS with MAP_RESOLUTION = paper dpi, so
+ * MapServer draws symbols, text and the right data set (N50 at 1:25.000) for
+ * the paper scale. Both are transparent outside Norway, so OpenTopoMap shows
+ * through there.
+ *
+ * The detailed levels hold Geovekst data (FKB), which the terms let us show
+ * but not copy without the rights holders' permission. A PDF is a copy, so
+ * the PDF names Kartverket's own layers (the N series, `kd_*`, plus hillshade
+ * and depths) instead of `topo`, and never asks for a WMS scale under 1:12.000,
+ * where only FKB is drawn: a finer print gets N50 enlarged.
+ * Terms: https://www.kartverket.no/api-og-data/vilkar-for-bruk
+ */
+const KARTVERKET_TOPO_WMTS_URL = "https://cache.kartverket.no/v1/wmts/1.0.0/topo/default/webmercator/{z}/{y}/{x}.png";
+const KARTVERKET_WMS_BASE =
+  "https://wms.geonorge.no/skwms1/wms.topo?service=WMS&version=1.1.1&request=GetMap" +
+  "&SRS=EPSG:3857&WIDTH=256&HEIGHT=256&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE";
+
+function kartverketWms(layers: string, dpi?: number): string {
+  // MapServer's resolution parameter; 90.7 dpi (its default) when absent.
+  const resolution = dpi ? `&MAP_RESOLUTION=${Math.round(dpi)}` : "";
+  return `${KARTVERKET_WMS_BASE}&LAYERS=${layers}${resolution}&BBOX={bbox-epsg-3857}`;
+}
+
+/** The children of `topo` that are Kartverket's own data, in its drawing order (no `fkb_*`). */
+const KARTVERKET_PRINT_LAYERS = [
+  "kd_hoydelag", "kd_arealdekkeflate", "kd_hoydekurver", "fjellskygge", "kd_vannflate", "kd_elver",
+  "Dybdelag", "Dybdekontur", "kd_vannkontur", "kd_administrative_grenser", "kd_andre_grenser",
+  "kd_verneomradegrense", "kd_veger", "kd_jernbane", "kd_ferger", "kd_anleggslinjer", "kd_bygninger",
+  "kd_spesiell_detalj", "kd_hoydepunkt", "kd_jernbanestasjon", "kd_anleggspunkt", "kd_bygningspunkt",
+  "kd_turisthytte", "kd_arealdekkepunkt", "kd_tettsted", "kd_stedsnavn",
+].join(",");
+
+/** Smallest WMS scale denominator the PDF asks for: the N50 layers end and FKB begins below it. */
+const KARTVERKET_MIN_PRINT_SCALE = 12000;
+
+/**
+ * Highest tile zoom whose WMS scale stays at or above 1:12.000 at this dpi.
+ * MapServer measures 256 px tiles in EPSG:3857 metres at MAP_RESOLUTION.
+ */
+export function kartverketPrintMaxzoom(dpi: number): number {
+  const metresPerPxAtZ0 = 40075016.686 / 256;
+  return Math.floor(Math.log2((metresPerPxAtZ0 * dpi) / 0.0254 / KARTVERKET_MIN_PRINT_SCALE));
+}
+
+/** Mainland Norway with its waters; the cache has nothing to draw outside. */
+const NORWAY_TILE_BOUNDS: [number, number, number, number] = [4.0, 57.8, 31.3, 71.3];
+
+const KARTVERKET_ATTRIBUTION = "&copy; <a href='https://www.kartverket.no/'>Kartverket</a>";
+
+export const KARTVERKET_TOPO_SOURCE: RasterSourceConfig = {
+  tiles: [KARTVERKET_TOPO_WMTS_URL],
+  printTiles: (dpi) => [kartverketWms(KARTVERKET_PRINT_LAYERS, dpi)],
+  printMaxzoom: kartverketPrintMaxzoom,
+  tileSize: 256,
+  maxzoom: 18,
+  bounds: NORWAY_TILE_BOUNDS,
+  attribution: KARTVERKET_ATTRIBUTION,
+  credit: "Kort over Norge: © Kartverket (CC BY 4.0)",
+  // Zoom 12-20 holds Geovekst data that may be shown, not copied: no bulk saving.
+  noOffline: true,
+};
+
+/**
+ * OpenTopoMap (CC-BY-SA, OSM data, SRTM and Sonny heights): topographic style with
+ * contours, used for Sweden and as the layer under Kartverket. Free to embed
+ * as long as the server is not hammered (opentopomap.org/about#faq), so no
+ * offline saving. Lantmäteriet has no free detailed web map (see README).
+ */
+export const OPENTOPOMAP_SOURCE: RasterSourceConfig = {
+  tiles: ["https://tile.opentopomap.org/{z}/{x}/{y}.png"],
+  tileSize: 256,
+  maxzoom: 17,
+  attribution:
+    "Kortdata: &copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a>-bidragydere | Højdedata: <a href='https://viewfinderpanoramas.org'>SRTM</a>, <a href='https://sonny.4lima.de/'>Sonny</a> | Kortdesign: &copy; <a href='https://opentopomap.org'>OpenTopoMap</a> (<a href='https://creativecommons.org/licenses/by-sa/3.0/'>CC-BY-SA</a>)",
+  credit: "Kortdata: © OpenStreetMap-bidragydere | Højdedata: SRTM, Sonny | Kortdesign: © OpenTopoMap (CC-BY-SA)",
+  noOffline: true,
+};
+
+/**
+ * The Nordic topographic map, bottom to top: OpenTopoMap everywhere, then
+ * Kartverket where it has data (Norway). Used outside Denmark for every base
+ * layer except OpenStreetMap, which the user chose on purpose.
+ */
+export const NORDIC_TOPO_SOURCES: readonly { id: string; cfg: RasterSourceConfig }[] = [
+  { id: "nordic-opentopomap", cfg: OPENTOPOMAP_SOURCE },
+  { id: "nordic-kartverket", cfg: KARTVERKET_TOPO_SOURCE },
+];
 
 export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
   contours: {
@@ -381,6 +502,19 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     noOffline: true,
     notForNavigation: true,
   },
+  // Kartverket's contour layers: MapServer picks N50 (20 m) to N2000 by scale,
+  // and FKB (5 m, 1 m) only on very large scales. With MAP_RESOLUTION the PDF
+  // gets the set for its paper scale; FKB (Geovekst) stays on the screen.
+  kurverNorge: {
+    tiles: [kartverketWms("kd_hoydekurver,fkb_hoydekurver")],
+    printTiles: (dpi) => [kartverketWms("kd_hoydekurver", dpi)],
+    printMaxzoom: kartverketPrintMaxzoom,
+    tileSize: 256,
+    bounds: NORWAY_TILE_BOUNDS,
+    attribution: "Højdekurver Norge: " + KARTVERKET_ATTRIBUTION,
+    credit: "Højdekurver Norge: © Kartverket (CC BY 4.0)",
+    noOffline: true,
+  },
   // Vector snapshots from public/data/soekort: `tiles` is unused, the layers come from vectorOverlays.ts.
   soedybder: {
     tiles: [soekortDataUrl("soedybder")],
@@ -428,6 +562,7 @@ export const OVERLAY_LABELS: Record<OverlayId, string> = {
   havbund: "Havbundens relief (Dybdemodel, skyggekort)",
   havdybder: "Havdybder Europa (EMODnet, grovere)",
   soemaerker: "Sømærker (OpenSeaMap)",
+  kurverNorge: "Højdekurver Norge (Kartverket)",
   soedybder: "Sødybder (dybdekurver i 80 søer)",
   indsoekort: "Historiske indsøkort (dybdekort over søer som bilag)",
   vrag: "Skibsvrag (EMODnet)",
@@ -449,3 +584,13 @@ export const SEA_OVERLAYS: readonly OverlayId[] = [
   "indsoekort",
   "vrag",
 ];
+
+/**
+ * Outside Denmark the Danish base maps have nothing to show, so every base
+ * layer except OpenStreetMap (chosen on purpose, covers everything) and
+ * "Intet basiskort" becomes the Nordic topographic map. Denmark is untouched.
+ */
+export function usesNordicTopo(baseLayer: BaseLayer, region: MapRegion): boolean {
+  // Søkort covers the Swedish side of Kattegat and Øresund itself.
+  return region === "nordic" && baseLayer !== "osm" && baseLayer !== "none" && baseLayer !== "soekort";
+}

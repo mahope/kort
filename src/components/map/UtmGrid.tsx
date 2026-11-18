@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState, memo } from "react";
 import { Source, Layer, useMap } from "react-map-gl/maplibre";
 import type { Map as MaplibreMap } from "maplibre-gl";
 import { useMapStore } from "@/stores/mapStore";
-import { computeZonedGrid, gridIntersections, type ZonedGridLine } from "@/lib/geo/zoneGrid";
-import { mgrsSquare, type GridSystem } from "@/lib/geo/coordinates";
+import { useMapRegion } from "@/lib/hooks/useMapRegion";
+import { computeZonedGrid, computeDktmGrid, gridIntersections, type ZonedGridLine } from "@/lib/geo/zoneGrid";
+import { mgrsSquare, isDktmSystem, dktmZoneOf, type GridSystem } from "@/lib/geo/coordinates";
 import {
   dropOverlapping,
   formatSpacing,
@@ -17,6 +18,7 @@ import {
   type GridLineClass,
   type LngLatBounds,
 } from "@/lib/geo/utmGrid";
+import type { DktmZone } from "@/lib/geo/dktm";
 
 const LINE_COLOR = "#1e3a8a";
 // Strip reserved along the left edge for northing labels; top labels start after it.
@@ -32,7 +34,7 @@ interface ViewInfo {
   square: string;
 }
 
-function readView(map: MaplibreMap, zoneMode: "dk" | "std"): ViewInfo {
+function readView(map: MaplibreMap, zoneMode: "dk" | "std", dktmZone: DktmZone | null): ViewInfo {
   const b = map.getBounds();
   const c = map.getCenter();
   // Pad the viewport so panning shows lines until the next moveend recompute.
@@ -45,7 +47,8 @@ function readView(map: MaplibreMap, zoneMode: "dk" | "std"): ViewInfo {
       south: Math.max(-80, b.getSouth() - padLat),
       north: Math.min(84, b.getNorth() + padLat),
     },
-    zone: resolveUtmZone(c.lng, c.lat, zoneMode),
+    // DKTM's zone is fixed by the system choice, not the location (each zone covers all of Denmark).
+    zone: dktmZone ?? resolveUtmZone(c.lng, c.lat, zoneMode),
     mpp: metersPerPixel(c.lat, map.getZoom()),
     square: mgrsSquare(c.lat, c.lng),
   };
@@ -65,14 +68,17 @@ function UtmGridImpl() {
   const labelFormat = useMapStore((s) => s.gridLabelFormat);
   const savedZoneMode = useMapStore((s) => s.utmZoneMode);
   const system = useMapStore((s) => s.gridSystem);
-  const zoneMode = system === "mgrs" ? "std" : savedZoneMode;
+  // Outside Denmark the grid follows the GPS zones; "32 for all of Denmark" is Danish only.
+  const nordic = useMapRegion() === "nordic";
+  const dktmZone = isDktmSystem(system) ? dktmZoneOf(system) : null;
+  const zoneMode = system === "mgrs" || nordic ? "std" : savedZoneMode;
   const [view, setView] = useState<ViewInfo | null>(null);
 
   // Recompute the grid only when a move ends — not on every animation frame.
   useEffect(() => {
     const map = mapRef?.getMap();
     if (!map || !showGrid) return;
-    const update = () => setView(readView(map, zoneMode));
+    const update = () => setView(readView(map, zoneMode, dktmZone));
     update();
     map.on("moveend", update);
     map.on("resize", update);
@@ -80,7 +86,7 @@ function UtmGridImpl() {
       map.off("moveend", update);
       map.off("resize", update);
     };
-  }, [mapRef, showGrid, zoneMode]);
+  }, [mapRef, showGrid, zoneMode, dktmZone]);
 
   const resolved = useMemo(
     () => (view ? resolveScreenSpacing(gridSpacing, view.mpp) : null),
@@ -88,7 +94,10 @@ function UtmGridImpl() {
   );
   const spacing = resolved?.spacing ?? null;
 
-  const lines = useMemo(() => view && spacing ? computeZonedGrid(view.bounds, spacing, zoneMode, view.zone) : [], [view, spacing, zoneMode]);
+  const lines = useMemo(() => {
+    if (!view || !spacing) return [];
+    return dktmZone ? computeDktmGrid(view.bounds, spacing, dktmZone) : computeZonedGrid(view.bounds, spacing, zoneMode, view.zone);
+  }, [view, spacing, zoneMode, dktmZone]);
   const gridData = useMemo(() => {
     if (!lines.length || !spacing) return null;
     return {
@@ -250,7 +259,7 @@ function GridBadge({
       data-testid="utm-grid-badge"
     >
       <div className="font-semibold">
-        {system === "mgrs" ? `MGRS ${square} · WGS84` : `UTM ${zone}N · ETRS89`}{spacing ? ` · ${formatSpacing(spacing)}` : ""}
+        {system === "mgrs" ? `MGRS ${square} · WGS84` : isDktmSystem(system) ? `DKTM${zone} · ETRS89` : `UTM ${zone}N · ETRS89`}{spacing ? ` · ${formatSpacing(spacing)}` : ""}
       </div>
       {note && <div className="text-slate-600">{note}</div>}
     </div>

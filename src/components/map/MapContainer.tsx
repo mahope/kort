@@ -15,8 +15,18 @@ import Map, {
 import { useMapStore } from "@/stores/mapStore";
 import { useUiStore } from "@/stores/uiStore";
 import { useDrawStore } from "@/stores/drawStore";
-import { DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
-import { getBaseMapStyle, getRasterBaseLayers, KDS_MAP_ATTRIBUTION, OVERLAY_SOURCES, sourceZoomLimit } from "@/lib/map/sources";
+import { MAP_BOUNDS, transformRequest } from "@/lib/map/styles";
+import {
+  getBaseMapStyle,
+  getRasterBaseLayers,
+  KDS_MAP_ATTRIBUTION,
+  NORDIC_MAP_ATTRIBUTION,
+  NORDIC_TOPO_SOURCES,
+  OVERLAY_SOURCES,
+  sourceZoomLimit,
+  usesNordicTopo,
+} from "@/lib/map/sources";
+import { useMapRegion } from "@/lib/hooks/useMapRegion";
 import { contourLayers, contourSourceUrl, ensurePmtilesProtocol, SCREEN_PX_PER_MM } from "@/lib/map/contours";
 import { attachSoekortIcons } from "@/lib/map/soekort/icons";
 import { vectorOverlayLayers, vectorOverlaySource } from "@/lib/map/vectorOverlays";
@@ -76,10 +86,13 @@ export function MapContainer() {
   const sheetPx = useUiStore((s) => s.sheetPx);
   const padding = useMemo(() => ({ top: 0, left: 0, right: 0, bottom: sheetPx }), [sheetPx]);
   const needsDrawing = useDrawStore((s) => s.activeMode !== null || s.features.length > 0);
+  // Outside Denmark: Kartverket over OpenTopoMap instead of the Danish maps.
+  const region = useMapRegion();
+  const nordic = usesNordicTopo(baseLayer, region);
 
   // The vector sea chart reads our PMTiles through the pmtiles:// protocol.
   if (baseLayer === "soekort") ensurePmtilesProtocol();
-  const mapStyle = getBaseMapStyle(baseLayer, style);
+  const mapStyle = getBaseMapStyle(baseLayer, style, nordic);
   const rasterBase = RASTER_BASE_LAYERS[baseLayer];
 
   const onMove = useCallback(
@@ -110,6 +123,13 @@ export function MapContainer() {
     }
   }, [rasterBase]);
 
+  // The attribution control is recreated per region (keyed below), and a new
+  // compact control opens expanded: fold it again on touch, as on load.
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (map) collapseAttributionOnTouch({ target: map });
+  }, [region]);
+
   useEffect(() => {
     if (flyToTarget && mapRef.current) {
       mapRef.current.flyTo({
@@ -131,12 +151,30 @@ export function MapContainer() {
       onLoad={onMapLoad}
       mapStyle={mapStyle}
       transformRequest={transformRequest}
-      maxBounds={[...DENMARK_BOUNDS[0], ...DENMARK_BOUNDS[1]]}
+      maxBounds={[...MAP_BOUNDS[0], ...MAP_BOUNDS[1]]}
       attributionControl={false}
       canvasContextAttributes={{ preserveDrawingBuffer: true }}
       style={{ width: "100%", height: "100%" }}
     >
+      {/* Nordic topo (OpenTopoMap, Kartverket on top). Always mounted so its
+          layers stay under everything else; hidden in Denmark (no requests). */}
+      {NORDIC_TOPO_SOURCES.map(({ id, cfg }) => (
+        <Source
+          key={id}
+          id={id}
+          type="raster"
+          tiles={cfg.tiles}
+          tileSize={cfg.tileSize}
+          {...sourceZoomLimit(cfg)}
+          {...(cfg.bounds ? { bounds: cfg.bounds } : {})}
+          attribution={cfg.attribution}
+        >
+          <Layer id={`${id}-layer`} type="raster" layout={{ visibility: nordic ? "visible" : "none" }} />
+        </Source>
+      ))}
+
       {/* Raster base layer (ortofoto, dtk25, osm, historiske kort) */}
+      {/* Hidden, not unmounted, outside Denmark: a remount would add it on top of the overlays. */}
       {rasterBase && (
         <Source
           id="base-raster"
@@ -146,7 +184,7 @@ export function MapContainer() {
           {...sourceZoomLimit(rasterBase)}
           attribution={rasterBase.attribution}
         >
-          <Layer id="base-raster-layer" type="raster" />
+          <Layer id="base-raster-layer" type="raster" layout={{ visibility: nordic ? "none" : "visible" }} />
         </Source>
       )}
 
@@ -194,6 +232,7 @@ export function MapContainer() {
           tiles={OVERLAY_SOURCES[overlay.id].tiles}
           tileSize={OVERLAY_SOURCES[overlay.id].tileSize}
           {...sourceZoomLimit(OVERLAY_SOURCES[overlay.id])}
+          {...(OVERLAY_SOURCES[overlay.id].bounds ? { bounds: OVERLAY_SOURCES[overlay.id].bounds } : {})}
           attribution={OVERLAY_SOURCES[overlay.id].attribution}
         >
           <Layer
@@ -213,10 +252,12 @@ export function MapContainer() {
 
       <NavigationControl position="bottom-right" />
       <ScaleControl position="bottom-right" unit="metric" />
+      {/* Keyed: react-map-gl reads customAttribution only when it creates the control. */}
       <AttributionControl
+        key={region}
         position="bottom-left"
         compact
-        customAttribution={KDS_MAP_ATTRIBUTION}
+        customAttribution={region === "nordic" ? NORDIC_MAP_ATTRIBUTION : KDS_MAP_ATTRIBUTION}
       />
       <GeolocationButton mapRef={mapRef} />
     </Map>

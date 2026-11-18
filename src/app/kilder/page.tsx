@@ -40,7 +40,7 @@ const TECH: { name: string; text: string }[] = [
   },
   {
     name: "Søgning",
-    text: "Adresser kommer fra Adressevælger. Stednavne søges i et øjebliksbillede af Danske Stednavne, som ligger på vores egen server, fordi DAWA lukker.",
+    text: "Adresser kommer fra Adressevælger. Stednavne søges i et øjebliksbillede af Danske Stednavne, som ligger på vores egen server, fordi DAWA lukker. Norske stednavne kommer fra Kartverkets stednavne-API.",
   },
   {
     name: "Rammen omkring",
@@ -137,6 +137,22 @@ export default function SourcesPage() {
             </ul>
           </section>
 
+          <section aria-labelledby="norden">
+            <h2 id="norden" className="text-lg font-semibold mb-3">
+              Norge og Sverige
+            </h2>
+            <p className="text-text-secondary mb-3">
+              Flytter du kortet til Norge eller Sverige, skifter det selv kilde ud fra midten af kortet. I Norge viser det
+              Kartverkets topografiske kort, og i Sverige og langs grænsen OpenTopoMap, som bygger på OpenStreetMap og
+              højdedata fra SRTM og Sonny. Gitter, misvisning og PDF virker som i Danmark, med UTM-zone 32 til 35 som på en GPS.
+            </p>
+            <p className="text-text-secondary">
+              Lantmäteriet har ikke et gratis, detaljeret webkort: det gratis oversigtskort er for groft til print i 1:25.000 og
+              lukker 31. december 2026, og det detaljerede koster penge. Derfor bruger vi OpenTopoMap i Sverige. De danske
+              lag (fx DHM-højdekurver og matrikelskel) har ingen data uden for Danmark.
+            </p>
+          </section>
+
           <section aria-labelledby="kreditering">
             <h2 id="kreditering" className="text-lg font-semibold mb-3">
               Sådan krediterer vi
@@ -144,7 +160,8 @@ export default function SourcesPage() {
             <p className="text-text-secondary">
               Kortet viser kilderne nederst til venstre (tryk på i&apos;et på mobilen). PDF&apos;en har
               &quot;Kortdata: Klimadatastyrelsen, CC BY 4.0&quot; og en henvisning til denne side i foden, og andre
-              kilder end Klimadatastyrelsen står i en boks øverst på kortet. Bruger du selv kortene videre, gælder
+              kilder end Klimadatastyrelsen står i en boks øverst på kortet. Uden for Danmark står Kartverket eller
+              OpenTopoMap i foden i stedet. Bruger du selv kortene videre, gælder
               kildernes licenser også for dig: kreditér kilderne og nævn licensen.
             </p>
           </section>

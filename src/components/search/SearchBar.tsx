@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { searchAddresses, resolveCoordinates } from "@/lib/api/address";
+import { searchAddresses, searchNorwegianPlaces, resolveCoordinates } from "@/lib/api/address";
 import { useUiStore } from "@/stores/uiStore";
 import type { SearchResult } from "@/types/map";
 import { flyToPrintArea } from "@/lib/map/focusPrintArea";
@@ -33,6 +33,8 @@ export function SearchBar() {
     }
     setIsLoading(true);
     const version = ++searchVersionRef.current;
+    // In parallel, but the Danish list does not wait for it.
+    const norway = searchNorwegianPlaces(q);
     try {
       const res = await searchAddresses(q);
       if (version !== searchVersionRef.current) return;
@@ -41,6 +43,10 @@ export function SearchBar() {
       setIsOpen(true);
       setHasSearched(true);
       setActiveIndex(-1);
+      void norway.then((places) => {
+        if (version !== searchVersionRef.current || places.length === 0) return;
+        setResults((current) => [...current, ...places]);
+      });
     } catch {
       if (version !== searchVersionRef.current) return;
       setResults([]);
@@ -191,7 +197,7 @@ export function SearchBar() {
               requestAnimationFrame(() => containerRef.current?.scrollIntoView({ block: "start" }));
             }
           }}
-          placeholder="Søg efter adresse eller stednavn"
+          placeholder="Søg adresse eller sted"
           className="w-full rounded-lg border border-border pl-8 pr-16 py-2 text-sm pointer-coarse:min-h-11 pointer-coarse:pr-20 pointer-coarse:text-base bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
         {isLoading && (

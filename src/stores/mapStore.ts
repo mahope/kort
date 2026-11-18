@@ -27,6 +27,7 @@ const DEFAULT_OVERLAYS: OverlayState[] = [
   // Grey relief over the blue depths, so both read together.
   { id: "havbund", enabled: false, opacity: 0.45 },
   { id: "soemaerker", enabled: false, opacity: 1 },
+  { id: "kurverNorge", enabled: false, opacity: 1 },
   // Vector points and lines on top of every raster layer.
   { id: "soedybder", enabled: false, opacity: 1 },
   { id: "indsoekort", enabled: false, opacity: 1 },

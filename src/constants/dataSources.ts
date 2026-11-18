@@ -250,6 +250,43 @@ export const DATA_SOURCES: DataSource[] = [
     layers: ["osm"],
   },
   {
+    id: "kartverket",
+    name: "Topografisk norgeskart og høydekurver",
+    provider: "Kartverket (Norge)",
+    usedFor:
+      "Basiskortet i Norge: uden for Danmark skifter kortet selv til Kartverkets topografiske kort, når midten af kortet er i Norge. Desuden laget Højdekurver Norge.",
+    delivery:
+      "WMTS-cache (cache.kartverket.no, laget topo) på skærmen. PDF'en bruger WMS (wms.geonorge.no, wms.topo) i papirets opløsning, så signaturer, tekst og kurver passer til målestokken, men kun Kartverkets egne lag (N50 og grovere): de detaljerede Geovekst-data (FKB) må vises, ikke kopieres, så de kommer hverken i PDF'en eller offline.",
+    licence: "CC BY 4.0 (Kartverkets gratisprodukter)",
+    licenceUrl: "https://www.kartverket.no/api-og-data/vilkar-for-bruk",
+    credit:
+      "\"© Kartverket\" med link på kortet, \"Kortdata: Kartverket\" i PDF'ens fod og \"Kort over Norge: © Kartverket (CC BY 4.0)\" i boksen på kortet.",
+    layers: ["kurverNorge"],
+  },
+  {
+    id: "ssr",
+    name: "Sentralt stedsnavnregister (SSR)",
+    provider: "Kartverket (Norge)",
+    usedFor: "Søgning efter norske stednavne (fjelde, søer, dale, byer).",
+    delivery: "JSON-API (api.kartverket.no/stedsnavn) direkte fra browseren, kun mens du søger.",
+    licence: "CC BY 4.0 (Kartverkets gratisprodukter)",
+    licenceUrl: "https://www.kartverket.no/api-og-data/vilkar-for-bruk",
+    credit: "Kartverket krediteres på denne side; søgeresultater vises ikke på kortet eller i PDF'en.",
+  },
+  {
+    id: "opentopomap",
+    name: "OpenTopoMap",
+    provider: "OpenTopoMap, OpenStreetMap-bidragydere, SRTM og Sonny (højdedata)",
+    usedFor:
+      "Basiskortet i Sverige og under Kartverkets kort langs grænsen. Lantmäteriet har ikke et gratis detaljeret webkort (se README).",
+    delivery:
+      "PNG-fliser fra tile.opentopomap.org (til zoom 17). Gemmes aldrig offline, fordi værten beder om, at serveren ikke belastes med masse-download.",
+    licence: "Kortfliser CC-BY-SA, data ODbL (OpenStreetMap)",
+    licenceUrl: "https://opentopomap.org/about",
+    credit:
+      "\"Kortdata: © OpenStreetMap-bidragydere | Højdedata: SRTM, Sonny | Kortdesign: © OpenTopoMap (CC-BY-SA)\" på kortet og i boksen på PDF'en.",
+  },
+  {
     id: "wmm",
     name: "World Magnetic Model 2025 (WMM2025)",
     provider: "NOAA NCEI og British Geological Survey",

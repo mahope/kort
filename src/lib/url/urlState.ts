@@ -1,7 +1,7 @@
 import type { BaseLayer, MapStyle, OverlayId } from "@/types/map";
-import type { GridSystem } from "@/lib/geo/coordinates";
+import { isGridSystem, type GridSystem } from "@/lib/geo/coordinates";
 import type { PaperFormat, Orientation, DpiOption } from "@/types/print";
-import { DENMARK_BOUNDS } from "@/lib/map/styles";
+import { MAP_BOUNDS } from "@/lib/map/styles";
 import { MIN_CUSTOM_SCALE, MAX_CUSTOM_SCALE } from "@/constants/scales";
 import { isGridSpacing, type GridSpacing, type GridLabelFormat, type UtmZoneMode } from "@/lib/geo/utmGrid";
 
@@ -46,6 +46,7 @@ const OVERLAY_CODES: Record<string, OverlayId> = {
   hb: "havbund",
   hd: "havdybder",
   sm: "soemaerker",
+  kn: "kurverNorge",
   sd: "soedybder",
   ik: "indsoekort",
   vr: "vrag",
@@ -153,7 +154,7 @@ export function deserializeState(search: string): UrlState {
   const params = new URLSearchParams(search);
   const state: UrlState = {};
   const cs = params.get("cs");
-  if (cs === "utm" || cs === "mgrs") state.gridSystem = cs;
+  if (cs && isGridSystem(cs)) state.gridSystem = cs;
   else if (params.get("g") === "1") state.gridSystem = "utm";
 
   const c = params.get("c");
@@ -161,7 +162,7 @@ export function deserializeState(search: string): UrlState {
     const parts = c.split(",").map(parseFinite);
     if (parts.length >= 3 && parts.slice(0, 3).every((n) => n !== undefined)) {
       const [lat, lng, zoom] = parts as number[];
-      const [[west, south], [east, north]] = DENMARK_BOUNDS;
+      const [[west, south], [east, north]] = MAP_BOUNDS;
       // Out-of-range views are dropped as a whole; the URL is rewritten from the stores.
       if (lat >= south && lat <= north && lng >= west && lng <= east && zoom >= 0 && zoom <= MAX_ZOOM) {
         state.lat = lat;

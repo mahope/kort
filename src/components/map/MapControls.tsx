@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useMapStore } from "@/stores/mapStore";
 import { MAP_STYLES } from "@/lib/map/styles";
-import { BASE_LAYERS } from "@/constants/baseLayers";
+import { baseLayerOptions, isBaseLayerSelected } from "@/constants/baseLayers";
+import { useMapRegion } from "@/lib/hooks/useMapRegion";
 import { useIsMobile } from "@/lib/hooks/useIsMobile";
 import type { MapStyle } from "@/types/map";
 import { OVERLAY_LABELS } from "@/lib/map/sources";
@@ -21,6 +22,7 @@ export function MapControls() {
   const setStyle = useMapStore((s) => s.setStyle);
   const baseLayer = useMapStore((s) => s.baseLayer);
   const setBaseLayer = useMapStore((s) => s.setBaseLayer);
+  const region = useMapRegion();
   const overlays = useMapStore((s) => s.overlays);
   const toggleOverlay = useMapStore((s) => s.toggleOverlay);
   const setOverlayOpacity = useMapStore((s) => s.setOverlayOpacity);
@@ -58,13 +60,13 @@ export function MapControls() {
           <div className="mb-3">
             <h2 id="map-baseLayer-label" className="text-xs font-semibold text-text-secondary mb-2">Basiskort</h2>
             <div role="radiogroup" aria-labelledby="map-baseLayer-label" className="space-y-1">
-              {BASE_LAYERS.map((layer) => (
+              {baseLayerOptions(region).map((layer) => (
                 <div key={layer.value}>
                   <label className="flex items-center gap-2 cursor-pointer pointer-coarse:min-h-11">
                     <input
                       type="radio"
                       name="baseLayer"
-                      checked={baseLayer === layer.value}
+                      checked={isBaseLayerSelected(layer, baseLayer, region)}
                       onChange={() => setBaseLayer(layer.value)}
                       className="accent-primary pointer-coarse:h-5 pointer-coarse:w-5"
                     />

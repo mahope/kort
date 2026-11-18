@@ -1,5 +1,6 @@
 import type { SearchResult } from "@/types/map";
 import { utmToLatlng } from "@/lib/geo/utm";
+import { fetchNorwegianPlaces } from "./norwegianPlaces";
 
 // Address search: Klimadatastyrelsens Adressevælger (DAWA's replacement).
 // DAWA (dawa.aws.dk / api.dataforsyningen.dk/adresser) is being decommissioned
@@ -46,6 +47,20 @@ export async function searchAddresses(query: string): Promise<SearchResult[]> {
     placeResults.status === "fulfilled" ? placeResults.value : [];
 
   return [...addresses, ...places].slice(0, 10);
+}
+
+/**
+ * Norwegian places (Kartverket), searched apart from the Danish results so a
+ * slow Kartverket neither holds them back nor pushes any of them out: the
+ * search bar shows the Danish list first and appends these when they arrive.
+ * Never throws.
+ */
+export async function searchNorwegianPlaces(query: string): Promise<SearchResult[]> {
+  try {
+    return await fetchNorwegianPlaces(query);
+  } catch {
+    return [];
+  }
 }
 
 interface AdressevaelgerHit {

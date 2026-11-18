@@ -1,4 +1,6 @@
 import type { BaseLayer } from "@/types/map";
+import type { MapRegion } from "@/lib/geo/regions";
+import { usesNordicTopo } from "@/lib/map/sources";
 
 /**
  * Single source of truth for the selectable base maps, shared by the sidebar
@@ -23,3 +25,29 @@ export const BASE_LAYERS: BaseLayerOption[] = [
   { value: "historisk_lave", label: "Lave Målebordsblade (1901–1971)" },
   { value: "none", label: "Intet basiskort" },
 ];
+
+/**
+ * Outside Denmark every Danish base map becomes the same Nordic topo map, so
+ * the pickers offer it once, under this label, next to OpenStreetMap and
+ * "Intet basiskort". Choosing it picks DTK25, which is also what the map
+ * returns to in Denmark.
+ */
+export const NORDIC_TOPO_OPTION: BaseLayerOption = { value: "dtk25", label: "Topografisk kort (Kartverket / OpenTopoMap)" };
+
+/** The base maps a picker offers in this region. */
+export function baseLayerOptions(region: MapRegion): BaseLayerOption[] {
+  if (region !== "nordic") return BASE_LAYERS;
+  return [NORDIC_TOPO_OPTION, ...BASE_LAYERS.filter((l) => !usesNordicTopo(l.value, region))];
+}
+
+/** Whether `option` is the chosen one: in the Nordic region, any Danish map counts as the topo map. */
+export function isBaseLayerSelected(option: BaseLayerOption, baseLayer: BaseLayer, region: MapRegion): boolean {
+  if (option === NORDIC_TOPO_OPTION) return usesNordicTopo(baseLayer, region);
+  return option.value === baseLayer;
+}
+
+/** Label of the map actually shown for `baseLayer` in this region. */
+export function baseLayerLabel(baseLayer: BaseLayer, region: MapRegion): string {
+  if (usesNordicTopo(baseLayer, region)) return NORDIC_TOPO_OPTION.label;
+  return BASE_LAYERS.find((l) => l.value === baseLayer)?.label ?? baseLayer;
+}

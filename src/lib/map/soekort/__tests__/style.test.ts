@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import type { LayerSpecification } from "maplibre-gl";
 import { buildSoekortStyle, DEPTH_BANDS, SOEKORT_ICONS, SOEKORT_SOURCE_ID, SOEKORT_TOKENS, SOEKORT_URL } from "../style";
-import { getBaseMapStyle, isSeaBaseLayer } from "@/lib/map/sources";
+import { getBaseMapStyle, isSeaBaseLayer, usesNordicTopo } from "@/lib/map/sources";
 import { pmtilesArchive } from "@/lib/map/contours";
 import { thirdPartyCredits } from "@/lib/pdf/generator";
 import { deserializeState, serializeState } from "@/lib/url/urlState";
@@ -72,7 +72,9 @@ describe("Søkort as a base map", () => {
 
   it("gives the live map the same style object on every render", () => {
     expect(getBaseMapStyle("soekort", "klassisk")).toBe(getBaseMapStyle("soekort", "klassisk"));
-    expect(getBaseMapStyle("soekort", "klassisk", 5)).not.toBe(getBaseMapStyle("soekort", "klassisk"));
+    expect(getBaseMapStyle("soekort", "klassisk", false, 5)).not.toBe(getBaseMapStyle("soekort", "klassisk"));
+    // Søkort covers the Swedish side of Kattegat and Øresund itself; the Nordic topo never replaces it.
+    expect(usesNordicTopo("soekort", "nordic")).toBe(false);
   });
 
   it("is a sea base map with the warning and every source on the PDF", () => {
