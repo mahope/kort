@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 type Handler = (e: unknown) => void;
 
-const { ctl, FakeMap } = vi.hoisted(() => {
+const { ctl, FakeMap, addSource } = vi.hoisted(() => {
 // Controls what the fake map does; reset per test.
 const ctl = {
   canvasW: 100,
@@ -78,7 +78,7 @@ class FakeMap {
     src.removed = [];
   }
   areTilesLoaded() { return true; }
-  addSource() {}
+  addSource = addSource;
   addLayer() {}
   remove() {}
   getCanvas() {
@@ -87,10 +87,11 @@ class FakeMap {
 }
 
 
-  return { ctl, FakeMap };
+  const addSource = vi.fn();
+  return { ctl, FakeMap, addSource };
 });
 
-vi.mock("maplibre-gl", () => ({ default: { Map: FakeMap }, Map: FakeMap, setWorkerUrl: () => {} }));
+vi.mock("maplibre-gl", () => ({ default: { Map: FakeMap }, Map: FakeMap, setWorkerUrl: () => {}, addProtocol: () => {} }));
 vi.mock("../limits", async (orig) => ({
   ...(await orig<typeof import("../limits")>()),
   getMaxCanvasSize: () => ctl.maxSize,
@@ -119,6 +120,7 @@ async function run(opts = base) {
 
 beforeEach(() => {
   vi.useFakeTimers();
+  addSource.mockClear();
   Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], errorsWithoutTile: [], reloads: 0, removed: [], updates: 0, notNeeded: [], noUpdate: false, maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [] });
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
 });
@@ -130,6 +132,24 @@ describe("renderMapToImage canvas size", () => {
     ctl.maxSize = 8192;
     await run();
     expect(ctl.lastOptions?.maxCanvasSize).toEqual([8192, 8192]);
+  });
+});
+
+describe("renderMapToImage base map", () => {
+  const overlays = [{ id: "kurver5", enabled: true, opacity: 1 }] as typeof base.overlays;
+
+  it("adds the raster tile source when a base map is selected", async () => {
+    expect(await run({ ...base, overlays })).toHaveProperty("v");
+    expect(addSource.mock.calls.map(([id]) => id)).toEqual(["base-ortofoto", "kurver5-overlay"]);
+  });
+
+  it("uses a white background and registers only the enabled overlays without a base map", async () => {
+    expect(await run({ ...base, baseLayer: "none", overlays })).toHaveProperty("v");
+    expect(ctl.lastOptions?.style).toMatchObject({
+      sources: {},
+      layers: [{ type: "background", paint: { "background-color": "#ffffff" } }],
+    });
+    expect(addSource.mock.calls.map(([id]) => id)).toEqual(["kurver5-overlay"]);
   });
 });
 

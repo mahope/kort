@@ -15,8 +15,8 @@ import Map, {
 import { useMapStore } from "@/stores/mapStore";
 import { useUiStore } from "@/stores/uiStore";
 import { useDrawStore } from "@/stores/drawStore";
-import { MAP_STYLES, DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
-import { BLANK_STYLE, getRasterBaseLayers, OVERLAY_SOURCES, sourceZoomLimit } from "@/lib/map/sources";
+import { DENMARK_BOUNDS, transformRequest } from "@/lib/map/styles";
+import { getBaseMapStyle, getRasterBaseLayers, OVERLAY_SOURCES, sourceZoomLimit } from "@/lib/map/sources";
 import { contourLayers, contourSourceUrl, ensurePmtilesProtocol } from "@/lib/map/contours";
 import { PrintFrame } from "./PrintFrame";
 import { GeolocationButton } from "./GeolocationButton";
@@ -68,10 +68,7 @@ export function MapContainer() {
   const padding = useMemo(() => ({ top: 0, left: 0, right: 0, bottom: sheetPx }), [sheetPx]);
   const needsDrawing = useDrawStore((s) => s.activeMode !== null || s.features.length > 0);
 
-  const mapStyle = useMemo(() => {
-    if (baseLayer !== "skaermkort") return BLANK_STYLE;
-    return MAP_STYLES[style].url;
-  }, [baseLayer, style]);
+  const mapStyle = getBaseMapStyle(baseLayer, style);
 
   const onMove = useCallback(
     (evt: ViewStateChangeEvent) => {
