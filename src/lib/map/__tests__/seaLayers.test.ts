@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { DDM_TERMS_URL, OVERLAY_LABELS, OVERLAY_SOURCES, SEA_OVERLAYS, sourceZoomLimit } from "../sources";
+import { DDM_TERMS_URL, OVERLAY_LABELS, OVERLAY_SOURCES, SEA_OVERLAYS, kdsPrintCredit, sourceZoomLimit } from "../sources";
 import { offlineLayerIds } from "@/lib/offline/tiles";
 import { deserializeState, serializeState } from "@/lib/url/urlState";
 import { thirdPartyCredits, drawThirdPartyCredits, overviewCreditsBox } from "@/lib/pdf/generator";
@@ -32,6 +32,25 @@ describe("overlay layers", () => {
     expect(src.attribution).toContain("href='https://gst.dk/");
   });
 
+  it("serves the seabed relief from Dybdemodellen with the same terms-compliant credit", () => {
+    const src = OVERLAY_SOURCES.havbund;
+    expect(src.tiles[0]).toContain("/wms/ddm?");
+    expect(src.tiles[0]).toContain("LAYERS=ddm_50m_skyggekort_overdrevet");
+    expect(src.tiles[0]).not.toContain("ddm_50m_dybde_relief");
+    expect(src.credit).toBe(OVERLAY_SOURCES.dybdemodel.credit);
+    expect(src.attribution).toBe(OVERLAY_SOURCES.dybdemodel.attribution);
+    expect(SEA_OVERLAYS).toContain("havbund");
+    // Draws above the blue depth colours, half transparent, so both read together.
+    const order = useMapStore.getState().overlays.map((o) => o.id);
+    expect(order.indexOf("havbund")).toBeGreaterThan(order.indexOf("dybdemodel"));
+  });
+
+  it("credits Klimadatastyrelsen with the CC BY 4.0 licence and the sources page on the PDF", () => {
+    expect(kdsPrintCredit("kort.mahoje.dk")).toBe(
+      "Kortdata: Klimadatastyrelsen, CC BY 4.0 | Kilder: kort.mahoje.dk/kilder"
+    );
+  });
+
   it("caps OpenSeaMap at its last zoom, so 1:5.000 at 300 dpi enlarges instead of failing", () => {
     expect(sourceZoomLimit(OVERLAY_SOURCES.soemaerker)).toEqual({ maxzoom: 18 });
     expect(sourceZoomLimit(OVERLAY_SOURCES.havdybder)).toEqual({});
@@ -50,6 +69,7 @@ describe("overlay layers", () => {
     expect(ids).toContain("contours25");
     expect(ids).not.toContain("havdybder");
     expect(ids).not.toContain("dybdemodel");
+    expect(ids).not.toContain("havbund");
     expect(ids).not.toContain("soemaerker");
   });
 });
@@ -82,6 +102,8 @@ describe("PDF credits", () => {
     expect(c.credits.join(" ")).toMatch(/EMODnet/);
     expect(c.credits.join(" ")).toMatch(/Danmarks Dybdemodel/);
     expect(c.credits.join(" ")).toMatch(/OpenSeaMap/);
+    // Depth colours and seabed relief share one Dybdemodel credit.
+    expect(c.credits.filter((x) => x.includes("Danmarks Dybdemodel"))).toHaveLength(1);
   });
 
   it("puts the credits inside the map image, wrapped to fit A5, clear of the margins", () => {

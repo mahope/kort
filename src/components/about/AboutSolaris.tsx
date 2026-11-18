@@ -89,7 +89,14 @@ export default function AboutSolaris() {
                 Dataforsyningen
               </a>{" "}
               (Klimadatastyrelsen), som stiller frie offentlige geodata til
-              rådighed for alle.
+              rådighed for alle. Se alle{" "}
+              <Link
+                href="/kilder"
+                className="text-primary hover:text-primary-hover underline underline-offset-2"
+              >
+                datakilder, licenser og hvordan kortet er bygget
+              </Link>
+              .
             </p>
           </section>
 
@@ -141,7 +148,11 @@ export default function AboutSolaris() {
         </div>
 
         <div className="mt-16 pt-8 border-t border-border text-xs text-text-muted">
-          Kortdata &copy; Klimadatastyrelsen |{" "}
+          Kortdata &copy; Klimadatastyrelsen (CC BY 4.0) |{" "}
+          <Link href="/kilder" className="hover:text-text-secondary">
+            Datakilder
+          </Link>{" "}
+          |{" "}
           <a
             href="https://dataforsyningen.dk/"
             target="_blank"

@@ -8,6 +8,7 @@ import { ScaleSelector } from "./ScaleSelector";
 import { PaperFormatSelector } from "./PaperFormatSelector";
 import { CoverageInfo } from "./CoverageInfo";
 import { PrintPreview } from "./PrintPreview";
+import { PrintAids } from "./PrintAids";
 import { DpiSelector } from "./DpiSelector";
 import { BearingSelector } from "./BearingSelector";
 import { MultiPageSelector } from "./MultiPageSelector";
@@ -238,6 +239,7 @@ function SidebarContent() {
           <CollapsibleSection id="udskrivning" title="Udskrivning">
             <BearingSelector />
             <DpiSelector />
+            <PrintAids />
             <MultiPageSelector />
           </CollapsibleSection>
 
@@ -262,6 +264,8 @@ function SidebarContent() {
       <div className="mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <div className="flex flex-wrap items-center gap-x-2 text-xs text-text-muted">
           <span>Kortdata &copy; Klimadatastyrelsen</span>
+          <span>&middot;</span>
+          <a href="/kilder" className="inline-flex items-center justify-center pointer-coarse:min-h-11 hover:text-text-secondary underline underline-offset-2">Datakilder</a>
           <span>&middot;</span>
           <a href="/om" className="inline-flex items-center justify-center pointer-coarse:min-h-11 pointer-coarse:min-w-11 hover:text-text-secondary underline underline-offset-2">Om</a>
           {brand.id === "solaris" && (

@@ -20,4 +20,5 @@ export const BASE_LAYERS: BaseLayerOption[] = [
   { value: "osm", label: "OpenStreetMap" },
   { value: "historisk_hoeje", label: "Høje Målebordsblade (1842–1899)" },
   { value: "historisk_lave", label: "Lave Målebordsblade (1901–1971)" },
+  { value: "none", label: "Intet basiskort" },
 ];

@@ -1,5 +1,5 @@
-import type { OverlayId } from "@/types/map";
-import { DATAFORSYNINGEN_TOKEN } from "./styles";
+import type { BaseLayer, MapStyle, OverlayId } from "@/types/map";
+import { DATAFORSYNINGEN_TOKEN, MAP_STYLES } from "./styles";
 
 /**
  * Ortofoto WMTS tile URL template.
@@ -118,8 +118,19 @@ const DDM_DEPTH_URL =
   `&LAYERS=ddm_50m_dybde_relief&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE` +
   `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}&token=${DATAFORSYNINGEN_TOKEN}`;
 
+/**
+ * Seabed relief from the same model: Geodatastyrelsen's own exaggerated
+ * hillshade, grey and transparent over land. Same terms and credit as the
+ * depth colours, so the PDF names Dybdemodellen once for both.
+ */
+const DDM_RELIEF_URL = DDM_DEPTH_URL.replace("LAYERS=ddm_50m_dybde_relief", "LAYERS=ddm_50m_skyggekort_overdrevet");
+
 export const DDM_TERMS_URL =
   "https://gst.dk/ansvarsomraader/soekort-og-marine-data/soeopmaaling-og-dybdedata/danmarks-dybdemodel";
+
+/** The three items Geodatastyrelsen's DDM50 terms (May 2024) require, plus the terms link. */
+const DDM_ATTRIBUTION = `Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning. Indeholder WMS-tjeneste (<a href='${DDM_TERMS_URL}'>vilkår</a>). Model og data er ikke egnet til navigation`;
+const DDM_CREDIT = `Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning. Indeholder WMS-tjeneste. Model og data er ikke egnet til navigation. Vilkår: ${DDM_TERMS_URL}`;
 
 /**
  * EMODnet Bathymetry (CC BY 4.0), mean depth, transparent over land. The
@@ -141,20 +152,43 @@ const DHM_HILLSHADE_URL =
   `${DHM_WMS_BASE}&LAYERS=dhm_terraen_skyggekort&BBOX={bbox-epsg-3857}`;
 
 /**
- * Minimal blank MapLibre style for use with ortofoto raster base layer.
+ * Klimadatastyrelsen's free data is CC BY 4.0 since 16 May 2024: credit the
+ * agency and name the licence. One line covers every KDS layer on screen and
+ * in the PDF; the sources page (/kilder) lists the datasets.
  */
-export const BLANK_STYLE = {
-  version: 8 as const,
-  glyphs: "https://cdn.dataforsyningen.dk/assets/vector_tiles_assets/latest/glyphs/{fontstack}/{range}.pbf",
-  sources: {},
-  layers: [
-    {
-      id: "background",
-      type: "background" as const,
-      paint: { "background-color": "#f0f0f0" },
-    },
-  ],
-};
+export const KDS_LICENCE_URL = "https://creativecommons.org/licenses/by/4.0/deed.da";
+export const SOURCES_PAGE_PATH = "/kilder";
+export const KDS_MAP_ATTRIBUTION =
+  `&copy; <a href='https://dataforsyningen.dk/data'>Klimadatastyrelsen</a>, <a href='${KDS_LICENCE_URL}'>CC BY 4.0</a>` +
+  ` &middot; <a href='${SOURCES_PAGE_PATH}'>Datakilder</a>`;
+
+/** PDF footer: KDS credit, licence and where the full list of sources is. */
+export function kdsPrintCredit(domain: string): string {
+  return `Kortdata: Klimadatastyrelsen, CC BY 4.0 | Kilder: ${domain}${SOURCES_PAGE_PATH}`;
+}
+
+function blankStyle(backgroundColor: string) {
+  return {
+    version: 8 as const,
+    glyphs: "https://cdn.dataforsyningen.dk/assets/vector_tiles_assets/latest/glyphs/{fontstack}/{range}.pbf",
+    sources: {},
+    layers: [
+      {
+        id: "background",
+        type: "background" as const,
+        paint: { "background-color": backgroundColor },
+      },
+    ],
+  };
+}
+
+const RASTER_STYLE = blankStyle("#f0f0f0");
+const NO_BASE_STYLE = blankStyle("#ffffff");
+
+export function getBaseMapStyle(baseLayer: BaseLayer, style: MapStyle) {
+  if (baseLayer === "skaermkort") return MAP_STYLES[style].url;
+  return baseLayer === "none" ? NO_BASE_STYLE : RASTER_STYLE;
+}
 
 export interface RasterSourceConfig {
   tiles: string[];
@@ -280,9 +314,17 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
   dybdemodel: {
     tiles: [DDM_DEPTH_URL],
     tileSize: 256,
-    attribution: `Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning. Indeholder WMS-tjeneste (<a href='${DDM_TERMS_URL}'>vilkår</a>). Model og data er ikke egnet til navigation`,
-    credit: `Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning. Indeholder WMS-tjeneste. Model og data er ikke egnet til navigation. Vilkår: ${DDM_TERMS_URL}`,
+    attribution: DDM_ATTRIBUTION,
+    credit: DDM_CREDIT,
     // Saved tiles would need a download date in the credit instead of "WMS-tjeneste".
+    noOffline: true,
+    notForNavigation: true,
+  },
+  havbund: {
+    tiles: [DDM_RELIEF_URL],
+    tileSize: 256,
+    attribution: DDM_ATTRIBUTION,
+    credit: DDM_CREDIT,
     noOffline: true,
     notForNavigation: true,
   },
@@ -317,8 +359,9 @@ export const OVERLAY_LABELS: Record<OverlayId, string> = {
   stednavne: "Stednavne",
   matrikel: "Matrikelskel",
   dybdemodel: "Havdybder Danmark (Dybdemodel 50 m)",
+  havbund: "Havbundens relief (Dybdemodel, skyggekort)",
   havdybder: "Havdybder Europa (EMODnet, grovere)",
   soemaerker: "Sømærker (OpenSeaMap)",
 };
 
-export const SEA_OVERLAYS: readonly OverlayId[] = ["dybdemodel", "havdybder", "soemaerker"];
+export const SEA_OVERLAYS: readonly OverlayId[] = ["dybdemodel", "havbund", "havdybder", "soemaerker"];
