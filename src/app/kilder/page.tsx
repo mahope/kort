@@ -24,7 +24,7 @@ function formatDate(iso: string): string {
 const TECH: { name: string; text: string }[] = [
   {
     name: "Kortet i browseren",
-    text: "MapLibre GL JS tegner kortet med WebGL. Basiskort og lag hentes som fliser direkte fra kilderne: vector tiles til Skærmkortet, WMS og WMTS til de øvrige kort, og PMTiles til vores egne højdekurver. Sødybder, vrag og indsøkort-markører er små GeoJSON-filer på vores egen server.",
+    text: "MapLibre GL JS tegner kortet med WebGL. Basiskort og lag hentes som fliser direkte fra kilderne: vector tiles til Skærmkortet, WMS og WMTS til de øvrige kort, og PMTiles til vores egne højdekurver og Søkortet. Sødybder, vrag og indsøkort-markører er små GeoJSON-filer på vores egen server.",
   },
   {
     name: "PDF'en",
@@ -33,6 +33,10 @@ const TECH: { name: string; text: string }[] = [
   {
     name: "Egne højdekurver",
     text: "5 og 10 m-kurverne er beregnet fra Danmarks Højdemodel, glattet og samlet i én PMTiles-fil. Browseren henter kun de bidder af filen, der skal bruges, så der ikke skal køre en kortserver.",
+  },
+  {
+    name: "Søkortet",
+    text: "Basiskortet Søkort er vores eget vektorkort: dybdebånd, dybdekurver og dybdetal beregnet fra EMODnets dybdemodel, land og kyst fra OpenStreetMap og Natura 2000 fra Miljøportalen, samlet i én PMTiles-fil og tegnet i en rolig stil, der er lavet til print. Tekst og streger måles i millimeter på papiret, så de har samme størrelse i en PDF på 150 og 300 dpi.",
   },
   {
     name: "Søgning",
@@ -112,7 +116,8 @@ export default function SourcesPage() {
               ophavsretligt beskyttede og sælges, så dem viser vi ikke. Hav- og søkortlagene her bygger på frie data:
               dybder og havbundens relief fra Danmarks Dybdemodel, grovere dybder fra EMODnet uden for danske farvande,
               sømærker fra OpenSeaMap, som frivillige kortlægger, dybdekurver i 80 søer fra Miljøstyrelsens
-              overvågning, vrag fra EMODnet og Geodatastyrelsens historiske indsøkort.
+              overvågning, vrag fra EMODnet og Geodatastyrelsens historiske indsøkort. Basiskortet Søkort samler det
+              meste i ét roligt kort med dybdebånd og dybdetal, beregnet af os fra EMODnets dybdemodel.
             </p>
             <p className="mb-3 rounded border border-border p-3 font-semibold">
               {NAVIGATION_WARNING} {SEA_DATA_NOTE}

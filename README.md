@@ -16,7 +16,8 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 
 - **Interaktivt kort** - Danske topografiske kort via Dataforsyningens vector tiles (MapLibre GL JS)
 - **4 kortstilarter** - Klassisk, Dæmpet, Grå og Mørkt skærmkort
-- **5 basiskort** - Skærmkort, Ortofoto, OpenStreetMap, Høje & Lave Målebordsblade
+- **Basiskort** - Skærmkort, Topografisk kort 1:25.000, Ortofoto, OpenStreetMap, Søkort, Høje & Lave Målebordsblade
+- **Søkort** - Eget vektorsøkort over danske farvande: dybdebånd (0-1 til 20-50 m), dybdekurver og dybdetal med decimal som sænket tal ("17₄"), land, by, skov og søer, kystlinje med strandkant, Natura 2000 (stiplet, grønne navne), vrag med navn, lystbådehavne, ankerpladser og sejlrender. Tegnet til print: tekst og streger måles i millimeter på papiret og ser ens ud i 1:25.000 og 1:50.000 ved 150 og 300 dpi. Dybder fra EMODnet Bathymetry (CC BY 4.0), land fra OpenStreetMap (ODbL), Natura 2000 fra Miljøportalen. Bygges med `scripts/soekort-vektor/build-soekort-tiles.sh` til én PMTiles-fil på tiles.mahoje.dk, se [scripts/soekort-vektor/README.md](scripts/soekort-vektor/README.md). "Må ikke bruges til navigation. Brug officielle søkort." står på kortet og PDF'en
 - **7 målestoksforhold** - 1:5.000, 1:10.000, 1:25.000, 1:50.000, 1:100.000, 1:250.000, 1:500.000 og valgfri fra 1:1.000 til 1:1.000.000 ("Andet"). Ved 1:5.000 er skærmkort og ortofoto skarpest; topografisk kort 1:25.000 bliver forstørret fem gange
 - **6 papirformater** - A5, A4, A3, A2 i stående eller liggende, plus A1 og A0 som ét stort ark til trykkeri/plotter (150 dpi)
 - **UTM-gitter** - Grid-linjer og koordinater på kort og PDF, til orientering i felten
@@ -60,6 +61,7 @@ Kort.mahoje.dk er gratis og vil altid forblive det.
 - **Adressesøgning:** [Adressevælger](https://confluence.sdfi.dk/pages/viewpage.action?pageId=234782998) (Klimadatastyrelsen) - adresser og veje, EPSG:25832 konverteres til WGS84
 - **Stednavne:** [Danske Stednavne](https://www.klimadatastyrelsen.dk/data/danske-stednavne) (Klimadatastyrelsen) - snapshot i `data/stednavne.tsv.gz`, søges server-side via `/api/stednavne`
 - **Sødybder, vrag og indsøkort-indeks:** øjebliksbilleder i `public/data/soekort/` (hentet 18/11-2026), bygget med `DATAFORSYNINGEN_TOKEN=… node scripts/soekort/build-soekort-data.mjs`. Ret `SOEKORT_RETRIEVED` i `src/constants/dataSources.ts`, når de bygges igen. Skærmbilleder: `node scripts/capture-soekort.mjs` (efter `npm run build`)
+- **Søkort (basiskort):** egne vector tiles i `soekort-v1.pmtiles` på tiles.mahoje.dk, bygget med `bash scripts/soekort-vektor/build-soekort-tiles.sh` (Docker, ca. 15 min). Pipeline, kilder, genbygning og upload: [scripts/soekort-vektor/README.md](scripts/soekort-vektor/README.md). Stilens farver og størrelser står i `src/lib/map/soekort/soekort-style.json`. Før/efter-billeder: `node scripts/capture-soekort-vektor.mjs` (efter `npm run build`)
 - Alle data er frie offentlige geodata; licenser, kreditering og hentedatoer står på `/kilder`
 
 ## Kom i gang

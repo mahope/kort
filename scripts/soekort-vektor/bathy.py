@@ -128,7 +128,7 @@ def main() -> None:
                 feat = {
                     "type": "Feature",
                     "geometry": {"type": "Point", "coordinates": [round(lon, 6), round(lat, 6)]},
-                    "properties": {"d": round(d, 1), "t": label(d)},
+                    "properties": {"d": int(d * 10) / 10, "t": label(d)},
                     "tippecanoe": {"minzoom": minzoom},
                 }
                 f.write(json.dumps(feat, ensure_ascii=False) + "\n")
