@@ -1,0 +1,4 @@
+== lave z8-16 (res 2.388657133911758 m), 2026-11-23T17:29:21Z
+warp: 9.9 s 771 MB
+jpeg-q85: translate 6.0 s 707 MB | overviews 2.6 s 417 MB | pmtiles 0.1 s 48 MB | 24081083 B
+webp-q85: translate 8.4 s 635 MB | overviews 6.0 s 418 MB | pmtiles 0.1 s 44 MB | 19991848 B

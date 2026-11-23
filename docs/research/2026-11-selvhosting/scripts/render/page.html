@@ -1,0 +1,64 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="/nm/maplibre-gl/dist/maplibre-gl.css">
+<style>body{margin:0}#map{position:absolute;left:0;top:0}</style>
+<script src="/nm/pmtiles/dist/pmtiles.js"></script></head>
+<body><div id="map"></div>
+<script type="module">
+// Renders one frame the way src/lib/pdf/renderer.ts does: a MapLibre map at
+// the paper's pixel size, pixelRatio 1, zoom from scale and dpi.
+import * as maplibregl from "/nm/maplibre-gl/dist/maplibre-gl.mjs";
+maplibregl.setWorkerUrl("/nm/maplibre-gl/dist/maplibre-gl-worker.mjs");
+const p = Object.fromEntries(new URLSearchParams(location.search));
+const T = p.token; // public Dataforsyningen token (docs/tokens.md), passed in by shoot.mjs
+const wms = (svc, layer, fmt = "image/png", transparent = "TRUE") =>
+  `https://api.dataforsyningen.dk/${svc}?service=WMS&version=1.1.1&request=GetMap&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
+  `&LAYERS=${layer}&STYLES=default&TRANSPARENT=${transparent}&FORMAT=${fmt}&token=${T}&BBOX={bbox-epsg-3857}`;
+const LIVE = {
+  "wms-dtk25-png": wms("dtk_25_DAF", "DTK25"),
+  "wms-dtk25-jpeg": wms("dtk_25_DAF", "DTK25", "image/jpeg", "FALSE"),
+  "wms-hoeje": wms("topo20_hoeje_maalebordsblade_DAF", "dtk_hoeje_maalebordsblade"),
+  "wms-lave": wms("topo20_lave_maalebordsblade_DAF", "dtk_lave_maalebordsblade"),
+  "wms-skygge": wms("dhm_DAF", "dhm_terraen_skyggekort").replace("STYLES=default", "STYLES="),
+  "wms-stednavne": wms("danske_stednavne_DAF", "danske_stednavne"),
+  "wmts-orto": `https://api.dataforsyningen.dk/orto_foraar_webm_DAF?service=WMTS&request=GetTile&version=1.0.0&layer=orto_foraar_webm&style=default&TileMatrixSet=DFD_GoogleMapsCompatible&TileMatrix={z}&TileRow={y}&TileCol={x}&format=image/jpeg&token=${T}`,
+};
+const protocol = new pmtiles.Protocol();
+maplibregl.addProtocol("pmtiles", protocol.tile);
+const lat = Number(p.lat), lon = Number(p.lon), w = Number(p.w), h = Number(p.h);
+// ground m/px on paper = scale * 25.4 mm / dpi / 1000; MapLibre zoom uses 512 px tiles
+const groundRes = (Number(p.scale) * 0.0254) / Number(p.dpi);
+const zoom = Math.log2((Math.cos((lat * Math.PI) / 180) * 40075016.686) / (512 * groundRes));
+const el = document.getElementById("map");
+el.style.width = `${w}px`; el.style.height = `${h}px`;
+const sources = {}, layers = [];
+const add = (id, src) => {
+  if (src.startsWith("pmtiles-vector:")) {
+    sources[id] = { type: "vector", url: `pmtiles://${location.origin}/tiles/${src.slice(15)}` };
+    layers.push({ id, type: "symbol", source: id, "source-layer": "stednavne",
+      layout: { "text-field": ["get", "navn"], "text-font": ["Open Sans Italic"], "text-size": Number(p.textsize || 11) },
+      paint: { "text-color": "#1a3d6e", "text-halo-color": "#fff", "text-halo-width": 1.2 } });
+    return;
+  }
+  sources[id] = src.endsWith(".pmtiles")
+    ? { type: "raster", url: `pmtiles://${location.origin}/tiles/${src}`, tileSize: 256 }
+    : { type: "raster", tiles: [LIVE[src]], tileSize: 256 };
+  layers.push({ id, type: "raster", source: id });
+};
+p.src.split(",").forEach((s, i) => add(`l${i}`, s));
+const requested = {};
+const t0 = performance.now();
+const map = new maplibregl.Map({
+  container: el, center: [lon, lat], zoom, pixelRatio: 1, interactive: false, attributionControl: false,
+  fadeDuration: 0, canvasContextAttributes: { preserveDrawingBuffer: true },
+  style: { version: 8, glyphs: "https://cdn.dataforsyningen.dk/assets/vector_tiles_assets/latest/glyphs/{fontstack}/{range}.pbf",
+    sources: { bg: { type: "geojson", data: { type: "FeatureCollection", features: [] } }, ...sources },
+    layers: [{ id: "bg", type: "background", paint: { "background-color": "#ffffff" } }, ...layers] },
+});
+window.__map = map;
+map.on("data", (e) => { if (e.tile) { const z = e.tile.tileID.canonical.z; requested[z] = (requested[z] || 0) + 1; } });
+map.once("idle", () => {
+  window.__result = { zoom, groundRes, ms: Math.round(performance.now() - t0), tileZooms: requested,
+    png: map.getCanvas().toDataURL("image/png") };
+});
+map.on("error", (e) => { window.__errors = (window.__errors || []).concat(String(e.error?.message || e)); });
+</script></body></html>

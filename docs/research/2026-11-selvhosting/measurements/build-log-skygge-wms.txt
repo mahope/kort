@@ -1,0 +1,5 @@
+== skygge z8-16 (res 2.388657133911758 m), 2026-11-23T17:29:56Z
+warp: 10.0 s 552 MB
+jpeg-q80: translate 2.6 s 600 MB | overviews 1.7 s 412 MB | pmtiles 0.1 s 35 MB | 11361948 B
+webp-q80: translate 5.2 s 598 MB | overviews 3.8 s 412 MB | pmtiles 0.1 s 32 MB | 8225799 B
+png-q0: translate 9.6 s 645 MB | overviews 6.0 s 437 MB | pmtiles 0.2 s 93 MB | 69694189 B

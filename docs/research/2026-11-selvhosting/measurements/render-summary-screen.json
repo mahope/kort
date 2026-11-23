@@ -1,0 +1,46 @@
+[
+ {
+  "name": "dtk25-200k-96-wms-jpeg",
+  "src": "wms-dtk25-jpeg",
+  "zoom": 9.686,
+  "groundRes": 52.917,
+  "ms": 1535,
+  "tileZooms": {
+   "11": 8
+  },
+  "errors": []
+ },
+ {
+  "name": "dtk25-200k-96-jpeg-q85",
+  "src": "dtk25-jpeg-q85.pmtiles",
+  "zoom": 9.686,
+  "groundRes": 52.917,
+  "ms": 419,
+  "tileZooms": {
+   "11": 4
+  },
+  "errors": []
+ },
+ {
+  "name": "dtk25-50k-96-wms-jpeg",
+  "src": "wms-dtk25-jpeg",
+  "zoom": 11.686,
+  "groundRes": 13.229,
+  "ms": 1742,
+  "tileZooms": {
+   "13": 12
+  },
+  "errors": []
+ },
+ {
+  "name": "dtk25-50k-96-jpeg-q85",
+  "src": "dtk25-jpeg-q85.pmtiles",
+  "zoom": 11.686,
+  "groundRes": 13.229,
+  "ms": 471,
+  "tileZooms": {
+   "13": 12
+  },
+  "errors": []
+ }
+]

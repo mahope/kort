@@ -1,0 +1,9 @@
+== dtk25 z8-16 (res 2.388657133911758 m), 2026-11-23T17:11:01Z
+warp: 10.6 s 496 MB
+jpeg-q75: translate 3.0 s 607 MB | overviews 2.3 s 414 MB | pmtiles 0.1 s 42 MB | 18728901 B
+jpeg-q85: translate 2.9 s 611 MB | overviews 2.3 s 416 MB | pmtiles 0.1 s 48 MB | 24135823 B
+jpeg-q90: translate 3.2 s 612 MB | overviews 2.4 s 418 MB | pmtiles 0.1 s 53 MB | 29126661 B
+webp-q75: translate 7.3 s 602 MB | overviews 5.6 s 415 MB | pmtiles 0.1 s 38 MB | 14567354 B
+webp-q85: translate 7.9 s 605 MB | overviews 5.8 s 417 MB | pmtiles 0.1 s 43 MB | 19385792 B
+png8-q0: translate 16.2 s 618 MB | overviews 7.5 s 431 MB | pmtiles 0.1 s 66 MB | 40478316 B
+png-q0: translate 6.4 s 650 MB | overviews 4.1 s 438 MB | pmtiles 0.2 s 114 MB | 88344869 B

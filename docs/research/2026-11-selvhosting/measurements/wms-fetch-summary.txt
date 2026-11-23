@@ -1,0 +1,6 @@
+dtk25 16 requests 13131923 B 802 ms mean
+hoeje 16 requests 166664534 B 3469 ms mean
+lave 16 requests 151437275 B 3354 ms mean
+skygge 16 requests 61314608 B 6523 ms mean
+orto 25 requests 252626275 B 5015 ms mean
+dtm wcs 16 requests 156514848 B
