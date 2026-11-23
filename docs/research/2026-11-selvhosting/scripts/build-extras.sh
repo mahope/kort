@@ -9,11 +9,15 @@ set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 case ${1:-} in
 hillshade)
+  # RES=1.6: average the terrain to this cell size first (the real 0.4 m DHM tiles); prints the times
   DTM=$2 RAW=$3; mkdir -p "$RAW"
-  docker run --rm -u "$(id -u):$(id -g)" -v "$DTM:/dtm:ro" -v "$RAW:/raw" kort-kurver bash -c '
-    set -e; cd /dtm; gdalbuildvrt -q /raw/dtm.vrt *.tif
-    gdaldem hillshade -q -multidirectional -z 1.5 -co COMPRESS=DEFLATE /raw/dtm.vrt /raw/hs.tif
-    rm /raw/dtm.vrt'
+  docker run --rm -u "$(id -u):$(id -g)" -v "$DTM:/dtm:ro" -v "$RAW:/raw" -e RES="${RES:-}" kort-kurver bash -c '
+    set -e; cd /dtm; gdalbuildvrt -q /raw/dtm.vrt *.tif; in=/raw/dtm.vrt; s=$(date +%s)
+    if [ -n "$RES" ]; then gdalwarp -q -overwrite -r average -tr $RES $RES -multi -wm 1024 \
+      -co TILED=YES -co COMPRESS=DEFLATE -co PREDICTOR=3 /raw/dtm.vrt /raw/dtm-avg.tif; in=/raw/dtm-avg.tif; fi
+    a=$(date +%s); gdaldem hillshade -q -multidirectional -z 1.5 -co COMPRESS=DEFLATE $in /raw/hs.tif
+    echo "average to ${RES:-native} m: $((a - s)) s | gdaldem: $(($(date +%s) - a)) s | peak $(( $(cat /sys/fs/cgroup/memory.peak) / 1048576 )) MB"
+    rm -f /raw/dtm.vrt /raw/dtm-avg.tif'
   ls -l "$RAW/hs.tif" ;;
 stednavne)
   REPO=$2 OUT=$3; mkdir -p "$OUT"
