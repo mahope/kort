@@ -2,7 +2,7 @@ import { forward } from "mgrs";
 import { latlngToUtm } from "./utm";
 import { latlngToDktm, type DktmZone } from "./dktm";
 
-export const GRID_SYSTEMS = ["utm", "mgrs", "dktm1", "dktm2", "dktm3", "dktm4"] as const;
+const GRID_SYSTEMS = ["utm", "mgrs", "dktm1", "dktm2", "dktm3", "dktm4"] as const;
 export type GridSystem = (typeof GRID_SYSTEMS)[number];
 
 export function isGridSystem(v: string): v is GridSystem {

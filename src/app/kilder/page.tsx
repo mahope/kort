@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getBrand } from "@/config/brand";
 import { DATA_SOURCES, DECLINED_SOURCES } from "@/constants/dataSources";
 import { NAVIGATION_WARNING, SEA_DATA_NOTE } from "@/lib/map/sources";
+import { LINK_CLASS, LINK_MUTED_CLASS } from "@/lib/ui/linkClasses";
 
 const brand = getBrand();
 
@@ -11,8 +12,6 @@ export const metadata: Metadata = {
   description: `Hvor kortdata på ${brand.siteName} kommer fra, hvilke licenser de har, hvordan de krediteres, og hvordan kortet og PDF'en er bygget.`,
   alternates: { canonical: "/kilder" },
 };
-
-const linkClass = "text-primary hover:text-primary-hover underline underline-offset-2";
 
 /** "18. november 2026" from an ISO date, without depending on the server's locale data. */
 function formatDate(iso: string): string {
@@ -82,7 +81,7 @@ export default function SourcesPage() {
                     <dd className="text-text-secondary">{s.delivery}</dd>
                     <dt className="font-medium">Licens</dt>
                     <dd className="text-text-secondary">
-                      <a href={s.licenceUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                      <a href={s.licenceUrl} target="_blank" rel="noopener noreferrer" className={LINK_CLASS}>
                         {s.licence}
                       </a>
                     </dd>
@@ -175,7 +174,7 @@ export default function SourcesPage() {
             </dl>
             <p className="text-text-secondary mt-3">
               Kildekoden ligger på{" "}
-              <a href={brand.github} target="_blank" rel="noopener noreferrer" className={linkClass}>
+              <a href={brand.github} target="_blank" rel="noopener noreferrer" className={LINK_CLASS}>
                 GitHub
               </a>
               . Mangler en kilde, eller er en kreditering forkert, så skriv gerne et issue.
@@ -184,7 +183,7 @@ export default function SourcesPage() {
         </div>
 
         <div className="mt-16 pt-8 border-t border-border text-xs text-text-muted">
-          <Link href="/om" className="hover:text-text-secondary underline underline-offset-2">
+          <Link href="/om" className={LINK_MUTED_CLASS}>
             Om {brand.siteName}
           </Link>
         </div>

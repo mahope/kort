@@ -5,7 +5,7 @@ import type { SheetPosition } from "@/stores/uiStore";
 // 108px fit exactly the drag handle + "Download PDF" footer; the print
 // summary line added above that button needs the extra room.
 export const SNAP_MIN_PX = 136;
-export const SNAP_MID_FRAC = 0.4;
+const SNAP_MID_FRAC = 0.4;
 export const SNAP_MAX_FRAC = 0.6;
 
 /** True when the settings are a bottom sheet (below md), not a sidebar. */

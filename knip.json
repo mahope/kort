@@ -4,6 +4,7 @@
     "public/sw.js",
     "scripts/**",
     "tests/e2e/**",
-    "docs/screenshots/**"
+    "docs/screenshots/**",
+    "docs/**/*.mjs"
   ]
 }

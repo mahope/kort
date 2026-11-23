@@ -5,7 +5,7 @@ import {
   expandTileUrl,
   areaTileUrls,
   offlineCacheKey,
-  padBounds,
+  OFFLINE_PADDING,
   offlineLayerIds,
   checkStart,
   confirmReason,
@@ -13,6 +13,7 @@ import {
   lngLatToTile,
 } from "../tiles";
 import { groundExtentToBounds, calculatePrintArea } from "@/lib/geo/calculations";
+import { padBounds } from "@/lib/geo/bounds";
 import { getRasterBaseLayers } from "@/lib/map/sources";
 
 describe("offline tiles", () => {
@@ -56,7 +57,7 @@ describe("offline tiles", () => {
       { id: "matrikel", enabled: false },
     ]);
     expect(ids).toEqual(["dtk25", "contours"]);
-    const perLayer = tilesForBounds(padBounds(bounds)).length;
+    const perLayer = tilesForBounds(padBounds(bounds, OFFLINE_PADDING)).length;
     const urls = areaTileUrls(bounds, ids);
     expect(urls.length).toBe(perLayer * 2);
     expect(new Set(urls).size).toBe(urls.length);
@@ -84,7 +85,7 @@ describe("offline tiles", () => {
 
   it("pads the frame so the edges of the map are covered", () => {
     const bounds = { north: 56.11, south: 56.1, east: 10.21, west: 10.2 };
-    const padded = padBounds(bounds);
+    const padded = padBounds(bounds, OFFLINE_PADDING);
     expect(padded.west).toBeLessThan(bounds.west);
     expect(padded.north).toBeGreaterThan(bounds.north);
     expect(areaTileUrls(bounds, ["dtk25"]).length).toBeGreaterThan(tilesForBounds(bounds).length);
