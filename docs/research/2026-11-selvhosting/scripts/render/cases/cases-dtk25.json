@@ -1,0 +1,12 @@
+[
+ {"name":"dtk25-25k-300-wms-png","src":"wms-dtk25-png","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"dtk25-25k-300-jpeg-q75","src":"dtk25-jpeg-q75.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"dtk25-25k-300-jpeg-q85","src":"dtk25-jpeg-q85.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"dtk25-25k-300-webp-q75","src":"dtk25-webp-q75.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"dtk25-25k-300-webp-q85","src":"dtk25-webp-q85.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"dtk25-25k-300-png","src":"dtk25-png-q0.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"dtk25-50k-300-wms-png","src":"wms-dtk25-png","lon":9.5393,"lat":56.158,"scale":50000,"dpi":300,"w":945,"h":709},
+ {"name":"dtk25-50k-300-jpeg-q85","src":"dtk25-jpeg-q85.pmtiles","lon":9.5393,"lat":56.158,"scale":50000,"dpi":300,"w":945,"h":709},
+ {"name":"dtk25-10k-300-wms-png","src":"wms-dtk25-png","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"dtk25-10k-300-jpeg-q85","src":"dtk25-jpeg-q85.pmtiles","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709}
+]

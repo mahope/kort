@@ -1,0 +1,118 @@
+[
+ {
+  "name": "orto-10k-300-wmts",
+  "src": "wmts-orto",
+  "zoom": 15.651,
+  "groundRes": 0.847,
+  "ms": 2336,
+  "tileZooms": {
+   "17": 24
+  },
+  "errors": []
+ },
+ {
+  "name": "orto-10k-300-jpeg-q80",
+  "src": "orto-jpeg-q80.pmtiles",
+  "zoom": 15.651,
+  "groundRes": 0.847,
+  "ms": 784,
+  "tileZooms": {
+   "17": 24
+  },
+  "errors": []
+ },
+ {
+  "name": "orto-10k-300-jpeg-q90",
+  "src": "orto-jpeg-q90.pmtiles",
+  "zoom": 15.651,
+  "groundRes": 0.847,
+  "ms": 860,
+  "tileZooms": {
+   "17": 24
+  },
+  "errors": []
+ },
+ {
+  "name": "orto-10k-300-webp-q80",
+  "src": "orto-webp-q80.pmtiles",
+  "zoom": 15.651,
+  "groundRes": 0.847,
+  "ms": 775,
+  "tileZooms": {
+   "17": 24
+  },
+  "errors": []
+ },
+ {
+  "name": "hoeje-25k-300-wms",
+  "error": "timeout",
+  "errors": []
+ },
+ {
+  "name": "hoeje-25k-300-jpeg-q85",
+  "src": "hoeje-jpeg-q85.pmtiles",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 499,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "hoeje-25k-300-webp-q85",
+  "src": "hoeje-webp-q85.pmtiles",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 470,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "skygge-25k-300-wms",
+  "src": "wms-skygge",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 1284,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "skygge-25k-300-own-webp-q80",
+  "src": "hillshade-webp-q80.pmtiles",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 448,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "stednavne-25k-300-wms",
+  "src": "wms-dtk25-png,wms-stednavne",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 3679,
+  "tileZooms": {
+   "15": 32
+  },
+  "errors": []
+ },
+ {
+  "name": "stednavne-25k-300-vector",
+  "src": "wms-dtk25-png,pmtiles-vector:stednavne.pmtiles",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 925,
+  "tileZooms": {
+   "14": 4,
+   "15": 16
+  },
+  "errors": []
+ }
+]

@@ -1,0 +1,5 @@
+== hillshade z8-16 (res 2.388657133911758 m), 2026-11-23T17:30:38Z
+warp: 4.1 s 241 MB
+jpeg-q80: translate 1.2 s 206 MB | overviews 1.8 s 412 MB | pmtiles 0.1 s 35 MB | 11135507 B
+webp-q80: translate 4.7 s 203 MB | overviews 3.9 s 412 MB | pmtiles 0.1 s 31 MB | 7347897 B
+png-q0: translate 4.7 s 225 MB | overviews 5.3 s 427 MB | pmtiles 0.1 s 70 MB | 46173423 B

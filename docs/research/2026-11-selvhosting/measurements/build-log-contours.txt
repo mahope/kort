@@ -1,0 +1,7 @@
+== contours, 2026-11-23T17:54:22Z
+average to 10 m: 0.8 s 320 MB
+average to 4 m: 0.9 s 290 MB
+k05raw: contour 10.5 s 654 MB | geojson 17.0 s 922 MB | tippecanoe 22.1 s 414 MB | 36069 lines | 7437595 B
+k05: contour 2.1 s 223 MB | geojson 4.2 s 378 MB | tippecanoe 6.2 s 216 MB | 15204 lines | 5188573 B
+k25: contour 0.1 s 45 MB | geojson 0.4 s 51 MB | tippecanoe 0.8 s 72 MB | 2464 lines | 946325 B
+k5: contour 0.1 s 41 MB | geojson 0.2 s 40 MB | tippecanoe 0.3 s 68 MB | 1248 lines | 478464 B

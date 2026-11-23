@@ -1,0 +1,1 @@
+stednavne: 140477 primary names -> stednavne.pmtiles 10590819 B, tippecanoe -Z6 -z14 -r1, 4.8 s, 30 MB RSS

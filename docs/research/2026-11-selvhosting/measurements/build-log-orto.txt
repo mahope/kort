@@ -1,0 +1,5 @@
+== orto z10-18 (res 0.5971642834779395 m), 2026-11-23T17:32:21Z
+warp: 12.6 s 941 MB
+jpeg-q80: translate 2.9 s 604 MB | overviews 1.9 s 418 MB | pmtiles 0.1 s 41 MB | 17106783 B
+webp-q80: translate 6.5 s 603 MB | overviews 4.8 s 418 MB | pmtiles 0.1 s 37 MB | 13390500 B
+jpeg-q90: translate 2.7 s 611 MB | overviews 2.1 s 420 MB | pmtiles 0.1 s 48 MB | 24909322 B

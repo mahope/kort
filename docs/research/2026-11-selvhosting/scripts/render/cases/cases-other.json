@@ -1,0 +1,13 @@
+[
+ {"name":"orto-10k-300-wmts","src":"wmts-orto","lon":9.5636,"lat":56.1687,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"orto-10k-300-jpeg-q80","src":"orto-jpeg-q80.pmtiles","lon":9.5636,"lat":56.1687,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"orto-10k-300-jpeg-q90","src":"orto-jpeg-q90.pmtiles","lon":9.5636,"lat":56.1687,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"orto-10k-300-webp-q80","src":"orto-webp-q80.pmtiles","lon":9.5636,"lat":56.1687,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"hoeje-25k-300-wms","src":"wms-hoeje","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"hoeje-25k-300-jpeg-q85","src":"hoeje-jpeg-q85.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"hoeje-25k-300-webp-q85","src":"hoeje-webp-q85.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"skygge-25k-300-wms","src":"wms-skygge","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"skygge-25k-300-own-webp-q80","src":"hillshade-webp-q80.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"stednavne-25k-300-wms","src":"wms-dtk25-png,wms-stednavne","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"stednavne-25k-300-vector","src":"wms-dtk25-png,pmtiles-vector:stednavne.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709,"textsize":20}
+]

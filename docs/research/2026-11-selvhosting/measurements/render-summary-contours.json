@@ -1,0 +1,57 @@
+[
+ {
+  "name": "kurver05-25k-300-wms",
+  "src": "wms-kurve-05",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 2208,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "kurver05-10k-300-wms",
+  "src": "wms-kurve-05",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 1610,
+  "tileZooms": {
+   "17": 24
+  },
+  "errors": []
+ },
+ {
+  "name": "kurver05-10k-300-own",
+  "src": "pmtiles-lines:k05.pmtiles",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 129,
+  "tileZooms": {
+   "15": 4
+  },
+  "errors": []
+ },
+ {
+  "name": "kurver25-25k-300-wms",
+  "src": "wms-kurve-25",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 2527,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "kurver25-25k-300-own",
+  "src": "pmtiles-lines:k25.pmtiles",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 159,
+  "tileZooms": {
+   "14": 4
+  },
+  "errors": []
+ }
+]

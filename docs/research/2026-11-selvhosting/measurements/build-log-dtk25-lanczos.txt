@@ -1,0 +1,4 @@
+== dtk25l z8-16 (res 2.388657133911758 m), 2026-11-23T17:41:44Z
+warp: 9.9 s 497 MB
+jpeg-q85: translate 2.8 s 611 MB | overviews 3.6 s 422 MB | pmtiles 0.1 s 48 MB | 24503598 B
+webp-q85: translate 6.2 s 605 MB | overviews 6.7 s 423 MB | pmtiles 0.1 s 43 MB | 19779635 B

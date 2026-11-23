@@ -1,0 +1,4 @@
+== hoeje z8-16 (res 2.388657133911758 m), 2026-11-23T17:28:48Z
+warp: 11.0 s 783 MB
+jpeg-q85: translate 3.2 s 609 MB | overviews 2.3 s 417 MB | pmtiles 0.1 s 49 MB | 25234654 B
+webp-q85: translate 7.6 s 606 MB | overviews 5.5 s 418 MB | pmtiles 0.1 s 45 MB | 21208886 B

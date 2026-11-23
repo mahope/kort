@@ -1,0 +1,6 @@
+[
+ {"name":"dtk25-200k-96-wms-jpeg","src":"wms-dtk25-jpeg","lon":9.5636,"lat":56.1687,"scale":200000,"dpi":96,"w":600,"h":400},
+ {"name":"dtk25-200k-96-jpeg-q85","src":"dtk25-jpeg-q85.pmtiles","lon":9.5636,"lat":56.1687,"scale":200000,"dpi":96,"w":600,"h":400},
+ {"name":"dtk25-50k-96-wms-jpeg","src":"wms-dtk25-jpeg","lon":9.5636,"lat":56.1687,"scale":50000,"dpi":96,"w":600,"h":400},
+ {"name":"dtk25-50k-96-jpeg-q85","src":"dtk25-jpeg-q85.pmtiles","lon":9.5636,"lat":56.1687,"scale":50000,"dpi":96,"w":600,"h":400}
+]

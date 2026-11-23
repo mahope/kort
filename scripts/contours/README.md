@@ -38,7 +38,7 @@ scp kurver-5m.pmtiles hetzner-main:/opt/kort-tiles/html/kurver-5m.pmtiles.ny
 ssh hetzner-main 'mv /opt/kort-tiles/html/kurver-5m.pmtiles.ny /opt/kort-tiles/html/kurver-5m.pmtiles'
 ```
 
-Cloudflare caches the file for a day (`Cache-Control: max-age=86400`); purge it there if a new build must show at once.
+nginx sends `Cache-Control: max-age=86400`, so browsers keep ranges for a day. Cloudflare does **not** cache `.pmtiles` (not in its default extension list; `cf-cache-status: DYNAMIC`, checked 23 Nov 2026), so every range request reaches nginx and a new file shows at once for new visitors. A Cache Rule would change that, but Cloudflare never caches files over 512 MB on the Free plan (`docs/research/2026-11-selvhosting/README.md`).
 
 The app reads the URL from `NEXT_PUBLIC_CONTOURS_URL` (default `https://tiles.mahoje.dk/kurver-5m.pmtiles`).
 
