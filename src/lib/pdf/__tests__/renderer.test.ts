@@ -23,6 +23,9 @@ const ctl = {
   lastOptions: null as Record<string, unknown> | null,
   sourceBusyPolls: 0, // isSourceLoaded() is false this many times (a GeoJSON file still on its way)
   sourcePolls: 0,
+  styleLayers: [] as { id: string; type: string }[], // the base style's layers (getStyle)
+  added: [] as [string, string | undefined][], // addLayer(id, beforeId)
+  depthSrc: [] as string[], // `src` of the søkort features in the loaded tiles
 };
 
 function fakeGl() {
@@ -82,7 +85,11 @@ class FakeMap {
   areTilesLoaded() { return true; }
   isSourceLoaded() { ctl.sourcePolls++; return ctl.sourceBusyPolls-- <= 0; }
   addSource = addSource;
-  addLayer() {}
+  addLayer(layer: { id: string }, beforeId?: string) { ctl.added.push([layer.id, beforeId]); }
+  getStyle() { return { layers: ctl.styleLayers }; }
+  querySourceFeatures(_id: string, { sourceLayer }: { sourceLayer: string }) {
+    return sourceLayer === "depth_contours" ? ctl.depthSrc.map((src) => ({ properties: { src } })) : [];
+  }
   remove() {}
   getCanvas() {
     return { width: ctl.canvasW, height: ctl.canvasH, getContext: () => fakeGl(), toBlob: (cb: (b: Blob | null) => void) => cb(ctl.blob ? new Blob([new Uint8Array([1, 2, 3])]) : null) };
@@ -125,7 +132,7 @@ async function run(opts = base) {
 beforeEach(() => {
   vi.useFakeTimers();
   addSource.mockClear();
-  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], errorsWithoutTile: [], reloads: 0, removed: [], updates: 0, notNeeded: [], noUpdate: false, maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [], sourceBusyPolls: 0, sourcePolls: 0 });
+  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], errorsWithoutTile: [], reloads: 0, removed: [], updates: 0, notNeeded: [], noUpdate: false, maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [], sourceBusyPolls: 0, sourcePolls: 0, styleLayers: [], added: [], depthSrc: [] });
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
 });
 afterEach(() => vi.useRealTimers());
@@ -163,6 +170,47 @@ describe("renderMapToImage base map", () => {
       layers: [{ type: "background", paint: { "background-color": "#ffffff" } }],
     });
     expect(addSource.mock.calls.map(([id]) => id)).toEqual(["kurver5-overlay"]);
+  });
+});
+
+describe("renderMapToImage søkort", () => {
+  const overlays = [{ id: "soekort", enabled: true, opacity: 1 }] as typeof base.overlays;
+  const skaermkort = [
+    { id: "vand_hav", type: "fill" },
+    { id: "linje_færgerute", type: "line" },
+    { id: "natur_land", type: "fill" },
+    { id: "vand_sø", type: "fill" },
+    { id: "vand_sø_outline", type: "line" },
+    { id: "veje", type: "line" },
+    { id: "tekst_by", type: "symbol" },
+  ];
+
+  it("puts bands and lines under the skærmkort's land and the numbers under its place names", async () => {
+    ctl.styleLayers = skaermkort;
+    expect(await run({ ...base, baseLayer: "skaermkort", style: "klassisk", overlays })).toHaveProperty("v");
+    const [id, spec] = addSource.mock.calls.find(([sid]) => sid === "soekort-overlay")!;
+    expect(id).toBe("soekort-overlay");
+    expect(spec).toEqual({ type: "vector", url: "pmtiles://https://tiles.mahoje.dk/soekort.pmtiles" });
+    const before = Object.fromEntries(ctl.added);
+    expect(before["soekort-overlay-areas-sea-z5"]).toBe("linje_færgerute");
+    expect(before["soekort-overlay-areas-lake-z9"]).toBe("veje");
+    expect(before["soekort-overlay-soundings-z12"]).toBe("tekst_by");
+  });
+
+  it("draws only lines and numbers, on top, over a raster base map", async () => {
+    ctl.styleLayers = [{ id: "background", type: "background" }];
+    expect(await run({ ...base, baseLayer: "dtk25", overlays })).toHaveProperty("v");
+    const ids = ctl.added.filter(([lid]) => lid.startsWith("soekort-"));
+    expect(ids.length).toBeGreaterThan(0);
+    expect(ids.some(([lid]) => lid.includes("-areas-"))).toBe(false);
+    expect(ids.every(([, b]) => b === undefined)).toBe(true);
+  });
+
+  it("reports which depth sources the print's tiles hold, for the credits", async () => {
+    ctl.depthSrc = ["ddm", "novana", "ddm"];
+    let found: Set<string> | undefined;
+    await run({ ...base, overlays, onSoekortSources: (s: Set<string>) => (found = s) } as typeof base);
+    expect(found).toEqual(new Set(["ddm", "novana"]));
   });
 });
 

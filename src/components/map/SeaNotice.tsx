@@ -1,7 +1,7 @@
 "use client";
 
 import { useMapStore } from "@/stores/mapStore";
-import { DDM_TERMS_URL, NAVIGATION_WARNING, SEA_OVERLAYS, SOURCES_PAGE_PATH } from "@/lib/map/sources";
+import { DDM_TERMS_URL, NAVIGATION_WARNING, SEA_OVERLAYS, SOEKORT_DDM_RETRIEVED, SOURCES_PAGE_PATH } from "@/lib/map/sources";
 
 /** Shown while a sea layer is on: what the data is, and that it is not a chart. */
 export function SeaNotice() {
@@ -10,13 +10,14 @@ export function SeaNotice() {
   return (
     <p className="mt-2 rounded border border-border bg-surface-secondary px-2 py-1.5 text-xs text-text-secondary" role="note">
       <strong className="font-semibold text-foreground">{NAVIGATION_WARNING}</strong> Officielle søkort er ophavsretligt
-      beskyttede og sælges af Geodatastyrelsen. Her vises frie data, bearbejdet og forenklet til kortet: dybder og
-      havbundens relief fra Danmarks Dybdemodel (50 m,{" "}
+      beskyttede og sælges af Geodatastyrelsen. Her vises frie data, bearbejdet og forenklet til kortet: søkortets
+      dybder, kurver og tal er beregnet af os fra Danmarks Dybdemodel (50 m, hentet {SOEKORT_DDM_RETRIEVED},{" "}
       <a href={DDM_TERMS_URL} target="_blank" rel="noopener noreferrer" className="underline">
         vilkår
       </a>
-      ), grovere dybder fra EMODnet, sømærker fra OpenSeaMap, dybdekurver i 80 søer fra Miljøportalen (mest i Jylland;
-      ikke Furesø og de andre store sjællandske søer), vrag fra EMODnet
+      ), grovere dybder fra EMODnet uden for danske farvande og dybdekurver i 80 søer fra Miljøportalen (mest i
+      Jylland; ikke Furesø og de andre store sjællandske søer). Havbundens relief er fra Dybdemodellen, sømærker fra
+      OpenSeaMap, vrag fra EMODnet
       og historiske indsøkort, som kommer med som ekstra sider i PDF&apos;en. Kortet er til orientering og
       turplanlægning. Advarslen står også på PDF&apos;en.{" "}
       <a href={SOURCES_PAGE_PATH} className="underline">

@@ -31,6 +31,7 @@ import { useMapRegion } from "@/lib/hooks/useMapRegion";
 import { contourLayers, contourSourceUrl, ensurePmtilesProtocol } from "@/lib/map/contours";
 import { vectorOverlayLayers, vectorOverlaySource } from "@/lib/map/vectorOverlays";
 import { LakeChartPopup } from "./LakeChartPopup";
+import { SoekortLayers } from "./SoekortLayers";
 import { PrintFrame } from "./PrintFrame";
 import { GeolocationButton } from "./GeolocationButton";
 import { ImportedLayers } from "./ImportedLayers";
@@ -77,6 +78,7 @@ export function MapContainer() {
   const style = useMapStore((s) => s.style);
   const baseLayer = useMapStore((s) => s.baseLayer);
   const overlays = useMapStore((s) => s.overlays);
+  const soekortVariant = useMapStore((s) => s.soekortVariant);
   const flyToTarget = useMapStore((s) => s.flyToTarget);
   const clearFlyTo = useMapStore((s) => s.clearFlyTo);
   // Below md the sheet covers the bottom of the map; padding moves the map
@@ -205,7 +207,9 @@ export function MapContainer() {
           wrecks. Mounted once, they keep the store's order. */}
       {overlays.map((overlay) => {
         const vector = OVERLAY_SOURCES[overlay.id].vector;
-        if (!overlay.enabled && (vector || OVERLAY_SOURCES[overlay.id].contourInterval)) return null;
+        const cfg = OVERLAY_SOURCES[overlay.id];
+        if (!overlay.enabled && (vector || cfg.contourInterval || cfg.soekort)) return null;
+        if (cfg.soekort) return <SoekortLayers key={overlay.id} opacity={overlay.opacity} variant={soekortVariant} />;
         if (vector) {
           const sourceId = `${overlay.id}-overlay`;
           return (

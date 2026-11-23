@@ -2,6 +2,7 @@ import type { BaseLayer, MapStyle, OverlayId } from "@/types/map";
 import type { MapRegion } from "@/lib/geo/regions";
 import { DATAFORSYNINGEN_TOKEN, MAP_STYLES } from "./styles";
 import { soekortDataUrl, type VectorOverlayKind } from "./vectorOverlays";
+import { SOEKORT_SRCS, SOEKORT_URL, type SoekortSrc } from "./soekortStyle";
 import { getBrand } from "@/config/brand";
 import { DENMARK_TILE_BOUNDS, tileRouteTemplate } from "@/lib/tiles/routeLayers";
 
@@ -122,6 +123,44 @@ const DDM_ATTRIBUTION = `Indeholder data fra Geodatastyrelsen, Danmarks Dybdemod
 const DDM_CREDIT = `Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning. Indeholder WMS-tjeneste. Model og data er ikke egnet til navigation. Vilkår: ${DDM_TERMS_PAGE_URL}`;
 
 /**
+ * When the Dybdemodel GeoTIFF behind soekort.pmtiles was fetched from
+ * Geodatastyrelsen (the build writes the same date into the file's
+ * attribution). The DDM50 terms want this date instead of "Indeholder
+ * WMS-tjeneste" once the data is downloaded. Update it with every rebuild.
+ */
+export const SOEKORT_DDM_RETRIEVED = "23.11.2026";
+
+/** Size of the hosted soekort.pmtiles, for the offline estimate (61.378.648 bytes on 23 Nov 2026). */
+const SOEKORT_BYTES = 61_378_648;
+
+const SOEKORT_DDM_TEXT =
+  `Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning, hentet ${SOEKORT_DDM_RETRIEVED}`;
+const DDM_NOT_FOR_NAVIGATION = "Model og data er ikke egnet til navigation";
+const NOVANA_TERMS_URL = "https://miljoeportal.dk/dataansvar/vilkaar-for-brug/";
+const NOVANA_TERMS_TEXT = "Indeholder data, som benyttes i henhold til vilkår for brug af danske offentlige data";
+
+/** PDF credit per source in soekort.pmtiles; only the sources in the frame are printed. */
+export const SOEKORT_CREDITS: Record<SoekortSrc, string> = {
+  ddm: `Dybder: ${SOEKORT_DDM_TEXT}. ${DDM_NOT_FOR_NAVIGATION}. Vilkår: ${DDM_TERMS_PAGE_URL}. Dybdekurver og -tal beregnet af kort.mahoje.dk`,
+  emodnet: "Dybder: EMODnet Bathymetry (CC BY 4.0)",
+  novana: `Sødybder: Miljøstyrelsen/Danmarks Miljøportal (NOVANA), bearbejdet af kort.mahoje.dk. ${NOVANA_TERMS_TEXT}`,
+};
+
+/**
+ * The PDF credits for the depth sources a print shows (`shown`, from the
+ * rendered tiles), in a fixed order. Unknown (`undefined`): all of them.
+ */
+export function soekortCredits(shown?: ReadonlySet<string>): string[] {
+  return SOEKORT_SRCS.filter((src) => !shown || shown.has(src)).map((src) => SOEKORT_CREDITS[src]);
+}
+
+/** On the map: all three sources, the DDM download date, not for navigation and the DDM terms link. */
+const SOEKORT_ATTRIBUTION =
+  `Dybder: ${SOEKORT_DDM_TEXT} (<a href='${DDM_TERMS_URL}'>vilkår</a>). ${DDM_NOT_FOR_NAVIGATION}` +
+  ` &middot; <a href='https://emodnet.ec.europa.eu/en/bathymetry'>EMODnet Bathymetry</a> (CC BY 4.0)` +
+  ` &middot; Sødybder: <a href='https://arealdata.miljoeportal.dk/'>Danmarks Miljøportal</a> (NOVANA), <a href='${NOVANA_TERMS_URL}'>vilkår for brug af danske offentlige data</a>`;
+
+/**
  * EMODnet Bathymetry (CC BY 4.0), mean depth, transparent over land. The
  * service colours depth red to yellow; the layer paint turns it into blues.
  * Coarse (about 115 m cells) and never for navigation.
@@ -210,6 +249,13 @@ export interface RasterSourceConfig {
   maxzoom?: number;
   /** Our own GeoJSON snapshot (public/data/soekort, see vectorOverlays.ts) instead of raster tiles. */
   vector?: VectorOverlayKind;
+  /** Our own depth tiles (PMTiles, see soekortStyle.ts) instead of raster tiles. */
+  soekort?: true;
+  /**
+   * One whole file the offline cache saves instead of tiles (a PMTiles archive
+   * the service worker answers range requests from), with its size in bytes.
+   */
+  offlineFile?: { url: string; bytes: number };
   /** [west, south, east, north]: MapLibre requests no tiles outside it. */
   bounds?: [number, number, number, number];
   /**
@@ -455,6 +501,18 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     noOffline: true,
     notForNavigation: true,
   },
+  // Vector, from tiles.mahoje.dk: `tiles` is unused, the layers come from soekortStyle.ts.
+  soekort: {
+    tiles: [],
+    tileSize: 512,
+    soekort: true,
+    attribution: SOEKORT_ATTRIBUTION,
+    // The PDF names only the sources in the frame (soekortCredits); this is the main one.
+    credit: SOEKORT_CREDITS.ddm,
+    // Our own file may be saved: DDM50 may be copied and distributed, and the credit carries the download date.
+    offlineFile: { url: SOEKORT_URL, bytes: SOEKORT_BYTES },
+    notForNavigation: true,
+  },
   havbund: {
     tiles: [DDM_RELIEF_URL],
     tileSize: 256,
@@ -545,6 +603,7 @@ export const OVERLAY_LABELS: Record<OverlayId, string> = {
   hillshade: "Skyggekort (terræn)",
   stednavne: "Stednavne",
   matrikel: "Matrikelskel",
+  soekort: "Søkort (dybder, kurver og tal i hav og søer)",
   dybdemodel: "Havdybder Danmark (Dybdemodel 50 m)",
   havbund: "Havbundens relief (Dybdemodel, skyggekort)",
   havdybder: "Havdybder Europa (EMODnet, grovere)",
@@ -563,6 +622,7 @@ export const SEA_DATA_NOTE =
   "Havets og søernes data er bearbejdet og forenklet til kortet. Kortet er til orientering og turplanlægning.";
 
 export const SEA_OVERLAYS: readonly OverlayId[] = [
+  "soekort",
   "dybdemodel",
   "havbund",
   "havdybder",
@@ -579,4 +639,22 @@ export const SEA_OVERLAYS: readonly OverlayId[] = [
  */
 export function usesNordicTopo(baseLayer: BaseLayer, region: MapRegion): boolean {
   return region === "nordic" && baseLayer !== "osm" && baseLayer !== "none";
+}
+
+/**
+ * Old layers that `soekort` replaces: an old link (`ov=dd`, `ov=hd`, `ov=sd`)
+ * opens the new layer instead, and the menu hides them. The WMS layers stay
+ * in the code until the new layer has been checked live.
+ */
+export const REPLACED_BY_SOEKORT: readonly OverlayId[] = ["dybdemodel", "havdybder", "soedybder"];
+
+/**
+ * Whether the menu lists an overlay. The replaced layers are hidden, except
+ * EMODnet outside Denmark: soekort.pmtiles stops at 59° N, so the Oslofjord and
+ * the Norwegian coast north of it still need the WMS. A layer that is on is
+ * always listed, so it can be switched off.
+ */
+export function overlayInMenu(id: OverlayId, enabled: boolean, region: MapRegion): boolean {
+  if (enabled || !REPLACED_BY_SOEKORT.includes(id)) return true;
+  return id === "havdybder" && region === "nordic";
 }

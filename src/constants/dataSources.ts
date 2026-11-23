@@ -1,5 +1,5 @@
 import type { BaseLayer, OverlayId } from "@/types/map";
-import { DDM_TERMS_URL, KDS_LICENCE_URL } from "@/lib/map/sources";
+import { DDM_TERMS_URL, KDS_LICENCE_URL, SOEKORT_DDM_RETRIEVED } from "@/lib/map/sources";
 
 /**
  * Every outside data source the site uses, for the /kilder page. A test checks
@@ -151,6 +151,22 @@ export const DATA_SOURCES: DataSource[] = [
       "\"Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning. Indeholder WMS-tjeneste. Model og data er ikke egnet til navigation\", både på kortet og på PDF'en. Vilkårene skal stilles til rådighed: kortet og denne side linker til vilkårsdokumentet, og PDF'en har adressen på Geodatastyrelsens side om Dybdemodellen, hvor dokumentet ligger.",
     layers: ["dybdemodel", "havbund"],
     notForNavigation: true,
+  },
+  {
+    id: "soekort",
+    name: "Søkort: dybder, dybdekurver og dybdetal (kort.mahoje.dk)",
+    provider:
+      "Beregnet af kort.mahoje.dk fra Danmarks Dybdemodel 50 m (Geodatastyrelsen), EMODnet Bathymetry og dybdekortene over danske søer (Miljøstyrelsen, NOVANA)",
+    usedFor:
+      "Laget Søkort: dybdebånd, dybdekurver og dybdetal i danske farvande (Dybdemodellen), grovere uden for dem (EMODnet, til 59° N) og i 80 søer (NOVANA). To stile: klassisk søkort og lavt vand (de første 5 m meter for meter) til kano, kajak og jolle. Dybdebåndene vises kun på Skærmkort; over andre baggrundskort kun kurver og tal.",
+    delivery: `Én PMTiles-fil med vektorfliser (tiles.mahoje.dk/soekort.pmtiles), bygget af vores script scripts/soekort/ddm-pmtiles af Dybdemodellens GeoTIFF fra Geodatastyrelsens åbne download, hentet ${SOEKORT_DDM_RETRIEVED}. Filen må gemmes offline.`,
+    licence:
+      "Geodatastyrelsens vilkår for DDM50 (maj 2024): gratis og i øvrigt ubegrænset brugsret, også kommercielt, men ikke til navigation; EMODnet CC BY 4.0; NOVANA efter vilkår for brug af danske offentlige data",
+    licenceUrl: DDM_TERMS_URL,
+    credit: `"Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning, hentet ${SOEKORT_DDM_RETRIEVED}. Model og data er ikke egnet til navigation" med link til vilkårene på kortet og her, og med adressen på Geodatastyrelsens side om Dybdemodellen på PDF'en. "EMODnet Bathymetry (CC BY 4.0)" og "Indeholder data, som benyttes i henhold til vilkår for brug af danske offentlige data" (NOVANA). PDF'en nævner kun de kilder, der er data fra inden for udskriften, og skriver "Må ikke bruges til navigation".`,
+    layers: ["soekort"],
+    notForNavigation: true,
+    retrieved: "2026-11-23",
   },
   {
     id: "emodnet",

@@ -107,7 +107,7 @@ export function offlineLayerIds(
   return ids;
 }
 
-function sourceFor(layerId: string): Pick<RasterSourceConfig, "tiles" | "bounds"> | null {
+function sourceFor(layerId: string): Pick<RasterSourceConfig, "tiles" | "bounds" | "offlineFile"> | null {
   return SAVEABLE_BASE[layerId as BaseLayer] ?? OVERLAY_SOURCES[layerId as OverlayId] ?? null;
 }
 
@@ -118,7 +118,8 @@ function sourceFor(layerId: string): Pick<RasterSourceConfig, "tiles" | "bounds"
  */
 export function layerTileUrl(layerId: string, tile: TileCoord): string | null {
   const source = sourceFor(layerId);
-  if (!source || (source.bounds && !tileIntersects(tile, source.bounds))) return null;
+  // A whole-file layer (our søkort) has no tiles; areaTilePlan adds the file once.
+  if (!source || source.offlineFile || (source.bounds && !tileIntersects(tile, source.bounds))) return null;
   return expandTileUrl(source.tiles[0], tile);
 }
 
@@ -136,6 +137,12 @@ export function areaTilePlan(bounds: PrintFrameBounds, layerIds: string[]): { ur
   const urls = new Set<string>();
   let bytes = 0;
   for (const id of layerIds) {
+    const file = sourceFor(id)?.offlineFile;
+    if (file) {
+      if (!urls.has(file.url)) bytes += file.bytes;
+      urls.add(file.url);
+      continue;
+    }
     let count = 0;
     for (const t of tiles) {
       const url = layerTileUrl(id, t);

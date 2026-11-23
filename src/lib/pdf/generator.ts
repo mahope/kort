@@ -16,6 +16,7 @@ import {
   OPENTOPOMAP_SOURCE,
   OVERLAY_SOURCES,
   SEA_DATA_NOTE,
+  soekortCredits,
   kdsPrintCredit,
   nordicPrintCredit,
   usesNordicTopo,
@@ -137,6 +138,8 @@ export async function generatePdf({
   const showUtmGrid = mapState.showUtmGrid;
   const bearing = mapState.viewState.bearing;
   const region = mapRegionForBounds(bounds);
+  // The søkort sources in the frame, from the rendered tiles (see thirdPartyCredits).
+  let depthSources: Set<string> | undefined;
 
   // Render map at target resolution (returns JPEG bytes)
   onProgress?.({ stage: "render", tilesLoaded: 0, tilesTotal: 0 });
@@ -153,6 +156,8 @@ export async function generatePdf({
     drawnFeatures,
     bearing,
     region,
+    soekortVariant: mapState.soekortVariant,
+    onSoekortSources: (found) => (depthSources = found),
   }));
 
   onProgress?.({ stage: "assemble", tilesLoaded: 0, tilesTotal: 0 });
@@ -186,7 +191,7 @@ export async function generatePdf({
   drawControlLine(pdf, layout);
   const where = { region, bounds };
   drawAttribution(pdf, layout, scale, gridInfo, undefined, mapDataCredit(baseLayer, where));
-  drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm), where);
+  drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm), where, depthSources);
   drawDeclination(declinationDiagram, pdf, layout, bounds, gridInfo, bearing);
   if (lakeChartsOn(overlays)) await addLakeChartPages(pdf, layout, orientation, bounds);
 
@@ -564,8 +569,15 @@ export function drawAttribution(
  * of the map image: the margins hold the grid labels and the footer. Text is
  * wrapped to the box width so it also fits A5.
  */
-export function drawThirdPartyCredits(pdf: jsPDF, x: number, y: number, maxWidthMm: number, where?: PrintPlace): void {
-  const extra = thirdPartyCredits(where);
+export function drawThirdPartyCredits(
+  pdf: jsPDF,
+  x: number,
+  y: number,
+  maxWidthMm: number,
+  where?: PrintPlace,
+  depthSources?: ReadonlySet<string>
+): void {
+  const extra = thirdPartyCredits(where, depthSources);
   if (extra.credits.length === 0 && !extra.notForNavigation) return;
   const pad = 1.2;
   const textW = maxWidthMm - 2 * pad;
@@ -646,8 +658,14 @@ export function mapDataCredit(baseLayer: BaseLayer, where: PrintPlace): string |
   return `Kortdata: ${names.join(", ")}`;
 }
 
-/** Credits for non-KDS data in the print: OSM base map, Nordic topo and third-party overlays. */
-export function thirdPartyCredits(where?: PrintPlace): { credits: string[]; notForNavigation: boolean } {
+/**
+ * Credits for non-KDS data in the print: OSM base map, Nordic topo and third-party overlays.
+ * `depthSources`: the søkort sources (ddm, emodnet, novana) the print shows; all of them when unknown.
+ */
+export function thirdPartyCredits(
+  where?: PrintPlace,
+  depthSources?: ReadonlySet<string>
+): { credits: string[]; notForNavigation: boolean } {
   const { baseLayer, overlays } = useMapStore.getState();
   const credits: string[] = [];
   let notForNavigation = false;
@@ -660,7 +678,9 @@ export function thirdPartyCredits(where?: PrintPlace): { credits: string[]; notF
   for (const o of overlays) {
     if (!o.enabled) continue;
     const src = OVERLAY_SOURCES[o.id];
-    if (src.credit && !credits.includes(src.credit)) credits.push(src.credit); // 5 and 10 m share one
+    const own = src.soekort ? soekortCredits(depthSources) : src.credit ? [src.credit] : [];
+    // 5 and 10 m share one; EMODnet in the søkort and the EMODnet WMS too.
+    for (const c of own) if (!credits.includes(c)) credits.push(c);
     if (src.notForNavigation) notForNavigation = true;
   }
   return { credits, notForNavigation };
@@ -751,6 +771,10 @@ async function generateMultiPagePdf({
   applyPrintPreferences(pdf);
 
   let declinationDiagram: DeclinationDiagram | null = null;
+  // The søkort sources on any sheet; the credit boxes are drawn once all sheets are rendered.
+  let depthSources: Set<string> | undefined;
+  const addDepthSources = (found: Set<string>) => (depthSources = new Set([...(depthSources ?? []), ...found]));
+  const creditBoxes: { page: number; x: number; y: number; width: number; where: PrintPlace }[] = [];
   try {
     declinationDiagram = await loadDeclinationDiagram(printState.showDeclination ?? (baseLayer !== "none"));
     if (withOverview) {
@@ -775,6 +799,8 @@ async function generateMultiPagePdf({
         drawnFeatures,
         bearing: 0,
         region,
+        soekortVariant: mapState.soekortVariant,
+        onSoekortSources: addDepthSources,
       });
       onProgress?.({ stage: "assemble", tilesLoaded: 0, tilesTotal: 0 });
       pdf.addImage(overviewImg, "JPEG", place.x, place.y, place.w, place.h);
@@ -789,7 +815,7 @@ async function generateMultiPagePdf({
       const overviewPlace = { region, bounds: totalBounds };
       drawAttribution(pdf, layout, scale, null, "Oversigt, ikke i målestok", mapDataCredit(baseLayer, overviewPlace));
       const credits = overviewCreditsBox(layout.marginMm, place);
-      drawThirdPartyCredits(pdf, credits.x, credits.y, credits.width, overviewPlace);
+      creditBoxes.push({ page: 1, x: credits.x, y: credits.y, width: credits.width, where: overviewPlace });
     }
 
     for (let i = 0; i < cells.length; i++) {
@@ -815,6 +841,8 @@ async function generateMultiPagePdf({
         drawnFeatures,
         bearing,
         region,
+        soekortVariant: mapState.soekortVariant,
+        onSoekortSources: addDepthSources,
       });
 
       onProgress?.({ stage: "assemble", tilesLoaded: 0, tilesTotal: 0 });
@@ -852,10 +880,18 @@ async function generateMultiPagePdf({
       // Once on the assembled map (sheet A1), not a white box on every sheet.
       // Its credits cover every sheet, since the box speaks for the whole map.
       if (i === 0) {
-        drawThirdPartyCredits(pdf, layout.marginMm + 1.5, layout.marginMm + 1.5, creditsWidthMm(layout.mapWidthMm), { region, bounds: totalBounds });
+        const where = { region, bounds: totalBounds };
+        creditBoxes.push({ page: pageNo, x: layout.marginMm + 1.5, y: layout.marginMm + 1.5, width: creditsWidthMm(layout.mapWidthMm), where });
       }
       drawDeclination(declinationDiagram, pdf, layout, cell.bounds, gridInfo, bearing);
     }
+    // The søkort credits depend on every sheet, so the boxes go in now.
+    const lastPage = pdf.getNumberOfPages();
+    for (const box of creditBoxes) {
+      pdf.setPage(box.page);
+      drawThirdPartyCredits(pdf, box.x, box.y, box.width, box.where, depthSources);
+    }
+    pdf.setPage(lastPage);
     if (lakeChartsOn(overlays)) {
       await addLakeChartPages(pdf, layout, orientation, {
         west: Math.min(...cells.map((c) => c.bounds.west)),

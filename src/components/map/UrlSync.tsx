@@ -43,6 +43,7 @@ export function UrlSync() {
         if (o.opacity !== undefined) mapStore.setOverlayOpacity(o.id, o.opacity);
       }
     }
+    if (state.soekortVariant) mapStore.setSoekortVariant(state.soekortVariant);
     if (state.showUtmGrid) mapStore.setShowUtmGrid(true);
     if (state.gridSystem) mapStore.setGridSystem(state.gridSystem);
     if (state.gridSpacing) mapStore.setGridSpacing(state.gridSpacing);
@@ -99,6 +100,7 @@ function updateUrl() {
     overlays: mapState.overlays
       .filter((o) => o.enabled)
       .map((o) => ({ id: o.id, opacity: o.opacity })),
+    soekortVariant: mapState.soekortVariant,
     showUtmGrid: mapState.showUtmGrid,
     gridSystem: mapState.gridSystem,
     gridSpacing: mapState.gridSpacing,

@@ -108,10 +108,11 @@ export default function SourcesPage() {
             </h2>
             <p className="text-text-secondary mb-3">
               De officielle danske søkort (papirkort og elektroniske ENC-søkort) laves af Geodatastyrelsen. De er
-              ophavsretligt beskyttede og sælges, så dem viser vi ikke. Hav- og søkortlagene her bygger på frie data:
-              dybder og havbundens relief fra Danmarks Dybdemodel, grovere dybder fra EMODnet uden for danske farvande,
-              sømærker fra OpenSeaMap, som frivillige kortlægger, dybdekurver i 80 søer fra Miljøstyrelsens
-              overvågning, vrag fra EMODnet og Geodatastyrelsens historiske indsøkort.
+              ophavsretligt beskyttede og sælges, så dem viser vi ikke. Hav- og søkortlagene her bygger på frie data. Vores
+              eget søkort har dybdebånd, dybdekurver og dybdetal, som vi selv har beregnet ud fra Danmarks Dybdemodel, fra
+              EMODnet uden for danske farvande og fra dybdekortene over 80 søer fra Miljøstyrelsens overvågning. Dertil
+              kommer havbundens relief fra Dybdemodellen, sømærker fra OpenSeaMap, som frivillige kortlægger, vrag fra
+              EMODnet og Geodatastyrelsens historiske indsøkort.
             </p>
             <p className="mb-3 rounded border border-border p-3 font-semibold">
               {NAVIGATION_WARNING} {SEA_DATA_NOTE}

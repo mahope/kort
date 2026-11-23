@@ -4,6 +4,7 @@ import type { GridSystem } from "@/lib/geo/coordinates";
 import type { MapViewState, MapStyle, BaseLayer, OverlayId, OverlayState } from "@/types/map";
 import { DENMARK_CENTER, DEFAULT_ZOOM, DEFAULT_STYLE } from "@/lib/map/styles";
 import type { GridSpacing, GridLabelFormat, UtmZoneMode } from "@/lib/geo/utmGrid";
+import { DEFAULT_SOEKORT_VARIANT, type SoekortVariant } from "@/lib/map/soekortStyle";
 
 /** Map padding to land on, so a fly started while the sheet moves ends without a jump. */
 interface FlyPadding {
@@ -29,7 +30,10 @@ const DEFAULT_OVERLAYS: OverlayState[] = [
   { id: "dybdemodel", enabled: false, opacity: 0.75 },
   { id: "soemaerker", enabled: false, opacity: 0.85 },
   { id: "kurverNorge", enabled: false, opacity: 1 },
-  // Vector points and lines on top of every raster layer.
+  // Vector points and lines on top of every raster layer. Our own søkort
+  // replaces dybdemodel, havdybder and soedybder (hidden in the menu); on the
+  // skærmkort its bands and lines go into the base map, under the land.
+  { id: "soekort", enabled: false, opacity: 1 },
   { id: "soedybder", enabled: false, opacity: 1 },
   { id: "indsoekort", enabled: false, opacity: 1 },
   { id: "vrag", enabled: false, opacity: 1 },
@@ -40,6 +44,8 @@ interface MapStore {
   style: MapStyle;
   baseLayer: BaseLayer;
   overlays: OverlayState[];
+  soekortVariant: SoekortVariant;
+  setSoekortVariant: (variant: SoekortVariant) => void;
   showUtmGrid: boolean;
   gridSystem: GridSystem;
   setGridSystem: (system: GridSystem) => void;
@@ -75,6 +81,8 @@ export const useMapStore = create<MapStore>()(persist((set) => ({
   style: DEFAULT_STYLE,
   baseLayer: "dtk25",
   overlays: DEFAULT_OVERLAYS,
+  soekortVariant: DEFAULT_SOEKORT_VARIANT,
+  setSoekortVariant: (soekortVariant) => set({ soekortVariant }),
   showUtmGrid: false,
   gridSystem: "utm",
   setGridSystem: (gridSystem) => set({ gridSystem }),

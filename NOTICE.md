@@ -19,7 +19,8 @@ The full, authoritative list with the exact credit text for each layer is
 | Skærmkort vector tiles, Adressevælger | [Klimadatastyrelsen](https://www.klimadatastyrelsen.dk/) via [Dataforsyningen](https://dataforsyningen.dk/) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 | Cadastre (Matrikelskel) | [Geodatastyrelsen](https://gst.dk/) via Dataforsyningen (`wms/forvaltning2`) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); the terms ask for credit to **Geodatastyrelsen** ([Datafordeler terms for MAT](https://datafordeler.dk/vejledning/brugervilkaar/ejendomsoplysninger-ebr-og-mat/)) |
 | 5 m and 10 m contours (`tiles.mahoje.dk`) | Derived by kort.mahoje.dk from Klimadatastyrelsen's DHM | CC BY 4.0 (derived work) |
-| Danmarks Dybdemodel 50 m (DDM50) | Geodatastyrelsen via Dataforsyningen | **Not CC BY.** Geodatastyrelsen's [terms for DDM50](https://dataforsyningen.dk/asset/PDF/rettigheder_vilkaar/Vilk%C3%A5r%20og%20betingelser%20for%20brug%20af%20marine%20data%20indeholdt%20i%20Danmarks%20Dybdemodel%2050%20m%20opl%C3%B8sning.pdf) (May 2024): free, also commercially, with a required credit sentence, the terms made available, and "not suitable for navigation" |
+| Depth bands, contours and soundings (*Søkort*, `tiles.mahoje.dk/soekort.pmtiles`) | Derived by kort.mahoje.dk from DDM50 (downloaded 23 Nov 2026), EMODnet Bathymetry and the NOVANA lake surveys | The terms of the three sources below. The file carries the DDM50 credit with the download date and a link to its terms in its attribution |
+| Danmarks Dybdemodel 50 m (DDM50) | Geodatastyrelsen via Dataforsyningen (WMS) and its open download (GeoTIFF) | **Not CC BY.** Geodatastyrelsen's [terms for DDM50](https://dataforsyningen.dk/asset/PDF/rettigheder_vilkaar/Vilk%C3%A5r%20og%20betingelser%20for%20brug%20af%20marine%20data%20indeholdt%20i%20Danmarks%20Dybdemodel%2050%20m%20opl%C3%B8sning.pdf) (May 2024): free, also commercially, with a required credit sentence, the terms made available, and "not suitable for navigation" |
 | Historic lake charts (indsøkort) | Geodatastyrelsen via Dataforsyningen | CC BY 4.0 |
 | Lake depth contours (NOVANA) | Miljøstyrelsen via Danmarks Miljøportal | Terms for Danish public data (Danmarks Miljøportal): free, may be modified and used commercially |
 | Bathymetry and wrecks outside Denmark | [EMODnet](https://emodnet.ec.europa.eu/en/terms-use-emodnet-online-services-data-and-data-products) (EU); wreck data from UK Hydrographic Office | CC BY 4.0; UKHO data under Open Government Licence v3.0 |
@@ -55,6 +56,9 @@ If you deploy your own copy:
    for Norway.
 5. Keep the DDM50 credit sentence, the link to its terms and the "not for
    navigation" warning wherever the sea-depth layers are shown or printed.
+   With your own build of the depth tiles, put your own download date in
+   `SOEKORT_DDM_RETRIEVED` (`src/lib/map/sources.ts`); the WMS layers say
+   "Indeholder WMS-tjeneste" instead.
 6. Analytics: `src/lib/analytics.ts` only reports on kort.mahoje.dk and
    kort.solaris.dk. Point it at your own Plausible (or remove it) if you want
    statistics for your copy.

@@ -23,13 +23,18 @@ export function ensurePmtilesProtocol(): void {
   if (registered) return;
   const protocol = new Protocol();
   // pmtiles caches the header promise per archive, also when it rejected, so one
-  // network hiccup would hide the contours until reload. Forget the archive on
-  // failure; the next request then fetches the header again.
+  // network hiccup would hide the contours (or depths) until reload. Forget the
+  // failed archive; the next request then fetches the header again.
   maplibregl.addProtocol("pmtiles", async (params, abort) => {
     try {
       return await protocol.tile(params, abort);
     } catch (err) {
-      if (!abort.signal.aborted) protocol.tiles.delete(CONTOURS_URL);
+      if (!abort.signal.aborted) {
+        const url = params.url.replace(/^pmtiles:\/\//, "");
+        for (const archive of [...protocol.tiles.keys()]) {
+          if (url === archive || url.startsWith(`${archive}/`)) protocol.tiles.delete(archive);
+        }
+      }
       throw err;
     }
   });

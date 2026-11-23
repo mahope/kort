@@ -40,7 +40,8 @@ export type OverlayId =
   | "kurverNorge"
   | "soedybder"
   | "indsoekort"
-  | "vrag";
+  | "vrag"
+  | "soekort";
 
 export interface OverlayState {
   id: OverlayId;

@@ -1,3 +1,5 @@
+// @vitest-environment node
+// Node, not jsdom: the worker builds Responses from Blobs, which jsdom's Blob breaks.
 import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it } from "vitest";
 import { LEGACY_TILE_TEMPLATES, legacyOutsideTileUrls } from "../legacyKeys";
@@ -59,13 +61,14 @@ function fakeCaches(opts: { full?: boolean; beforeMatch?: MatchHook } = {}) {
 
 function loadWorker(
   network: { online: boolean },
-  opts: { full?: boolean; origin?: string; beforeMatch?: MatchHook } = {}
+  opts: { full?: boolean; origin?: string; beforeMatch?: MatchHook; respond?: (url: string) => Response | undefined } = {}
 ) {
   const handlers: Record<string, Handler> = {};
   const caches = fakeCaches(opts);
   const fetchFn = async (input: string | Request) => {
     if (!network.online) throw new TypeError("offline");
-    void input;
+    const own = opts.respond?.(typeof input === "string" ? input : input.url);
+    if (own) return own;
     return new Response(new Uint8Array([1, 2, 3]), { status: 200, headers: { "content-type": "image/jpeg" } });
   };
   const self = {
@@ -77,11 +80,11 @@ function loadWorker(
   const src = readFileSync("public/sw.js", "utf8");
   new Function("self", "caches", "fetch", "navigator", src)(self, caches.api, fetchFn, { onLine: network.online });
 
-  async function request(url: string): Promise<Response | undefined> {
+  async function request(url: string, headers?: Record<string, string>): Promise<Response | undefined> {
     let responded: Promise<Response> | undefined;
     const pending: Promise<unknown>[] = [];
     handlers.fetch({
-      request: new Request(url),
+      request: new Request(url, { headers }),
       respondWith: (p: Promise<Response>) => (responded = p),
       waitUntil: (p: Promise<unknown>) => pending.push(p),
     });
@@ -220,5 +223,56 @@ describe("service worker and the tile route", () => {
       urls: [`${ORIGIN}/api/stednavne?q=x`, "https://tile.openstreetmap.org/1/1/1.png", "https://evil.example/api/tiles/dtk25/1/1/1.png"],
     })) as { stored: unknown[] };
     expect(reply.stored).toHaveLength(0);
+  });
+});
+
+describe("service worker and the saved søkort file", () => {
+  const FILE = "https://tiles.mahoje.dk/soekort.pmtiles";
+  const BYTES = new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  const network = { online: true };
+  const respond = (url: string) =>
+    url === FILE
+      ? new Response(BYTES, { status: 200, headers: { "content-type": "application/octet-stream", etag: '"v1"' } })
+      : undefined;
+  beforeEach(() => {
+    network.online = true;
+  });
+
+  it("saves the whole file and answers the map's range requests from it offline", async () => {
+    const sw = loadWorker(network, { respond });
+    const reply = (await sw.message({ type: "OFFLINE_FETCH", urls: [FILE] })) as { stored: { bytes: number }[] };
+    expect(reply.stored).toEqual([{ url: FILE, bytes: 10 }]);
+    network.online = false;
+    const res = await sw.request(FILE, { range: "bytes=2-5" });
+    expect(res?.status).toBe(206);
+    expect(res?.headers.get("content-range")).toBe("bytes 2-5/10");
+    expect(res?.headers.get("etag")).toBe('"v1"');
+    expect([...new Uint8Array(await res!.arrayBuffer())]).toEqual([2, 3, 4, 5]);
+    // A range past the end is cut to the file, as the file server does.
+    const tail = await sw.request(FILE, { range: "bytes=8-100" });
+    expect([...new Uint8Array(await tail!.arrayBuffer())]).toEqual([8, 9]);
+    expect((await sw.request(FILE, { range: "bytes=20-30" }))?.status).toBe(416);
+  });
+
+  it("goes to the network while the file is not saved, and stores nothing", async () => {
+    const sw = loadWorker(network, { respond });
+    expect((await sw.request(FILE, { range: "bytes=0-3" }))?.status).toBe(200);
+    const offline = await sw.caches.api.open(OFFLINE_CACHE_NAME);
+    expect(await offline.keys()).toEqual([]);
+  });
+
+  it("deletes the saved file with its area", async () => {
+    const sw = loadWorker(network, { respond });
+    await sw.message({ type: "OFFLINE_FETCH", urls: [FILE] });
+    await sw.message({ type: "OFFLINE_DELETE", urls: [FILE] });
+    network.online = false;
+    await expect(sw.request(FILE, { range: "bytes=0-3" })).rejects.toThrow("offline");
+  });
+
+  it("saves no PMTiles file from other hosts", async () => {
+    const other = "https://example.org/soekort.pmtiles";
+    const sw = loadWorker(network, { respond: () => new Response(BYTES, { status: 200 }) });
+    const reply = (await sw.message({ type: "OFFLINE_FETCH", urls: [other] })) as { stored: unknown[] };
+    expect(reply.stored).toEqual([]);
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { DDM_TERMS_PAGE_URL, DDM_TERMS_URL, NAVIGATION_WARNING, OVERLAY_LABELS, OVERLAY_SOURCES, SEA_OVERLAYS, kdsPrintCredit, layerMinzoom, sourceZoomLimit } from "../sources";
+import { DDM_TERMS_PAGE_URL, DDM_TERMS_URL, NAVIGATION_WARNING, OVERLAY_LABELS, OVERLAY_SOURCES, REPLACED_BY_SOEKORT, SEA_OVERLAYS, kdsPrintCredit, layerMinzoom, sourceZoomLimit } from "../sources";
 import { offlineLayerIds } from "@/lib/offline/tiles";
 import { upstreamTileUrl } from "@/lib/tiles/upstream";
 import { deserializeState, serializeState } from "@/lib/url/urlState";
@@ -14,7 +14,8 @@ const all = Object.keys(OVERLAY_SOURCES) as OverlayId[];
 
 describe("overlay layers", () => {
   it("every overlay has a label and a URL code that round-trips", () => {
-    for (const id of all) {
+    // The replaced depth layers open soekort instead (urlState.test.ts).
+    for (const id of all.filter((i) => !REPLACED_BY_SOEKORT.includes(i))) {
       expect(OVERLAY_LABELS[id]).toBeTruthy();
       const qs = serializeState({ overlays: [{ id, opacity: 0.6 }] });
       expect(deserializeState(qs).overlays).toEqual([{ id, opacity: 0.6 }]);
@@ -115,7 +116,7 @@ describe("PDF credits", () => {
   it("credits OSM, Dybdemodellen, EMODnet and OpenSeaMap and says not for navigation", () => {
     useMapStore.setState({
       baseLayer: "osm",
-      overlays: initial.overlays.map((o) => ({ ...o, enabled: SEA_OVERLAYS.includes(o.id) })),
+      overlays: initial.overlays.map((o) => ({ ...o, enabled: SEA_OVERLAYS.includes(o.id) && !REPLACED_BY_SOEKORT.includes(o.id) })),
     });
     const c = thirdPartyCredits();
     expect(c.notForNavigation).toBe(true);
@@ -123,8 +124,18 @@ describe("PDF credits", () => {
     expect(c.credits.join(" ")).toMatch(/EMODnet/);
     expect(c.credits.join(" ")).toMatch(/Danmarks Dybdemodel/);
     expect(c.credits.join(" ")).toMatch(/OpenSeaMap/);
-    // Depth colours and seabed relief share one Dybdemodel credit.
-    expect(c.credits.filter((x) => x.includes("Danmarks Dybdemodel"))).toHaveLength(1);
+    // The søkort's file has a download date; the seabed relief is still the WMS.
+    const ddm = c.credits.filter((x) => x.includes("Danmarks Dybdemodel"));
+    expect(ddm).toHaveLength(2);
+    expect(ddm.filter((x) => x.includes("hentet 23.11.2026"))).toHaveLength(1);
+    expect(ddm.filter((x) => x.includes("Indeholder WMS-tjeneste"))).toHaveLength(1);
+  });
+
+  it("shares one credit between the WMS layers that use the same data", () => {
+    useMapStore.setState({
+      overlays: initial.overlays.map((o) => ({ ...o, enabled: o.id === "dybdemodel" || o.id === "havbund" })),
+    });
+    expect(thirdPartyCredits().credits.filter((x) => x.includes("Danmarks Dybdemodel"))).toHaveLength(1);
   });
 
   it("puts the credits inside the map image, wrapped to fit A5, clear of the margins", () => {

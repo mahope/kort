@@ -4,6 +4,9 @@ import type { PaperFormat, Orientation, DpiOption } from "@/types/print";
 import { MAP_BOUNDS } from "@/lib/map/styles";
 import { MIN_CUSTOM_SCALE, MAX_CUSTOM_SCALE } from "@/constants/scales";
 import { isGridSpacing, type GridSpacing, type GridLabelFormat, type UtmZoneMode } from "@/lib/geo/utmGrid";
+import { mapRegionAt } from "@/lib/geo/regions";
+import { REPLACED_BY_SOEKORT } from "@/lib/map/sources";
+import type { SoekortVariant } from "@/lib/map/soekortStyle";
 
 interface UrlOverlay {
   id: OverlayId;
@@ -33,6 +36,8 @@ interface UrlState {
   multiPage?: boolean;
   gridCols?: number;
   gridRows?: number;
+  /** Only serialized when not the default (klassisk). */
+  soekortVariant?: SoekortVariant;
 }
 
 const OVERLAY_CODES: Record<string, OverlayId> = {
@@ -51,7 +56,11 @@ const OVERLAY_CODES: Record<string, OverlayId> = {
   sd: "soedybder",
   ik: "indsoekort",
   vr: "vrag",
+  sk: "soekort",
 };
+
+/** Variant codes (`sv=`); the default, klassisk, is left out of links. */
+const SOEKORT_VARIANT_CODES: Record<string, SoekortVariant> = { kl: "klassisk", lv: "lavvande" };
 
 const OVERLAY_TO_CODE = Object.fromEntries(
   Object.entries(OVERLAY_CODES).map(([k, v]) => [v, k])
@@ -117,6 +126,9 @@ export function serializeState(state: UrlState): string {
         .map((o) => (o.opacity === undefined ? OVERLAY_TO_CODE[o.id] : `${OVERLAY_TO_CODE[o.id]}-${Math.round(o.opacity * 100)}`))
         .join(",")
     );
+  }
+  if (state.soekortVariant && state.soekortVariant !== "klassisk" && state.overlays?.some((o) => o.id === "soekort")) {
+    params.set("sv", Object.keys(SOEKORT_VARIANT_CODES).find((k) => SOEKORT_VARIANT_CODES[k] === state.soekortVariant)!);
   }
   if (state.showUtmGrid) {
     params.set("g", "1");
@@ -227,11 +239,27 @@ export function deserializeState(search: string): UrlState {
       const [code, pct] = token.split("-");
       const id = OVERLAY_CODES[code];
       if (!id) continue;
+      if (REPLACED_BY_SOEKORT.includes(id)) {
+        // Old links to the depth layers open our own søkort, at its own opacity
+        // (the old numbers were for semi-transparent rasters).
+        if (!overlays.some((o) => o.id === "soekort")) overlays.push({ id: "soekort" });
+        // Outside Denmark EMODnet still shows what soekort.pmtiles lacks (north of 59° N).
+        const nordic = state.lat !== undefined && state.lng !== undefined && mapRegionAt(state.lng, state.lat) === "nordic";
+        if (id !== "havdybder" || !nordic) continue;
+      }
       const parsed = pct ? Number(pct) : NaN;
       overlays.push(isNaN(parsed) ? { id } : { id, opacity: Math.min(1, Math.max(0, parsed / 100)) });
     }
-    if (overlays.length > 0) state.overlays = overlays;
+    // A link with both an old code and the new one: keep one soekort, the one with an opacity if any.
+    const unique = overlays.filter((o) => {
+      const same = overlays.filter((p) => p.id === o.id);
+      return same.length === 1 || o === (same.find((p) => p.opacity !== undefined) ?? same[0]);
+    });
+    if (unique.length > 0) state.overlays = unique;
   }
+
+  const sv = params.get("sv");
+  if (sv && SOEKORT_VARIANT_CODES[sv]) state.soekortVariant = SOEKORT_VARIANT_CODES[sv];
 
   if (params.get("g") === "1") state.showUtmGrid = true;
   const gs = params.get("gs");

@@ -32,6 +32,7 @@ const LAYER_LABELS: Record<string, string> = {
   hillshade: "Skyggekort",
   stednavne: "Stednavne",
   matrikel: "Matrikelskel",
+  soekort: "Søkort",
 };
 
 type Phase = "idle" | "running" | "paused";
@@ -211,6 +212,9 @@ export function OfflinePanel() {
             <span className="font-medium text-foreground">{urls.length.toLocaleString("da-DK")} fliser</span>,
             ca. <span className="font-medium text-foreground">{formatBytes(estimated)}</span>
           </p>
+          {layerIds.includes("soekort") && (
+            <p>Søkortet gemmes som én fil for hele Danmark (ca. 61 MB) og tælles som én flise.</p>
+          )}
           <p className="text-text-muted">
             Lag: {layerIds.map((id) => LAYER_LABELS[id] ?? id).join(", ")}
             {available !== null && <> · Ledig plads: {formatBytes(available)}</>}

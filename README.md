@@ -43,9 +43,10 @@ Example PDF: [example-a4-1-25000.pdf](https://github.com/mahope/kort/releases/do
 - **Map layers:** Skærmkort in four styles, the 1:25,000 topographic map (DTK25),
   orthophoto, OpenStreetMap, two series of historic maps (1842-1971) or no base map at all.
 - **Overlays:** contours (0.5 m to 10 m, with height labels), hillshade, cadastre,
-  place names, sea depths in blue with the seabed relief underneath, sea marks
-  (from about 1:50,000), lake depth contours, wrecks and historic lake charts
-  (marked *not for navigation*).
+  place names, our own depth layer *Søkort* (depth bands, contours and soundings
+  for Danish waters and 80 lakes, in a classic style or a shallow-water style
+  for canoe, kayak and dinghy), seabed relief, sea marks (from about 1:50,000),
+  wrecks and historic lake charts (marked *not for navigation*).
 - **Scales** 1:5,000 to 1:500,000, or any custom scale from 1:1,000 to 1:1,000,000.
 - **Paper sizes** A5 to A2 in portrait or landscape, plus A1 and A0 as one sheet for a print shop.
 - **Multi-page prints and floor maps:** up to 5 × 5 sheets with overlap, an
@@ -118,6 +119,7 @@ read at runtime. See [.env.example](.env.example) and [docs/tokens.md](docs/toke
 | `NEXT_PUBLIC_DATAFORSYNINGEN_TOKEN` | fallback in `src/lib/map/styles.ts` | Map tiles and WMS from Dataforsyningen. Get your own free token at [dataforsyningen.dk](https://dataforsyningen.dk/) if you deploy a copy |
 | `NEXT_PUBLIC_ADRESSEVAELGER_TOKEN` | fallback in `src/lib/api/address.ts` | Address search (Adressevælger) |
 | `NEXT_PUBLIC_CONTOURS_URL` | `https://tiles.mahoje.dk/kurver-5m.pmtiles` | PMTiles file for the 5 m / 10 m contours |
+| `NEXT_PUBLIC_SOEKORT_URL` | `https://tiles.mahoje.dk/soekort.pmtiles` | PMTiles file for the depth layer *Søkort* (built by `scripts/soekort/ddm-pmtiles`). Offline saving only works for files on `tiles.mahoje.dk` (`OFFLINE_FILE_HOSTS` in `public/sw.js`) |
 | `DATAFORDELER_API_KEY` | empty: same tiles from Dataforsyningen's older services | **Server-side, runtime.** Datafordeler API key for the Danish raster layers (DTK25, orthophoto, historic maps, place names, DHM). The tile route `/api/tiles` adds it on the server, so it never reaches the browser. Without it the app works as before, until Dataforsyningen closes those services on 26 Nov 2026 |
 
 Never give a secret a `NEXT_PUBLIC_` name. A service that needs a private key
@@ -168,7 +170,7 @@ src/
   place names, DHM) come from Datafordeleren through our own tile route
   `/api/tiles/<layer>/<z>/<x>/<y>.<png|jpg>`, which adds the API key on the
   server, refuses anything but known layers and tiles inside Denmark, and sets
-  long `Cache-Control` headers. Skærmkort, the cadastre and the sea depths
+  long `Cache-Control` headers. Skærmkort, the cadastre and the seabed relief
   still load straight from Dataforsyningen with the public token.
 - **PDF:** the browser creates a hidden MapLibre instance at the target
   resolution (up to 300 dpi), waits for every tile, and adds the image to jsPDF
@@ -180,9 +182,17 @@ src/
   own `/api/stednavne` over a snapshot of Danske Stednavne
   (`data/stednavne.tsv.gz`), because DAWA closed in October 2026 and no live
   replacement offers free-text place-name search.
-- **Own data:** sea depths, wrecks and the lake chart index are small GeoJSON
-  files in `public/data/soekort/`; the 5 m and 10 m contours are PMTiles derived
-  from the Danish elevation model and served from `tiles.mahoje.dk`.
+- **Own data:** wrecks and the lake chart index are small GeoJSON files in
+  `public/data/soekort/`. Two PMTiles files are served from `tiles.mahoje.dk`:
+  the 5 m and 10 m contours, derived from the Danish elevation model, and the
+  depth layer *Søkort*, derived from Danmarks Dybdemodel, EMODnet and the NOVANA
+  lake surveys (`scripts/soekort/ddm-pmtiles`). On the skærmkort the depth bands
+  and lines go under the land and the numbers under the place names; over
+  raster base maps only the contours and numbers are drawn, because the bands
+  reach 1 km past the model's coast. Old links to the depth layers it replaces
+  (`ov=dd`, `ov=hd`, `ov=sd`) open *Søkort*. It is the one sea layer that can be
+  saved offline: the service worker stores the whole file (about 61 MB) and
+  answers the map's range requests from it.
 
 More detail: [Norway and Sweden](docs/nordic.md) ·
 [grids and declination](docs/grids-and-declination.md) ·

@@ -13,9 +13,17 @@ const OFFLINE_MAX_BATCH = 24;
 // layers via Datafordeleren) may be bulk-fetched (OSM's policy forbids it).
 const OFFLINE_HOSTS = ["api.dataforsyningen.dk"];
 const TILE_ROUTE_PREFIX = "/api/tiles/";
+// Our own PMTiles archives (the søkort) may be saved as one whole file; the
+// map then reads them with range requests, which are answered from that copy.
+// Keep in sync with NEXT_PUBLIC_SOEKORT_URL (src/lib/map/soekortStyle.ts).
+const OFFLINE_FILE_HOSTS = ["tiles.mahoje.dk"];
 
 function isTileRoute(url) {
   return url.origin === self.location.origin && url.pathname.startsWith(TILE_ROUTE_PREFIX);
+}
+
+function isOfflineFile(url) {
+  return url.protocol === "https:" && OFFLINE_FILE_HOSTS.includes(url.hostname) && url.pathname.endsWith(".pmtiles");
 }
 // One A4 print at 300 dpi needs 88-98 tiles, so 3,000 covers roughly 30 prints
 // or a long browsing session while staying within a few hundred MB.
@@ -84,6 +92,12 @@ self.addEventListener("fetch", (event) => {
     url.hostname === "dawa.aws.dk"
   ) {
     event.respondWith(networkFirst(event.request));
+    return;
+  }
+
+  // A saved PMTiles file answers the range requests itself; otherwise the network.
+  if (isOfflineFile(url)) {
+    event.respondWith(offlineFileStrategy(event.request));
     return;
   }
 
@@ -247,7 +261,9 @@ function offlineUrls(urls, limit) {
         return null;
       }
     })
-    .filter((u) => u && (isTileRoute(u) || (u.protocol === "https:" && OFFLINE_HOSTS.includes(u.hostname))))
+    .filter(
+      (u) => u && (isTileRoute(u) || isOfflineFile(u) || (u.protocol === "https:" && OFFLINE_HOSTS.includes(u.hostname)))
+    )
     .slice(0, limit)
     .map((u) => u.href);
 }
@@ -274,13 +290,17 @@ async function offlineFetch(urls) {
           throw new Error("rate limited");
         }
         const type = response.headers.get("content-type") || "";
-        // WMS errors come back as 200 + XML: only keep real images.
-        if (!response.ok || !type.startsWith("image/")) throw new Error("bad");
+        const file = isOfflineFile(new URL(url));
+        // WMS errors come back as 200 + XML: only keep real images (or the whole archive).
+        if (!response.ok || (!file && !type.startsWith("image/")) || (file && response.status !== 200)) {
+          throw new Error("bad");
+        }
         const blob = await response.blob();
-        await cache.put(
-          offlineKey(url),
-          new Response(blob, { status: 200, headers: { "content-type": type } })
-        );
+        const headers = { "content-type": type };
+        // The PMTiles reader checks that every range comes from the same file version.
+        const etag = response.headers.get("etag");
+        if (file && etag) headers.etag = etag;
+        await cache.put(offlineKey(url), new Response(blob, { status: 200, headers }));
         stored.push({ url, bytes: blob.size });
       } catch {
         failed.push(url);
@@ -374,6 +394,32 @@ async function savedTile(url) {
   // The page may move the tile between the two lookups: then it sits under
   // the new key again.
   return (await cache.match(legacy)) || cache.match(key);
+}
+
+// A saved whole file: answer "Range: bytes=a-b" with that slice (206), as the
+// file server does. Not saved: straight to the network, range header and all.
+async function offlineFileStrategy(request) {
+  const cache = await caches.open(OFFLINE_CACHE);
+  const saved = await cache.match(offlineKey(request.url));
+  if (!saved) return fetch(request);
+  const blob = await saved.blob();
+  const headers = new Headers({ "content-type": saved.headers.get("content-type") || "application/octet-stream" });
+  const etag = saved.headers.get("etag");
+  if (etag) headers.set("etag", etag);
+  const range = /^bytes=(\d+)-(\d*)$/.exec(request.headers.get("range") || "");
+  if (!range) {
+    headers.set("content-length", String(blob.size));
+    return new Response(blob, { status: 200, headers });
+  }
+  const start = Number(range[1]);
+  const end = Math.min(range[2] ? Number(range[2]) : blob.size - 1, blob.size - 1);
+  if (start > end) {
+    headers.set("content-range", `bytes */${blob.size}`);
+    return new Response(null, { status: 416, headers });
+  }
+  headers.set("content-range", `bytes ${start}-${end}/${blob.size}`);
+  headers.set("content-length", String(end - start + 1));
+  return new Response(blob.slice(start, end + 1), { status: 206, headers });
 }
 
 // Cache-first; entries older than 24 h are refreshed in the background.

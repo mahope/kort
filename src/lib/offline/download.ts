@@ -16,7 +16,10 @@ const sendToWorker: WorkerSend = async (message) => {
   if (!worker) throw new Error("Service worker er ikke aktiv");
   return new Promise((resolve, reject) => {
     const channel = new MessageChannel();
-    const timer = setTimeout(() => reject(new Error("Timeout")), 120000);
+    // A whole PMTiles file (the søkort, about 61 MB) takes longer than a batch of tiles.
+    const urls = Array.isArray(message.urls) ? (message.urls as unknown[]) : [];
+    const wholeFile = urls.some((u) => typeof u === "string" && u.endsWith(".pmtiles"));
+    const timer = setTimeout(() => reject(new Error("Timeout")), wholeFile ? 15 * 60000 : 120000);
     channel.port1.onmessage = (e) => {
       clearTimeout(timer);
       if (e.data && e.data.error) reject(new Error(e.data.error));

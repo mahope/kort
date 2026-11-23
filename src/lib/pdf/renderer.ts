@@ -21,6 +21,14 @@ import { padBounds } from "@/lib/geo/bounds";
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
 import { contourLayers, contourSourceUrl, ensurePmtilesProtocol, SCREEN_PX_PER_MM } from "@/lib/map/contours";
 import { vectorOverlayLayers, vectorOverlaySource } from "@/lib/map/vectorOverlays";
+import {
+  DEFAULT_SOEKORT_VARIANT,
+  SOEKORT_SOURCE_LAYERS,
+  SOEKORT_URL,
+  soekortAnchors,
+  soekortLayersWithAnchors,
+  type SoekortVariant,
+} from "@/lib/map/soekortStyle";
 import { timed } from "./timing";
 import { retryTiles, type FailedTile, type TileEvent } from "@/lib/map/tileRetry";
 
@@ -128,6 +136,9 @@ interface RenderOptions {
   onTileProgress?: TileProgress;
   /** Source family; defaults to the one at the centre of `bounds` (multi-page passes one for all sheets). */
   region?: MapRegion;
+  soekortVariant?: SoekortVariant;
+  /** Called with the `src` values (ddm, emodnet, novana) the søkort tiles of this print hold, for the credits. */
+  onSoekortSources?: (sources: Set<string>) => void;
 }
 
 /** Renders the map at target resolution and returns it as JPEG bytes. */
@@ -144,6 +155,8 @@ export async function renderMapToImage({
   pxPerMm = SCREEN_PX_PER_MM,
   onTileProgress,
   region,
+  soekortVariant = DEFAULT_SOEKORT_VARIANT,
+  onSoekortSources,
 }: RenderOptions): Promise<Uint8Array> {
   if (isOffline()) throw new Error(OFFLINE_MESSAGE);
 
@@ -221,6 +234,9 @@ export async function renderMapToImage({
     if (onTileProgress) trackTileProgress(map, onTileProgress);
 
     await waitForMapLoad(map);
+    // Where the depth layers go in the base map, read before anything is added on top.
+    const soekortOn = overlays.some((o) => o.enabled && OVERLAY_SOURCES[o.id].soekort);
+    const anchors = soekortOn ? soekortAnchors(map.getStyle().layers) : null;
 
     // Add raster base layer if not skaermkort
     const rasterSource = PRINT_RASTER_BASE_LAYERS[baseLayer];
@@ -248,6 +264,13 @@ export async function renderMapToImage({
       if (sourceConfig.vector) {
         map.addSource(sourceId, vectorOverlaySource(sourceConfig.vector));
         for (const layer of vectorOverlayLayers(sourceConfig.vector, sourceId, overlay.opacity, pxPerMm)) map.addLayer(layer);
+        continue;
+      }
+      if (sourceConfig.soekort) {
+        ensurePmtilesProtocol();
+        map.addSource(sourceId, { type: "vector", url: `pmtiles://${SOEKORT_URL}` });
+        const layers = soekortLayersWithAnchors(sourceId, anchors, { variant: soekortVariant, opacity: overlay.opacity, pxPerMm });
+        for (const { layer, beforeId } of layers) map.addLayer(layer, beforeId);
         continue;
       }
       if (sourceConfig.contourInterval) {
@@ -368,6 +391,10 @@ export async function renderMapToImage({
       throw new Error(isOffline() ? OFFLINE_MESSAGE : "Et kortlag kunne ikke hentes, så PDF'en ville mangle det. Prøv igen.");
     }
 
+    if (onSoekortSources && soekortOn) {
+      onSoekortSources(soekortSourcesIn(map, "soekort-overlay"));
+    }
+
     // WebGL silently clamps oversized canvases; never deliver a downscaled map.
     const canvas = map.getCanvas();
     if (canvas.width !== canvasWidth || canvas.height !== canvasHeight) {
@@ -388,6 +415,18 @@ export async function renderMapToImage({
     map?.remove();
     document.body.removeChild(container);
   }
+}
+
+/** The `src` values in the loaded tiles of the søkort source (the frame, rounded out to whole tiles). */
+function soekortSourcesIn(map: maplibregl.Map, sourceId: string): Set<string> {
+  const found = new Set<string>();
+  for (const sourceLayer of SOEKORT_SOURCE_LAYERS) {
+    for (const f of map.querySourceFeatures(sourceId, { sourceLayer })) {
+      const src = f.properties?.src;
+      if (typeof src === "string") found.add(src);
+    }
+  }
+  return found;
 }
 
 // Reading pixels back while the GPU still has the render queued blocks the main
