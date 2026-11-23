@@ -96,15 +96,15 @@ Each claim below is marked **measured** (own run, numbers in `measurements/`), *
   files) are answered only through a stand-in: WMS renderings at the GeoTIFF's documented
   resolution. The real sheets could be sharper, larger or a different resolution. This is the
   gate in front of the whole recommendation: one `GetRasterMultipleSize` call and one downloaded
-  sheet per series, run on agent-worker with the key (section 10, point 1). S1 and S4 are
-  conditional on it.
+  sheet per series, run on agent-worker with the key (section 10, point 1). S1 and S4 were
+  conditional on it. **The gate has since been run (section 3.4).**
 - **Sample:** EPSG:25832 box 530000-540000 E, 6220000-6230000 N. That is 10 x 10 km over
   Silkeborg: town, the lakes, Silkeborgskovene and farmland. In PR #60, DTK25 JPEG tiles here
   averaged 14.1 KB at z16, the same as that PR's three-area mean (14.7 KB). So Silkeborg is a
   middle case, not a best case.
 - **Stand-in for the raw files:** the WMS was asked for large GetMap images in EPSG:25832 at
   DTK25's native resolution (1.25 m/px, 508 dpi). These were 2,000 px chunks, 16 requests per layer,
-  PNG, with a 0.5 s pause. This mimics the Datafordeler GeoTIFF sheets (10 x 10 km, EPSG:25832),
+  PNG, with a 0.5 s pause. This mimics the Datafordeler GeoTIFF sheets (documented as 10 x 10 km; measured as 20 x 20 km, EPSG:25832),
   so the pipeline includes the reprojection to EPSG:3857 that the real build needs. Ortofoto was
   fetched at 0.25 m over 2.5 x 2.5 km (25 requests). The terrain model came from the WCS at 1.6 m
   (16 requests). Totals are in `measurements/wms-fetch-summary.txt`.
@@ -132,6 +132,7 @@ Sources were looked up on 23 Nov 2026. Format details come from Datafordeler's
 [transition guide for file downloads][dafo-trans] and its [file-download meeting deck of
 18 Sep 2024][dafo-tema]. Raster downloads are "GeoTIFF og ECW". GeoTIFF is "reorganiseret … til
 10x10 km GeoTIFF-tiles, der er tilpasset Det Danske Kvadratnet". ECW is passed on as delivered.
+In the gate (section 3.4) DTK25 and Lave came as 20 x 20 km sheets and the terrain as 1 x 1 km tiles.
 Every file download needs a Datafordeler API key (`GetRasterMultipleFiles`,
 `GetRasterMultipleSize`). No general STAC catalogue was found; the only STAC API at
 [docs.dataforsyningen.dk][df-docs] is for oblique photos.
@@ -247,7 +248,8 @@ Earlier notes assumed z16 (PR #60 and [mig] section 5). This matters in two ways
   at 2x with nearest-neighbour scaling, to see the pixels. With `average` overviews the faint brown
   contour lines get softer. WebP q75 loses some of them. With **lanczos overviews** the lines come
   back close to the WMS, but stay a touch softer. Our input was itself a WMS rendering at 1.25 m;
-  the real 508 dpi GeoTIFF may be sharper, and that needs checking on the real file.
+  the real 508 dpi GeoTIFF may be sharper, and that needs checking on the real file. (Gate: it is
+  not; the real sheet gives the same picture, section 3.4.)
 - `dtk25-print-10k-300dpi.webp`: WMS z17 against our z16 overzoomed. Equal. The WMS's z17 is
   upscaled from the same 1.25 m raster, so tiles above z16 add nothing.
 - `dtk25-screen-50k.webp`: on-screen 1:50.000 (z13), identical. A 1:200.000 view (z11) also showed
@@ -264,7 +266,8 @@ Earlier notes assumed z16 (PR #60 and [mig] section 5). This matters in two ways
   Top: 0.5 m at 1:10.000. Bottom: 2.5 m at 1:25.000. The 2.5 m lines match the WMS closely in
   shape; ours are a little more angular because the smoothing is a plain 10 m mean. The 0.5 m
   lines follow the same terrain, but a 4 m grid shows as corners at 1:10.000; a real build should
-  use the `formkurve05` file product or a smoother resampling. **The WMS draws nothing for 0.5 m
+  use the `formkurve05` file product or a smoother resampling (gate: `Formkurve0_5` with max zoom
+  15 does, section 3.4). **The WMS draws nothing for 0.5 m
   at 1:25.000** (the 1:25.000 render is one flat colour, `measurements/render-summary-contours.json`):
   the layer's `ScaleHint` max is 2.99 m per pixel diagonal, so it only appears from z17 tiles,
   about 1:7.500. So in today's app "Højdekurver (0,5 m)" is blank in a 1:25.000 or 1:50.000 PDF.
@@ -379,41 +382,50 @@ Three things to know for the real build:
 Sizes multiply the measured mean per zoom by PR #60's count of land-touching tiles
 (`measurements/dk-tilecounts-from-pr60.json`; z18 = 4 x z17, estimate). The range is x0.47-x1.3, the
 farmland-to-town spread PR #60 measured. That spread is borrowed for ortofoto and the historic
-maps, so treat their ranges as rough. Full table: `measurements/extrapolation.md`.
+maps, so treat their ranges as rough. Full table: `measurements/extrapolation.md`; the rows from
+the real files (section 3.4) are in `measurements/extrapolation-gate.md`.
+
+**Build times are measured on agent-worker after the gate** (CPU seconds per 100 km² or per sheet,
+section 3.4), not the afternoon's 4 vCPU box: agent-worker is 3-6 times slower per core. The
+raster sheets also cover sea: a DTK25 or Lave build processes 192 or 190 sheets of 400 km²
+(about 76,000 km²), while the tile counts below are for the ~43,000 km² of land tiles. Sea tiles
+are uniform and cost almost nothing in size, but they cost warp and encode time.
 
 | Layer | Tool and steps | Zooms | Format | Size, Denmark (estimate) | Build, Denmark (estimate) |
 | --- | --- | --- | --- | --- | --- |
-| DTK25 | Datafordeler GeoTIFF sheets → `gdalbuildvrt` → `gdalwarp` 3857 lanczos → MBTiles z16 → `gdaladdo -r lanczos` → PMTiles | 6-16 | WebP q85 | **7.8 GB** (3.7-10.2); JPEG q85 9.5 GB; PNG 35 GB | ~2.5 h compute (23 s/100 km² x 399) |
-| Høje Målebordsblade | same | 6-16 (z6-15 saves ~67 %) | WebP q85 | **8.4 GB** (3.9-10.9); z6-15 WebP 2.8 GB (1.3-3.7) | ~2.5 h |
-| Lave Målebordsblade | same | 6-16 | WebP q85 | **7.9 GB** (3.7-10.3) | ~2.5 h |
-| Hillshade | Extend `scripts/contours/kurver-dk.sh`: per 5 km cell, terrain at 1.6 m from the Datafordeler `dhm_wcs` (key), `gdaldem hillshade`, then the raster pipeline. Or download `TerraenSkygge` ready-made | 6-16 (z6-15: 0.9 GB) | WebP q80 | **2.9 GB** (1.4-3.8) | ~1.5-2 h compute; ~2,000 land cells, ~40 MB each from the WCS |
-| Contours 0.5 m (`contours`) | Either the `DHMHoejdekurver` file download (`formkurve05`, KDS's own lines) → GeoJSONSeq → tippecanoe, or the same terrain as the hillshade, averaged to 4 m, `gdal_contour -i 0.5`, tippecanoe (`scripts/build-contours.sh`) | 12-14, overzoomed; minzoom ~15.5 in the style to copy the WMS's hiding below 1:7.500 | MVT | **~1.2 GB** (1.2-2.5, see below) | ~1.5 h compute; ~30 GB of intermediate GeoJSON |
-| Contours 2.5 m (`contours25`) | Own only: terrain averaged to 10 m, `gdal_contour -i 2.5`, tippecanoe; a stronger smoothing (e.g. 20 m or a Gaussian) to come closer to "traditionel" | 11-14, overzoomed | MVT | **~0.2 GB** (0.2-0.4) | ~15 min |
+| DTK25 | 192 land sheets (20 x 20 km GeoTIFF, 5.7 GB download) → per-sheet `gdalwarp` 3857 lanczos, threaded → national VRT → MBTiles z16 → `gdaladdo -r lanczos` → PMTiles | 6-16 | WebP q85 | **7.8 GB** (3.7-10.2), **confirmed by the real sheet**; PNG 36.6 GB | **~12.4 CPU-hours** (232 cpu-s per sheet x 192); ~7 h wall with parallel warps (section 12) |
+| Høje Målebordsblade | **No file product** (`404`, section 3.4) | | | (8.4 GB if a source is found) | |
+| Lave Målebordsblade | as DTK25 plus `EXPAND=rgb` per sheet; 190 land sheets, 5.7 GB | 6-16 (z6-15 is visibly softer at 1:10.000) | WebP q85 | **8.5 GB** (4.0-11.0), real sheet; z6-15 3.0 GB | ~12.5 CPU-hours; ~7 h wall |
+| Hillshade | Extend `scripts/contours/kurver-dk.sh`: per 5 km cell, terrain at 1.6 m from the Datafordeler `dhm_wcs` (key; `TerraenSkygge` does not exist as a file), `gdaldem hillshade -multidirectional -z 1.5`, then the raster pipeline. The 0.4 m `Terraen` files give the same picture but are 853 GB | 6-16 (z6-17 from 0.8 m: 12.6 GB, S8) | WebP q80 | **2.7 GB** (1.3-3.6), real terrain | ~8 CPU-hours (66.6 cpu-s per 100 km² x 430); download ~10.5 h (~6,900 WCS chunks, ~67 GB streamed) |
+| Contours 0.5 m (`contours`) | `DHMHoejdekurver` `Formkurve0_5` national gpkg (16.2 GB zip) → `ogr2ogr` GeoJSONSeq (`h` = `hoejde`) → tippecanoe (`scripts/build-contours-dafo.sh`) | **12-15**, overzoomed; minzoom ~15.5 in the style to copy the WMS's hiding below 1:7.500 | MVT | **~2.9 GB** (z14: 1.7 GB; Silkeborg municipality x 35.5) | ~2.4 h (Silkeborg 239 s x 35.5); download ~1.7 h; ~49 GB GeoJSON unless streamed or built per municipality |
+| Contours 2.5 m (`contours25`) | Same with `Formkurve2_5` (0.76 GB zip): **KDS's own "traditionel" lines** | 11-14, overzoomed | MVT | **~0.25 GB** (Silkeborg 7.3 MB x 33.6) | ~7 min; download ~5 min |
 | Danske Stednavne | Already done: `data/stednavne.tsv.gz` → GeoJSONSeq → tippecanoe. For area outlines: the GeoPackage download, then tippecanoe | 6-14 (overzoom) | MVT | **10.6 MB measured**; with geometries not measured | 5 s measured |
 | Ortofoto | ECW → GeoTIFF needs an ECW-capable GDAL (proprietary SDK, not in OSGeo images) | 6-17 / 6-18 | JPEG q90 | **40 GB** to z17 (19-52); **153 GB** to z18 (72-199); WebP q80 z18: 82 GB | z17 ~8 h, z18 ~33 h compute, plus downloading ~0.5 TB of ECW (estimate) |
 | Matriklen | Not recommended (daily). Would be GeoPackage → tippecanoe vector | | | not measured | |
 | Skærmkort | Raster: national GeoTIFF → same raster pipeline. Vector: GeoDanmark → planetiler with an own profile, which is a cartography project | | | not measured | |
 
-**Contour sizes** are not scaled by tile counts but against the real national file: the 5 m
-variant is 0.48 MB on the sample and `kurver-5m.pmtiles` is 109.9 MB for Denmark (x230). The same
-factor gives 1.2 GB for 0.5 m and 0.22 GB for 2.5 m. Silkeborg is hilly, and flat land gains
-relatively more 0.5 m lines than 5 m lines, so the upper end of the range is doubled. Vector
-contours stay sharp at any print dpi, unlike the WMS PNGs.
+**Contour sizes** come from the real file products: the whole Silkeborg municipality built to
+47.5 MB (0.5 m, z12-14) and 7.3 MB (2.5 m), scaled by the national zip against Silkeborg's zip
+(x35.5 and x33.6). Max zoom 15 for 0.5 m (needed for smooth lines at 1:10.000, section 3.4) made the
+100 km² box 1.75 times larger, hence ~2.9 GB. The afternoon's estimate from our own derived lines
+(1.2 GB and 0.22 GB, scaled against `kurver-5m.pmtiles`) was close for z14. Vector contours stay
+sharp at any print dpi, unlike the WMS PNGs.
 
-**Build time and RAM for Denmark (estimate).** These are this sample's times x 399, the ratio of
-Danish z16 land tiles (370,946) to the sample's 930. Each step peaked under 1 GB because GDAL
-streams by block (`-wm 1024`). A full run of the recommended layers is about **11-12 hours of
-compute on a 4 vCPU box**, sequentially. On agent-worker (16 GB) or a Hetzner CX43 (8 vCPU, 16 GB,
-€16.49/month, which Hetzner showed as "currently unavailable" on 23 Nov), it takes the same or less.
-RAM is not the limit; disk is:
+**Build time and RAM for Denmark (measured per sheet, extrapolated).** The afternoon's estimate
+(sample times x 399, ~11-12 hours on a 4 vCPU box) is replaced by the gate's numbers on
+agent-worker: **~37-40 CPU-hours** for the recommended layers without Høje (DTK25 12.4, Lave 12.5,
+hillshade 8, contours ~4). A whole 400 km² sheet scaled linearly from the 100 km² box, and each
+step peaked at 2.3 GB per sheet at most (page cache included), so RAM is not the limit. The tile
+encoding (`gdal_translate`, `gdaladdo`) runs on one core; the warp and the WCS download run in
+parallel. Disk is the limit:
 
-- the intermediate 3857 GeoTIFF is ~20 GB for DTK25,
-- plus the MBTiles and PMTiles,
-- plus the raw sheets (not measured; 10 x 10 km at 1.25 m is about 550 sheets),
+- the warped 3857 GeoTIFF is ~51 MB per 100 km² of sheet, so ~39 GB for DTK25 or Lave,
+- plus the MBTiles (~8 GB) and the PMTiles (~8 GB),
+- plus the raw sheets (5.7 GB),
 
-so plan **~50-60 GB of scratch per layer**. The step from 100 km² to Denmark has not been run.
-Long single VRTs are known to be slower per km² than small ones. The safe way is per-sheet MBTiles,
-merged at the end, or `gdal raster tile` with threads.
+so plan **~60 GB of scratch per raster layer**. agent-worker has 107 GB free on the Hetzner volume
+(`/mnt/HC_Volume_107237308`) and 15 GB on `/`, so the build must run on the volume, one layer at a
+time. The national VRT over 192 warped sheets is the one step not yet run.
 
 **Tool versions** (documented, 23 Nov):
 
@@ -469,9 +481,9 @@ PMTiles adds 1-3 directory reads per session, which is negligible.
 Exchange rates on 23 Nov 2026 (ECB reference via frankfurter.dev): 1 EUR = 7.4746 DKK, 1 USD =
 6.833 DKK.
 
-| Option | Price, as published | Recommended set (~28 GB, up to 38 GB) | + ortofoto z17 (~67 GB) | + ortofoto z18 (~180 GB) | Traffic and requests | Notes |
+| Option | Price, as published | Recommended set (~28 GB, up to 38 GB; after the gate ~22 GB without Høje) | + ortofoto z17 (~67 GB) | + ortofoto z18 (~180 GB) | Traffic and requests | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
-| **Existing nginx on `tiles.mahoje.dk`** (Hetzner main node) | Only disk; Hetzner cloud servers include 20 TB/month ([Hetzner cloud][hz-cloud]) | **0 kr.** if the disk has ~40 GB free (not checked) | 0 kr. if ~80 GB free | needs a volume (price not looked up) | High scenario is <1 % of 20 TB | No new vendor. Origin load goes on the main node. Cloudflare terms risk (5.1). Without a Cache Rule there is no CDN cache. |
+| **Existing nginx on `tiles.mahoje.dk`** (Hetzner main node) | Only disk; Hetzner cloud servers include 20 TB/month ([Hetzner cloud][hz-cloud]) | **0 kr.** if the disk has ~30 GB free (not checked; the gate's set is ~22 GB, 12-28 GB) | 0 kr. if ~80 GB free | needs a volume (price not looked up) | High scenario is <1 % of 20 TB | No new vendor. Origin load goes on the main node. Cloudflare terms risk (5.1). Without a Cache Rule there is no CDN cache. |
 | **Cloudflare R2** | $0.015/GB-month, 10 GB free; Class B $0.36/M, 10 M free; egress free ([R2 pricing][r2]) | **~1.9-2.9 kr.** | ~5.8 kr. | ~17.4 kr. | High scenario (4 M reads) is inside the free 10 M; 30 M reads would add ~49 kr. | New service on Mahope's Cloudflare account. Custom domain, e.g. `tiles.mahoje.dk` moved to R2. No 512 MB issue for serving, since egress is free uncached. |
 | **Hetzner Object Storage** | €6.49/month incl. 1 TB storage and 1 TB egress ([Hetzner][hz-os]); extra egress ~€1/TB (price wording garbled on the page) | **48.5 kr.** | 48.5 kr. | 48.5 kr. | All scenarios inside 1 TB | New service. S3-compatible, so CORS is set via the S3 API. Fixed price no matter the size. |
 | Hetzner Storage Box | BX11 €3.20 (23.9 kr.) for 1 TB ([Hetzner][hz-sb]) | | | | | **Not an origin:** SFTP, SMB and WebDAV, no public HTTP with range and CORS (documented as access protocols only). Useful only as a backup of the raw files. |
@@ -543,6 +555,7 @@ Build compute costs nothing extra on agent-worker. A dedicated Hetzner CX43 (16 
 
 **Lose:**
 
+- **Høje Målebordsblade, for now.** There is no file to build from (section 3.4, S9).
 - **Scale-dependent rendering: nothing for DTK25.** Measured at 1:200.000, 1:50.000, 1:25.000
   and 1:10.000. The WMS resamples one raster. A small loss of crispness in thin lines at z15 depends
   on resampling and can be tuned (section 3.3). The historic maps are scans, so the same holds.
@@ -550,9 +563,9 @@ Build compute costs nothing extra on agent-worker. A dedicated Hetzner CX43 (16 
   1:7.500 (`ScaleHint`, section 3.3). A vector layer would draw it at every zoom unless the style
   sets a minzoom, so the switch must copy that on purpose, or decide that showing 0.5 m lines in a
   1:25.000 print is wanted (it is very busy, see the image). The 2.5 m layer has no such limit.
-- **KDS's own contour generalisation.** The 2.5 m "traditionel" lines exist only in the WMS. Our
-  derived lines are close but not the same lines (section 3.3), and the credit must say they are
-  derived, as it already does for `kurver5`.
+- ~~KDS's own contour generalisation~~ **Not lost (gate, section 3.4).** The 2.5 m "traditionel"
+  lines exist as the `Formkurve2_5` file, line for line the WMS's layer, so we keep KDS's lines and
+  need no smoothing of our own.
 - **Area outlines in the place-name layer.** The WMS draws them; the snapshot has no geometry.
   Getting them back needs the GeoPackage download.
 - **Other years.** The WMS offers DTK25 for 2002-2023 and ortofoto for 2024-2026. A self-hosted
@@ -581,21 +594,29 @@ Self-host the layers that **never change**, in this order. Keep ortofoto and the
 through Datafordeleren or Dataforsyningen (the proxy chosen on 23 Nov). Keep Skærmkort until it
 returns in Q1 2027.
 
+**Chosen 23 Nov (AskUserQuestion):** S1 (a), the frozen layers, once the gate has passed; S2 (a),
+S3 (a), S4 (a), S5 (a) WebP q85, S6 (a), S7 (a). The gate (section 3.4) passed for every layer
+except Høje Målebordsblade, which has no file to build from. The table carries the gate's numbers.
+
 | Step | What | Why first | Agent time | Mads | Storage | Money/month |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | **Danske Stednavne as vector labels** from the existing snapshot | No key and no download; measured 10.6 MB and 5 s; sharper text in the PDF | 0.5-1 day (style, source, credit, PDF check) | Choose S3 | 11 MB | 0 kr. |
-| 2 | **Høje + Lave Målebordsblade** | Historic, the biggest WMS tiles (~190 KB PNG), a slow service (3.5 s per sample chunk, one live render that never finished) | 1-2 days (pipeline from this folder, raster PMTiles source, credit) + ~5 h compute | Datafordeler key (already step 1 in [mig]) | ~16 GB (WebP z6-16) or ~5.5 GB (WebP z6-15) | 0-1 kr. |
-| 3 | **Terrain layers from DHM:** hillshade, contours 0.5 m and 2.5 m | `dhm_DAF` closes 26 Nov, so `contours` and `contours25` break with it unless the proxy covers them. One terrain download per 5 km cell feeds all three (and a later `kurver-5m` rebuild); extends `kurver-dk.sh` | 1.5-2 days (cell loop, hillshade + two contour variants, minzoom for 0.5 m, credit) + ~4 h compute | Choose S7 | ~4.5 GB (3 GB hillshade, 1.2-2.5 GB contours) | 0 kr. |
-| 4 | **DTK25** | The most-used layer, frozen since 2023; removes the proxy's heaviest traffic | 1 day + ~2.5 h compute | | ~8 GB | 0-2 kr. |
+| 2 | **Lave Målebordsblade** (Høje: S9) | Historic, the biggest WMS tiles (~190 KB PNG), a fragile service (failed in 3 of 6 gate renders) | 1-1.5 days (pipeline from this folder, raster PMTiles source, credit) + ~7 h wall, 5.7 GB download | | **~8.5 GB** (z6-16) | 0-1 kr. |
+| 3 | **Terrain layers from DHM:** hillshade, contours 0.5 m and 2.5 m | `dhm_DAF` closes 26 Nov, so `contours` and `contours25` break with it unless the proxy covers them. The contours are KDS's own file products (no smoothing to write); the hillshade loop extends `kurver-dk.sh` on `dhm_wcs` and can rebuild `kurver-5m` on the way | 1-1.5 days (WCS cell loop, hillshade, two contour builds, minzoom for 0.5 m, credit) + ~11 h hillshade, ~4 h contours | Choose S8 | **~5.9 GB** (2.7 GB hillshade, 2.9 + 0.25 GB contours) | 0 kr. |
+| 4 | **DTK25** | The most-used layer, frozen since 2023; removes the proxy's heaviest traffic | 1 day + ~7 h wall, 5.7 GB download | | **~7.8 GB** | 0-2 kr. |
 | 5 | **Offline for PMTiles layers** (#36) | Without it, steps 1-4 drop out of "Gem område" | 2-3 days | | | |
 | later | Ortofoto, if the yearly rebuild and ECW decoding are worth it | | 3-5 days + ~0.5 TB download | ECW decision | 40-150 GB | 0-17 kr. on R2, 0 kr. on nginx if the disk allows |
 
-**Total for steps 1-4:** 4-6 agent days (0.5-1 + 1-2 + 1.5-2 + 1), plus 2-3 for offline (step 5),
-so 6-9 days with offline. Storage is ~28 GB, at 0 kr.
-on today's nginx or ~2 kr./month on R2. The step-2 pipeline gets its gate on the first real
-GeoTIFF sheet: check sharpness, size per sheet and time. Only then build the country.
+**Total for steps 1-4:** 3.5-5 agent days (0.5-1 + 1-1.5 + 1-1.5 + 1), plus 2-3 for offline
+(step 5). Building the whole country takes **~37-40 CPU-hours and ~95 GB of downloads (~14 h)**,
+about 1.5 days of wall time if the layers run one after the other on agent-worker, with ~60 GB of
+scratch per raster layer. Storage is **~22 GB** (12-28 GB) without Høje, at 0 kr. on today's nginx
+or ~2 kr./month on R2. The gate is passed; the build plan per layer is in section 12.
 
 ## 9. Decisions for Mads
+
+*S1-S7 were answered on 23 Nov (section 8). S4 and S7 are refined by the gate below, and S8-S9
+are new.*
 
 **S1. Which layers to self-host?**
 - (a) The frozen ones: stednavne, Høje/Lave Målebordsblade, the DHM layers (hillshade, contours
@@ -620,6 +641,8 @@ GeoTIFF sheet: check sharpness, size per sheet and time. Only then build the cou
 - (a) z6-16 (WebP q85, ~8 GB each, sharp at 1:10.000). *Recommended* if the GeoTIFF's native resolution is
   ≤ 1.3 m.
 - (b) z6-15 (WebP q85, ~2.8 GB each). Enough for 1:25.000 prints, softer at 1:10.000.
+- *Gate:* Lave is 2.0 m, not 1.3 m, but z16 is still clearly sharper than z15 at 1:10.000
+  (`gate-lave-10k-300dpi.webp`), so (a) stands: 8.5 GB against 3.0 GB.
 
 **S5. Tile format:**
 - (a) WebP q85 with lanczos overviews (smallest at equal or better quality). *Recommended.*
@@ -638,27 +661,48 @@ GeoTIFF sheet: check sharpness, size per sheet and time. Only then build the cou
 - (c) Drop both and point users to `kurver5`/`kurver10`, which already exist. No work, but the
   2.5 m interval is gone.
 - (d) Keep both on the Datafordeler proxy.
+- *Gate:* both exist as KDS's own files (`Formkurve0_5`, `Formkurve2_5`), and the 2.5 m file is the
+  WMS's layer line for line. So (a) needs no smoothing of our own. The 0.5 m layer needs max zoom 15
+  (~2.9 GB instead of ~1.7 GB) to stay smooth at 1:10.000.
+
+**S8. Hillshade depth (new, from the gate)**
+- (a) z6-16 from the WCS at 1.6 m: **2.7 GB**, ~67 GB and ~10.5 h of download. Same as the WMS at
+  1:25.000, clearly softer at 1:10.000. *Recommended* for the first build; the common print is
+  1:25.000.
+- (b) z6-17 from the WCS at 0.8 m: **12.6 GB**, ~270 GB and ~37 h of download. Matches the WMS
+  at 1:10.000 (`gate-hillshade-10k-z17.webp`). Can be added later without touching (a)'s files.
+
+**S9. Høje Målebordsblade has no file download (new, from the gate)**
+- (a) Ask Datafordeler support (or KDS) whether `DTKHøjeMaalebordsblade` will be delivered, and keep
+  the layer on the Datafordeler WMS through the proxy meanwhile. *Recommended.*
+- (b) Harvest it from the WMS at 1.25 m, the way this report's stand-in was made: ~6,900 GetMap
+  requests of 2,000 px for the land area, ~8.4 GB. Only with KDS's acceptance, because it is bulk
+  use of a view service.
+- (c) Drop Høje from the self-hosted set for good.
 
 ## 10. Open points
 
-1. **Raw file sizes and native resolution** for DTK25 and the two Målebordsblade series. Call
-   `GetRasterMultipleSize` with the key on agent-worker, then build one real sheet per series with
-   `scripts/build-raster.sh`. This is the gate before step 2 and before S1 and S4; it could not be
-   run from the machine this report was made on.
+1. ~~Raw file sizes and native resolution~~ **Closed by the gate (section 3.4).** DTK25 1.25 m and
+   Lave 2.0 m in 20 x 20 km sheets, 5.7 GB each; Høje is not available (S9).
 2. **Free disk on the main node** (`hetzner-main`) for S2 (a). `obs servere` showed 52 % used on
    23 Nov, but the size was not checked.
 3. Whether **R2 content served through a custom domain** is outside the Cloudflare CDN clause in
    5.1. Not confirmed.
 4. Whether the **GDAL 3.14 PMTiles writer** ships before the build, or we use go-pmtiles for the
    last step.
-5. The **step from 100 km² to Denmark** (time, disk, one VRT against per-sheet builds) has not
-   been run.
-6. The **`TerraenSkygge` file product** against our own `gdaldem` build: style and size.
+5. The **step from 100 km² to Denmark**: one whole 400 km² sheet scaled linearly (section 3.4).
+   The national VRT over all warped sheets has not been run.
+6. ~~The `TerraenSkygge` file product~~ **Closed:** it answers `404`, so we build our own.
 7. **ECW decoding** for ortofoto: licence and availability of an ECW-capable GDAL build.
-8. The **`DHMHoejdekurver` file format** and size, and whether its `formkurve05` lines look like
-   the WMS's 0.5 m layer.
+8. ~~The `DHMHoejdekurver` file format~~ **Closed:** GeoPackage or GML, 16.2 GB and 0.76 GB
+   national; the lines are the WMS's lines.
 9. The Hetzner Object Storage **extra-egress price** (page wording garbled) and Hetzner volume
    prices. Neither is needed for the recommendation.
+10. **Høje Målebordsblade:** ask Datafordeler support why `DTKHøjeMaalebordsblade` answers `404`
+    (S9).
+11. The file listing for `DHMHoejdekurver` has not been regenerated since 28 Sep 2026 (generation
+    401). Check that a newer generation does not change the lines before the build, and note the
+    generation in the PMTiles metadata.
 
 ## 11. Files and how to reproduce
 
@@ -675,6 +719,10 @@ the same SSIM/PSNR and the same hillshade statistics, and one WCS chunk was byte
 | `scripts/build-contours.sh` | Terrain → contour variants (0.5 m, 2.5 m, 5 m) as vector PMTiles, with time and RAM |
 | `scripts/build-extras.sh` | `hillshade` (gdaldem on the terrain), `stednavne` (snapshot → tippecanoe), `quality` (SSIM and PSNR with ffmpeg) |
 | `scripts/stednavne-geojson.mjs` | `data/stednavne.tsv.gz` → GeoJSONSeq with tippecanoe minzooms (called by `build-extras.sh stednavne`) |
+| `scripts/dafo/` | Datafordeler file API with the key from `DAFO_KEY` (redacted from all output): `dafo.py` (any FileDownloads method), `count-sheets.py` (sheets per 20 km cell), `fetch-terrain.sh` (0.4 m terrain in 2 x 2 km calls), `wcs-probe.py` (`dhm_wcs` chunk), `kurve-sum.py` (contour file sizes) |
+| `scripts/build-contours-dafo.sh` | KDS's `Formkurve0_5` / `Formkurve2_5` GeoPackage → vector PMTiles, with time and RAM |
+| `scripts/land-sheets.py` | Which 20 km sheets touch land, from the place-name snapshot |
+| `scripts/compose.sh` | Side-by-side crops of render PNGs for the `gate-*.webp` images |
 | `scripts/zoomstats.py`, `scripts/extrapolate.py` | Per-zoom tile sizes, and the extrapolation to Denmark (`extrapolate.py <tilecounts.json> <out dir>`, reads `<out>/<layer>/zoomstats.txt`) |
 | `scripts/render/` | Render rig: `serve.mjs` (static + Range), `page.html` (MapLibre frame like the PDF renderer), `shoot.mjs` (headless Chrome over CDP, localhost only), `cases/` |
 | `measurements/` | Build logs, zoom statistics, render summaries, quality metrics, fetch totals, extrapolation |
@@ -709,6 +757,63 @@ python3 $D/scripts/extrapolate.py $D/measurements/dk-tilecounts-from-pr60.json $
 
 The other layers follow the DTK25 lines with the parameters in the build logs (Høje and Lave
 Målebordsblade at 1.25 m, ortofoto at 0.25 m over 2.5 x 2.5 km, the KDS hillshade WMS `dhm_terraen_skyggekort` at 1.25 m).
+
+**The raw-data gate** (section 3.4) on agent-worker, with `$W` on the Hetzner volume. The key goes
+into the environment, never onto the command line or into a file:
+
+```sh
+D=docs/research/2026-11-selvhosting W=/mnt/HC_Volume_107237308/mads/selvhost-gate-scratch
+export DAFO_KEY="$(tr -d '\r\n' < ~/.config/kort/datafordeler.key)"
+S="minx=530000 miny=6220000 maxx=540000 maxy=6230000"
+python3 -I $D/scripts/dafo/dafo.py GetRasterMultipleSize $S register=DTK version=1 datasetname=DTK25
+python3 -I $D/scripts/dafo/count-sheets.py DTK DTK25 20000 440000 6040000 900000 6420000 > dtk25.tsv
+python3 -I $D/scripts/dafo/dafo.py GetRasterMultipleFiles $S register=DTK version=1 datasetname=DTK25 --out $W/raw/dtk25/dl.zip
+python3 -I $D/scripts/dafo/dafo.py GetRasterMultipleFiles $S register=DTK version=1 datasetname=DTKLaveMaalebordsblade --out $W/raw/lave/dl.zip
+$D/scripts/dafo/fetch-terrain.sh $W/raw/terraen 530000 6220000 540000 6230000   # then unzip to $W/raw/terraen/tif
+python3 -I $D/scripts/dafo/dafo.py GetFile Filename=DHMHoejdekurver_V4_Formkurve0_5_0740_TotalDownload_gpkg_Current_401.zip --out $W/raw/kurver/k05.zip
+# unzip the sheets, then build (C = the Silkeborg box)
+C="530000 6220000 540000 6230000"
+OVR=lanczos CLIP="$C" $D/scripts/build-raster.sh $W/raw/dtk25 $W/out/dtk25 dtk25r 16 6 WEBP:85 PNG:0
+OVR=lanczos EXPAND=rgb CLIP="$C" $D/scripts/build-raster.sh $W/raw/lave $W/out/lave laver 16 6 WEBP:85
+RES=1.6 $D/scripts/build-extras.sh hillshade $W/raw/terraen/tif $W/raw/hillshade
+OVR=lanczos $D/scripts/build-raster.sh $W/raw/hillshade $W/out/hillshade hsr 16 6 WEBP:80
+$D/scripts/build-contours-dafo.sh $W/raw/kurver/<Formkurve0_5 gpkg> formkurve0_5 k05r 12 $W/out/kurver $C
+node $D/scripts/render/shoot.mjs $D/scripts/render/cases/cases-gate.json $W/tiles $W/render
+python3 $D/scripts/extrapolate.py $D/measurements/dk-tilecounts-from-pr60.json $W/out gate
+```
+
+## 12. Build plan for the next job
+
+One job per layer, in this order, each on its own branch and PR. Each job builds, checks and keeps
+the PMTiles on agent-worker; upload to `tiles.mahoje.dk` (S2 (a): versioned files, `.ny` then `mv`,
+as `scripts/contours/README.md`) is a separate, explicit step, and the app switch (source in
+`src/lib/map/sources.ts`, `dataSources.ts`, `NOTICE.md`, PDF credit with "tilpasset af
+kort.mahoje.dk") is a normal app PR per layer. Common rules:
+
+- Work on the Hetzner volume (`/mnt/HC_Volume_107237308`), one raster layer at a time; ~60 GB
+  scratch per raster layer, delete the 3857 GeoTIFF and MBTiles once the PMTiles is checked.
+- Key from `~/.config/kort/datafordeler.key` into `DAFO_KEY` only; `scripts/dafo/` redacts it.
+- Resumable downloads: one file per sheet or cell, skip what exists (as `fetch-terrain.sh`).
+- `gdalwarp -wo NUM_THREADS=4` per sheet with 3-4 sheets in parallel; tile encoding on one core.
+- Write the PMTiles metadata: attribution (Klimadatastyrelsen, CC BY 4.0, "tilpasset af
+  kort.mahoje.dk"), source dataset and generation, build date.
+- Check before upload: `pmtiles show`, z6-z16 tile counts against
+  `measurements/dk-tilecounts-from-pr60.json`, three test tiles (Copenhagen, Silkeborg, Skagen),
+  and the gate's 1:25.000 render of Silkeborg against `gate-*.webp`.
+
+| # | Layer and file | Input and download | Steps | Expected result | Time |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Danske Stednavne → `stednavne.v1.pmtiles` | `data/stednavne.tsv.gz`, no key | `build-extras.sh stednavne` (snapshot → GeoJSONSeq → tippecanoe z6-14) | 10.6 MB | minutes |
+| 2 | Lave Målebordsblade → `lave-maalebordsblade.v1.pmtiles` | 190 land sheets from `count-sheets.py` + `land-sheets.py`; `GetRasterMultipleFiles` one sheet per call (interior 20 km box), 5.7 GB, ~45 min | per sheet: RGB VRT (`EXPAND=rgb`) → `gdalwarp` 3857 lanczos at z16 resolution; then a national VRT of the warped sheets → MBTiles WebP q85 z16 → `gdaladdo -r lanczos` with `-oo QUALITY=85` → PMTiles | ~8.5 GB (4.0-11.0) | ~12.5 CPU-h, ~7 h wall |
+| 3a | Contours 2.5 m → `kurver-2_5m.v1.pmtiles` | `GetAvailableFileDownloads Register=DHMHoejdekurver`, newest `Formkurve2_5` national gpkg, 0.76 GB | `build-contours-dafo.sh … formkurve2_5 … 11` (z11-14) | ~0.25 GB | ~15 min |
+| 3b | Contours 0.5 m → `kurver-0_5m.v1.pmtiles` | `Formkurve0_5` per municipality (98 files, 16.4 GB, ~1.7 h) | per municipality: `ogr2ogr` → GeoJSONSeq → one tippecanoe run over all files (or per municipality + `tile-join`), **max zoom 15**; the style gets minzoom ~15.5 | ~2.9 GB | ~2.5-3 h |
+| 3c | Hillshade → `hillshade-dhm.v1.pmtiles` | `dhm_wcs` at 1.6 m per 5 km cell with a 50 m buffer, the cell list and probe from `kurver-dk.sh`; ~67 GB streamed, ~10.5 h | per cell: `gdaldem hillshade -multidirectional -z 1.5`, crop the buffer, keep the hillshade only (~28 MB per 100 km²); then one VRT → raster pipeline WebP q80 z6-16 (z17 only if S8 (b)) | ~2.7 GB (z6-16) | ~8 CPU-h + download, ~12 h wall |
+| 4 | DTK25 → `dtk25-2023.v1.pmtiles` | 192 land sheets, 5.7 GB, ~45 min | as Lave without `EXPAND` | ~7.8 GB (3.7-10.2) | ~12.4 CPU-h, ~7 h wall |
+| - | Høje Målebordsblade | S9 | | | |
+
+The hillshade loop (3c) is also the natural place to rebuild `kurver-5m.pmtiles` from the same
+1.6 m terrain, since `kurver-dk.sh` reads `dhm_wcs_DAF`, which closes on 26 Nov.
+
 
 [mig]: ../2026-11-datafordeleren-migration.md
 [dafo-trans]: https://datafordeler.dk/media/rijp4jxb/transitionsguide-for-fildownload-samt-etablering-og-vedligeholdelse-af-kopiregister.pdf
