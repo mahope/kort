@@ -1,4 +1,5 @@
-import type { OfflineArea } from "@/stores/offlineStore";
+import { useOfflineStore, type OfflineArea } from "@/stores/offlineStore";
+import { migrateLegacyTileKeys } from "./legacyKeys";
 import { areaTileUrls, offlineCacheKey } from "./tiles";
 
 /**
@@ -26,4 +27,28 @@ export async function findMissingAreas(
     if (hits.every((h) => !h)) missing.push(area.id);
   }
   return missing;
+}
+
+/** Set once the saved tiles sit under the tile-route keys (see legacyKeys.ts). */
+const KEYS_MIGRATED_FLAG = "offline-tile-keys";
+const KEYS_MIGRATED_VALUE = "tile-route";
+let migration: Promise<void> | null = null;
+
+/**
+ * Moves areas saved before the tile route to the new keys, once per browser.
+ * The map (service worker) and the offline panel both wait on it; run before
+ * findMissingAreas, which would otherwise drop those areas as evicted.
+ */
+export function ensureOfflineKeysMigrated(): Promise<void> {
+  migration ??= (async () => {
+    if (typeof caches === "undefined" || typeof localStorage === "undefined") return;
+    if (localStorage.getItem(KEYS_MIGRATED_FLAG) === KEYS_MIGRATED_VALUE) return;
+    const areas = useOfflineStore.getState().areas;
+    if (areas.length > 0) await migrateLegacyTileKeys(areas, await caches.open(OFFLINE_CACHE_NAME));
+    localStorage.setItem(KEYS_MIGRATED_FLAG, KEYS_MIGRATED_VALUE);
+  })().catch(() => {
+    // Try again on the next load.
+    migration = null;
+  });
+  return migration;
 }

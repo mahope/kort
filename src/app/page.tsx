@@ -14,6 +14,7 @@ import { UrlSync } from "@/components/map/UrlSync";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
 import { ToastContainer } from "@/components/ui/Toast";
 import { registerServiceWorker } from "@/lib/pwa/register";
+import { ensureOfflineKeysMigrated } from "@/lib/offline/areas";
 import { useUiStore } from "@/stores/uiStore";
 
 const MapContainer = dynamic(
@@ -35,6 +36,8 @@ export default function Home() {
 
   useEffect(() => {
     registerServiceWorker();
+    // Saved areas from before the tile route: move their tiles to the new keys.
+    void ensureOfflineKeysMigrated();
   }, []);
 
   return (

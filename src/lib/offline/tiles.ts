@@ -112,19 +112,29 @@ function sourceFor(layerId: string): Pick<RasterSourceConfig, "tiles" | "bounds"
 }
 
 /**
- * All tile URLs an area needs, deduplicated. Tiles outside a layer's bounds
- * are left out, as MapLibre never asks for them (and the tile route refuses them).
+ * The URL a saved layer uses for one tile, or null for unknown layers and for
+ * tiles outside the layer's bounds: MapLibre never asks for those (and the
+ * tile route refuses them).
  */
+export function layerTileUrl(layerId: string, tile: TileCoord): string | null {
+  const source = sourceFor(layerId);
+  if (!source || (source.bounds && !tileIntersects(tile, source.bounds))) return null;
+  return expandTileUrl(source.tiles[0], tile);
+}
+
+/** The tiles (padded) an area covers on each saved zoom level. */
+export function areaTiles(bounds: PrintFrameBounds): TileCoord[] {
+  return tilesForBounds(padBounds(bounds, OFFLINE_PADDING));
+}
+
+/** All tile URLs an area needs, deduplicated. */
 export function areaTileUrls(bounds: PrintFrameBounds, layerIds: string[]): string[] {
-  const tiles = tilesForBounds(padBounds(bounds, OFFLINE_PADDING));
+  const tiles = areaTiles(bounds);
   const urls = new Set<string>();
   for (const id of layerIds) {
-    const source = sourceFor(id);
-    if (!source) continue;
-    const template = source.tiles[0];
     for (const t of tiles) {
-      if (source.bounds && !tileIntersects(t, source.bounds)) continue;
-      urls.add(expandTileUrl(template, t));
+      const url = layerTileUrl(id, t);
+      if (url) urls.add(url);
     }
   }
   return [...urls];

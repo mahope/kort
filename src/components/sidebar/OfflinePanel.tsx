@@ -17,7 +17,7 @@ import {
   confirmReason,
   MAX_TILE_COUNT,
 } from "@/lib/offline/tiles";
-import { findMissingAreas, OFFLINE_CACHE_NAME } from "@/lib/offline/areas";
+import { ensureOfflineKeysMigrated, findMissingAreas, OFFLINE_CACHE_NAME } from "@/lib/offline/areas";
 import { deleteTiles, downloadTiles, type DownloadProgress } from "@/lib/offline/download";
 import { usesNordicTopo } from "@/lib/map/sources";
 import { useMapRegion } from "@/lib/hooks/useMapRegion";
@@ -61,6 +61,8 @@ export function OfflinePanel() {
     if (typeof caches === "undefined") return;
     let alive = true;
     (async () => {
+      // Areas saved before the tile route still sit under the old keys.
+      await ensureOfflineKeysMigrated();
       const cache = await caches.open(OFFLINE_CACHE_NAME);
       const missing = await findMissingAreas(useOfflineStore.getState().areas, cache);
       if (!alive) return;
