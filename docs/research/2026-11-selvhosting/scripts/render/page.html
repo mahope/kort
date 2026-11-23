@@ -20,6 +20,8 @@ const LIVE = {
   "wms-lave": wms("topo20_lave_maalebordsblade_DAF", "dtk_lave_maalebordsblade"),
   "wms-skygge": wms("dhm_DAF", "dhm_terraen_skyggekort").replace("STYLES=default", "STYLES="),
   "wms-stednavne": wms("danske_stednavne_DAF", "danske_stednavne"),
+  "wms-kurve-05": wms("dhm_DAF", "dhm_kurve_0_5_m").replace("STYLES=default", "STYLES="),
+  "wms-kurve-25": wms("dhm_DAF", "dhm_kurve_traditionel").replace("STYLES=default", "STYLES="),
   "wmts-orto": `https://api.dataforsyningen.dk/orto_foraar_webm_DAF?service=WMTS&request=GetTile&version=1.0.0&layer=orto_foraar_webm&style=default&TileMatrixSet=DFD_GoogleMapsCompatible&TileMatrix={z}&TileRow={y}&TileCol={x}&format=image/jpeg&token=${T}`,
 };
 const protocol = new pmtiles.Protocol();
@@ -37,6 +39,12 @@ const add = (id, src) => {
     layers.push({ id, type: "symbol", source: id, "source-layer": "stednavne",
       layout: { "text-field": ["get", "navn"], "text-font": ["Open Sans Italic"], "text-size": Number(p.textsize || 11) },
       paint: { "text-color": "#1a3d6e", "text-halo-color": "#fff", "text-halo-width": 1.2 } });
+    return;
+  }
+  if (src.startsWith("pmtiles-lines:")) { // contour lines, colour and 0.13 mm width as src/lib/map/contours.ts
+    sources[id] = { type: "vector", url: `pmtiles://${location.origin}/tiles/${src.slice(14)}` };
+    layers.push({ id, type: "line", source: id, "source-layer": "kurver", layout: { "line-join": "round" },
+      paint: { "line-color": "#a15c2b", "line-width": 0.13 * Number(p.dpi) / 25.4 } });
     return;
   }
   sources[id] = src.endsWith(".pmtiles")

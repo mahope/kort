@@ -2,6 +2,10 @@
 """Fetch a 10 x 10 km sample of a WMS layer as georeferenced chunks.
 
 Usage: fetch-wms.py <outdir> <service> <layer> <res_m> <format> [x0 y0 x1 y1]
+       fetch-wms.py --wcs <outdir> <service> <coverage> <px> [x0 y0 x1 y1]
+
+The --wcs form fetches GeoTIFF terrain from a WCS 1.0.0 in 2.5 km chunks of
+<px> x <px> pixels (the sample used dhm_wcs_DAF dhm_terraen 1563, i.e. 1.6 m).
 
 EPSG:25832, 2000 px chunks, one request at a time with a pause. Each chunk is
 saved with a world file (.wld) so GDAL can mosaic it. Reads the app's public
@@ -13,6 +17,32 @@ import json, os, sys, time, urllib.request
 TOKEN = os.environ["DF_TOKEN"]  # the public token from src/lib/map/styles.ts
 UA = "kort.mahoje.dk research #39 (small sample)"
 CHUNK = 2000
+
+if sys.argv[1] == "--wcs":
+    out, service, coverage, px = sys.argv[2:6]; px = int(px)
+    x0, y0, x1, y1 = map(float, sys.argv[6:10]) if len(sys.argv) > 6 else (530000, 6220000, 540000, 6230000)
+    os.makedirs(out, exist_ok=True)
+    log = open(os.path.join(out, "fetch-log.jsonl"), "a")
+    STEP = 2500
+    for x in range(int(x0), int(x1), STEP):
+        for y in range(int(y0), int(y1), STEP):
+            path = os.path.join(out, f"dtm_{x}_{y}.tif")
+            if os.path.exists(path): continue
+            url = (f"https://api.dataforsyningen.dk/{service}?service=WCS&version=1.0.0&request=GetCoverage"
+                   f"&coverage={coverage}&crs=EPSG:25832&format=GTiff&bbox={x},{y},{x + STEP},{y + STEP}"
+                   f"&width={px}&height={px}&token={TOKEN}")
+            t = time.time()
+            req = urllib.request.Request(url, headers={"User-Agent": UA, "Referer": "https://kort.mahoje.dk/"})
+            with urllib.request.urlopen(req, timeout=300) as r:
+                data = r.read()
+            ms = round((time.time() - t) * 1000)
+            if data[:4] not in (b"II*\0", b"MM\0*"):  # the WCS answers errors with 200 and XML
+                sys.exit(f"not a GeoTIFF for {x},{y}: {data[:300]!r}")
+            open(path, "wb").write(data)
+            log.write(json.dumps({"chunk": f"dtm_{x}_{y}", "bytes": len(data), "ms": ms}) + "\n"); log.flush()
+            print(x, y, len(data), ms, flush=True)
+            time.sleep(0.5)
+    sys.exit(0)
 
 out, service, layer, res, fmt = sys.argv[1:6]
 res = float(res)

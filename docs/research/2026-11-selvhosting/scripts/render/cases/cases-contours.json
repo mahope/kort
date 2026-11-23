@@ -1,0 +1,52 @@
+[
+ {
+  "name": "kurver05-25k-300-wms",
+  "src": "wms-kurve-05",
+  "lon": 9.5393,
+  "lat": 56.158,
+  "scale": 25000,
+  "dpi": 300,
+  "w": 945,
+  "h": 709
+ },
+ {
+  "name": "kurver05-10k-300-wms",
+  "src": "wms-kurve-05",
+  "lon": 9.5393,
+  "lat": 56.158,
+  "scale": 10000,
+  "dpi": 300,
+  "w": 945,
+  "h": 709
+ },
+ {
+  "name": "kurver05-10k-300-own",
+  "src": "pmtiles-lines:k05.pmtiles",
+  "lon": 9.5393,
+  "lat": 56.158,
+  "scale": 10000,
+  "dpi": 300,
+  "w": 945,
+  "h": 709
+ },
+ {
+  "name": "kurver25-25k-300-wms",
+  "src": "wms-kurve-25",
+  "lon": 9.5393,
+  "lat": 56.158,
+  "scale": 25000,
+  "dpi": 300,
+  "w": 945,
+  "h": 709
+ },
+ {
+  "name": "kurver25-25k-300-own",
+  "src": "pmtiles-lines:k25.pmtiles",
+  "lon": 9.5393,
+  "lat": 56.158,
+  "scale": 25000,
+  "dpi": 300,
+  "w": 945,
+  "h": 709
+ }
+]

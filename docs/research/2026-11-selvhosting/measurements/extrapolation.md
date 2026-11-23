@@ -10,8 +10,10 @@
 | Høje Målebordsblade JPEG q85 | 6-16 | 499,528 | 18.4 | **10.0** (4.7-13.0) |
 | Høje Målebordsblade WebP q85 | 6-16 | 499,528 | 15.0 | **8.4** (3.9-10.9) |
 | Høje Målebordsblade JPEG q85, z6-15 | 6-15 | 128,582 | 18.4 | **3.2** (1.5-4.1) |
+| Høje Målebordsblade WebP q85, z6-15 | 6-15 | 128,582 | 15.0 | **2.8** (1.3-3.7) |
 | Lave Målebordsblade JPEG q85 | 6-16 | 499,528 | 17.6 | **9.5** (4.5-12.4) |
 | Lave Målebordsblade WebP q85 | 6-16 | 499,528 | 14.1 | **7.9** (3.7-10.3) |
+| Lave Målebordsblade WebP q85, z6-15 | 6-15 | 128,582 | 14.1 | **2.7** (1.3-3.5) |
 | Hillshade (own, gdaldem) WebP q80 | 6-16 | 499,528 | 5.4 | **2.9** (1.4-3.8) |
 | Hillshade (own, gdaldem) JPEG q80 | 6-16 | 499,528 | 8.4 | **4.4** (2.1-5.7) |
 | Hillshade (own) WebP q80, z6-15 | 6-15 | 128,582 | 5.4 | **0.9** (0.4-1.2) |
