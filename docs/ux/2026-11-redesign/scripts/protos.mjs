@@ -82,7 +82,8 @@ const PLAN = {
 // along the horizontal line through the middle of that run gives the width.
 // The outermost pixel on each side is not sampled (anti-aliased edges and borders
 // shared with a neighbour) but still counts. Controls that get no hits at all
-// (behind a modal, inert) are not reachable right now and are skipped.
+// (behind a modal, inert) are not reachable right now and are skipped, except
+// inside an open modal dialog: those must be tappable, so they are reported.
 async function smallTargets(page) {
   return page.evaluate(() => {
     const out = [];
@@ -95,7 +96,9 @@ async function smallTargets(page) {
       return best ? [best + 2, bestMid] : [0, -1];
     };
     for (const el of document.querySelectorAll("button, a, select, input, [role=radio], [role=tab], label.check")) {
-      if (el.closest(".protobar") || el.closest("[inert]") || !el.checkVisibility()) continue;
+      const inModal = !!el.closest("[aria-modal=true]:not([hidden])");
+      if (el.closest(".protobar") || !el.checkVisibility()) continue;
+      if (el.closest("[inert]")) { if (inModal) out.push(`${el.tagName.toLowerCase()} i åben dialog er inert`); continue; }
       if (el.matches("input[type=checkbox]") && el.closest("label.check")) continue;
       let r = el.getBoundingClientRect();
       if (!r.width || !r.height) continue;
@@ -105,7 +108,7 @@ async function smallTargets(page) {
       r = el.getBoundingClientRect();
       const cx = r.left + r.width / 2;
       const [hgt, mid] = longestRun(Math.floor(r.height), (i) => hits(el, cx, r.top + i + 0.5));
-      if (!hgt) continue;
+      if (!hgt) { if (inModal) out.push(`${name} i åben dialog kan ikke trykkes`); continue; }
       const cy = r.top + mid + 0.5;
       const [wid] = longestRun(Math.floor(r.width), (i) => hits(el, r.left + i + 0.5, cy));
       if (hgt < 43.5 || wid < 43.5) out.push(`${name} trykflade ${wid}x${hgt} (boks ${Math.round(r.width)}x${Math.round(r.height)})`);

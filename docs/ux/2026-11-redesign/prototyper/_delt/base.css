@@ -253,7 +253,7 @@ input[type="range"] { width: 100%; accent-color: var(--primary); min-height: 44p
   box-shadow: 0 0 0 9999px rgb(20 22 26 / 0.28);
   transition: width 160ms, height 160ms, transform 160ms;
 }
-.frame .sheet { position: absolute; box-sizing: border-box; border: 1px dashed rgb(220 38 38 / 0.7); }
+.frame .sheet { position: absolute; border: 1px dashed rgb(220 38 38 / 0.7); }
 .frame-tag { position: absolute; left: 6px; bottom: 6px; background: var(--surface); color: var(--fg); font-size: 12px; padding: 3px 8px; border-radius: var(--radius); box-shadow: var(--shadow); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .crosshair { position: absolute; left: 50%; top: 50%; width: 28px; height: 28px; transform: translate(-50%, -50%); color: #15181c; pointer-events: none; }
 

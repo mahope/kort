@@ -528,11 +528,11 @@
           h("button", { type: "button", class: "iconbtn", "aria-label": lbl + ": flere", onclick: () => set({ [key]: Math.min(6, state[key] + 1) }) }, icon("plus"))));
       wrap.append(stepper("Ark på tværs", "cols"), stepper("Ark på langs", "rows"));
       wrap.append(h("div", {}, h("label", { class: "label", for: "overlap" }, "Overlap ", h("span", { class: "hint tnum" }, state.overlap + " mm")),
-        h("input", { id: "overlap", type: "range", min: "0", max: "20", step: "1", value: String(state.overlap), "data-focus": "overlap", oninput: (e) => set({ overlap: Number(e.target.value) }) })));
+        h("input", { id: "overlap", type: "range", min: "0", max: "20", step: "1", value: String(state.overlap), "data-focus": "overlap", oninput: (e) => { liveHint(e.target, e.target.value + " mm"); set({ overlap: Number(e.target.value) }); } })));
       if (state.rotation) wrap.append(h("p", { class: "notice", role: "note" }, icon("warn"), h("span", {}, "Kortet er drejet. Sæt rotationen til 0°, ellers passer arkene ikke sammen.")));
     }
     wrap.append(h("div", {}, h("label", { class: "label", for: "rot" }, "Drej kortet ", h("span", { class: "hint tnum" }, state.rotation + "°")),
-      h("input", { id: "rot", type: "range", min: "-180", max: "180", step: "1", value: String(state.rotation), "data-focus": "rot", oninput: (e) => set({ rotation: Number(e.target.value) }) })));
+      h("input", { id: "rot", type: "range", min: "-180", max: "180", step: "1", value: String(state.rotation), "data-focus": "rot", oninput: (e) => { liveHint(e.target, e.target.value + "°"); set({ rotation: Number(e.target.value) }); } })));
     wrap.append(h("div", {}, h("label", { class: "label", for: "dpi" }, "Opløsning"),
       (() => { const s = h("select", { id: "dpi", class: "select", onchange: (e) => set({ dpi: Number(e.target.value) }) });
         [[150, "150 dpi, hurtig"], [200, "200 dpi"], [300, "300 dpi, høj kvalitet"]].forEach(([v, l]) => s.append(h("option", { value: v, selected: state.dpi === v }, l))); return s; })()));
@@ -647,9 +647,20 @@
       toolBody(t.id));
   };
 
+  // A slider being dragged must not be rebuilt under the pointer, or the drag ends
+  // after the first step. Its widget is skipped until release; the label hint is
+  // kept live by the slider's own handler.
+  let dragging = null;
+  document.addEventListener("pointerdown", (e) => { if (e.target.matches && e.target.matches("input[type=range]")) dragging = e.target; });
+  const endDrag = () => { if (!dragging) return; dragging = null; set({}); };
+  window.addEventListener("pointerup", endDrag);
+  window.addEventListener("pointercancel", endDrag);
+  function liveHint(input, text) { const hint = input.labels && input.labels[0] && input.labels[0].querySelector(".hint"); if (hint) hint.textContent = text; }
+
   function renderWidget(el) {
     const fn = W[el.dataset.widget];
     if (!fn) return;
+    if (dragging && el.contains(dragging)) return;
     const active = document.activeElement;
     const key = active && el.contains(active) ? active.getAttribute("data-focus") || (active.getAttribute("role") === "radio" ? "radio:" + active.closest("[role=radiogroup]").getAttribute("aria-label") : null) : null;
     const caret = key === "layersearch" ? active.selectionStart : null;

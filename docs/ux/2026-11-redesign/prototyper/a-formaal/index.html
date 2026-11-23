@@ -207,10 +207,12 @@
     p.classList.toggle("sheetlike", modal);
     p.setAttribute("aria-modal", String(modal));
     $("#scrim").hidden = !modal;
-    const behind = [
-      ...Array.from(document.body.children).filter((c) => !c.matches(".map, #scrim, script")),
-      ...Array.from($(".map").children).filter((c) => c.id !== "layerpanel"),
-    ];
+    // Everything behind is every sibling of the panel and of each of its ancestors,
+    // so the panel itself and the elements that contain it are never made inert.
+    const behind = [];
+    for (let n = p; n && n !== document.body; n = n.parentElement) {
+      behind.push(...Array.from(n.parentElement.children).filter((c) => c !== n && !c.matches("#scrim, script")));
+    }
     behind.forEach((c) => (c.inert = modal));
   }
   mobileQuery.addEventListener("change", syncModal);

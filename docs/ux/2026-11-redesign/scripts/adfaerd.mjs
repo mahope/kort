@@ -64,16 +64,47 @@ await check("C: forhåndsvisningen drejer kortet modsat rammen", "c-trin", DESKT
   expect(t === "rotate(-45deg)", "transform: " + t);
 });
 
-await check("A mobil: Tab bliver i lagpanelet, mens det er åbent", "a-formaal", MOBILE, async (p) => {
-  await p.click("#open-layers-map");
+// Tabs 40 times in the open mobile layer panel. Focus may pass body once per lap
+// (Chromium leaves the page after the last element), but never land behind the
+// panel, and the panel's own controls must actually be reached.
+async function tabStaysInPanel(p) {
+  const seen = new Set();
   for (let i = 0; i < 40; i++) {
     await p.keyboard.press("Tab");
     const where = await p.evaluate(() => {
       const a = document.activeElement;
-      return a.closest("#layerpanel") ? "panel" : a.closest(".protobar") || a === document.body ? "udenfor-design" : a.outerHTML.slice(0, 60);
+      if (a === document.body) return "body";
+      return a.closest("#layerpanel") ? "panel:" + (a.id || a.dataset.focus || a.tagName) : "bag:" + a.outerHTML.slice(0, 60);
     });
-    expect(where === "panel" || where === "udenfor-design", "fokus bag panelet: " + where);
+    expect(!where.startsWith("bag:"), "fokus bag panelet: " + where);
+    seen.add(where);
   }
+  expect(seen.has("panel:close-layers"), "Luk fik aldrig fokus: " + Array.from(seen).join(" "));
+  expect([...seen].some((s) => s.startsWith("panel:base-")), "intet basiskort fik fokus: " + Array.from(seen).join(" "));
+}
+
+await check("A mobil: lagpanelet kan bruges med Tab og tryk, og intet bag det kan nås", "a-formaal", MOBILE, async (p) => {
+  await p.tap("#open-layers-map");
+  await tabStaysInPanel(p);
+  await p.locator("#layerpanel [data-focus='base-ortofoto']").tap({ timeout: 2000 });
+  expect(await p.evaluate(() => window.Kort.state.base) === "ortofoto", "basiskort blev ikke valgt ved tryk");
+  await p.locator("#close-layers").tap({ timeout: 2000 });
+  expect(await p.locator("#layerpanel").isHidden(), "Luk lukkede ikke panelet");
+});
+
+await check("C: Overlap-skyderen kan trækkes i ét træk fra 10 til 20 mm", "c-trin", DESKTOP, async (p) => {
+  await p.getByRole("tab", { name: /Print/ }).click();
+  await p.click("#exp-print");
+  await p.click("[data-focus='multi']");
+  const r = await p.locator("#overlap").boundingBox();
+  await p.mouse.move(r.x + r.width / 2, r.y + r.height / 2);
+  await p.mouse.down();
+  for (let i = 1; i <= 10; i++) await p.mouse.move(r.x + r.width / 2 + (i * r.width) / 10, r.y + r.height / 2);
+  const during = await p.evaluate(() => [window.Kort.state.overlap, document.querySelector("label[for=overlap] .hint").textContent]);
+  await p.mouse.up();
+  expect(during[0] === 20 && during[1] === "20 mm", "under trækket: " + during);
+  const after = await p.evaluate(() => [window.Kort.state.overlap, document.querySelector("#overlap").value]);
+  expect(after[0] === 20 && after[1] === "20", "efter slip: " + after);
 });
 
 await check("Mobil: Enter på panelhåndtaget skifter størrelse", "c-trin", MOBILE, async (p) => {
@@ -105,11 +136,7 @@ for (const dir of ["a-formaal", "b-lagpanel", "c-trin"]) {
 
 await check("A mobil uden ?ren=1: prototypelinjen er bag dæmpningen, og skift til desktop ophæver den", "a-formaal", { ...MOBILE, url: "" }, async (p) => {
   await p.click("#open-layers-map");
-  for (let i = 0; i < 40; i++) {
-    await p.keyboard.press("Tab");
-    const where = await p.evaluate(() => (document.activeElement.closest("#layerpanel") || document.activeElement === document.body ? "ok" : document.activeElement.outerHTML.slice(0, 60)));
-    expect(where === "ok", "fokus bag panelet: " + where);
-  }
+  await tabStaysInPanel(p);
   await p.setViewportSize({ width: 1440, height: 900 });
   await p.waitForTimeout(200);
   const s = await p.evaluate(() => ({ scrim: document.querySelector("#scrim").hidden, inert: !!document.querySelector("#side").inert, bar: !!(document.querySelector(".protobar") || {}).inert }));
