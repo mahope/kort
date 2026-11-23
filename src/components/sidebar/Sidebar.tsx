@@ -269,6 +269,8 @@ function SidebarContent() {
           <a href="/kilder" className="inline-flex items-center justify-center pointer-coarse:min-h-11 hover:text-text-secondary underline underline-offset-2">Datakilder</a>
           <span>&middot;</span>
           <a href="/om" className="inline-flex items-center justify-center pointer-coarse:min-h-11 pointer-coarse:min-w-11 hover:text-text-secondary underline underline-offset-2">Om</a>
+          <span>&middot;</span>
+          <a href={brand.github} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center pointer-coarse:min-h-11 hover:text-text-secondary underline underline-offset-2">Open source på GitHub<span className="sr-only"> (åbner i ny fane)</span></a>
           {brand.id === "solaris" && (
             <>
               <span className="md:hidden">&middot;</span>

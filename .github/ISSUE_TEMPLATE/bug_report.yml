@@ -1,0 +1,34 @@
+name: Bug report / Fejl
+description: Something does not work as expected. Danish or English is fine.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? / Hvad skete der?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: Share link / Delingslink
+      description: Use "Del" in the app to copy a link to the map view, so we can reproduce it.
+  - type: dropdown
+    id: site
+    attributes:
+      label: Site
+      options:
+        - kort.mahoje.dk
+        - kort.solaris.dk
+        - Local / self-hosted
+  - type: input
+    id: browser
+    attributes:
+      label: Device and browser / Enhed og browser
+      placeholder: e.g. iPhone 15, Safari 19 / Windows, Chrome 142
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshot, PDF or console output
+      description: Drag files in here. Remove anything personal first.

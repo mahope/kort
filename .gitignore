@@ -46,3 +46,6 @@ next-env.d.ts
 # planning docs
 PLAN.md
 PRD.md
+
+# Local env files; .env.example documents the variables
+!.env.example

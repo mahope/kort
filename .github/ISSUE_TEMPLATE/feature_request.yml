@@ -1,0 +1,20 @@
+name: Feature request / Ønske
+description: Suggest an idea or a new map layer. Danish or English is fine.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What do you want to do? / Hvad vil du gerne kunne?
+      description: Describe the situation (scouting, orienteering, hiking, sailing …) rather than the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Idea / Forslag
+  - type: input
+    id: data
+    attributes:
+      label: Data source (for new layers) / Datakilde
+      description: Link to the dataset and its licence, if you know it.

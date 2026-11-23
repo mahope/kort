@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   check:
-    name: Build, lint and test
+    name: Build, lint, typecheck and test
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -27,6 +27,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run build
       - run: npm run lint
+      - run: npm run typecheck
       - run: npx vitest run
 
   audit:
@@ -42,3 +43,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm audit --omit=dev --audit-level=high
+
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      # Known public-by-design tokens are listed in .gitleaksignore (docs/tokens.md).
+      - run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.28.0 git /repo --redact --no-banner
