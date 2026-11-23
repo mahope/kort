@@ -6,9 +6,9 @@ import { usePrintStore } from "@/stores/printStore";
 import { useOfflineStore, type OfflineArea } from "@/stores/offlineStore";
 import { useUiStore } from "@/stores/uiStore";
 import {
+  areaTilePlan,
   areaTileUrls,
   checkStart,
-  estimateAreaBytes,
   formatBytes,
   isBaseLayerSaveable,
   offlineLayerIds,
@@ -83,12 +83,8 @@ export function OfflinePanel() {
     () => offlineLayerIds(baseLayer, overlays).filter((id) => !(nordic && id === baseLayer)),
     [baseLayer, overlays, nordic]
   );
-  const urls = useMemo(
-    () => (frameBounds ? areaTileUrls(frameBounds, layerIds) : []),
-    [frameBounds, layerIds]
-  );
-  const estimated = useMemo(
-    () => (frameBounds ? estimateAreaBytes(frameBounds, layerIds) : 0),
+  const { urls, bytes: estimated } = useMemo(
+    () => (frameBounds ? areaTilePlan(frameBounds, layerIds) : { urls: [], bytes: 0 }),
     [frameBounds, layerIds]
   );
   const check = checkStart(urls.length, estimated, available);

@@ -127,31 +127,35 @@ export function areaTiles(bounds: PrintFrameBounds): TileCoord[] {
   return tilesForBounds(padBounds(bounds, OFFLINE_PADDING));
 }
 
-/** All tile URLs an area needs, deduplicated. */
-export function areaTileUrls(bounds: PrintFrameBounds, layerIds: string[]): string[] {
+/**
+ * All tile URLs an area needs, deduplicated, and its estimated size from each
+ * layer's own tile count (layers stop at their bounds), in one pass.
+ */
+export function areaTilePlan(bounds: PrintFrameBounds, layerIds: string[]): { urls: string[]; bytes: number } {
   const tiles = areaTiles(bounds);
   const urls = new Set<string>();
+  let bytes = 0;
   for (const id of layerIds) {
+    let count = 0;
     for (const t of tiles) {
       const url = layerTileUrl(id, t);
-      if (url) urls.add(url);
+      if (!url) continue;
+      urls.add(url);
+      count++;
     }
+    bytes += estimateBytes(count, [id]);
   }
-  return [...urls];
+  return { urls: [...urls], bytes };
+}
+
+/** All tile URLs an area needs, deduplicated. */
+export function areaTileUrls(bounds: PrintFrameBounds, layerIds: string[]): string[] {
+  return areaTilePlan(bounds, layerIds).urls;
 }
 
 export function estimateBytes(tileCountPerLayer: number, layerIds: string[]): number {
   return layerIds.reduce(
     (sum, id) => sum + tileCountPerLayer * (AVG_TILE_BYTES[id] ?? 20 * 1024),
-    0
-  );
-}
-
-/** Estimated size of an area, from each layer's own tile count (layers stop at their bounds). */
-export function estimateAreaBytes(bounds: PrintFrameBounds, layerIds: string[]): number {
-  const tiles = areaTiles(bounds);
-  return layerIds.reduce(
-    (sum, id) => sum + estimateBytes(tiles.filter((t) => layerTileUrl(id, t)).length, [id]),
     0
   );
 }

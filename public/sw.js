@@ -298,7 +298,12 @@ async function offlineFetch(urls) {
 async function offlineDelete(urls) {
   const cache = await caches.open(OFFLINE_CACHE);
   let deleted = 0;
-  for (const u of offlineUrls(urls, 5000)) if (await cache.delete(offlineKey(u))) deleted++;
+  for (const u of offlineUrls(urls, 5000)) {
+    if (await cache.delete(offlineKey(u))) deleted++;
+    // Tiles not yet moved to the tile route's keys (see legacyOfflineKey).
+    const legacy = legacyOfflineKey(u);
+    if (legacy && (await cache.delete(legacy))) deleted++;
+  }
   return { deleted };
 }
 
@@ -361,10 +366,14 @@ function legacyOfflineKey(url) {
 
 async function savedTile(url) {
   const cache = await caches.open(OFFLINE_CACHE);
-  const saved = await cache.match(offlineKey(url));
+  const key = offlineKey(url);
+  const saved = await cache.match(key);
   if (saved) return saved;
   const legacy = legacyOfflineKey(url);
-  return legacy ? cache.match(legacy) : undefined;
+  if (!legacy) return undefined;
+  // The page may move the tile between the two lookups: then it sits under
+  // the new key again.
+  return (await cache.match(legacy)) || cache.match(key);
 }
 
 // Cache-first; entries older than 24 h are refreshed in the background.

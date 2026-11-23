@@ -9,7 +9,7 @@ import {
   offlineLayerIds,
   checkStart,
   confirmReason,
-  estimateAreaBytes,
+  areaTilePlan,
   estimateBytes,
   lngLatToTile,
 } from "../tiles";
@@ -83,7 +83,7 @@ describe("offline tiles", () => {
     const dtk = areaTileUrls(gedser, ["dtk25"]).length;
     const matrikel = areaTileUrls(gedser, ["matrikel"]).length;
     expect(dtk).toBeLessThan(matrikel);
-    expect(estimateAreaBytes(gedser, ["dtk25", "matrikel"])).toBe(
+    expect(areaTilePlan(gedser, ["dtk25", "matrikel"]).bytes).toBe(
       estimateBytes(dtk, ["dtk25"]) + estimateBytes(matrikel, ["matrikel"])
     );
   });

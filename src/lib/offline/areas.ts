@@ -10,21 +10,21 @@ import { areaTileUrls, offlineCacheKey } from "./tiles";
 export const OFFLINE_CACHE_NAME = "topoprint-offline-v2";
 
 /**
- * Ids of saved areas whose tiles the browser has evicted or cleared: first,
- * middle and last tile are all missing. Areas without any tile url cannot be
- * checked and are left alone.
+ * Ids of saved areas whose tiles the browser has evicted or cleared: none of
+ * their tiles is left. Checks every tile against one listing of the cache, so
+ * a partial download that missed a few tiles is kept. Areas without any tile
+ * url cannot be checked and are left alone.
  */
 export async function findMissingAreas(
   areas: OfflineArea[],
-  cache: { match: (key: string) => Promise<unknown> }
+  cache: { keys: () => Promise<readonly Request[]> }
 ): Promise<string[]> {
+  const present = new Set((await cache.keys()).map((r) => r.url));
   const missing: string[] = [];
   for (const area of areas) {
     const urls = areaTileUrls(area.bounds, area.layerIds);
     if (urls.length === 0) continue;
-    const sample = [urls[0], urls[Math.floor(urls.length / 2)], urls[urls.length - 1]];
-    const hits = await Promise.all(sample.map((u) => cache.match(offlineCacheKey(u))));
-    if (hits.every((h) => !h)) missing.push(area.id);
+    if (!urls.some((u) => present.has(offlineCacheKey(u)))) missing.push(area.id);
   }
   return missing;
 }

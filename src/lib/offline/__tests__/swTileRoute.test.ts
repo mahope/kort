@@ -19,13 +19,18 @@ function keyOf(req: string | Request): string {
   return typeof req === "string" ? new URL(req, ORIGIN).href : req.url;
 }
 
-function fakeCaches(opts: { full?: boolean } = {}) {
+type MatchHook = (key: string, store: Map<string, Response>) => void;
+
+function fakeCaches(opts: { full?: boolean; beforeMatch?: MatchHook } = {}) {
   const stores = new Map<string, Map<string, Response>>();
   const open = async (name: string) => {
     if (!stores.has(name)) stores.set(name, new Map());
     const m = stores.get(name)!;
     return {
-      match: async (req: string | Request) => m.get(keyOf(req))?.clone(),
+      match: async (req: string | Request) => {
+        opts.beforeMatch?.(keyOf(req), m);
+        return m.get(keyOf(req))?.clone();
+      },
       put: async (req: string | Request, res: Response) => {
         if (opts.full) throw new DOMException("quota", "QuotaExceededError");
         m.set(keyOf(req), res);
@@ -52,7 +57,10 @@ function fakeCaches(opts: { full?: boolean } = {}) {
   };
 }
 
-function loadWorker(network: { online: boolean }, opts: { full?: boolean; origin?: string } = {}) {
+function loadWorker(
+  network: { online: boolean },
+  opts: { full?: boolean; origin?: string; beforeMatch?: MatchHook } = {}
+) {
   const handlers: Record<string, Handler> = {};
   const caches = fakeCaches(opts);
   const fetchFn = async (input: string | Request) => {
@@ -155,6 +163,41 @@ describe("service worker and the tile route", () => {
     await offline.put(offlineCacheKey(expandTileUrl(LEGACY_TILE_TEMPLATES.dtk25, t)), new Response("old"));
     network.online = false;
     expect((await sw.request(png))?.status).toBe(503);
+  });
+
+  it("finds a tile the migration moves between the two lookups", async () => {
+    const t = areaTiles(mols)[0];
+    const url = layerTileUrl("dtk25", t)!;
+    const newKey = offlineCacheKey(url);
+    const oldKey = offlineCacheKey(expandTileUrl(LEGACY_TILE_TEMPLATES.dtk25, t));
+    // The page moves the tile right after the worker missed the new key.
+    const sw = loadWorker(network, {
+      origin: new URL(url).origin,
+      beforeMatch: (key, store) => {
+        if (key !== oldKey || !store.has(oldKey)) return;
+        store.set(newKey, store.get(oldKey)!);
+        store.delete(oldKey);
+      },
+    });
+    const offline = await sw.caches.api.open(OFFLINE_CACHE_NAME);
+    await offline.put(oldKey, new Response("old"));
+    network.online = false;
+    const res = await sw.request(url);
+    expect(res?.status).toBe(200);
+    expect(await res?.text()).toBe("old");
+  });
+
+  it("deletes a saved tile still under its old key with its area", async () => {
+    const t = areaTiles(mols)[0];
+    const url = layerTileUrl("dtk25", t)!;
+    const oldKey = offlineCacheKey(expandTileUrl(LEGACY_TILE_TEMPLATES.dtk25, t));
+    const sw = loadWorker(network, { origin: new URL(url).origin });
+    const offline = await sw.caches.api.open(OFFLINE_CACHE_NAME);
+    await offline.put(oldKey, new Response("old"));
+    await sw.message({ type: "OFFLINE_DELETE", urls: [url] });
+    expect(await offline.match(oldKey)).toBeUndefined();
+    network.online = false;
+    expect((await sw.request(url))?.status).toBe(503);
   });
 
   it("does not bulk-fetch other same-origin paths or foreign hosts", async () => {

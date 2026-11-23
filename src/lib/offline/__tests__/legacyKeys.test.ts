@@ -135,4 +135,21 @@ describe("ensureOfflineKeysMigrated", () => {
     expect(localStorage.getItem("offline-tile-keys")).toBeNull();
     expect(cache.store.size).toBe(before);
   });
+
+  it("keeps a partial download whose first, middle and last tile never arrived", async () => {
+    const a = area("p", mols, ["dtk25"]);
+    const cache = savedBeforeRoute(a);
+    const tiles = areaTiles(a.bounds);
+    for (const i of [0, Math.floor(tiles.length / 2), tiles.length - 1]) {
+      cache.store.delete(offlineCacheKey(expandTileUrl(LEGACY_TILE_TEMPLATES.dtk25, tiles[i])));
+    }
+    vi.stubGlobal("caches", { open: async () => cache });
+
+    vi.resetModules();
+    const mod = await import("../areas");
+    const { useOfflineStore: store } = await import("@/stores/offlineStore");
+    store.setState({ areas: [a] });
+    expect(await mod.dropEvictedAreas()).toEqual([]);
+    expect(store.getState().areas.map((x) => x.id)).toEqual(["p"]);
+  });
 });

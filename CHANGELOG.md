@@ -19,7 +19,12 @@ All notable changes to this project are documented here. The format is based on
   Areas saved before are moved to the new cache keys on the first load, so they
   keep working offline. Until the move is done (or if storage is full), the
   service worker still finds their tiles under the old keys, and the areas stay
-  in the list.
+  in the list. Deleting such an area also deletes its tiles under the old keys.
+
+### Fixed
+- Saved offline areas are only dropped from the list when none of their tiles is
+  left, so a partial download no longer disappears because three sampled tiles
+  were missing.
 
 ### Added
 - A short, closable notice over Danish views during Dataforsyningen's platform
