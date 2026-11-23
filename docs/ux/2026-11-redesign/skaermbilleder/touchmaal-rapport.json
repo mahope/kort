@@ -1,0 +1,207 @@
+{
+  "a-desktop-01-start": {
+    "errors": [],
+    "small": []
+  },
+  "a-desktop-02-kort-og-lag": {
+    "errors": [],
+    "small": []
+  },
+  "a-desktop-03-formaal-sejlads": {
+    "errors": [],
+    "small": []
+  },
+  "a-desktop-04-print": {
+    "errors": [],
+    "small": []
+  },
+  "a-desktop-05-vaerktoej": {
+    "errors": [],
+    "small": []
+  },
+  "a-desktop-06-start-moerk": {
+    "errors": [],
+    "small": []
+  },
+  "a-desktop-07-solaris": {
+    "errors": [],
+    "small": []
+  },
+  "a-desktop-08-solaris-moerk": {
+    "errors": [],
+    "small": []
+  },
+  "a-mobil-01-start": {
+    "errors": [],
+    "small": [
+      "a \"Datakilder\" 52x25"
+    ]
+  },
+  "a-mobil-02-kort-og-lag": {
+    "errors": [],
+    "small": [
+      "a \"Datakilder\" 52x25"
+    ]
+  },
+  "a-mobil-03-print": {
+    "errors": [],
+    "small": [
+      "button \"Slå koordinatgitter fra\" 40x40",
+      "a \"Datakilder\" 52x25"
+    ]
+  },
+  "a-mobil-05-vaerktoej": {
+    "errors": [],
+    "small": [
+      "a \"Datakilder\" 52x25"
+    ]
+  },
+  "a-mobil-06-start-moerk": {
+    "errors": [],
+    "small": [
+      "a \"Datakilder\" 52x25"
+    ]
+  },
+  "a-mobil-07-solaris": {
+    "errors": [],
+    "small": [
+      "button \"Slå koordinatgitter fra\" 40x40",
+      "a \"Datakilder\" 57x25"
+    ]
+  },
+  "b-desktop-01-start": {
+    "errors": [],
+    "small": []
+  },
+  "b-desktop-02-kortlag-soeg": {
+    "errors": [],
+    "small": []
+  },
+  "b-desktop-03-kortlag-aktive": {
+    "errors": [],
+    "small": []
+  },
+  "b-desktop-04-print-flere-valg": {
+    "errors": [],
+    "small": []
+  },
+  "b-desktop-05-vaerktoejer": {
+    "errors": [],
+    "small": []
+  },
+  "b-desktop-06-vaerktoej": {
+    "errors": [],
+    "small": []
+  },
+  "b-desktop-07-start-moerk": {
+    "errors": [],
+    "small": []
+  },
+  "b-desktop-08-solaris": {
+    "errors": [],
+    "small": []
+  },
+  "b-desktop-09-solaris-moerk": {
+    "errors": [],
+    "small": []
+  },
+  "b-mobil-01-start": {
+    "errors": [],
+    "small": [
+      "a \"Datakilder\" 52x25"
+    ]
+  },
+  "b-mobil-02-kortlag": {
+    "errors": [],
+    "small": [
+      "a \"Om\" 21x44",
+      "a \"Datakilder\" 52x25"
+    ]
+  },
+  "b-mobil-04-print": {
+    "errors": [],
+    "small": [
+      "a \"Datakilder\" 52x25"
+    ]
+  },
+  "b-mobil-05-vaerktoejer": {
+    "errors": [],
+    "small": [
+      "a \"Datakilder\" 52x25"
+    ]
+  },
+  "b-mobil-07-start-moerk": {
+    "errors": [],
+    "small": [
+      "a \"Datakilder\" 52x25"
+    ]
+  },
+  "b-mobil-08-solaris": {
+    "errors": [],
+    "small": [
+      "a \"Datakilder\" 57x25"
+    ]
+  },
+  "c-desktop-01-hvor": {
+    "errors": [],
+    "small": []
+  },
+  "c-desktop-02-hvad": {
+    "errors": [],
+    "small": []
+  },
+  "c-desktop-03-print": {
+    "errors": [],
+    "small": []
+  },
+  "c-desktop-04-print-flere-ark": {
+    "errors": [],
+    "small": []
+  },
+  "c-desktop-05-vaerktoej": {
+    "errors": [],
+    "small": []
+  },
+  "c-desktop-06-hvad-moerk": {
+    "errors": [],
+    "small": []
+  },
+  "c-desktop-07-solaris-print": {
+    "errors": [],
+    "small": []
+  },
+  "c-desktop-08-solaris-moerk": {
+    "errors": [],
+    "small": []
+  },
+  "c-mobil-01-hvor": {
+    "errors": [],
+    "small": [
+      "a \"Datakilder\" 52x25"
+    ]
+  },
+  "c-mobil-02-hvad": {
+    "errors": [],
+    "small": [
+      "a \"Datakilder\" 52x25"
+    ]
+  },
+  "c-mobil-03-print": {
+    "errors": [],
+    "small": [
+      "a \"Datakilder\" 52x25"
+    ]
+  },
+  "c-mobil-06-print-moerk": {
+    "errors": [],
+    "small": [
+      "a \"Datakilder\" 52x25"
+    ]
+  },
+  "c-mobil-07-solaris": {
+    "errors": [],
+    "small": [
+      "a \"Datakilder\" 57x25"
+    ]
+  }
+}

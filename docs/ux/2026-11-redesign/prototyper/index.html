@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="da" data-brand="mahoje" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redesign af kort: tre retninger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brygada+1918:wght@400;600&family=Schibsted+Grotesk:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="_delt/base.css">
+<style>
+  body { overflow: auto; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 24px 64px; }
+  h1 { font-size: 36px; margin-bottom: 12px; }
+  .lead { font-size: 18px; color: var(--text-2); max-width: 60ch; margin-bottom: 40px; }
+  .dir { display: grid; grid-template-columns: 220px 1fr; gap: 24px; padding: 28px 0; border-top: 1px solid var(--border); }
+  .dir img { width: 100%; height: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+  .dir h2 { font-size: 26px; margin-bottom: 8px; }
+  .dir p { color: var(--text-2); margin-bottom: 12px; max-width: 55ch; }
+  .links { display: flex; flex-wrap: wrap; gap: 8px; }
+  .fine { font-size: 14px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 20px; }
+  @media (max-width: 640px) { .dir { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Kortlag og print: tre retninger</h1>
+  <p class="lead">Klikbare prototyper til redesignet af kort.mahoje.dk og kort.solaris.dk. Kortet er et fast billede over Mols Bjerge, og der bliver ikke printet noget. Nederst på hver side kan du skifte mellem Mahoje og Solaris og mellem lyst og mørkt tema.</p>
+
+  <section class="dir">
+    <img src="../skaermbilleder/a-desktop-01-start.webp" alt="Retning A på desktop" width="1440" height="900">
+    <div>
+      <h2>A: Start med formålet</h2>
+      <p>Man vælger først, hvad kortet skal bruges til: vandretur, orientering, sejlads og kano eller historisk. Valget sætter kort, lag og målestok. Alt kan justeres bagefter i ét panel, "Kort og lag".</p>
+      <div class="links"><a class="btn btn-primary" href="a-formaal/index.html">Åbn A</a><a class="btn" href="a-formaal/index.html?brand=solaris">A som Solaris</a></div>
+    </div>
+  </section>
+
+  <section class="dir">
+    <img src="../skaermbilleder/b-desktop-03-kortlag-aktive.webp" alt="Retning B på desktop" width="1440" height="900">
+    <div>
+      <h2>B: Ét samlet lagpanel</h2>
+      <p>Sidepanelet får tre faner: Print, Kortlag og Værktøjer. Lagene ligger i foldbare grupper, og man kan søge i dem. Knappen på kortet åbner den samme fane, så der kun er ét sted til lag.</p>
+      <div class="links"><a class="btn btn-primary" href="b-lagpanel/index.html">Åbn B</a><a class="btn" href="b-lagpanel/index.html?brand=solaris">B som Solaris</a></div>
+    </div>
+  </section>
+
+  <section class="dir">
+    <img src="../skaermbilleder/c-desktop-03-print.webp" alt="Retning C på desktop" width="1440" height="900">
+    <div>
+      <h2>C: Hvor, hvad, print</h2>
+      <p>Tre trin, som man kan hoppe frit imellem. Sidste trin viser en forhåndsvisning af det ark, der bliver printet. "Hent PDF" kan bruges fra alle trin.</p>
+      <div class="links"><a class="btn btn-primary" href="c-trin/index.html">Åbn C</a><a class="btn" href="c-trin/index.html?brand=solaris">C som Solaris</a></div>
+    </div>
+  </section>
+
+  <p class="fine">Kortbilleder: © Klimadatastyrelsen (CC BY 4.0), © OpenStreetMap-bidragydere (ODbL), sømærker © OpenSeaMap, dybder EMODnet Bathymetry. Ikke til navigation. Se <a href="https://kort.mahoje.dk/kilder">kort.mahoje.dk/kilder</a>.</p>
+</main>
+<script>
+  if (matchMedia("(prefers-color-scheme: dark)").matches) document.documentElement.dataset.theme = "dark";
+</script>
+</body>
+</html>
