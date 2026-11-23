@@ -1,0 +1,42 @@
+[
+{
+"name": "gate-kurver05-10k-real-z15",
+"src": "pmtiles-lines:k05r-z15-s4.pmtiles",
+"scale": 10000,
+"lon": 9.5393,
+"lat": 56.158,
+"dpi": 300,
+"w": 945,
+"h": 709
+},
+{
+"name": "gate-kurver05-10k-real-z16",
+"src": "pmtiles-lines:k05r-z16-s4.pmtiles",
+"scale": 10000,
+"lon": 9.5393,
+"lat": 56.158,
+"dpi": 300,
+"w": 945,
+"h": 709
+},
+{
+"name": "gate-skygge-10k-real-z17-webp-q80",
+"src": "hsr17-webp-q80.pmtiles",
+"scale": 10000,
+"lon": 9.5393,
+"lat": 56.158,
+"dpi": 300,
+"w": 945,
+"h": 709
+},
+{
+"name": "gate-skygge-25k-real-z17-webp-q80",
+"src": "hsr17-webp-q80.pmtiles",
+"scale": 25000,
+"lon": 9.5393,
+"lat": 56.158,
+"dpi": 300,
+"w": 945,
+"h": 709
+}
+]

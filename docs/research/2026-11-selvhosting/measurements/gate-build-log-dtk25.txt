@@ -1,0 +1,7 @@
+== dtk25r z6-16 (res 2.388657133911758 m), 2026-11-23T20:42:59Z
+warp: 28.6 s 807 MB 28.6 cpu-s
+webp-q85: translate 15.7 s 611 MB 15.6 cpu-s | overviews 20.5 s 428 MB 20.1 cpu-s | pmtiles 0.3 s 48 MB 0.3 cpu-s | 19779635 B
+png-q0: translate 16.5 s 655 MB 16.3 cpu-s | overviews 16.3 s 447 MB 16.0 cpu-s | pmtiles 0.6 s 126 MB 0.6 cpu-s | 92794963 B
+== dtk25sheet z6-16 (res 2.388657133911758 m), 2026-11-23T21:08:54Z
+warp: 111.3 s 2288 MB 116.3 cpu-s
+webp-q85: translate 57.2 s 2240 MB 52.3 cpu-s | overviews 65.6 s 1526 MB 63.2 cpu-s | pmtiles 0.6 s 87 MB 0.7 cpu-s | 58893311 B

@@ -7,6 +7,8 @@ Mean bytes per zoom come from zoomstats.txt of each sample; zooms the sample
 does not cover use the lowest measured zoom's mean (few tiles, small effect).
 Range: x0.47 (farmland) to x1.3 (town), the spread PR #60 measured between its
 three areas at z16, relative to the overall mean that this Silkeborg sample matches.
+With a third argument `gate` it reads the builds from the real Datafordeler sheets instead
+(extrapolate.py <tilecounts.json> <out dir> gate).
 """
 import json, sys, re
 counts = {int(k): v for k, v in json.load(open(sys.argv[1])).items()}
@@ -43,6 +45,16 @@ rows = [  # label, zoomstats file, mbtiles name, minzoom, maxzoom
     ("Ortofoto JPEG q90, z6-18", "orto", "orto-jpeg-q90.mbtiles", 6, 18),
     ("Ortofoto WebP q80, z6-18", "orto", "orto-webp-q80.mbtiles", 6, 18),
 ]
+if sys.argv[3:] == ["gate"]:
+    rows = [
+        ("DTK25 WebP q85, real sheet", "dtk25", "dtk25r-webp-q85.mbtiles", 6, 16),
+        ("DTK25 PNG, real sheet", "dtk25", "dtk25r-png-q0.mbtiles", 6, 16),
+        ("Lave Målebordsblade WebP q85, real sheet", "lave", "laver-webp-q85.mbtiles", 6, 16),
+        ("Lave Målebordsblade WebP q85, real sheet, z6-15", "lave", "laver-webp-q85.mbtiles", 6, 15),
+        ("Hillshade WebP q80, real DHM at 1.6 m", "hillshade", "hsr-webp-q80.mbtiles", 6, 16),
+        ("Hillshade WebP q80, real DHM at 1.6 m, z6-15", "hillshade", "hsr-webp-q80.mbtiles", 6, 15),
+        ("Hillshade WebP q80, real DHM at 0.8 m, z6-17", "hillshade17", "hsr17-webp-q80.mbtiles", 6, 17),
+    ]
 base = sys.argv[2]
 print("| Layer and variant | Zooms | Tiles (DK) | z16 KB/tile | Size DK, GB (range) |")
 print("| --- | --- | --- | --- | --- |")

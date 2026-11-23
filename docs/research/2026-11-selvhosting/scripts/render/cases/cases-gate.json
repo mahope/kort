@@ -1,0 +1,23 @@
+[
+ {"name":"gate-dtk25-25k-wms","src":"wms-dtk25-png","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-dtk25-25k-real-webp-q85","src":"dtk25r-webp-q85.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-dtk25-25k-real-png","src":"dtk25r-png-q0.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-dtk25-10k-wms","src":"wms-dtk25-png","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-dtk25-10k-real-webp-q85","src":"dtk25r-webp-q85.pmtiles","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-lave-25k-wms","src":"wms-lave","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-lave-25k-real-webp-q85","src":"laver-webp-q85.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-lave-10k-wms","src":"wms-lave","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-lave-10k-real-webp-q85","src":"laver-webp-q85.pmtiles","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-hoeje-25k-wms","src":"wms-hoeje","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-skygge-25k-wms","src":"wms-skygge","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-skygge-25k-real-webp-q80","src":"hsr-webp-q80.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-skygge-10k-wms","src":"wms-skygge","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-skygge-10k-real-webp-q80","src":"hsr-webp-q80.pmtiles","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-kurver25-25k-wms","src":"wms-kurve-25","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-kurver25-25k-real","src":"pmtiles-lines:k25r.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-kurver25-10k-wms","src":"wms-kurve-25","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-kurver25-10k-real","src":"pmtiles-lines:k25r.pmtiles","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-kurver05-10k-wms","src":"wms-kurve-05","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-kurver05-10k-real","src":"pmtiles-lines:k05r.pmtiles","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-kurver05-25k-real","src":"pmtiles-lines:k05r.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709}
+]

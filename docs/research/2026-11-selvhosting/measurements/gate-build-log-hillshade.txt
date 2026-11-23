@@ -1,0 +1,8 @@
+hillshade 1.6 m: average to 1.6 m: 13 s | gdaldem: 2 s | peak 4308 MB
+== hsr z6-16 (res 2.388657133911758 m), 2026-11-23T20:45:52Z
+warp: 26.0 s 252 MB 26.1 cpu-s
+webp-q80: translate 10.6 s 204 MB 10.6 cpu-s | overviews 15.0 s 430 MB 14.7 cpu-s | pmtiles 0.2 s 36 MB 0.2 cpu-s | 6964892 B
+hillshade 0.8 m: average to 0.8 m: 25 s | gdaldem: 8 s | peak 4765 MB
+== hsr17 z6-17 (res 1.194328566955879 m), 2026-11-23T21:01:37Z
+warp: 97.6 s 928 MB 97.6 cpu-s
+webp-q80: translate 42.1 s 566 MB 41.9 cpu-s | overviews 66.5 s 1519 MB 64.6 cpu-s | pmtiles 0.8 s 81 MB 0.7 cpu-s | 31149982 B

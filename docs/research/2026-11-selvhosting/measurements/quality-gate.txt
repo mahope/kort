@@ -1,0 +1,6 @@
+ref=gate-dtk25-25k-real-png gate-dtk25-25k-real-webp-q85 All:0.932436 average:31.039356
+ref=gate-dtk25-25k-wms gate-dtk25-25k-real-png All:0.820378 average:19.027984
+ref=gate-dtk25-25k-wms gate-dtk25-25k-real-webp-q85 All:0.778649 average:18.995257
+ref=gate-dtk25-10k-wms gate-dtk25-10k-real-webp-q85 All:0.948037 average:29.142849
+ref=gate-lave-25k-wms gate-lave-25k-real-webp-q85 All:0.884361 average:21.649195
+ref=gate-lave-10k-wms gate-lave-10k-real-webp-q85 All:0.825411 average:21.417651

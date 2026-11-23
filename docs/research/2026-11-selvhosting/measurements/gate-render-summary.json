@@ -1,0 +1,308 @@
+[
+ {
+  "name": "gate-dtk25-25k-wms",
+  "src": "wms-dtk25-png",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 2080,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-dtk25-25k-real-webp-q85",
+  "src": "dtk25r-webp-q85.pmtiles",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 545,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-dtk25-25k-real-png",
+  "src": "dtk25r-png-q0.pmtiles",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 484,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-dtk25-10k-wms",
+  "src": "wms-dtk25-png",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 1673,
+  "tileZooms": {
+   "17": 24
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-dtk25-10k-real-webp-q85",
+  "src": "dtk25r-webp-q85.pmtiles",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 474,
+  "tileZooms": {
+   "16": 6
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-lave-25k-wms",
+  "src": "wms-lave",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 22514,
+  "tileZooms": {
+   "15": 7
+  },
+  "errors": [
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch"
+  ]
+ },
+ {
+  "name": "gate-lave-25k-real-webp-q85",
+  "src": "laver-webp-q85.pmtiles",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 512,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-lave-10k-wms",
+  "src": "wms-lave",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 3540,
+  "tileZooms": {
+   "17": 18
+  },
+  "errors": [
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch"
+  ]
+ },
+ {
+  "name": "gate-lave-10k-real-webp-q85",
+  "src": "laver-webp-q85.pmtiles",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 428,
+  "tileZooms": {
+   "16": 6
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-hoeje-25k-wms",
+  "src": "wms-hoeje",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 20974,
+  "tileZooms": {
+   "15": 13
+  },
+  "errors": [
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch"
+  ]
+ },
+ {
+  "name": "gate-skygge-25k-wms",
+  "src": "wms-skygge",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 855,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-skygge-25k-real-webp-q80",
+  "src": "hsr-webp-q80.pmtiles",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 530,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-skygge-10k-wms",
+  "src": "wms-skygge",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 1041,
+  "tileZooms": {
+   "17": 24
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-skygge-10k-real-webp-q80",
+  "src": "hsr-webp-q80.pmtiles",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 633,
+  "tileZooms": {
+   "16": 6
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-kurver25-25k-wms",
+  "src": "wms-kurve-25",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 751,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-kurver25-25k-real",
+  "src": "pmtiles-lines:k25r.pmtiles",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 380,
+  "tileZooms": {
+   "14": 4
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-kurver25-10k-wms",
+  "src": "wms-kurve-25",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 1200,
+  "tileZooms": {
+   "17": 24
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-kurver25-10k-real",
+  "src": "pmtiles-lines:k25r.pmtiles",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 258,
+  "tileZooms": {
+   "15": 4
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-kurver05-10k-wms",
+  "src": "wms-kurve-05",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 722,
+  "tileZooms": {
+   "17": 24
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-kurver05-10k-real",
+  "src": "pmtiles-lines:k05r.pmtiles",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 411,
+  "tileZooms": {
+   "15": 4
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-kurver05-25k-real",
+  "src": "pmtiles-lines:k05r.pmtiles",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 493,
+  "tileZooms": {
+   "14": 4
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-lave-25k-wms",
+  "src": "wms-lave",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 1307,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-lave-10k-wms",
+  "src": "wms-lave",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 1697,
+  "tileZooms": {
+   "17": 24
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-hoeje-25k-wms",
+  "src": "wms-hoeje",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 1742,
+  "tileZooms": {
+   "15": 7
+  },
+  "errors": [
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch",
+   "Failed to fetch"
+  ]
+ },
+ {
+  "name": "gate-lave-10k-real-z15",
+  "src": "laver15-webp-q85.pmtiles",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 984,
+  "tileZooms": {
+   "15": 4
+  },
+  "errors": []
+ }
+]

@@ -1,0 +1,6 @@
+== laver z6-16 (res 2.388657133911758 m), 2026-11-23T20:44:48Z
+warp: 24.1 s 501 MB 24.2 cpu-s
+webp-q85: translate 16.0 s 611 MB 15.9 cpu-s | overviews 19.0 s 429 MB 18.9 cpu-s | pmtiles 0.3 s 48 MB 0.3 cpu-s | 21460769 B
+== laver15 z6-15 (res 4.777314267823516 m), 2026-11-23T21:13:22Z
+warp: 10.7 s 298 MB 10.7 cpu-s
+webp-q85: translate 4.2 s 204 MB 4.3 cpu-s | overviews 5.3 s 143 MB 5.2 cpu-s | pmtiles 0.2 s 33 MB 0.2 cpu-s | 7986897 B
