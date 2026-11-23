@@ -31,7 +31,7 @@ export function PrintSummaryLine() {
     <button
       type="button"
       onClick={openSettings}
-      className="mb-2 block w-full truncate text-left text-xs text-text-secondary hover:text-foreground py-0.5"
+      className="mb-2 pointer-coarse:mb-0 pointer-coarse:min-h-11 block w-full truncate text-left text-xs text-text-secondary hover:text-foreground py-0.5"
     >
       {paperFormat} &middot; 1:{scale.toLocaleString("da-DK")} &middot; {layerLabel}
     </button>

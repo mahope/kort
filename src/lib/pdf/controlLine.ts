@@ -8,8 +8,7 @@ export const CONTROL_LINE_TEXT = "Mål linjen: den skal være 10,0 cm. Udskriv i
 const TEXT_PT = 6;
 const PAD_MM = 2;
 const TICK_MM = 1.5;
-// The box sits in the bottom-left of the map, above the scale bar (which
-// reaches 9.3 mm above the map's bottom edge and at most 45 mm from its left edge).
+// The box sits in the bottom-left of the map, above the scale bar.
 const LEFT_OFFSET_MM = 5;
 const BOTTOM_OFFSET_MM = 11;
 const BOX_HEIGHT_MM = 9;
@@ -24,10 +23,11 @@ export interface ControlLineGeometry {
 /** Pure placement of the control line; `textWidthMm` is the width of CONTROL_LINE_TEXT at 6 pt. */
 export function controlLineGeometry(
   layout: Pick<PdfLayout, "marginMm" | "mapHeightMm">,
-  textWidthMm: number
+  textWidthMm: number,
+  bottomInsetMm = 0
 ): ControlLineGeometry {
   const x = layout.marginMm + LEFT_OFFSET_MM;
-  const bottom = layout.marginMm + layout.mapHeightMm - BOTTOM_OFFSET_MM;
+  const bottom = layout.marginMm + layout.mapHeightMm - BOTTOM_OFFSET_MM - bottomInsetMm;
   const top = bottom - BOX_HEIGHT_MM;
   const lineY = top + 6.5;
   const lineX1 = x + PAD_MM;
@@ -39,15 +39,23 @@ export function controlLineGeometry(
   };
 }
 
-export function drawControlLine(pdf: jsPDF, layout: Pick<PdfLayout, "marginMm" | "mapHeightMm">): void {
-  pdf.setFontSize(TEXT_PT);
-  pdf.setFont("helvetica", "normal");
-  const g = controlLineGeometry(layout, pdf.getTextWidth(CONTROL_LINE_TEXT));
-
+export function drawPrintBox(pdf: jsPDF, x: number, y: number, w: number, h: number): void {
   pdf.setFillColor(255, 255, 255);
   pdf.setDrawColor(120, 120, 120);
   pdf.setLineWidth(0.15);
-  pdf.rect(g.box.x, g.box.y, g.box.w, g.box.h, "FD");
+  pdf.rect(x, y, w, h, "FD");
+}
+
+export function drawControlLine(
+  pdf: jsPDF,
+  layout: Pick<PdfLayout, "marginMm" | "mapHeightMm">,
+  bottomInsetMm = 0
+): void {
+  pdf.setFontSize(TEXT_PT);
+  pdf.setFont("helvetica", "normal");
+  const g = controlLineGeometry(layout, pdf.getTextWidth(CONTROL_LINE_TEXT), bottomInsetMm);
+
+  drawPrintBox(pdf, g.box.x, g.box.y, g.box.w, g.box.h);
 
   pdf.setDrawColor(0);
   pdf.setLineWidth(0.3);

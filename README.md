@@ -98,6 +98,11 @@ npm run build       # production build
 Unused code is checked with `npx knip@6.44.1`; `knip.json` lists the known
 false positives.
 
+On touch devices, the map and About page use 44 px targets and the map's
+text-entry fields use at least 16 px type. See the
+[touch audit](docs/screenshots/issue-23/NOTES.md) for the Playwright checks
+and screenshots for both brands.
+
 ## Environment variables
 
 All are optional and public (`NEXT_PUBLIC_*` values are baked into the client
@@ -154,8 +159,10 @@ src/
   are rendered directly by MapLibre; no reprojection.
 - **PDF:** the browser creates a hidden MapLibre instance at the target
   resolution (up to 300 dpi), waits for every tile, and adds the image to jsPDF
-  with grid, scale bar, north arrow, declination diagram and credits. Nothing is
-  rendered on the server.
+  with grid, scale bar, north arrow, declination diagram and credits. The scale
+  bar and print calibration line have matching white boxes for legibility.
+  On sheets with a neighbour below, both boxes sit above the overlap strip.
+  Nothing is rendered on the server.
 - **Search:** addresses come from Adressevælger. Place names are searched in our
   own `/api/stednavne` over a snapshot of Danske Stednavne
   (`data/stednavne.tsv.gz`), because DAWA closed in October 2026 and no live

@@ -24,9 +24,27 @@
     background-position: center;
   }
 
-  /* The zoom group is 44px wide and would sit under the (40px) geolocation button
-     stacked above it; shift it left so neither obscures the other (axe target-size). */
+  /* Keep the zoom group separate from the other map controls on touch. */
   .maplibregl-ctrl-bottom-right .maplibregl-ctrl-group:has(.maplibregl-ctrl-zoom-in) {
     margin-right: 60px;
+  }
+
+  .maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib.maplibregl-compact-show {
+    box-sizing: border-box;
+    max-width: calc(100vw - 132px);
+    padding-left: 48px;
+  }
+
+  .maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-button {
+    top: auto;
+    bottom: 0;
+  }
+
+  .maplibregl-ctrl-attrib a {
+    display: inline-flex;
+    align-items: center;
+    min-width: 44px;
+    min-height: 44px;
+    vertical-align: middle;
   }
 }

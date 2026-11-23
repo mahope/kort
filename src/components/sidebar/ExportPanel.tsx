@@ -72,7 +72,7 @@ export function ExportPanel() {
         <select
           value={format}
           onChange={(e) => setFormat(e.target.value as ExportFormat)}
-          className="rounded border border-border px-2 py-1 text-xs bg-surface"
+          className="rounded border border-border px-2 py-1 text-xs pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:text-base bg-surface"
         >
           <option value="geojson">GeoJSON</option>
           <option value="gpx">GPX</option>
@@ -81,19 +81,19 @@ export function ExportPanel() {
         <button
           type="button"
           onClick={handleDownload}
-          className="px-2 py-1 rounded text-xs bg-primary text-on-primary hover:bg-primary-hover transition-colors"
+          className="px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 rounded text-xs bg-primary text-on-primary hover:bg-primary-hover transition-colors"
         >
           Download
         </button>
         <button
           type="button"
           onClick={handleCopy}
-          className="px-2 py-1 rounded text-xs border border-border hover:border-text-muted transition-colors"
+          className="px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 rounded text-xs border border-border hover:border-text-muted transition-colors"
         >
           {copied ? "Kopieret!" : "Kopiér GeoJSON"}
         </button>
       </div>
-      <p className="text-[10px] text-text-muted mt-1">
+      <p className="text-[10px] pointer-coarse:text-xs text-text-muted mt-1">
         {allFeatures.length} feature{allFeatures.length !== 1 ? "s" : ""} ({importedLayers.length} importerede lag, {drawnFeatures.length} tegnede)
       </p>
     </div>

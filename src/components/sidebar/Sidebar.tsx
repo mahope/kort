@@ -172,7 +172,7 @@ function SidebarContent() {
         <div className="border-b border-border pb-3 max-md:flex max-md:items-baseline max-md:justify-between max-md:gap-3 md:pb-4">
           <a
             href={brand.credit.url}
-            className="inline-flex text-[19px] text-foreground hover:text-text-secondary transition-colors max-md:order-2 max-md:min-h-11 max-md:items-center max-md:text-[16px]"
+            className="inline-flex text-[19px] text-foreground hover:text-text-secondary transition-colors max-md:order-2 pointer-coarse:min-h-11 max-md:min-h-11 max-md:items-center max-md:text-[16px]"
             aria-label="Mahoje, til mahoje.dk"
           >
             <MahojeWordmark />
@@ -189,7 +189,7 @@ function SidebarContent() {
             href={brand.credit.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[11px] text-text-muted hover:text-text-secondary underline underline-offset-2 max-md:hidden"
+            className="text-[11px] md:pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center pointer-coarse:text-xs text-text-muted hover:text-text-secondary underline underline-offset-2 max-md:hidden"
           >
             {brand.credit.label}
           </a>

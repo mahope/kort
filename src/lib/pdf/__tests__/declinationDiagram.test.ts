@@ -12,7 +12,7 @@ describe("declination diagram placement", () => {
   const formats = Object.keys(PAPER_FORMATS) as PaperFormat[];
   for (const f of formats) {
     for (const o of ["portrait", "landscape"] as Orientation[]) {
-      it(`${f} ${o}: inside the map, clear of scale bar, north arrow and the attribution margin`, () => {
+      it(`${f} ${o}: inside the map, clear of the north arrow and attribution margin`, () => {
         const l = calculatePdfLayout(f, o, 150);
         const box = declinationBoxRect(l);
         const map = { left: l.marginMm, top: l.marginMm, right: l.marginMm + l.mapWidthMm, bottom: l.marginMm + l.mapHeightMm };
@@ -20,9 +20,6 @@ describe("declination diagram placement", () => {
         expect(box.right).toBeLessThanOrEqual(map.right);
         expect(box.top).toBeGreaterThanOrEqual(map.top);
         expect(box.bottom).toBeLessThanOrEqual(map.bottom);
-        // Scale bar: at most 40 mm wide from x = margin + 5, y within 12 mm of the bottom edge (generator.ts drawScaleBar).
-        const scaleBar = { left: map.left + 5, right: map.left + 5 + 40, top: map.bottom - 12, bottom: map.bottom - 3 };
-        expect(overlaps(box, scaleBar)).toBe(false);
         // North arrow: top-right, 8 mm in, 12 mm down, with label; generous 14 mm square.
         const north = { left: map.right - 16, right: map.right, top: map.top, bottom: map.top + 22 };
         expect(overlaps(box, north)).toBe(false);

@@ -13,6 +13,6 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <main>{getBrand().id === "solaris" ? <AboutSolaris /> : <AboutMahoje />}</main>
+    <main className="pointer-coarse:[&_a]:inline-flex pointer-coarse:[&_a]:min-h-11 pointer-coarse:[&_a]:min-w-11 pointer-coarse:[&_a]:max-w-full pointer-coarse:[&_a]:items-center pointer-coarse:[&_a]:align-middle">{getBrand().id === "solaris" ? <AboutSolaris /> : <AboutMahoje />}</main>
   );
 }

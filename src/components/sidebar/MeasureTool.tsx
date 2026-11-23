@@ -70,7 +70,7 @@ export function MeasureTool() {
           <button
             type="button"
             onClick={() => { setMode("distance"); if (isActive) setDrawMode("line"); }}
-            className={`px-2 py-1 ${
+            className={`px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 ${
               mode === "distance" ? "bg-surface-secondary font-medium" : "bg-surface"
             }`}
           >
@@ -79,7 +79,7 @@ export function MeasureTool() {
           <button
             type="button"
             onClick={() => { setMode("area"); if (isActive) setDrawMode("polygon"); }}
-            className={`px-2 py-1 border-l border-border ${
+            className={`px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 border-l border-border ${
               mode === "area" ? "bg-surface-secondary font-medium" : "bg-surface"
             }`}
           >
@@ -89,7 +89,7 @@ export function MeasureTool() {
         <button
           type="button"
           onClick={toggleActive}
-          className={`px-2 py-1 rounded text-xs border transition-colors ${
+          className={`px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 rounded text-xs border transition-colors ${
             isActive
               ? "bg-primary text-on-primary border-primary"
               : "bg-surface text-foreground border-border hover:border-text-muted"
@@ -99,7 +99,7 @@ export function MeasureTool() {
         </button>
       </div>
       {isActive && (
-        <p className="mt-1 text-[10px] text-text-muted">
+        <p className="mt-1 text-[10px] pointer-coarse:text-xs text-text-muted">
           Tegn en {mode === "distance" ? "linje" : "polygon"} på kortet for at måle
         </p>
       )}
