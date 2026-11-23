@@ -40,7 +40,7 @@ export function UrlSync() {
     if (state.overlays) {
       for (const o of state.overlays) {
         mapStore.setOverlayEnabled(o.id, true);
-        mapStore.setOverlayOpacity(o.id, o.opacity);
+        if (o.opacity !== undefined) mapStore.setOverlayOpacity(o.id, o.opacity);
       }
     }
     if (state.showUtmGrid) mapStore.setShowUtmGrid(true);

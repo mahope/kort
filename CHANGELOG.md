@@ -20,11 +20,28 @@ All notable changes to this project are documented here. The format is based on
   keep working offline. Until the move is done (or if storage is full), the
   service worker still finds their tiles under the old keys, and the areas stay
   in the list. Deleting such an area also deletes its tiles under the old keys.
+- Sea layers read like a chart: Danmarks Dybdemodel draws as smooth blue depths
+  (the plain depth layer, enlarged from the model's own 50 m cells instead of
+  grey-black blocks), the seabed relief always lies under the depth colours,
+  and sea marks are toned down and start at about 1:50,000, where OpenSeaMap's
+  symbols no longer clump. Same look in the PDF.
+- Shorter on-map credit with the sea layers on (two lines instead of three at
+  1440 px). Dybdemodellen's required sentence, "Indeholder WMS-tjeneste", the
+  terms link and "Model og data er ikke egnet til navigation" stay word for word.
+- The lake depth layer says which lakes it covers (80 lakes, mostly in Jutland;
+  not Furesø).
 
 ### Fixed
 - Saved offline areas are only dropped from the list when none of their tiles is
   left, so a partial download no longer disappears because three sampled tiles
   were missing.
+- A map tile that failed to load (a timeout or server error) stayed a grey
+  square until the map moved; it is now requested again. Tiles the server
+  refuses, such as the tile route's 404 outside Denmark, are not.
+- A shared link without opacities (`ov=dd,hb`) showed every layer at 100 %, so
+  the grey relief covered the sea; it now uses each layer's default.
+- An overlay switched on later no longer draws over the ones below it in the
+  list (the relief over the depths, or the depths over the wrecks).
 
 ### Added
 - A short, closable notice over Danish views during Dataforsyningen's platform

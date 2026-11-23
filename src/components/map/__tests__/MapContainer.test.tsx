@@ -12,7 +12,9 @@ vi.mock("react-map-gl/maplibre", () => ({
   Source: ({ id, bounds, children }: { id: string; bounds?: number[]; children: ReactNode }) => (
     <div data-source={id} data-bounds={bounds?.join(",")}>{children}</div>
   ),
-  Layer: ({ id }: { id: string }) => <div data-layer={id} />,
+  Layer: ({ id, layout }: { id: string; layout?: { visibility?: string } }) => (
+    <div data-layer={id} data-visibility={layout?.visibility} />
+  ),
   NavigationControl: () => null,
   ScaleControl: () => null,
   // Like react-map-gl: the options are read once, when the control is created.
@@ -35,27 +37,72 @@ vi.mock("@/lib/map/contours", async (importOriginal) => ({
 
 afterEach(() => useMapStore.setState(useMapStore.getInitialState()));
 
-it("removes and restores the raster layer while keeping the selected contours", () => {
+it("hides and restores the raster layer while keeping the selected contours", () => {
   const container = document.createElement("div");
   const root = createRoot(container);
   const { setBaseLayer, setOverlayEnabled } = useMapStore.getState();
   const rasterLayer = '[data-source="base-raster"] [data-layer="base-raster-layer"]';
+  const rasterVisibility = () => container.querySelector(rasterLayer)?.getAttribute("data-visibility");
   const contours = '[data-source="kurver5-overlay"]';
 
   try {
     setBaseLayer("dtk25");
     setOverlayEnabled("kurver5", true);
     act(() => root.render(<MapContainer />));
-    expect(container.querySelector(rasterLayer)).not.toBeNull();
+    expect(rasterVisibility()).toBe("visible");
     expect(container.querySelector(contours)).not.toBeNull();
 
     act(() => setBaseLayer("none"));
-    expect(container.querySelector('[data-source="base-raster"]')).toBeNull();
+    expect(rasterVisibility()).toBe("none");
     expect(container.querySelector(contours)).not.toBeNull();
 
     act(() => setBaseLayer("dtk25"));
-    expect(container.querySelector(rasterLayer)).not.toBeNull();
+    expect(rasterVisibility()).toBe("visible");
     expect(container.querySelector(contours)).not.toBeNull();
+  } finally {
+    act(() => root.unmount());
+  }
+});
+
+it("keeps the raster base map under the depths when it is chosen after them", () => {
+  // MapLibre adds a new layer on top: a base-raster mounted on choosing DTK25
+  // after "no base map" covered the always-mounted depth layer.
+  const container = document.createElement("div");
+  const root = createRoot(container);
+  const { setBaseLayer, setOverlayEnabled } = useMapStore.getState();
+  const ids = () => [...container.querySelectorAll("[data-layer]")].map((l) => l.getAttribute("data-layer"));
+  try {
+    setBaseLayer("none");
+    act(() => root.render(<MapContainer />));
+    const before = ids();
+    act(() => setBaseLayer("dtk25"));
+    act(() => setOverlayEnabled("dybdemodel", true));
+    expect(ids()).toEqual(before);
+    expect(ids().indexOf("base-raster-layer")).toBeLessThan(ids().indexOf("dybdemodel-overlay-layer"));
+  } finally {
+    act(() => root.unmount());
+  }
+});
+
+it("keeps every raster overlay mounted in the store's order, hidden while off", () => {
+  // MapLibre adds a new layer on top, so mounting on toggle drew the grey
+  // seabed relief over depth colours switched on earlier.
+  const container = document.createElement("div");
+  const root = createRoot(container);
+  const ids = () => [...container.querySelectorAll("[data-layer$='-overlay-layer']")].map((l) => l.getAttribute("data-layer"));
+  const visibility = (id: string) => container.querySelector(`[data-layer="${id}"]`)?.getAttribute("data-visibility");
+  try {
+    act(() => useMapStore.getState().setOverlayEnabled("dybdemodel", true));
+    act(() => root.render(<MapContainer />));
+    const before = ids();
+    expect(before.indexOf("havbund-overlay-layer")).toBeGreaterThan(-1);
+    expect(before.indexOf("havbund-overlay-layer")).toBeLessThan(before.indexOf("dybdemodel-overlay-layer"));
+    expect(visibility("havbund-overlay-layer")).toBe("none");
+    expect(visibility("dybdemodel-overlay-layer")).toBe("visible");
+
+    act(() => useMapStore.getState().setOverlayEnabled("havbund", true));
+    expect(visibility("havbund-overlay-layer")).toBe("visible");
+    expect(ids()).toEqual(before);
   } finally {
     act(() => root.unmount());
   }

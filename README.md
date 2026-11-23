@@ -43,8 +43,9 @@ Example PDF: [example-a4-1-25000.pdf](https://github.com/mahope/kort/releases/do
 - **Map layers:** Skærmkort in four styles, the 1:25,000 topographic map (DTK25),
   orthophoto, OpenStreetMap, two series of historic maps (1842-1971) or no base map at all.
 - **Overlays:** contours (0.5 m to 10 m, with height labels), hillshade, cadastre,
-  place names, sea depths and seabed relief, sea marks, lake depth contours,
-  wrecks and historic lake charts (marked *not for navigation*).
+  place names, sea depths in blue with the seabed relief underneath, sea marks
+  (from about 1:50,000), lake depth contours, wrecks and historic lake charts
+  (marked *not for navigation*).
 - **Scales** 1:5,000 to 1:500,000, or any custom scale from 1:1,000 to 1:1,000,000.
 - **Paper sizes** A5 to A2 in portrait or landscape, plus A1 and A0 as one sheet for a print shop.
 - **Multi-page prints and floor maps:** up to 5 × 5 sheets with overlap, an

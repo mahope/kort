@@ -1,0 +1,153 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { Map as MaplibreMap } from "maplibre-gl";
+import { dropTilesOutside, screenTileRetry } from "../tileRetry";
+import { DENMARK_TILE_BOUNDS } from "@/lib/tiles/routeLayers";
+
+/** Just enough of a MapLibre map: a tile manager with tile states, and _update. */
+function fakeMap() {
+  const removed: (string | number)[] = [];
+  const states = new Map<string | number, string>();
+  const map = {
+    updates: 0,
+    removed,
+    states,
+    style: {
+      tileManagers: {
+        "base-raster": {
+          _removeTile: (k: string | number) => removed.push(k),
+          getTileByID: (k: string | number) => (states.has(k) ? { state: states.get(k) } : undefined),
+        },
+      },
+    },
+    _update() {
+      map.updates++;
+    },
+  };
+  return map;
+}
+
+function setup(delays: number[]) {
+  const map = fakeMap();
+  const retry = screenTileRetry(delays);
+  const target = map as unknown as MaplibreMap;
+  return {
+    map,
+    retry,
+    // Without a status like a timeout or network error; with one like MapLibre's AJAXError.
+    fail: (status?: number) => {
+      map.states.set(42, "errored");
+      const error = status === undefined ? undefined : Object.assign(new Error(`HTTP ${status}`), { status });
+      retry.onError({ target, sourceId: "base-raster", tile: { tileID: { key: 42 } }, error });
+    },
+    load: () => {
+      map.states.set(42, "loaded");
+      retry.onSourceData({ sourceId: "base-raster", dataType: "source", tile: { tileID: { key: 42 } } });
+    },
+  };
+}
+
+describe("screenTileRetry", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("asks again for a tile that failed, after a pause, instead of leaving a grey square", () => {
+    const { map, fail } = setup([1000, 3000]);
+    fail();
+    expect(map.removed).toEqual([]);
+    vi.advanceTimersByTime(1000);
+    expect(map.removed).toEqual([42]);
+    expect(map.updates).toBe(1);
+  });
+
+  it("gives up after the last pause when the server keeps failing", () => {
+    const { map, fail } = setup([1000, 3000]);
+    for (let i = 0; i < 5; i++) {
+      fail();
+      vi.advanceTimersByTime(3000);
+    }
+    expect(map.updates).toBe(2);
+  });
+
+  it("does not ask again for a tile the server refuses (the tile route's 404 outside Denmark, 400)", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { map, fail } = setup([1000]);
+    fail(404);
+    vi.advanceTimersByTime(1000);
+    fail(400);
+    vi.advanceTimersByTime(1000);
+    expect(map.updates).toBe(0);
+  });
+
+  it("asks again after a timeout, a rate limit or a server error", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    for (const status of [408, 429, 502, 503]) {
+      const { map, fail } = setup([1000]);
+      fail(status);
+      vi.advanceTimersByTime(1000);
+      expect(map.updates).toBe(1);
+    }
+  });
+
+  it("starts the count again once the tile has loaded", () => {
+    const { map, fail, load } = setup([1000]);
+    fail();
+    vi.advanceTimersByTime(1000);
+    load();
+    fail();
+    vi.advanceTimersByTime(1000);
+    expect(map.updates).toBe(2);
+  });
+
+  it("leaves the new tile alone when the base map is switched before the retry", () => {
+    // DTK25 → ortofoto keeps the source id base-raster (setTiles), and MapLibre
+    // reloads the failed key as a new, loading tile from the new map.
+    const { map, fail } = setup([1000]);
+    fail();
+    map.states.set(42, "loading");
+    vi.advanceTimersByTime(1000);
+    expect(map.removed).toEqual([]);
+    expect(map.updates).toBe(0);
+  });
+
+  it("cancels the pending retry once the tile has loaded", () => {
+    const { map, fail, load } = setup([1000]);
+    fail();
+    load();
+    map.states.set(42, "errored"); // even if a later state looks failed again
+    vi.advanceTimersByTime(1000);
+    expect(map.updates).toBe(0);
+  });
+
+  it("ignores source errors without a tile, and stops when told to", () => {
+    const { map, retry, fail } = setup([1000]);
+    retry.onError({ target: map as unknown as MaplibreMap, sourceId: "base-raster" });
+    fail();
+    retry.stop();
+    vi.advanceTimersByTime(5000);
+    expect(map.updates).toBe(0);
+  });
+});
+
+describe("dropTilesOutside", () => {
+  it("drops the tiles outside the new bounds so the reload does not ask the tile route for them", () => {
+    // z10 around Gedser: y 323 lies at about 55 N (inside), y 330 south of 54 N.
+    const tiles = new Map([
+      ["inside", { z: 10, x: 545, y: 323 }],
+      ["south", { z: 10, x: 545, y: 330 }],
+    ]);
+    const removed: string[] = [];
+    const map = {
+      style: {
+        tileManagers: {
+          "base-raster": {
+            getIds: () => [...tiles.keys()],
+            getTileByID: (id: string) => ({ tileID: { canonical: tiles.get(id) } }),
+            _removeTile: (id: string) => removed.push(id),
+          },
+        },
+      },
+    } as unknown as MaplibreMap;
+    dropTilesOutside(map, "base-raster", DENMARK_TILE_BOUNDS);
+    expect(removed).toEqual(["south"]);
+  });
+});

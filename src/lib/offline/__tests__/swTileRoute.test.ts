@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it } from "vitest";
-import { LEGACY_TILE_TEMPLATES } from "../legacyKeys";
+import { LEGACY_TILE_TEMPLATES, legacyOutsideTileUrls } from "../legacyKeys";
 import { OFFLINE_CACHE_NAME } from "../areas";
 import { areaTiles, expandTileUrl, layerTileUrl, offlineCacheKey } from "../tiles";
 import { DTK25_TILES_URL } from "@/lib/map/sources";
@@ -198,6 +198,19 @@ describe("service worker and the tile route", () => {
     expect(await offline.match(oldKey)).toBeUndefined();
     network.online = false;
     expect((await sw.request(url))?.status).toBe(503);
+  });
+
+  it("deletes old-key tiles outside the route's bounds with their area", async () => {
+    // Across 54.3° N south of Gedser: the move stopped (storage full) before
+    // dropping these, and they have no current url to reach them by.
+    const a = { bounds: { north: 54.32, south: 54.28, east: 11.98, west: 11.95 }, layerIds: ["dtk25"] };
+    const outside = legacyOutsideTileUrls(a);
+    expect(outside.length).toBeGreaterThan(0);
+    const sw = loadWorker(network);
+    const offline = await sw.caches.api.open(OFFLINE_CACHE_NAME);
+    for (const u of outside) await offline.put(offlineCacheKey(u), new Response("old"));
+    await sw.message({ type: "OFFLINE_DELETE", urls: outside });
+    for (const u of outside) expect(await offline.match(offlineCacheKey(u))).toBeUndefined();
   });
 
   it("does not bulk-fetch other same-origin paths or foreign hosts", async () => {

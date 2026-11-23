@@ -15,7 +15,8 @@ export function SeaNotice() {
       <a href={DDM_TERMS_URL} target="_blank" rel="noopener noreferrer" className="underline">
         vilkår
       </a>
-      ), grovere dybder fra EMODnet, sømærker fra OpenSeaMap, dybdekurver i 80 søer fra Miljøportalen, vrag fra EMODnet
+      ), grovere dybder fra EMODnet, sømærker fra OpenSeaMap, dybdekurver i 80 søer fra Miljøportalen (mest i Jylland;
+      ikke Furesø og de andre store sjællandske søer), vrag fra EMODnet
       og historiske indsøkort, som kommer med som ekstra sider i PDF&apos;en. Kortet er til orientering og
       turplanlægning. Advarslen står også på PDF&apos;en.{" "}
       <a href={SOURCES_PAGE_PATH} className="underline">

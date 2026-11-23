@@ -21,12 +21,13 @@ const DEFAULT_OVERLAYS: OverlayState[] = [
   { id: "hillshade", enabled: false, opacity: 0.5 },
   { id: "stednavne", enabled: false, opacity: 1 },
   { id: "matrikel", enabled: false, opacity: 1 },
-  // Later overlays draw on top: the finer Danish model covers EMODnet.
+  // Later overlays draw on top. The grey seabed relief goes first, so it only
+  // shades the water through the depth colours and never greys them over.
+  { id: "havbund", enabled: false, opacity: 0.5 },
+  // The finer Danish model covers EMODnet.
   { id: "havdybder", enabled: false, opacity: 0.6 },
-  { id: "dybdemodel", enabled: false, opacity: 0.8 },
-  // Grey relief over the blue depths, so both read together.
-  { id: "havbund", enabled: false, opacity: 0.45 },
-  { id: "soemaerker", enabled: false, opacity: 1 },
+  { id: "dybdemodel", enabled: false, opacity: 0.75 },
+  { id: "soemaerker", enabled: false, opacity: 0.85 },
   { id: "kurverNorge", enabled: false, opacity: 1 },
   // Vector points and lines on top of every raster layer.
   { id: "soedybder", enabled: false, opacity: 1 },

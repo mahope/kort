@@ -22,6 +22,7 @@ import {
   KDS_MAP_ATTRIBUTION,
   NORDIC_MAP_ATTRIBUTION,
   NORDIC_TOPO_SOURCES,
+  layerMinzoom,
   OVERLAY_SOURCES,
   sourceZoomLimit,
   usesNordicTopo,
@@ -35,6 +36,7 @@ import { GeolocationButton } from "./GeolocationButton";
 import { ImportedLayers } from "./ImportedLayers";
 import { UtmGrid } from "./UtmGrid";
 import { configureMaplibreWorker } from "@/lib/map/workerUrl";
+import { dropTilesOutside, screenTileRetry } from "@/lib/map/tileRetry";
 
 // terra-draw (~44 KB gz) is only needed once the user starts drawing or has
 // persisted drawings to restore.
@@ -67,6 +69,9 @@ export function MapContainer() {
     preconnect("https://cdn.dataforsyningen.dk", { crossOrigin: "anonymous" });
   }, []);
   const mapRef = useRef<MapRef>(null);
+  // A failed tile is asked for again instead of staying a grey square.
+  const tileRetry = useMemo(() => screenTileRetry(), []);
+  useEffect(() => () => tileRetry.stop(), [tileRetry]);
   const viewState = useMapStore((s) => s.viewState);
   const setViewState = useMapStore((s) => s.setViewState);
   const style = useMapStore((s) => s.style);
@@ -85,6 +90,9 @@ export function MapContainer() {
 
   const mapStyle = getBaseMapStyle(baseLayer, style, nordic);
   const rasterBase = RASTER_BASE_LAYERS[baseLayer];
+  // What the always-mounted base-raster source is created with. It is hidden
+  // while the base map is not a raster, so these tiles are not requested then.
+  const mountedRaster = rasterBase ?? RASTER_BASE_LAYERS.dtk25;
 
   const onMove = useCallback(
     (evt: ViewStateChangeEvent) => {
@@ -115,6 +123,9 @@ export function MapContainer() {
       // new options have none, so clear them first.
       raster._options.bounds = rasterBase.bounds;
       raster.tileBounds = undefined as unknown as typeof raster.tileBounds;
+      // The reload asks again for every tile held, also old OSM tiles outside
+      // the new bounds (the tile route answers those with 404): drop them.
+      if (rasterBase.bounds) dropTilesOutside(map, "base-raster", rasterBase.bounds);
       raster.setTiles(rasterBase.tiles);
     }
   }, [rasterBase]);
@@ -145,6 +156,8 @@ export function MapContainer() {
       padding={padding}
       onMove={onMove}
       onLoad={collapseAttributionOnTouch}
+      onError={tileRetry.onError}
+      onSourceData={tileRetry.onSourceData}
       mapStyle={mapStyle}
       transformRequest={transformRequest}
       maxBounds={[...MAP_BOUNDS[0], ...MAP_BOUNDS[1]]}
@@ -170,24 +183,29 @@ export function MapContainer() {
       ))}
 
       {/* Raster base layer (ortofoto, dtk25, osm, historiske kort) */}
-      {/* Hidden, not unmounted, outside Denmark: a remount would add it on top of the overlays. */}
-      {rasterBase && (
-        <Source
-          id="base-raster"
-          type="raster"
-          tiles={rasterBase.tiles}
-          tileSize={rasterBase.tileSize}
-          {...sourceZoomLimit(rasterBase)}
-          {...(rasterBase.bounds ? { bounds: rasterBase.bounds } : {})}
-          attribution={rasterBase.attribution}
-        >
-          <Layer id="base-raster-layer" type="raster" layout={{ visibility: nordic ? "none" : "visible" }} />
-        </Source>
-      )}
+      {/* Hidden, not unmounted, outside Denmark and under a vector or no base
+          map: mounted later it would be added on top of the raster overlays,
+          which are always mounted, and cover them. Tiles follow via setTiles. */}
+      <Source
+        id="base-raster"
+        type="raster"
+        tiles={mountedRaster.tiles}
+        tileSize={mountedRaster.tileSize}
+        {...sourceZoomLimit(mountedRaster)}
+        {...(mountedRaster.bounds ? { bounds: mountedRaster.bounds } : {})}
+        attribution={mountedRaster.attribution}
+      >
+        <Layer id="base-raster-layer" type="raster" layout={{ visibility: rasterBase && !nordic ? "visible" : "none" }} />
+      </Source>
 
-      {/* Overlays (generic loop) */}
-      {overlays.filter((o) => o.enabled).map((overlay) => {
+      {/* Overlays (generic loop). Raster overlays are always mounted and only
+          hidden when off (hidden layers request no tiles): MapLibre puts a
+          newly added layer on top, so mounting on toggle would draw e.g. the
+          grey seabed relief over the depth colours, or the depths over the
+          wrecks. Mounted once, they keep the store's order. */}
+      {overlays.map((overlay) => {
         const vector = OVERLAY_SOURCES[overlay.id].vector;
+        if (!overlay.enabled && (vector || OVERLAY_SOURCES[overlay.id].contourInterval)) return null;
         if (vector) {
           const sourceId = `${overlay.id}-overlay`;
           return (
@@ -235,6 +253,8 @@ export function MapContainer() {
           <Layer
             id={`${overlay.id}-overlay-layer`}
             type="raster"
+            {...layerMinzoom(OVERLAY_SOURCES[overlay.id])}
+            layout={{ visibility: overlay.enabled ? "visible" : "none" }}
             paint={{ "raster-opacity": overlay.opacity, ...OVERLAY_SOURCES[overlay.id].paint }}
           />
         </Source>

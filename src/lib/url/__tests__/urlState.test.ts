@@ -66,6 +66,14 @@ describe("overlays / UTM grid / multipage in URL", () => {
     ]);
   });
 
+  it("leaves the opacity to the layer's default when a hand-written link gives none", () => {
+    // ov=dd,hb used to mean 100 %, so the grey seabed relief covered the depths.
+    expect(deserializeState("ov=dd,hb-30").overlays).toEqual([
+      { id: "dybdemodel" },
+      { id: "havbund", opacity: 0.3 },
+    ]);
+  });
+
   it("omits the overlay param when none are enabled", () => {
     expect(serializeState({ overlays: [] })).not.toContain("ov=");
   });

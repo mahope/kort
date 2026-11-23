@@ -36,6 +36,25 @@ export const LEGACY_TILE_TEMPLATES: Record<string, string> = {
   hillshade: `${DHM}&LAYERS=dhm_terraen_skyggekort&BBOX={bbox-epsg-3857}`,
 };
 
+/**
+ * Old-key urls of an area's tiles outside the layers' current bounds. Deleting
+ * by the current urls finds the old key of every other tile (the service
+ * worker maps each url to it), but these tiles have no current url. They stay
+ * under the old key when the move stopped (storage full) before reaching them.
+ */
+export function legacyOutsideTileUrls(area: Pick<OfflineArea, "bounds" | "layerIds">): string[] {
+  const tiles = areaTiles(area.bounds);
+  const urls: string[] = [];
+  for (const id of area.layerIds) {
+    const legacy = LEGACY_TILE_TEMPLATES[id];
+    if (!legacy) continue;
+    for (const tile of tiles) {
+      if (!layerTileUrl(id, tile)) urls.push(expandTileUrl(legacy, tile));
+    }
+  }
+  return urls;
+}
+
 type TileCache = Pick<Cache, "match" | "put" | "delete" | "keys">;
 
 /**
