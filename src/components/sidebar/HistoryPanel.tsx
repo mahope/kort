@@ -36,7 +36,7 @@ export function HistoryPanel() {
           onClick={() => {
             if (confirm("Ryd hele udskriftshistorikken?")) clearAll();
           }}
-          className="text-[10px] text-danger hover:text-danger-hover"
+          className="pointer-coarse:min-h-11 pointer-coarse:min-w-11 text-[10px] pointer-coarse:text-xs text-danger hover:text-danger-hover"
         >
           Slet alle
         </button>
@@ -57,13 +57,13 @@ export function HistoryPanel() {
               key={entry.id}
               type="button"
               onClick={() => handleGoTo(entry)}
-              className="w-full text-left px-2 py-1 rounded bg-surface-secondary text-xs hover:bg-border transition-colors"
+              className="w-full pointer-coarse:min-h-11 pointer-coarse:min-w-11 text-left px-2 py-1 rounded bg-surface-secondary text-xs hover:bg-border transition-colors"
             >
               <div className="flex items-center justify-between">
                 <span className="text-text-secondary">{dateStr}</span>
                 <span className="text-text-muted">{scaleStr}</span>
               </div>
-              <div className="text-text-muted text-[10px]">
+              <div className="text-text-muted text-[10px] pointer-coarse:text-xs">
                 {entry.paperFormat} {entry.orientation === "landscape" ? "landskab" : "portræt"}
               </div>
             </button>

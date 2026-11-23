@@ -18,7 +18,7 @@ export function StylePanel({ style, onUpdate }: StylePanelProps) {
           onChange={(e) =>
             onUpdate({ lineColor: e.target.value, fillColor: e.target.value })
           }
-          className="w-6 h-6 rounded border border-border cursor-pointer"
+          className="w-6 h-6 pointer-coarse:min-h-11 pointer-coarse:min-w-11 rounded border border-border cursor-pointer"
         />
       </div>
       <div className="flex items-center gap-2">
@@ -30,7 +30,7 @@ export function StylePanel({ style, onUpdate }: StylePanelProps) {
           step={1}
           value={style.lineWidth}
           onChange={(e) => onUpdate({ lineWidth: Number(e.target.value) })}
-          className="flex-1 h-1 accent-primary"
+          className="flex-1 h-1 pointer-coarse:h-11 pointer-coarse:min-w-11 accent-primary"
         />
         <span className="text-text-secondary w-6 text-right">{style.lineWidth}px</span>
       </div>
@@ -41,7 +41,7 @@ export function StylePanel({ style, onUpdate }: StylePanelProps) {
           onChange={(e) =>
             onUpdate({ lineStyle: e.target.value as LayerStyle["lineStyle"] })
           }
-          className="rounded border border-border px-1 py-0.5 text-xs bg-surface"
+          className="rounded border border-border px-1 py-0.5 text-xs pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:text-base bg-surface"
         >
           <option value="solid">Solid</option>
           <option value="dashed">Stiplet</option>
@@ -59,7 +59,7 @@ export function StylePanel({ style, onUpdate }: StylePanelProps) {
           onChange={(e) =>
             onUpdate({ fillOpacity: Number(e.target.value) / 100 })
           }
-          className="flex-1 h-1 accent-primary"
+          className="flex-1 h-1 pointer-coarse:h-11 pointer-coarse:min-w-11 accent-primary"
         />
         <span className="text-text-secondary w-6 text-right">
           {Math.round(style.fillOpacity * 100)}%

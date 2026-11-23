@@ -100,7 +100,7 @@ export function DrawToolbar() {
             key={tool.mode}
             type="button"
             onClick={() => setMode(activeMode === tool.mode ? null : tool.mode)}
-            className={`flex items-center gap-1 px-2 py-1 rounded text-xs border transition-colors ${
+            className={`flex items-center gap-1 px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 rounded text-xs border transition-colors ${
               activeMode === tool.mode
                 ? "bg-primary text-on-primary border-primary"
                 : "bg-surface text-foreground border-border hover:border-text-muted"
@@ -119,7 +119,7 @@ export function DrawToolbar() {
           onClick={undo}
           disabled={!canUndo}
           title="Fortryd (Ctrl+Z)"
-          className="flex items-center gap-1 px-2 py-1 rounded text-xs border border-border text-foreground hover:border-text-muted disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center gap-1 px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 rounded text-xs border border-border text-foreground hover:border-text-muted disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
@@ -131,7 +131,7 @@ export function DrawToolbar() {
           onClick={redo}
           disabled={!canRedo}
           title="Gentag (Ctrl+Shift+Z)"
-          className="flex items-center gap-1 px-2 py-1 rounded text-xs border border-border text-foreground hover:border-text-muted disabled:opacity-40 disabled:cursor-not-allowed"
+          className="flex items-center gap-1 px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 rounded text-xs border border-border text-foreground hover:border-text-muted disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12h3" />
@@ -151,7 +151,7 @@ export function DrawToolbar() {
               onClick={() => {
                 if (confirm("Slet alle tegninger?")) clearAll();
               }}
-              className="text-xs text-danger hover:text-danger-hover"
+              className="pointer-coarse:min-h-11 pointer-coarse:min-w-11 text-xs text-danger hover:text-danger-hover"
             >
               Slet alle
             </button>
@@ -174,14 +174,14 @@ export function DrawToolbar() {
                       onChange={(e) => renameFeature(f.id, e.target.value)}
                       placeholder={typeLabel}
                       aria-label="Navn på tegning"
-                      className="flex-1 min-w-0 bg-transparent text-foreground placeholder:text-text-muted focus:outline-none"
+                      className="flex-1 min-w-0 pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:text-base bg-transparent text-foreground placeholder:text-text-muted focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={() => setExpandedId(expandedId === f.id ? null : f.id)}
                       title="Stil"
                       aria-label="Rediger stil"
-                      className="text-text-muted hover:text-primary shrink-0"
+                      className="pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:grid pointer-coarse:place-items-center text-text-muted hover:text-primary shrink-0"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z M9 11v3h3" />
@@ -192,7 +192,7 @@ export function DrawToolbar() {
                       onClick={() => removeFeature(f.id)}
                       title="Slet"
                       aria-label="Slet tegning"
-                      className="text-text-muted hover:text-danger shrink-0"
+                      className="pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:grid pointer-coarse:place-items-center text-text-muted hover:text-danger shrink-0"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -211,7 +211,7 @@ export function DrawToolbar() {
               );
             })}
           </div>
-          <p className="text-[10px] text-text-muted mt-1">Styling påvirker PDF og eksport</p>
+          <p className="text-[10px] pointer-coarse:text-xs text-text-muted mt-1">Styling påvirker PDF og eksport</p>
         </div>
       )}
     </div>

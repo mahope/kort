@@ -15,6 +15,10 @@ export function isSheetLayout(): boolean {
 
 /** Height in px the sheet covers at a snap position (0 when it is a sidebar). */
 export function sheetHeightPx(position: SheetPosition, viewportHeight: number): number {
-  if (position === "min") return SNAP_MIN_PX;
+  if (position === "min") {
+    const touchMin = typeof document === "undefined" ? 0 :
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sheet-touch-min")) || 0;
+    return Math.max(SNAP_MIN_PX, touchMin);
+  }
   return Math.round(viewportHeight * (position === "mid" ? SNAP_MID_FRAC : SNAP_MAX_FRAC));
 }

@@ -138,7 +138,7 @@ export function FileImport() {
             <p className="text-xs text-text-secondary">
               Træk fil hertil eller klik
             </p>
-            <p className="text-[10px] text-text-muted mt-0.5">
+            <p className="text-[10px] pointer-coarse:text-xs text-text-muted mt-0.5">
               GPX, KML, GeoJSON
             </p>
           </>
