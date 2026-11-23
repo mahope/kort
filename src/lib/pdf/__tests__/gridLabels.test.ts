@@ -68,6 +68,50 @@ describe("PDF grid labels", () => {
     }
   });
 
+  it.each(["top", "bottom", "left", "right"] as const)("connects crowded %s labels to their own crossings", (side) => {
+    const pdf = new jsPDF({ unit: "mm", format: "a4" });
+    const text = vi.spyOn(pdf, "text");
+    const leader = vi.spyOn(pdf, "line");
+    const horizontal = side === "top" || side === "bottom";
+    const edge = rect[side];
+    const inward = side === "top" || side === "left" ? 1 : -1;
+    const offsets = horizontal ? [61, 63.22, 67.21, 71.2] : [61, 62, 63, 64];
+    const point = (along: number, across: number): [number, number] =>
+      horizontal ? [along, across] : [across, along];
+    const coords = new Map<string, { x: number; y: number }>();
+    const lines = offsets.map((offset, index): ZonedGridLine => {
+      const value = 598300 + index * 100;
+      const points = [6250000, 6251000].map((northing, vertex): [number, number] => {
+        const { lng, lat } = utmToLatlng(value, northing, 32);
+        const [x, y] = point(offset, edge + inward * vertex * 10);
+        coords.set(`${lng},${lat}`, { x, y });
+        return [lng, lat];
+      });
+      return { axis: "E", value, zone: 32, cls: "minor", coords: points };
+    });
+
+    drawGridLabels(pdf, { toMm: (lng, lat) => coords.get(`${lng},${lat}`)! }, rect, 10, lines, { system: "mgrs", labelFormat: "short" });
+
+    const labels = text.mock.calls.filter(([label]) => String(label).startsWith("NH "));
+    expect(labels.map(([label]) => label)).toEqual(["NH 98,3", "NH 98,4", "NH 98,5", "NH 98,6"]);
+    expect(leader).toHaveBeenCalledTimes(offsets.length);
+    labels.forEach(([, x, y], index) => {
+      const [x1, y1, x2, y2] = leader.mock.calls[index];
+      const [crossing, frame] = point(x1, y1);
+      expect(crossing).toBeCloseTo(offsets[index], 7);
+      expect(frame).toBe(edge);
+      const [along, across] = point(x2, y2);
+      expect((across - edge) * inward).toBeLessThan(0);
+      if (horizontal) {
+        expect(along).toBeCloseTo(x, 7);
+      } else {
+        expect(along).toBeGreaterThan(y - 2);
+        expect(along).toBeLessThan(y);
+      }
+    });
+    if (horizontal) expect(labels[1][1]).toBeGreaterThan((offsets[1] + offsets[2]) / 2);
+  });
+
   it("labels a diagonal line once where it meets a shared corner", () => {
     const pdf = new jsPDF({ unit: "mm", format: "a4" });
     const text = vi.spyOn(pdf, "text");

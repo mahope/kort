@@ -402,6 +402,9 @@ export function drawGridLabels(
 ) {
   pdf.setTextColor(0, 0, 0);
   pdf.setFont("helvetica", "bold");
+  pdf.saveGraphicsState();
+  pdf.setDrawColor(0);
+  pdf.setLineWidth(0.12);
 
   const measure = (l: FormattedLabel, k: number) => {
     if (opts.system === "mgrs" && l.prefix) {
@@ -484,15 +487,25 @@ export function drawGridLabels(
       start = position + half + inset;
       remaining -= 2 * (half + inset);
       if (horizontal) {
-        const baseline = side === "top" ? rect.top - 1.5 : rect.bottom + 1.2 + labelHeight * scale;
-        drawLabel(label, rect.left + position, baseline, "center", scale);
+        const top = side === "top";
+        const edge = top ? rect.top : rect.bottom;
+        const x = rect.left + position;
+        const baseline = top ? edge - 1.5 : edge + 1.2 + labelHeight * scale;
+        // Keep the association with the grid line when the label shifts.
+        pdf.line(rect.left + t, edge, x, edge + (top ? -1.2 : 0.9));
+        drawLabel(label, x, baseline, "center", scale);
       } else {
         const left = side === "left";
-        drawLabel(label, left ? rect.left - 1 : rect.right + 1, rect.top + position + half, left ? "right" : "left", scale);
+        const edge = left ? rect.left : rect.right;
+        const direction = left ? -1 : 1;
+        const y = rect.top + position;
+        pdf.line(edge, rect.top + t, edge + direction * 0.7, y);
+        drawLabel(label, edge + direction, y + half, left ? "right" : "left", scale);
       }
     }
   }
 
+  pdf.restoreGraphicsState();
   pdf.setFont("helvetica", "normal");
 }
 
