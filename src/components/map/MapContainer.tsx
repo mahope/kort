@@ -36,7 +36,7 @@ import { GeolocationButton } from "./GeolocationButton";
 import { ImportedLayers } from "./ImportedLayers";
 import { UtmGrid } from "./UtmGrid";
 import { configureMaplibreWorker } from "@/lib/map/workerUrl";
-import { screenTileRetry } from "@/lib/map/tileRetry";
+import { dropTilesOutside, screenTileRetry } from "@/lib/map/tileRetry";
 
 // terra-draw (~44 KB gz) is only needed once the user starts drawing or has
 // persisted drawings to restore.
@@ -123,6 +123,9 @@ export function MapContainer() {
       // new options have none, so clear them first.
       raster._options.bounds = rasterBase.bounds;
       raster.tileBounds = undefined as unknown as typeof raster.tileBounds;
+      // The reload asks again for every tile held, also old OSM tiles outside
+      // the new bounds (the tile route answers those with 404): drop them.
+      if (rasterBase.bounds) dropTilesOutside(map, "base-raster", rasterBase.bounds);
       raster.setTiles(rasterBase.tiles);
     }
   }, [rasterBase]);

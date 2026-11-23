@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Map as MaplibreMap } from "maplibre-gl";
-import { screenTileRetry } from "../tileRetry";
+import { dropTilesOutside, screenTileRetry } from "../tileRetry";
+import { DENMARK_TILE_BOUNDS } from "@/lib/tiles/routeLayers";
 
 /** Just enough of a MapLibre map: a tile manager with tile states, and _update. */
 function fakeMap() {
@@ -124,5 +125,29 @@ describe("screenTileRetry", () => {
     retry.stop();
     vi.advanceTimersByTime(5000);
     expect(map.updates).toBe(0);
+  });
+});
+
+describe("dropTilesOutside", () => {
+  it("drops the tiles outside the new bounds so the reload does not ask the tile route for them", () => {
+    // z10 around Gedser: y 323 lies at about 55 N (inside), y 330 south of 54 N.
+    const tiles = new Map([
+      ["inside", { z: 10, x: 545, y: 323 }],
+      ["south", { z: 10, x: 545, y: 330 }],
+    ]);
+    const removed: string[] = [];
+    const map = {
+      style: {
+        tileManagers: {
+          "base-raster": {
+            getIds: () => [...tiles.keys()],
+            getTileByID: (id: string) => ({ tileID: { canonical: tiles.get(id) } }),
+            _removeTile: (id: string) => removed.push(id),
+          },
+        },
+      },
+    } as unknown as MaplibreMap;
+    dropTilesOutside(map, "base-raster", DENMARK_TILE_BOUNDS);
+    expect(removed).toEqual(["south"]);
   });
 });

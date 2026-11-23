@@ -14,5 +14,7 @@ describe("maplibre-gl private API used for tile retries", () => {
     expect(src).toContain("_removeTile");
     expect(src).toContain("_update(");
     expect(src).toContain("tileManagers");
+    // dropTilesOutside (lagskift på skærmen) lists the held tiles.
+    expect(src).toContain("getIds()");
   });
 });

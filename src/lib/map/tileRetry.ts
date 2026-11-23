@@ -1,4 +1,5 @@
 import type { Map as MaplibreMap } from "maplibre-gl";
+import { tileIntersects, type TileCoord } from "@/lib/tiles/bbox";
 
 /** A tile that errored, by source and MapLibre tile key. */
 export interface FailedTile {
@@ -16,10 +17,27 @@ export type TileEvent = { sourceId?: string; dataType?: string; tile?: { tileID?
 // some of them before they arrived, and the PDF was refused as incomplete.
 type Manager = {
   _removeTile?: (id: number | string) => void;
-  getTileByID?: (id: number | string) => { state?: string } | undefined;
+  getTileByID?: (id: number | string) => { state?: string; tileID?: { canonical?: TileCoord } } | undefined;
+  getIds?: () => (number | string)[];
 };
 
 type Internals = { _update?: () => void; redraw?: () => void; style?: { tileManagers?: Record<string, Manager> } };
+
+/**
+ * Drops the source's tiles that lie outside `bounds`. Call it before setTiles
+ * narrows a source's bounds: TileManager.reload() asks again for every tile it
+ * holds without checking hasTile(), so switching from OSM to DTK25 in a view
+ * south of Gedser sent the old OSM tiles to the tile route and got 404s.
+ * Dropped tiles are not asked for again, since update() filters by the bounds.
+ */
+export function dropTilesOutside(map: MaplibreMap, sourceId: string, bounds: [number, number, number, number]) {
+  const manager = (map as unknown as Internals).style?.tileManagers?.[sourceId];
+  if (!manager?.getIds || !manager.getTileByID || !manager._removeTile) return;
+  for (const id of manager.getIds()) {
+    const canonical = manager.getTileByID(id)?.tileID?.canonical;
+    if (canonical && !tileIntersects(canonical, bounds)) manager._removeTile(id);
+  }
+}
 
 /** Requests the failed tiles again; the ones it could drop are removed from `failed`. */
 export function retryTiles(map: MaplibreMap, failed: Map<string, FailedTile>) {
