@@ -91,9 +91,14 @@ describe("control line", () => {
           const contentPdf = newPdf(format, orientation).pdf;
           const rect = vi.spyOn(contentPdf, "rect");
           const fillColor = vi.spyOn(contentPdf, "setFillColor");
+          const line = vi.spyOn(contentPdf, "line");
+          const label = vi.spyOn(contentPdf, "text");
           const bar = recordBox(contentPdf, () => drawScaleBar(contentPdf, layout, scale));
           expect(rect).toHaveBeenCalledExactlyOnceWith(bar.x1, bar.y1, expect.any(Number), expect.any(Number), "FD");
           expect(fillColor).toHaveBeenCalledWith(255, 255, 255);
+          for (const order of [...line.mock.invocationCallOrder, ...label.mock.invocationCallOrder]) {
+            expect(rect.mock.invocationCallOrder[0]).toBeLessThan(order);
+          }
 
           const { left, top, right, bottom } = declinationBoxRect(layout);
           for (const other of [control, arrow, arrowRotated, { x1: left, y1: top, x2: right, y2: bottom }]) {
@@ -145,8 +150,8 @@ describe("generatePdf output", () => {
     HTMLAnchorElement.prototype.click = () => {};
   });
 
-  async function generate(multiPage: boolean) {
-    usePrintStore.setState({ multiPage, gridCols: 2, gridRows: 1, overlapMm: 10 });
+  async function generate(multiPage: boolean, gridRows = 1, overlapMm = 10) {
+    usePrintStore.setState({ multiPage, gridCols: 2, gridRows, overlapMm });
     await generatePdf({
       bounds: { west: 10, east: 10.1, south: 56, north: 56.1 },
       scale: 25000, paperFormat: "A4", orientation: "portrait", dpi: 150,
@@ -167,6 +172,32 @@ describe("generatePdf output", () => {
     const { file, texts } = await generate(true);
     expect(file).toContain("/PrintScaling /None");
     expect(texts).toHaveLength(2);
+  });
+
+  it.each([5, 15])("keeps both left-hand boxes above the bottom assembly line with %i mm overlap", async (overlapMm) => {
+    usePrintStore.setState({ showScaleBar: true });
+    const { file } = await generate(true, 2, overlapMm);
+    const { layout } = newPdf("A4", "portrait");
+    const ptPerMm = 72 / 25.4;
+    const boxX = (layout.marginMm + 5) * ptPerMm;
+    const mapBottom = (layout.pageHeightMm - layout.marginMm - layout.mapHeightMm) * ptPerMm;
+    const assemblyY = mapBottom + overlapMm * ptPerMm;
+    const sheets = [...file.matchAll(/\bstream\r?\n([^]*?)\r?\nendstream/g)]
+      .map(([, stream]) => stream)
+      .filter((stream) => stream.includes("(Ark "));
+    expect(sheets).toHaveLength(4);
+
+    for (const [index, sheet] of sheets.entries()) {
+      const boxBottoms = [...sheet.matchAll(/^([\d.]+) ([\d.]+) [\d.]+ (-[\d.]+) re\r?\nB$/gm)]
+        .filter(([, x]) => Math.abs(Number(x) - boxX) < 0.01)
+        .map(([, , top, height]) => Number(top) + Number(height));
+      expect(boxBottoms).toHaveLength(2);
+      if (index < 2) {
+        for (const bottom of boxBottoms) expect(bottom).toBeGreaterThan(assemblyY);
+      } else {
+        expect(Math.min(...boxBottoms)).toBeCloseTo(mapBottom + 1.5 * ptPerMm, 2);
+      }
+    }
   });
 
   it.each([false, true])("emits a scale box only when enabled without a base map (multi-page: %s)", async (multiPage) => {

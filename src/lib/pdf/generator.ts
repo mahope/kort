@@ -210,7 +210,8 @@ export async function generatePdf({
 export function drawScaleBar(
   pdf: jsPDF,
   layout: { marginMm: number; mapWidthMm: number; mapHeightMm: number; pageHeightMm: number },
-  scale: number
+  scale: number,
+  bottomInsetMm = 0
 ) {
   // Calculate a "nice" distance for the scale bar
   const barWidthMm = 40; // target bar width on paper
@@ -228,7 +229,7 @@ export function drawScaleBar(
   const pad = 2;
   const centerX = boxX + pad + width / 2;
   const x = centerX - actualBarMm / 2;
-  const y = layout.marginMm + layout.mapHeightMm - 5;
+  const y = layout.marginMm + layout.mapHeightMm - 5 - bottomInsetMm;
 
   drawPrintBox(pdf, boxX, y - 4.5, width + 2 * pad, 8);
 
@@ -821,12 +822,15 @@ async function generateMultiPagePdf({
         opts.reserveTopLeftMm = pageLabelMm;
         gridInfo = { ...gridInfoBase(opts, cell.bounds), spacing: drawUtmGrid(pdf, layout, cell.bounds, scale, opts) };
       }
+      const neighbours = sheetNeighbours(cell, gridCols, gridRows);
       // After the grid, so the white box keeps grid lines off the hint.
-      drawAssemblyMarks(pdf, layout, sheetNeighbours(cell, gridCols, gridRows), overlapMm);
+      drawAssemblyMarks(pdf, layout, neighbours, overlapMm);
 
-      if (printState.showScaleBar ?? (baseLayer !== "none")) drawScaleBar(pdf, layout, scale);
+      // Keep the stacked boxes above the dashed line and out of the covered strip.
+      const bottomInsetMm = neighbours.bottom ? overlapMm : 0;
+      if (printState.showScaleBar ?? (baseLayer !== "none")) drawScaleBar(pdf, layout, scale, bottomInsetMm);
       if (printState.showNorthArrow ?? (baseLayer !== "none")) drawNorthArrow(pdf, layout, bearing);
-      drawControlLine(pdf, layout);
+      drawControlLine(pdf, layout, bottomInsetMm);
 
       const sheetPlace = { region, bounds: cell.bounds };
       drawAttribution(pdf, layout, scale, gridInfo, undefined, mapDataCredit(baseLayer, sheetPlace));

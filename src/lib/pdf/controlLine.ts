@@ -23,10 +23,11 @@ export interface ControlLineGeometry {
 /** Pure placement of the control line; `textWidthMm` is the width of CONTROL_LINE_TEXT at 6 pt. */
 export function controlLineGeometry(
   layout: Pick<PdfLayout, "marginMm" | "mapHeightMm">,
-  textWidthMm: number
+  textWidthMm: number,
+  bottomInsetMm = 0
 ): ControlLineGeometry {
   const x = layout.marginMm + LEFT_OFFSET_MM;
-  const bottom = layout.marginMm + layout.mapHeightMm - BOTTOM_OFFSET_MM;
+  const bottom = layout.marginMm + layout.mapHeightMm - BOTTOM_OFFSET_MM - bottomInsetMm;
   const top = bottom - BOX_HEIGHT_MM;
   const lineY = top + 6.5;
   const lineX1 = x + PAD_MM;
@@ -45,10 +46,14 @@ export function drawPrintBox(pdf: jsPDF, x: number, y: number, w: number, h: num
   pdf.rect(x, y, w, h, "FD");
 }
 
-export function drawControlLine(pdf: jsPDF, layout: Pick<PdfLayout, "marginMm" | "mapHeightMm">): void {
+export function drawControlLine(
+  pdf: jsPDF,
+  layout: Pick<PdfLayout, "marginMm" | "mapHeightMm">,
+  bottomInsetMm = 0
+): void {
   pdf.setFontSize(TEXT_PT);
   pdf.setFont("helvetica", "normal");
-  const g = controlLineGeometry(layout, pdf.getTextWidth(CONTROL_LINE_TEXT));
+  const g = controlLineGeometry(layout, pdf.getTextWidth(CONTROL_LINE_TEXT), bottomInsetMm);
 
   drawPrintBox(pdf, g.box.x, g.box.y, g.box.w, g.box.h);
 

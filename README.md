@@ -156,6 +156,7 @@ src/
   resolution (up to 300 dpi), waits for every tile, and adds the image to jsPDF
   with grid, scale bar, north arrow, declination diagram and credits. The scale
   bar and print calibration line have matching white boxes for legibility.
+  On sheets with a neighbour below, both boxes sit above the overlap strip.
   Nothing is rendered on the server.
 - **Search:** addresses come from Adressevælger. Place names are searched in our
   own `/api/stednavne` over a snapshot of Danske Stednavne
