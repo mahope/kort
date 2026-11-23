@@ -1,8 +1,8 @@
 import type { BaseLayer, OverlayId } from "@/types/map";
 import type { PrintFrameBounds } from "@/types/print";
-import { getRasterBaseLayers, OVERLAY_SOURCES } from "@/lib/map/sources";
+import { getRasterBaseLayers, OVERLAY_SOURCES, type RasterSourceConfig } from "@/lib/map/sources";
 import { padBounds } from "@/lib/geo/bounds";
-import { tileBBox3857, type TileCoord } from "@/lib/tiles/bbox";
+import { tileBBox3857, tileIntersects, type TileCoord } from "@/lib/tiles/bbox";
 
 export { tileBBox3857, type TileCoord };
 
@@ -38,7 +38,7 @@ export const MAX_TILE_COUNT = 20000;
  * and sprites, which are not tile-addressable.
  */
 const SCREEN_RASTER = getRasterBaseLayers("screen");
-const SAVEABLE_BASE: Partial<Record<BaseLayer, { tiles: string[] }>> = {
+const SAVEABLE_BASE: Partial<Record<BaseLayer, RasterSourceConfig>> = {
   ortofoto: SCREEN_RASTER.ortofoto,
   dtk25: SCREEN_RASTER.dtk25,
   historisk_hoeje: SCREEN_RASTER.historisk_hoeje,
@@ -107,21 +107,25 @@ export function offlineLayerIds(
   return ids;
 }
 
-function templateFor(layerId: string): string | null {
-  const base = SAVEABLE_BASE[layerId as BaseLayer];
-  if (base) return base.tiles[0];
-  const overlay = OVERLAY_SOURCES[layerId as OverlayId];
-  return overlay ? overlay.tiles[0] : null;
+function sourceFor(layerId: string): Pick<RasterSourceConfig, "tiles" | "bounds"> | null {
+  return SAVEABLE_BASE[layerId as BaseLayer] ?? OVERLAY_SOURCES[layerId as OverlayId] ?? null;
 }
 
-/** All tile URLs an area needs, deduplicated. */
+/**
+ * All tile URLs an area needs, deduplicated. Tiles outside a layer's bounds
+ * are left out, as MapLibre never asks for them (and the tile route refuses them).
+ */
 export function areaTileUrls(bounds: PrintFrameBounds, layerIds: string[]): string[] {
   const tiles = tilesForBounds(padBounds(bounds, OFFLINE_PADDING));
   const urls = new Set<string>();
   for (const id of layerIds) {
-    const template = templateFor(id);
-    if (!template) continue;
-    for (const t of tiles) urls.add(expandTileUrl(template, t));
+    const source = sourceFor(id);
+    if (!source) continue;
+    const template = source.tiles[0];
+    for (const t of tiles) {
+      if (source.bounds && !tileIntersects(t, source.bounds)) continue;
+      urls.add(expandTileUrl(template, t));
+    }
   }
   return [...urls];
 }

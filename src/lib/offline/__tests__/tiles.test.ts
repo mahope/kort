@@ -15,6 +15,8 @@ import {
 import { groundExtentToBounds, calculatePrintArea } from "@/lib/geo/calculations";
 import { padBounds } from "@/lib/geo/bounds";
 import { getRasterBaseLayers } from "@/lib/map/sources";
+import { tileIntersects } from "@/lib/tiles/bbox";
+import { DENMARK_TILE_BOUNDS } from "@/lib/tiles/routeLayers";
 
 describe("offline tiles", () => {
   it("maps lng/lat to the known tile", () => {
@@ -59,6 +61,19 @@ describe("offline tiles", () => {
     const urls = areaTileUrls(bounds, ids);
     expect(urls.length).toBe(perLayer * 2);
     expect(new Set(urls).size).toBe(urls.length);
+  });
+
+  it("leaves out tiles the route refuses, outside the layer's bounds", () => {
+    // From Gedser across 54.3° N into the Baltic.
+    const gedser = { north: 54.6, south: 54.0, east: 12.0, west: 11.8 };
+    const all = tilesForBounds(padBounds(gedser, OFFLINE_PADDING));
+    const urls = areaTileUrls(gedser, ["dtk25"]);
+    expect(urls.length).toBeGreaterThan(0);
+    expect(urls.length).toBeLessThan(all.length);
+    for (const u of urls) {
+      const [z, x, y] = new URL(u).pathname.split("/").slice(-3).map((p) => parseInt(p, 10));
+      expect(tileIntersects({ z, x, y }, DENMARK_TILE_BOUNDS)).toBe(true);
+    }
   });
 
   it("requires confirmation above 2,000 tiles or 100 MB and warns on quota", () => {
