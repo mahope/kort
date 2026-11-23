@@ -7,7 +7,9 @@ vi.mock("../renderer", () => ({ renderMapToImage }));
 
 import { PAPER_FORMATS } from "@/constants/paperFormats";
 import type { Orientation, PaperFormat } from "@/types/print";
+import { useMapStore } from "@/stores/mapStore";
 import { usePrintStore } from "@/stores/printStore";
+import { declinationBoxRect } from "../declinationDiagram";
 import { calculatePdfLayout } from "../layout";
 import {
   CONTROL_LINE_MM,
@@ -50,7 +52,7 @@ const overlaps = (a: Box, b: Box) => a.x1 < b.x2 && b.x1 < a.x2 && a.y1 < b.y2 &
 
 const FORMATS = Object.keys(PAPER_FORMATS) as PaperFormat[];
 const ORIENTATIONS: Orientation[] = ["portrait", "landscape"];
-const SCALES = [1000, 5000, 25000, 50000, 100000, 250000];
+const SCALES = [1000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000];
 
 function newPdf(format: PaperFormat, orientation: Orientation) {
   const layout = calculatePdfLayout(format, orientation, 150);
@@ -61,7 +63,7 @@ function newPdf(format: PaperFormat, orientation: Orientation) {
 describe("control line", () => {
   for (const format of FORMATS) {
     for (const orientation of ORIENTATIONS) {
-      it(`is 100 mm and clear of scale bar, north arrow and attribution (${format} ${orientation})`, () => {
+      it(`keeps the 100 mm control line and boxed scale bar clear of nearby elements (${format} ${orientation})`, () => {
         const { pdf, layout } = newPdf(format, orientation);
         const lines: number[][] = [];
         const origLine = pdf.line.bind(pdf);
@@ -86,8 +88,26 @@ describe("control line", () => {
         expect(overlaps(control, arrowRotated)).toBe(false);
         expect(overlaps(control, attribution)).toBe(false);
         for (const scale of SCALES) {
-          const bar = recordBox(pdf, () => drawScaleBar(pdf, layout, scale));
-          expect(overlaps(control, bar), `scale 1:${scale}`).toBe(false);
+          const contentPdf = newPdf(format, orientation).pdf;
+          const rect = vi.spyOn(contentPdf, "rect");
+          const fillColor = vi.spyOn(contentPdf, "setFillColor");
+          const line = vi.spyOn(contentPdf, "line");
+          const label = vi.spyOn(contentPdf, "text");
+          const bar = recordBox(contentPdf, () => drawScaleBar(contentPdf, layout, scale));
+          expect(rect).toHaveBeenCalledExactlyOnceWith(bar.x1, bar.y1, expect.any(Number), expect.any(Number), "FD");
+          expect(fillColor).toHaveBeenCalledWith(255, 255, 255);
+          for (const order of [...line.mock.invocationCallOrder, ...label.mock.invocationCallOrder]) {
+            expect(rect.mock.invocationCallOrder[0]).toBeLessThan(order);
+          }
+
+          const { left, top, right, bottom } = declinationBoxRect(layout);
+          for (const other of [control, arrow, arrowRotated, { x1: left, y1: top, x2: right, y2: bottom }]) {
+            expect(overlaps(other, bar), `scale 1:${scale}`).toBe(false);
+          }
+          expect(bar.x1).toBeGreaterThan(map.x1);
+          expect(bar.x2).toBeLessThan(map.x2);
+          expect(bar.y1).toBeGreaterThan(map.y1);
+          expect(bar.y2).toBeLessThan(map.y2);
         }
       });
     }
@@ -121,6 +141,8 @@ describe("generatePdf output", () => {
   let blobs: Blob[];
   beforeEach(() => {
     blobs = [];
+    useMapStore.setState({ baseLayer: "dtk25" });
+    usePrintStore.setState({ showScaleBar: null });
     renderMapToImage.mockReset();
     renderMapToImage.mockResolvedValue(JPEG);
     URL.createObjectURL = ((b: Blob) => { blobs.push(b); return "blob:test"; }) as typeof URL.createObjectURL;
@@ -128,13 +150,13 @@ describe("generatePdf output", () => {
     HTMLAnchorElement.prototype.click = () => {};
   });
 
-  async function generate(multiPage: boolean) {
-    usePrintStore.setState({ multiPage, gridCols: 2, gridRows: 1, overlapMm: 10 });
+  async function generate(multiPage: boolean, gridRows = 1, overlapMm = 10) {
+    usePrintStore.setState({ multiPage, gridCols: 2, gridRows, overlapMm });
     await generatePdf({
       bounds: { west: 10, east: 10.1, south: 56, north: 56.1 },
       scale: 25000, paperFormat: "A4", orientation: "portrait", dpi: 150,
     });
-    const file = Buffer.from(await blobs[0].arrayBuffer()).toString("latin1");
+    const file = Buffer.from(await blobs.at(-1)!.arrayBuffer()).toString("latin1");
     // Count the control-line text in the page content streams (uncompressed).
     const texts = file.match(/linjen: den skal v/g) ?? [];
     return { file, texts };
@@ -150,5 +172,45 @@ describe("generatePdf output", () => {
     const { file, texts } = await generate(true);
     expect(file).toContain("/PrintScaling /None");
     expect(texts).toHaveLength(2);
+  });
+
+  it.each([5, 15])("keeps both left-hand boxes above the bottom assembly line with %i mm overlap", async (overlapMm) => {
+    usePrintStore.setState({ showScaleBar: true });
+    const { file } = await generate(true, 2, overlapMm);
+    const { layout } = newPdf("A4", "portrait");
+    const ptPerMm = 72 / 25.4;
+    const boxX = (layout.marginMm + 5) * ptPerMm;
+    const mapBottom = (layout.pageHeightMm - layout.marginMm - layout.mapHeightMm) * ptPerMm;
+    const assemblyY = mapBottom + overlapMm * ptPerMm;
+    const sheets = [...file.matchAll(/\bstream\r?\n([^]*?)\r?\nendstream/g)]
+      .map(([, stream]) => stream)
+      .filter((stream) => stream.includes("(Ark "));
+    expect(sheets).toHaveLength(4);
+
+    for (const [index, sheet] of sheets.entries()) {
+      const boxBottoms = [...sheet.matchAll(/^([\d.]+) ([\d.]+) [\d.]+ (-[\d.]+) re\r?\nB$/gm)]
+        .filter(([, x]) => Math.abs(Number(x) - boxX) < 0.01)
+        .map(([, , top, height]) => Number(top) + Number(height));
+      expect(boxBottoms).toHaveLength(2);
+      if (index < 2) {
+        for (const bottom of boxBottoms) expect(bottom).toBeGreaterThan(assemblyY);
+      } else {
+        expect(Math.min(...boxBottoms)).toBeCloseTo(mapBottom + 1.5 * ptPerMm, 2);
+      }
+    }
+  });
+
+  it.each([false, true])("emits a scale box only when enabled without a base map (multi-page: %s)", async (multiPage) => {
+    useMapStore.setState({ baseLayer: "none" });
+    usePrintStore.setState({ showScaleBar: false });
+    const { file: withoutScale } = await generate(multiPage);
+    usePrintStore.setState({ showScaleBar: true });
+    const { file: withScale } = await generate(multiPage);
+    const filledAndStrokedBoxes = (file: string) => file.match(/\bre\r?\nB\r?\n/g) ?? [];
+    expect(withoutScale).not.toContain("(500 m)");
+    expect(withScale.match(/\(500 m\) Tj/g)).toHaveLength(multiPage ? 2 : 1);
+    expect(filledAndStrokedBoxes(withScale)).toHaveLength(
+      filledAndStrokedBoxes(withoutScale).length + (multiPage ? 2 : 1),
+    );
   });
 });
