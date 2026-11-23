@@ -55,7 +55,8 @@ which has contours built in.
   stops at zoom 14 (about 10 m per pixel), is too coarse for 1:25,000 prints and
   closes on 31 December 2026
   ([Lantmäteriet, 20 May 2026](https://www.lantmateriet.se/sv/geodata/vara-produkter/Produktnyheter/Geografisk-information/avveckling-av-produkten-topografisk-webbkarta-visning-oversiktlig/)).
-  The detailed *Topografisk webbkarta Visning, cache* is paid. A possible route
+  The detailed *Topografisk webbkarta Visning, cache* is paid. So no token proxy
+  has been built, and no token needs to be created. A possible route
   is *Topografisk webbkarta Nedladdning, raster* (free under the high-value
   datasets terms), served as PMTiles from `tiles.mahoje.dk` like the Danish
   contours. But from 6 October 2026 it is only available through a STAC API,

@@ -42,7 +42,7 @@ Example PDF: [example-a4-1-25000.pdf](https://github.com/mahope/kort/releases/do
 
 - **Map layers:** Skærmkort in four styles, the 1:25,000 topographic map (DTK25),
   orthophoto, OpenStreetMap, two series of historic maps (1842-1971) or no base map at all.
-- **Overlays:** contours (0.25 m to 10 m, with height labels), hillshade, cadastre,
+- **Overlays:** contours (0.5 m to 10 m, with height labels), hillshade, cadastre,
   place names, sea depths and seabed relief, sea marks, lake depth contours,
   wrecks and historic lake charts (marked *not for navigation*).
 - **Scales** 1:5,000 to 1:500,000, or any custom scale from 1:1,000 to 1:1,000,000.
@@ -58,7 +58,7 @@ Example PDF: [example-a4-1-25000.pdf](https://github.com/mahope/kort/releases/do
 - **Search** addresses and place names (Danish and Norwegian).
 - **Share** a map view as a URL; bookmarks and print history in the browser.
 - **PWA:** installable, works offline with cached tiles, and can save an area for offline use.
-- **No account, no cookies.** Anonymous, cookieless visitor counts via self-hosted Plausible.
+- **No account, no cookies.** Anonymous, cookieless visitor counts via self-hosted Plausible, only on the two production domains.
 - Light and dark theme, desktop sidebar and mobile bottom sheet.
 
 ## Tech stack
@@ -127,7 +127,7 @@ build arguments: changing them needs a new build, not just a restart.
 
 Production runs on Dokploy. Both kort.mahoje.dk and kort.solaris.dk build the
 `Dockerfile` from `main` and deploy automatically on every merge. CI
-(`.github/workflows/ci.yml`) runs build, lint, typecheck, tests, a dependency
+(`.github/workflows/ci.yml`) runs build, lint, typecheck, tests, a non-blocking dependency
 audit and a gitleaks secret scan on every pull request; it does not deploy.
 
 ## Architecture
@@ -145,7 +145,7 @@ src/
 │   ├── import/     GPX, GeoJSON and KML import
 │   ├── offline/    offline areas and tile cache (with public/sw.js)
 │   └── url/        shareable URL state
-├── stores/         Zustand stores (map, print, ui, import, draw, history)
+├── stores/         Zustand stores (map, print, ui, import, draw, history, bookmarks, offline)
 ├── constants/      scales, paper formats, data sources (shown on /kilder)
 └── config/         brand config (mahoje / solaris)
 ```
@@ -169,13 +169,14 @@ More detail: [Norway and Sweden](docs/nordic.md) ·
 [security headers and CSP](docs/security.md) ·
 [public tokens](docs/tokens.md) ·
 [dependency policy](docs/dependency-security.md) ·
+[maintenance](docs/maintenance.md) ·
 [offline tests](docs/offline-tests.md)
 
 ## Roadmap
 
 Open ideas and known bugs live in [GitHub issues](https://github.com/mahope/kort/issues).
 Bigger themes right now: our own map tiles behind a CDN instead of live WMS
-([#39](https://github.com/mahope/kort/issues/39)), saving an area offline before
+([#39](https://github.com/mahope/kort/issues/39)), more offline areas before
 a trip ([#36](https://github.com/mahope/kort/issues/36)) and moving map layers
 to Datafordeleren as Dataforsyningen closes services ([#5](https://github.com/mahope/kort/issues/5)).
 

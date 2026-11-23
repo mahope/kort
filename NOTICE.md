@@ -17,13 +17,14 @@ The full, authoritative list with the exact credit text for each layer is
 |---|---|---|
 | Skærmkort vector tiles, DTK25 topographic map, orthophoto, historic maps (Høje/Lave Målebordsblade), elevation model (DHM), cadastre, Danske Stednavne, Adressevælger | [Klimadatastyrelsen](https://www.klimadatastyrelsen.dk/) via [Dataforsyningen](https://dataforsyningen.dk/) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (free geodata since 16 May 2024) |
 | 5 m and 10 m contours (`tiles.mahoje.dk`) | Derived by kort.mahoje.dk from Klimadatastyrelsen's DHM | CC BY 4.0 (derived work) |
-| Danmarks Dybdemodel 50 m, historic lake charts | Geodatastyrelsen via Dataforsyningen | CC BY 4.0, plus Dataforsyningen's [terms for marine data](https://dataforsyningen.dk/) |
+| Danmarks Dybdemodel 50 m (DDM50) | Geodatastyrelsen via Dataforsyningen | **Not CC BY.** Geodatastyrelsen's [terms for DDM50](https://dataforsyningen.dk/asset/PDF/rettigheder_vilkaar/Vilk%C3%A5r%20og%20betingelser%20for%20brug%20af%20marine%20data%20indeholdt%20i%20Danmarks%20Dybdemodel%2050%20m%20opl%C3%B8sning.pdf) (May 2024): free, also commercially, with a required credit sentence, the terms made available, and "not suitable for navigation" |
+| Historic lake charts (indsøkort) | Geodatastyrelsen via Dataforsyningen | CC BY 4.0 |
 | Lake depth contours (NOVANA) | Miljøstyrelsen via Danmarks Miljøportal | Terms for Danish public data (Danmarks Miljøportal): free, may be modified and used commercially |
 | Bathymetry and wrecks outside Denmark | [EMODnet](https://emodnet.ec.europa.eu/en/terms-use-emodnet-online-services-data-and-data-products) (EU); wreck data from UK Hydrographic Office | CC BY 4.0; UKHO data under Open Government Licence v3.0 |
 | Sea marks | [OpenSeaMap](https://openseamap.org/) and OpenStreetMap contributors | Tiles CC BY-SA 2.0, data ODbL |
-| OpenStreetMap base map | [© OpenStreetMap contributors](https://www.openstreetmap.org/copyright) | ODbL |
+| OpenStreetMap base map | [© OpenStreetMap contributors](https://www.openstreetmap.org/copyright) | Data ODbL, tiles CC BY-SA 2.0 |
 | Norway: topographic map, contours, place names (SSR) | [Kartverket](https://www.kartverket.no/api-og-data/vilkar-for-bruk) | CC BY 4.0 |
-| Sweden: OpenTopoMap | [OpenTopoMap](https://opentopomap.org/about), OSM contributors, SRTM and [Sonny](https://sonny.4lima.de/) | CC-BY-SA |
+| Sweden: OpenTopoMap | [OpenTopoMap](https://opentopomap.org/about), OSM contributors, SRTM and [Sonny](https://sonny.4lima.de/) | Map style CC-BY-SA, data ODbL |
 | Magnetic declination (WMM2025) | NOAA/NCEI and British Geological Survey | Public domain (US government work) |
 | Country outlines for region detection | Natural Earth | Public domain |
 
@@ -48,6 +49,11 @@ If you deploy your own copy:
    no bulk downloads, no offline caching of OpenTopoMap or Kartverket tiles
    (the offline feature already skips them), and no Geovekst/FKB data in PDFs
    for Norway.
+5. Keep the DDM50 credit sentence, the link to its terms and the "not for
+   navigation" warning wherever the sea-depth layers are shown or printed.
+6. Analytics: `src/lib/analytics.ts` only reports on kort.mahoje.dk and
+   kort.solaris.dk. Point it at your own Plausible (or remove it) if you want
+   statistics for your copy.
 
 ## Fonts
 
@@ -65,7 +71,9 @@ Map labels use the glyphs served by Dataforsyningen (`cdn.dataforsyningen.dk`).
 The interface icons are inline SVGs written for this project and are covered by
 the MIT License. The Solaris logo in `public/brand/solaris/` belongs to the scout
 group Solaris. It is **not** covered by the MIT
-License; remove it (or set `NEXT_PUBLIC_BRAND=mahoje`) in your own deployment.
+License; delete `public/brand/solaris/` in your own deployment. The Mahoje name
+and logo (`public/icons/icon.svg`, the wordmark) are not covered either: give
+your copy its own name and logo in `src/config/brand.ts`.
 
 ## Runtime libraries
 
