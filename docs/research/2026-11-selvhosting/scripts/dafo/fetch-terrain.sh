@@ -12,6 +12,8 @@ for ((x = X0; x < X1; x += 2000)); do
     [ -s "$z" ] && continue
     r=$(python3 -I "$HERE/dafo.py" GetRasterMultipleFiles minx=$((x + 100)) miny=$((y + 100)) \
       maxx=$((x + 1900)) maxy=$((y + 1900)) register=dhm version=1 datasetname=Terraen --out "$z.part" 2>&1)
+    # dafo.py fails on a short body; a ZIP without Content-Length is caught here
+    unzip -tqq "$z.part" > /dev/null || { echo "$x $y: bad ZIP, run again" >&2; rm -f "$z.part"; exit 1; }
     mv "$z.part" "$z"
     echo "$x $y $r" | cut -c1-110 | tee -a "$OUT/fetch-log.txt"
   done

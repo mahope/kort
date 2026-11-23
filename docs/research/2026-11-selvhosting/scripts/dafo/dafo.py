@@ -30,6 +30,12 @@ try:
                 if not b:
                     break
                 f.write(b); n += len(b)
+        # read(amt) returns EOF without an error when the server cuts the body short
+        want = hdr.get("Content-Length")
+        if want is not None and n != int(want):
+            os.remove(out)
+            print(f"ERROR truncated: {n} of {want} B", file=sys.stderr)
+            sys.exit(1)
         print(red(f"HTTP {code} {hdr.get('Content-Type')} {n} B {time.time() - t:.1f} s "
                   f"disp={hdr.get('Content-Disposition')}"), file=sys.stderr)
     else:

@@ -1,0 +1,12 @@
+[
+ {"name":"gate-skygge-25k-wms","src":"wms-skygge","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-skygge-25k-wcs-webp-q85","src":"hsw-webp-q85.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-skygge-25k-wcs-webp-q80","src":"hsw-webp-q80.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-skygge-25k-real-webp-q80","src":"hsr-webp-q80.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-skygge-10k-wms","src":"wms-skygge","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-skygge-10k-wcs-webp-q85","src":"hsw-webp-q85.pmtiles","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-skygge-10k-wcs-z17-webp-q85","src":"hsw17-webp-q85.pmtiles","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-lave-10k-wms","src":"wms-lave","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-lave-10k-sheet-webp-q85","src":"lavesheet-webp-q85.pmtiles","lon":9.5393,"lat":56.158,"scale":10000,"dpi":300,"w":945,"h":709},
+ {"name":"gate-lave-25k-sheet-webp-q85","src":"lavesheet-webp-q85.pmtiles","lon":9.5393,"lat":56.158,"scale":25000,"dpi":300,"w":945,"h":709}
+]

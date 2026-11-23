@@ -31,9 +31,14 @@ DK quadrants (boxes share edges, so the sum double counts a little):
 
 ## Sheet counts (`scripts/dafo/count-sheets.py`, 20 km grid, interior boxes)
 
-- DTK25: 383 cells answer 200 (`gate-sheets-dtk25.tsv`); 192 hold a land place name, 191 are sea
-  only (`scripts/land-sheets.py`). One sea sheet (2023_606_84) downloaded: 1.3 MB.
-- Lave: 206 cells answer 200 (`gate-sheets-lave.tsv`); 190 touch land.
+- DTK25: 383 cells answer 200 (`gate-sheets-dtk25.tsv`). One sea sheet (2023_606_84) downloaded: 1.3 MB.
+- Lave: 206 cells answer 200 (`gate-sheets-lave.tsv`).
+- dhm/Terraen: 193 cells answer 200 (`gate-sheets-terraen.tsv`, 853.2 GB summed, second round),
+  0 failed. This is the land mask (`land-sheets.py mask`): DTK25 193 land sheets, Lave 192.
+- The first round's place-name proxy gave DTK25 192 and Lave 190: it missed 440000/6120000,
+  600000/6320000 and 600000/6360000 (terrain, no land-type name) and counted 620000/6260000 and
+  740000/6100000 (DTK25 only), whose only land-type names are the Anholt and Kriegers Flak offshore
+  wind farms.
 
 ## Downloads (GetRasterMultipleFiles / GetFile)
 
@@ -65,3 +70,5 @@ on 23 Nov. `Register=DTK` and `Register=DHM` are unknown to this method (400).
 | 2.5 km at 1.6 m | 1563 | GeoTIFF, 9,781,666 B, 5.8 s and 5.0 s |
 | 1.25 km at 0.8 m | 1563 | GeoTIFF, 9,781,666 B, 4.8 s |
 | 2.5 km at 0.8 m | 3125 | connection reset by the server |
+| 2.6 km at 1.6 m (2.5 km cell + 50 m buffer), 16 cells | 1625 | 16 x GeoTIFF, 10,572,662 B, 7.1 s mean (`gate-wcs-cells-1.6m.txt`) |
+| 1.35 km at 0.8 m (1.25 km cell + 50 m buffer), 64 cells | 1688 | 64 x GeoTIFF, 11,407,916 B, 5.3 s mean (`gate-wcs-cells-0.8m.txt`) |

@@ -1,0 +1,112 @@
+[
+ {
+  "name": "gate-skygge-25k-wms",
+  "src": "wms-skygge",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 1625,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-skygge-25k-wcs-webp-q85",
+  "src": "hsw-webp-q85.pmtiles",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 941,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-skygge-25k-wcs-webp-q80",
+  "src": "hsw-webp-q80.pmtiles",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 771,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-skygge-25k-real-webp-q80",
+  "src": "hsr-webp-q80.pmtiles",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 623,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-skygge-10k-wms",
+  "src": "wms-skygge",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 966,
+  "tileZooms": {
+   "17": 24
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-skygge-10k-wcs-webp-q85",
+  "src": "hsw-webp-q85.pmtiles",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 701,
+  "tileZooms": {
+   "16": 6
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-skygge-10k-wcs-z17-webp-q85",
+  "src": "hsw17-webp-q85.pmtiles",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 751,
+  "tileZooms": {
+   "17": 24
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-lave-10k-wms",
+  "src": "wms-lave",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 903,
+  "tileZooms": {
+   "17": 24
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-lave-10k-sheet-webp-q85",
+  "src": "lavesheet-webp-q85.pmtiles",
+  "zoom": 15.652,
+  "groundRes": 0.847,
+  "ms": 784,
+  "tileZooms": {
+   "16": 6
+  },
+  "errors": []
+ },
+ {
+  "name": "gate-lave-25k-sheet-webp-q85",
+  "src": "lavesheet-webp-q85.pmtiles",
+  "zoom": 14.33,
+  "groundRes": 2.117,
+  "ms": 677,
+  "tileZooms": {
+   "15": 16
+  },
+  "errors": []
+ }
+]

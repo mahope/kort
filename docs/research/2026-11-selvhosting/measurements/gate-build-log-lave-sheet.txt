@@ -1,0 +1,3 @@
+== lavesheet z6-16 (res 2.388657133911758 m), 2026-11-23T21:29:10Z
+warp: 95.9 s 1822 MB 95.9 cpu-s
+webp-q85: translate 54.9 s 2195 MB 54.7 cpu-s | overviews 66.6 s 1528 MB 66.3 cpu-s | pmtiles 0.8 s 98 MB 0.8 cpu-s | 75140638 B

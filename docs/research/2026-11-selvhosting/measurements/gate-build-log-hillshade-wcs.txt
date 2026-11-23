@@ -1,0 +1,9 @@
+hillshade from dhm_wcs, 1.6 m, 2.5 km cells + 50 m buffer (1,625 px), 16 cells: 2m17s wall (cells-log-1.6m below)
+== hsw z6-16 (res 2.388657133911758 m), 2026-11-23T21:35:53Z
+warp: 12.5 s 212 MB 12.5 cpu-s
+webp-q85: translate 11.2 s 204 MB 11.2 cpu-s | overviews 15.5 s 424 MB 15.3 cpu-s | pmtiles 0.2 s 36 MB 0.3 cpu-s | 9576488 B
+webp-q80: translate 9.8 s 208 MB 9.8 cpu-s | overviews 15.0 s 419 MB 14.8 cpu-s | pmtiles 0.2 s 31 MB 0.2 cpu-s | 7648900 B
+hillshade from dhm_wcs, 0.8 m, 1.25 km cells + 50 m buffer (1,688 px), 64 cells: 7m30s wall
+== hsw17 z6-17 (res 1.194328566955879 m), 2026-11-23T21:44:47Z
+warp: 56.4 s 786 MB 56.3 cpu-s
+webp-q85: translate 47.0 s 572 MB 47.0 cpu-s | overviews 71.1 s 1511 MB 70.7 cpu-s | pmtiles 0.6 s 69 MB 0.7 cpu-s | 41318267 B

@@ -1,0 +1,7 @@
+gate-skygge-25k-wcs-webp-q85 vs gate-skygge-25k-wcs-webp-q80: All:0.960879
+gate-skygge-25k-wcs-webp-q85 vs gate-skygge-25k-real-webp-q80: All:0.881598
+gate-skygge-25k-wms vs gate-skygge-25k-wcs-webp-q85: All:0.858470
+gate-skygge-25k-wms vs gate-skygge-25k-real-webp-q80: All:0.789317
+gate-skygge-10k-wms vs gate-skygge-10k-wcs-webp-q85: All:0.736769
+gate-skygge-10k-wms vs gate-skygge-10k-wcs-z17-webp-q85: All:0.884469
+gate-lave-10k-wms vs gate-lave-10k-sheet-webp-q85: All:0.865145
