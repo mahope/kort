@@ -18,6 +18,7 @@ import {
   MAX_TILE_COUNT,
 } from "@/lib/offline/tiles";
 import { dropEvictedAreas } from "@/lib/offline/areas";
+import { legacyOutsideTileUrls } from "@/lib/offline/legacyKeys";
 import { deleteTiles, downloadTiles, type DownloadProgress } from "@/lib/offline/download";
 import { usesNordicTopo } from "@/lib/map/sources";
 import { useMapRegion } from "@/lib/hooks/useMapRegion";
@@ -37,8 +38,10 @@ type Phase = "idle" | "running" | "paused";
 
 /** Urls used by other saved areas must survive when one area is removed. */
 function urlsOnlyIn(area: OfflineArea, others: OfflineArea[]): string[] {
-  const keep = new Set(others.flatMap((o) => areaTileUrls(o.bounds, o.layerIds)));
-  return areaTileUrls(area.bounds, area.layerIds).filter((u) => !keep.has(u));
+  // Also the old keys of tiles outside the current bounds, which no current url reaches.
+  const urls = (a: OfflineArea) => [...areaTileUrls(a.bounds, a.layerIds), ...legacyOutsideTileUrls(a)];
+  const keep = new Set(others.flatMap(urls));
+  return urls(area).filter((u) => !keep.has(u));
 }
 
 export function OfflinePanel() {
