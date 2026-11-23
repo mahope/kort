@@ -9,9 +9,9 @@ import {
 } from "@/lib/map/lakeCharts";
 import { NAVIGATION_WARNING } from "@/lib/map/sources";
 
-export const LAKE_CHART_NOTE =
+const LAKE_CHART_NOTE =
   "Historisk kort, gengivet uændret fra Geodatastyrelsens skanning og formindsket til arket. Dybderne er målt for mange år siden og kan have ændret sig.";
-export const LAKE_CHART_CREDIT =
+const LAKE_CHART_CREDIT =
   "Kilde: Geodatastyrelsen, Historiske indsøkort (historiskekort.dk), CC BY 4.0.";
 
 /** Scan resolution: about 200 dpi across the page, which is plenty for a scanned chart. */

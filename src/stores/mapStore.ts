@@ -6,7 +6,7 @@ import { DENMARK_CENTER, DEFAULT_ZOOM, DEFAULT_STYLE } from "@/lib/map/styles";
 import type { GridSpacing, GridLabelFormat, UtmZoneMode } from "@/lib/geo/utmGrid";
 
 /** Map padding to land on, so a fly started while the sheet moves ends without a jump. */
-export interface FlyPadding {
+interface FlyPadding {
   top: number;
   bottom: number;
   left: number;

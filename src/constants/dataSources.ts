@@ -30,7 +30,7 @@ export interface DataSource {
 }
 
 /** Date of the sea/lake snapshots in public/data/soekort (scripts/soekort/build-soekort-data.mjs). */
-export const SOEKORT_RETRIEVED = "2026-11-18";
+const SOEKORT_RETRIEVED = "2026-11-18";
 
 const KDS_CC_BY = "CC BY 4.0 (frie geografiske data, fra 16. maj 2024)";
 const KDS_CREDIT =

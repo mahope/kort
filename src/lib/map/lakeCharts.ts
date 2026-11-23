@@ -57,7 +57,7 @@ export function loadLakeCharts(): Promise<LakeChart[]> {
 }
 
 /** At most this many charts are added to one PDF, so a county-wide print stays small. */
-export const MAX_CHARTS_PER_PDF = 4;
+const MAX_CHARTS_PER_PDF = 4;
 
 /**
  * Charts whose lake lies inside the printed area, nearest the centre first. The

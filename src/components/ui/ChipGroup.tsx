@@ -2,7 +2,7 @@
 
 import { useId, useRef } from "react";
 
-export interface ChipOption {
+interface ChipOption {
   value: string;
   label: string;
   /** Accessible name when the visible label is abbreviated. */

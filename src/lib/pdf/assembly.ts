@@ -21,7 +21,7 @@ export interface Neighbours {
 }
 
 /** Sheet label as used on the pages: row letter + column number (A1, A2, B1 ...). */
-export function sheetLabel(row: number, col: number): string {
+function sheetLabel(row: number, col: number): string {
   return `${String.fromCharCode(65 + row)}${col + 1}`;
 }
 

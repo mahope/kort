@@ -9,7 +9,7 @@ import type { ExpressionSpecification, GeoJSONSourceSpecification, LayerSpecific
  */
 export type VectorOverlayKind = "soedybder" | "indsoekort" | "vrag";
 
-export const SOEKORT_DATA_PATH = "/data/soekort";
+const SOEKORT_DATA_PATH = "/data/soekort";
 
 /** Same-origin path of a snapshot. */
 export function soekortDataUrl(kind: VectorOverlayKind): string {

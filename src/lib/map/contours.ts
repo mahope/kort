@@ -8,7 +8,7 @@ import { Protocol } from "pmtiles";
  * The file holds every 5 m line with its height `h` (layer "kurver"); the 10 m
  * overlay filters it. Build script: scripts/contours/kurver-dk.sh.
  */
-export const CONTOURS_URL =
+const CONTOURS_URL =
   process.env.NEXT_PUBLIC_CONTOURS_URL || "https://tiles.mahoje.dk/kurver-5m.pmtiles";
 export const CONTOURS_SOURCE_LAYER = "kurver";
 
@@ -41,7 +41,7 @@ export function contourSourceUrl(): string {
 }
 
 /** Every 5th line is an index contour: 25 m for the 5 m set, 50 m for the 10 m set. */
-export function contourSteps(interval: 5 | 10): { interval: number; index: number } {
+function contourSteps(interval: 5 | 10): { interval: number; index: number } {
   return { interval, index: interval * 5 };
 }
 
