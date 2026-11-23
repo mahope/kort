@@ -296,6 +296,14 @@
         ...Array.from({ length: a.cols * a.rows }, () => h("div", { class: "sheet" })));
     }
     $$("[data-credit]").forEach((el) => (el.textContent = credit()));
+    // Same rule as SeaBadge in the app: always on the map while a sea layer is on.
+    const seaOn = activeOverlays().some((i) => SEA_IDS.includes(i.id));
+    let badge = $(".seabadge");
+    if (seaOn && !badge) {
+      badge = h("div", { class: "seabadge", role: "note" }, "Må ikke bruges til navigation");
+      $(".map").append(badge);
+    }
+    if (badge) badge.hidden = !seaOn;
   }
   function renderText() {
     $$("[data-summary]").forEach((el) => (el.textContent = summary()));
@@ -311,7 +319,7 @@
 
   // ---------- Widgets (render into [data-widget]) ----------
   // Each widget re-renders on state change but keeps focus on the same control.
-  function radioGroup(label, options, current, onPick, cls, small) {
+  function radioGroup(label, options, current, onPick, cls) {
     const g = h("div", { class: cls, role: "radiogroup", "aria-label": label });
     options.forEach((o) => {
       const checked = String(o.value) === String(current);

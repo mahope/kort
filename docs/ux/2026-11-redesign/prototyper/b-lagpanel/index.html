@@ -21,7 +21,7 @@
   .tabs .count { font-size: 12px; min-width: 20px; padding: 0 6px; border-radius: 99px; background: var(--primary); color: var(--on-primary); font-weight: 600; }
   .sub { font-family: var(--font-body); font-size: 14px; letter-spacing: 0; font-weight: 600; margin-bottom: 8px; }
   .footlinks { display: flex; flex-wrap: wrap; gap: 0 12px; font-size: 13px; color: var(--muted); margin-top: 24px; }
-  .footlinks a { display: inline-flex; align-items: center; min-height: 44px; }
+  .footlinks a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
   .basequick { position: absolute; left: 12px; bottom: 36px; z-index: 5; display: flex; gap: 6px; padding: 6px; }
   .basequick button { width: 64px; padding: 0; border: 0; background: none; font-size: 11px; line-height: 1.2; color: var(--fg); text-align: center; }
   .basequick .img { display: block; width: 64px; height: 44px; border-radius: var(--radius); background-size: cover; background-position: center; border: 1px solid var(--border); margin-bottom: 3px; }
@@ -65,6 +65,11 @@
       </div>
 
       <div role="tabpanel" id="pane-kort" aria-labelledby="t-kort" hidden>
+        <div class="section">
+          <h2 class="sub" id="h-quick">Hurtigvalg</h2>
+          <div class="chips" style="grid-template-columns: repeat(2, minmax(0, 1fr));" role="group" aria-labelledby="h-quick" id="quickpresets"></div>
+          <p class="small" style="margin-top: 6px;">Sætter kort, lag og målestok. Alt kan ændres bagefter.</p>
+        </div>
         <div class="section">
           <h2 class="sub">Aktive lag</h2>
           <div data-widget="activechips"></div>
@@ -179,9 +184,18 @@
     if (row) row.focus();
   });
 
+  function renderPresets() {
+    const g = $("#quickpresets");
+    const f = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.preset : null;
+    g.replaceChildren(...K.PRESETS.map((p) => h("button", { type: "button", class: "chip", "data-preset": p.id, "aria-pressed": String(K.state.preset === p.id), title: p.desc,
+      style: K.state.preset === p.id ? { background: "var(--primary)", color: "var(--on-primary)", borderColor: "var(--primary)", fontWeight: "600" } : {},
+      onclick: () => { K.applyPreset(p.id); K.toast(p.label + ": " + p.desc); } }, p.label)));
+    if (f) { const b = g.querySelector('[data-preset="' + f + '"]'); if (b) b.focus(); }
+  }
+  K.on(renderPresets);
   K.on(renderQuick);
   K.boot("B · Lagpanel");
-  renderQuick();
+  renderQuick(); renderPresets();
   window.__open = { sheet: sheetApi };
 })();
 </script>

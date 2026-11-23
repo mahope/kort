@@ -105,6 +105,10 @@
     "errors": [],
     "small": []
   },
+  "b-desktop-10-hurtigvalg-sejlads": {
+    "errors": [],
+    "small": []
+  },
   "b-mobil-01-start": {
     "errors": [],
     "small": [
@@ -114,7 +118,6 @@
   "b-mobil-02-kortlag": {
     "errors": [],
     "small": [
-      "a \"Om\" 21x44",
       "a \"Datakilder\" 52x25"
     ]
   },
@@ -140,6 +143,16 @@
     "errors": [],
     "small": [
       "a \"Datakilder\" 57x25"
+    ]
+  },
+  "b-mobil-10-hurtigvalg-sejlads": {
+    "errors": [],
+    "small": [
+      "button \"Slå Havdybder fra\" 40x40",
+      "button \"Slå Sømærker fra\" 40x40",
+      "button \"Slå Sødybder fra\" 40x40",
+      "button \"Slå koordinatgitter fra\" 40x40",
+      "a \"Datakilder\" 52x25"
     ]
   },
   "c-desktop-01-hvor": {
