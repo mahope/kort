@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeZonedGrid, computeDktmGrid, gridIntersections } from "../zoneGrid";
+import { calculatePrintArea, groundExtentToBounds } from "../calculations";
 import { createPaperProjector } from "@/lib/pdf/gridProjection";
 
 const bounds = { west: 11.94, east: 12.06, south: 55.64, north: 55.76 };
@@ -28,6 +29,27 @@ describe("zone-clipped grid shared by screen and PDF", () => {
     const labels = gridIntersections(lines, project, [from.x, from.y], [to.x, to.y], "mgrs", "full");
     expect(labels).toHaveLength(1);
     expect(labels[0].label).toEqual({ prefix: "32U PG ", main: "00" });
+  });
+  it.each(["mgrs", "utm"] as const)("labels clipped %s lines on both horizontal paper edges", (system) => {
+    const layout = { marginMm: 10, mapWidthMm: 190, mapHeightMm: 277 };
+    const area = calculatePrintArea("A4", "portrait", 50000);
+    const bounds = groundExtentToBounds(10.61, 55.866, area.groundWidthM, area.groundHeightM);
+    const proj = createPaperProjector(bounds, layout, 0);
+    const nw = proj.fromMm(10, 10), se = proj.fromMm(200, 287);
+    const lines = computeZonedGrid({ west: nw.lng, north: nw.lat, east: se.lng, south: se.lat }, 1000, "std", 32)
+      .filter((line) => line.axis === "E" && line.value === 600000);
+
+    expect(lines).toHaveLength(1);
+    expect(lines[0].coords.at(0)?.[1]).toBeCloseTo(se.lat, 12);
+    expect(lines[0].coords.at(-1)?.[1]).toBeCloseTo(nw.lat, 12);
+    for (const y of [10, 287]) {
+      const labels = gridIntersections(lines, proj.toMm, [10, y], [200, y], system, "full");
+      expect(labels.map(({ label }) => label)).toEqual([
+        system === "mgrs" ? { prefix: "32U PG ", main: "00" } : { prefix: "", main: "600" },
+      ]);
+    }
+    expect(gridIntersections(lines, proj.toMm, [10, 9.999], [200, 9.999], system, "full")).toEqual([]);
+    expect(gridIntersections(lines, proj.toMm, [10, 10], [30, 10], system, "full")).toEqual([]);
   });
   it.each([1000, 10000])("clips %i metre lines at 12 degrees", (spacing) => {
     const lines = computeZonedGrid(bounds, spacing, "std", 32);

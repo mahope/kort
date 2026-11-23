@@ -38,8 +38,6 @@ import {
 import { computeZonedGrid, computeDktmGrid, gridIntersections, type ZonedGridLine } from "@/lib/geo/zoneGrid";
 import { mgrsSquare, isDktmSystem, dktmZoneOf, type GridSystem } from "@/lib/geo/coordinates";
 import {
-  dropOverlapping,
-  formatGridLabel,
   formatSpacing,
   resolvePrintSpacing,
   resolveUtmZone,
@@ -303,8 +301,6 @@ interface GridOptions {
   labelFormat: GridLabelFormat;
   zone: number;
   bearing: number;
-  /** Space (mm from the left map edge) kept free in the top margin, e.g. for "Side A1". */
-  reserveTopLeftMm?: number;
 }
 
 function gridOptionsFromStore(zoneLng: number, zoneLat: number, bearing: number, region: MapRegion = "dk"): GridOptions {
@@ -394,40 +390,44 @@ function drawUtmGrid(
   pdf.setDrawColor(0, 0, 0);
 
   if (opts.showLabels) {
-    drawGridLabels(pdf, proj, { left, top, right, bottom }, layout.marginMm, spacing, lines, opts);
+    drawGridLabels(pdf, proj, { left, top, right, bottom }, layout.marginMm, lines, opts);
   }
   return spacing;
 }
 
-function drawGridLabels(
+export function drawGridLabels(
   pdf: jsPDF,
-  proj: PaperProjector,
+  proj: Pick<PaperProjector, "toMm">,
   rect: { left: number; top: number; right: number; bottom: number },
   marginMm: number,
-  spacing: number,
   lines: ZonedGridLine[],
-  opts: GridOptions
+  opts: Pick<GridOptions, "system" | "labelFormat">
 ) {
   pdf.setTextColor(0, 0, 0);
   pdf.setFont("helvetica", "bold");
+  pdf.saveGraphicsState();
+  pdf.setDrawColor(0);
+  pdf.setLineWidth(0.12);
 
   const measure = (l: FormattedLabel, k: number) => {
+    if (opts.system === "mgrs" && l.prefix) {
+      const [zone, square] = l.prefix.trim().split(" ");
+      pdf.setFontSize(5 * k);
+      const zoneWidth = pdf.getTextWidth(zone);
+      pdf.setFontSize(LABEL_PT * k);
+      return { wp: 0, wm: Math.max(zoneWidth, pdf.getTextWidth(`${square} ${l.main}`)) };
+    }
     pdf.setFontSize(PREFIX_PT * k);
     const wp = l.prefix ? pdf.getTextWidth(l.prefix) : 0;
     pdf.setFontSize(LABEL_PT * k);
     return { wp, wm: pdf.getTextWidth(l.main) };
   };
 
-  // Shrink the font if the widest possible northing label would not fit the side margin.
-  const widest = opts.system === "mgrs" ? { prefix: "", main: spacing < 1000 ? "WW 99,9" : "WW 99" } : formatGridLabel(spacing < 1000 ? 6999900 : 6999000, opts.labelFormat);
-  const w1 = measure(widest, 1);
-  const k = Math.min(1, (marginMm - 2) / (w1.wp + w1.wm));
-
-  const drawLabel = (l: FormattedLabel, x: number, baseline: number, align: "center" | "left" | "right") => {
+  const drawLabel = (l: FormattedLabel, x: number, baseline: number, align: "center" | "left" | "right", k: number) => {
     if (opts.system === "mgrs") {
       const [zone, square] = l.prefix.trim().split(" ");
-      pdf.setFontSize(5);
-      pdf.text(zone, x, baseline - 2.2, { align });
+      pdf.setFontSize(5 * k);
+      pdf.text(zone, x, baseline - 2 * k, { align });
       pdf.setFontSize(LABEL_PT * k);
       pdf.text(`${square} ${l.main}`, x, baseline, { align });
       return;
@@ -443,56 +443,72 @@ function drawGridLabels(
     pdf.text(l.main, x0 + wp, baseline);
   };
 
-  const capMm = LABEL_PT * k * PT_TO_MM * 0.72;
-  const hGap = (w1.wp + w1.wm) * k + 2; // labels side by side (top/bottom)
-  const vGap = opts.system === "mgrs" ? capMm + 4 : capMm + 2.5;
+  const mgrs = opts.system === "mgrs";
+  const height = mgrs ? 2 + 5 * PT_TO_MM * 0.72 : LABEL_PT * PT_TO_MM * 0.72;
+  const edges = [
+    { from: [rect.left, rect.top], to: [rect.right, rect.top], side: "top" },
+    { from: [rect.left, rect.bottom], to: [rect.right, rect.bottom], side: "bottom" },
+    { from: [rect.left, rect.top], to: [rect.left, rect.bottom], side: "left" },
+    { from: [rect.right, rect.top], to: [rect.right, rect.bottom], side: "right" },
+  ] as const;
 
-  interface Edge {
-    from: [number, number];
-    to: [number, number];
-    horizontal: boolean;
-    place: (t: number, l: FormattedLabel) => void;
-    reserveStart?: number;
+  const cornerLabels = new Set<string>();
+  for (const { from, to, side } of edges) {
+    const horizontal = side === "top" || side === "bottom";
+    const length = horizontal ? rect.right - rect.left : rect.bottom - rect.top;
+    const crossings = gridIntersections(lines, proj.toMm, [...from], [...to], opts.system, opts.labelFormat)
+      .filter(({ t, lineKey }) => {
+        const corner = t <= 1e-7 ? from : length - t <= 1e-7 ? to : null;
+        if (!corner) return true;
+        const key = `${corner.join(",")}:${lineKey}`;
+        if (cornerLabels.has(key)) return false;
+        cornerLabels.add(key);
+        return true;
+      });
+    const gap = 0.7;
+    const labels = crossings.map(({ t, label }) => {
+      const { wp, wm } = measure(label, 1);
+      const width = wp + wm;
+      const labelHeight = !mgrs && label.prefix ? (LABEL_PT * 0.3 + PREFIX_PT * 0.72) * PT_TO_MM : height;
+      const scale = horizontal ? 1 : Math.min(1, (marginMm - 2) / width);
+      const extent = (horizontal ? width : labelHeight) * scale;
+      return { t, label, labelHeight, scale, extent };
+    });
+
+    // Reserve room for every label before placing the first one. Close
+    // crossings can borrow space along the edge without shrinking the text.
+    const required = labels.reduce((total, { extent }) => total + extent + gap, 0);
+    const edgeScale = required > length ? length / required : 1;
+    const inset = gap * edgeScale / 2;
+    let remaining = required * edgeScale;
+    let start = 0;
+    for (const entry of labels) {
+      const { t, label, labelHeight, extent } = entry;
+      const scale = entry.scale * edgeScale;
+      const half = extent * edgeScale / 2;
+      const position = Math.max(start, Math.min(t - half - inset, length - remaining)) + half + inset;
+      start = position + half + inset;
+      remaining -= 2 * (half + inset);
+      if (horizontal) {
+        const top = side === "top";
+        const edge = top ? rect.top : rect.bottom;
+        const x = rect.left + position;
+        const baseline = top ? edge - 1.5 : edge + 1.2 + labelHeight * scale;
+        // Keep the association with the grid line when the label shifts.
+        pdf.line(rect.left + t, edge, x, edge + (top ? -1.2 : 0.9));
+        drawLabel(label, x, baseline, "center", scale);
+      } else {
+        const left = side === "left";
+        const edge = left ? rect.left : rect.right;
+        const direction = left ? -1 : 1;
+        const y = rect.top + position;
+        pdf.line(edge, rect.top + t, edge + direction * 0.7, y);
+        drawLabel(label, edge + direction, y + half, left ? "right" : "left", scale);
+      }
+    }
   }
-  const edges: Edge[] = [
-    {
-      from: [rect.left, rect.top],
-      to: [rect.right, rect.top],
-      horizontal: true,
-      place: (t, l) => drawLabel(l, rect.left + t, rect.top - 1.5, "center"),
-      reserveStart: opts.reserveTopLeftMm,
-    },
-    {
-      from: [rect.left, rect.bottom],
-      to: [rect.right, rect.bottom],
-      horizontal: true,
-      place: (t, l) => drawLabel(l, rect.left + t, rect.bottom + 1.2 + capMm, "center"),
-    },
-    {
-      from: [rect.left, rect.top],
-      to: [rect.left, rect.bottom],
-      horizontal: false,
-      place: (t, l) => drawLabel(l, rect.left - 1, rect.top + t + capMm / 2, "right"),
-    },
-    {
-      from: [rect.right, rect.top],
-      to: [rect.right, rect.bottom],
-      horizontal: false,
-      place: (t, l) => drawLabel(l, rect.right + 1, rect.top + t + capMm / 2, "left"),
-    },
-  ];
 
-  for (const edge of edges) {
-    const len = Math.hypot(edge.to[0] - edge.from[0], edge.to[1] - edge.from[1]);
-    const gap = edge.horizontal ? hGap : vGap;
-    const startMin = Math.max(gap / 2, (edge.reserveStart ?? 0) + gap / 2);
-    const crossings = dropOverlapping(
-      gridIntersections(lines, proj.toMm, edge.from, edge.to, opts.system, opts.labelFormat).filter((c) => c.t >= startMin && c.t <= len - gap / 2),
-      gap
-    );
-    for (const c of crossings) edge.place(c.t, c.label);
-  }
-
+  pdf.restoreGraphicsState();
   pdf.setFont("helvetica", "normal");
 }
 
@@ -810,16 +826,15 @@ async function generateMultiPagePdf({
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(8);
       pdf.setTextColor(0);
-      // Starts 2 mm in, clear of the vertical crop mark at the map corner.
-      pdf.text(pageLabel, layout.marginMm + 2, layout.marginMm - 2);
-      const pageLabelMm = pdf.getTextWidth(pageLabel) + 4;
+      // Keep the title above the grid labels when both use the top margin.
+      const titleInset = showUtmGrid && useMapStore.getState().showGridLabels ? 6.5 : 2;
+      pdf.text(pageLabel, layout.marginMm + 2, layout.marginMm - titleInset);
       pdf.setFont("helvetica", "normal");
       drawCropMarks(pdf, layout);
 
       let gridInfo: GridInfo | null = null;
       if (showUtmGrid) {
         const opts = gridOptionsFromStore((cell.bounds.west + cell.bounds.east) / 2, (cell.bounds.south + cell.bounds.north) / 2, bearing, region);
-        opts.reserveTopLeftMm = pageLabelMm;
         gridInfo = { ...gridInfoBase(opts, cell.bounds), spacing: drawUtmGrid(pdf, layout, cell.bounds, scale, opts) };
       }
       const neighbours = sheetNeighbours(cell, gridCols, gridRows);
