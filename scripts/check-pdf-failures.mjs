@@ -52,7 +52,9 @@ try {
     return { text, isError, downloaded: !!download, tileFailures };
   }
 
-  const isTile = (url) => /^https:\/\/(api\.dataforsyningen\.dk\/|tile\.openstreetmap\.org\/)/.test(url);
+  // Danish layers come through our own tile route (/api/tiles) since #5.
+  const isTile = (url) =>
+    /^https:\/\/(api\.dataforsyningen\.dk\/|tile\.openstreetmap\.org\/)/.test(url) || new URL(url).pathname.startsWith("/api/tiles/");
 
   const online = await scenario("online", async () => {});
   assert.ok(online.downloaded && !online.isError && /PDF downloadet/.test(online.text), "online control must succeed");

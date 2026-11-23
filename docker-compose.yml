@@ -12,6 +12,8 @@ services:
       - NEXT_PUBLIC_BRAND=${NEXT_PUBLIC_BRAND:-mahoje}
       - NEXT_PUBLIC_DATAFORSYNINGEN_TOKEN=${NEXT_PUBLIC_DATAFORSYNINGEN_TOKEN:-}
       - NEXT_PUBLIC_ADRESSEVAELGER_TOKEN=${NEXT_PUBLIC_ADRESSEVAELGER_TOKEN:-}
+      # Server-side secret, read at runtime by /api/tiles (see docs/tokens.md).
+      - DATAFORDELER_API_KEY=${DATAFORDELER_API_KEY:-}
     restart: unless-stopped
     expose:
       - "3000"

@@ -5,6 +5,22 @@ All notable changes to this project are documented here. The format is based on
 [Semantic Versioning](https://semver.org/). Kort deploys continuously from
 `main`; tagged releases mark milestones.
 
+## [Unreleased]
+
+### Changed
+- The Danish raster layers (DTK25, orthophoto, Høje/Lave Målebordsblade, Danske
+  Stednavne, DHM contours and hillshade) now come from Datafordeleren through
+  the app's own tile route `/api/tiles`, which adds the API key on the server
+  and sets cache headers. Without `DATAFORDELER_API_KEY` the route serves the
+  same tiles from Dataforsyningen as before (#5).
+- Cadastre (Matrikelskel) moved to `wms/forvaltning2` and is credited to
+  Geodatastyrelsen on the map, in the PDF and on `/kilder` (#5).
+- The service worker caches and saves tiles from the tile route for offline use.
+
+### Added
+- A short, closable notice over Danish views during Dataforsyningen's platform
+  move (26 Nov 16:00 to 30 Nov 08:00, 2026). It disappears by itself.
+
 ## [0.1.0] - 2026-11-23
 
 First tagged release, and the day the project became open source under the MIT
