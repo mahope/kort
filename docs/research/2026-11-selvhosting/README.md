@@ -7,8 +7,8 @@ for the sample, plus about 300 ordinary tile requests for the live comparisons. 
 tiles were uploaded anywhere, and `tiles.mahoje.dk` was only read with `curl -I` and one range
 request.
 
-This builds on [`docs/research/2026-11-datafordeleren-migration.md`][mig] (branch
-`docs/5-datafordeleren-kortlaegning`) and the PMTiles PoC in PR #60 (`docs/poc-pmtiles/RAPPORT.md`,
+This builds on [`docs/research/2026-11-datafordeleren-migration.md`][mig] (merged in PR #91)
+and the PMTiles PoC in PR #60 (`docs/poc-pmtiles/RAPPORT.md`,
 `docs/research/2026-11-05-dtk25-pmtiles.md`). It does not repeat them.
 
 ## Dansk opsummering
@@ -505,7 +505,7 @@ node scripts/render/shoot.mjs scripts/render/cases/cases-dtk25.json tiles/ rende
 (Script paths are relative to this folder. The fetch step only works until the Dataforsyningen
 services close on 26 Nov 2026. After that the real input is the Datafordeler file download.)
 
-[mig]: https://github.com/mahope/kort/blob/docs/5-datafordeleren-kortlaegning/docs/research/2026-11-datafordeleren-migration.md
+[mig]: ../2026-11-datafordeleren-migration.md
 [dafo-trans]: https://datafordeler.dk/media/rijp4jxb/transitionsguide-for-fildownload-samt-etablering-og-vedligeholdelse-af-kopiregister.pdf
 [dafo-tema]: https://datafordeler.dk/media/n4abehew/temamoede-om-fildownloads-inkl-beskyttede-data-og-rasterdata-2024-09-18.pdf
 [df-docs]: https://docs.dataforsyningen.dk/
