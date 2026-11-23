@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { useMapStore } from "@/stores/mapStore";
 import { OVERLAY_LABELS, overlayInMenu } from "@/lib/map/sources";
 import { SOEKORT_VARIANT_LABELS, type SoekortVariant } from "@/lib/map/soekortStyle";
@@ -12,11 +13,13 @@ const VARIANT_HINTS: Record<SoekortVariant, string> = {
 };
 
 /** Klassisk or lavt vand, under the søkort layer while it is on. */
-function SoekortVariantChoice() {
+export function SoekortVariantChoice() {
   const variant = useMapStore((s) => s.soekortVariant);
   const setVariant = useMapStore((s) => s.setSoekortVariant);
   const baseLayer = useMapStore((s) => s.baseLayer);
   const region = useMapRegion();
+  // Both layer menus (map button and sidebar) can be open at once: one radio group each.
+  const name = useId();
   return (
     <fieldset className="ml-6 mt-2 space-y-1">
       <legend className="text-xs text-text-muted">Søkortets stil</legend>
@@ -24,7 +27,7 @@ function SoekortVariantChoice() {
         <label key={v} className="flex items-start gap-2 cursor-pointer pointer-coarse:min-h-11">
           <input
             type="radio"
-            name="soekort-variant"
+            name={name}
             value={v}
             checked={variant === v}
             onChange={() => setVariant(v)}

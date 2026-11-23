@@ -103,10 +103,6 @@ export const SOEKORT_VARIANT_LABELS: Record<SoekortVariant, string> = {
 
 export const DEFAULT_SOEKORT_VARIANT: SoekortVariant = "klassisk";
 
-export function isSoekortVariant(v: unknown): v is SoekortVariant {
-  return typeof v === "string" && v in SOEKORT_VARIANTS;
-}
-
 // Plain objects while the layers are assembled; cast to LayerSpecification at the end.
 type Layer = Record<string, unknown> & {
   id: string;

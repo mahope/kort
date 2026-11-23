@@ -7,7 +7,8 @@ import { baseLayerOptions, isBaseLayerSelected } from "@/constants/baseLayers";
 import { useMapRegion } from "@/lib/hooks/useMapRegion";
 import { useIsMobile } from "@/lib/hooks/useIsMobile";
 import type { MapStyle } from "@/types/map";
-import { OVERLAY_LABELS } from "@/lib/map/sources";
+import { OVERLAY_LABELS, overlayInMenu } from "@/lib/map/sources";
+import { SoekortVariantChoice } from "@/components/sidebar/OverlaySelector";
 import { SeaNotice } from "./SeaNotice";
 import "./maplibre-touch.css";
 
@@ -99,7 +100,7 @@ export function MapControls() {
           <div className="border-t border-border pt-3">
             <h2 className="text-xs font-semibold text-text-secondary mb-2">Ekstra lag</h2>
             <div className="space-y-2">
-              {overlays.map((overlay) => (
+              {overlays.filter((o) => overlayInMenu(o.id, o.enabled, region)).map((overlay) => (
                 <div key={overlay.id}>
                   <label className="flex items-center gap-2 cursor-pointer pointer-coarse:min-h-11">
                     <input
@@ -128,6 +129,7 @@ export function MapControls() {
                       </span>
                     </div>
                   )}
+                  {overlay.enabled && overlay.id === "soekort" && <SoekortVariantChoice />}
                 </div>
               ))}
             </div>

@@ -13,20 +13,22 @@ import {
   type SoekortVariant,
 } from "@/lib/map/soekortStyle";
 
-export const SOEKORT_SOURCE_ID = "soekort-overlay";
+const SOEKORT_SOURCE_ID = "soekort-overlay";
 
 /**
  * The base map's own layers: those on a vector source that is not one of our
  * PMTiles archives. Raster overlays, imports, the grid and the depth layers
  * themselves are added on top by the app and must not move the anchors.
  */
-function baseLayersOf(map: MaplibreMap): { id: string; type: string }[] {
-  const style = map.getStyle();
-  const isBaseSource = (id: unknown) => {
-    const src = typeof id === "string" ? style.sources[id] : undefined;
+export function baseLayersOf(map: Pick<MaplibreMap, "getLayersOrder" | "getLayer" | "getSource">): { id: string; type: string }[] {
+  const isBaseSource = (id: string) => {
+    const src = map.getSource(id) as { type?: string; url?: string } | undefined;
     return src?.type === "vector" && !(src.url ?? "").startsWith("pmtiles://");
   };
-  return style.layers.filter((l) => "source" in l && isBaseSource(l.source));
+  return map.getLayersOrder().flatMap((id) => {
+    const layer = map.getLayer(id);
+    return layer?.source && isBaseSource(layer.source) ? [{ id, type: layer.type }] : [];
+  });
 }
 
 const sameAnchors = (a: SoekortAnchors | null, b: SoekortAnchors | null) => JSON.stringify(a) === JSON.stringify(b);
@@ -38,8 +40,9 @@ function useSoekortAnchors(): SoekortAnchors | null {
   useEffect(() => {
     const map = current?.getMap();
     if (!map) return;
+    // Not isStyleLoaded(): that stays false while tiles load, and the last
+    // styledata event can come before they are done.
     const update = () => {
-      if (!map.isStyleLoaded()) return;
       const next = soekortAnchors(baseLayersOf(map));
       setAnchors((prev) => (sameAnchors(prev, next) ? prev : next));
     };
