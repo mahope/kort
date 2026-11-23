@@ -26,10 +26,21 @@ function isOfflineFile(url) {
   return url.protocol === "https:" && OFFLINE_FILE_HOSTS.includes(url.hostname) && url.pathname.endsWith(".pmtiles");
 }
 
-// A PMTiles v3 archive starts with "PMTiles" and the version byte 3.
+// A whole PMTiles v3 archive: the 127-byte header ("PMTiles", version byte 3)
+// and every section it points to (root directory, metadata, leaf directories,
+// tile data; u64 offset and length pairs from byte 8) inside the file. A cut-off
+// download has a valid header but ends before its tile data.
+const PMTILES_HEADER_BYTES = 127;
 async function isPmtiles(blob) {
-  const head = new Uint8Array(await blob.slice(0, 8).arrayBuffer());
-  return head.length === 8 && String.fromCharCode(...head.subarray(0, 7)) === "PMTiles" && head[7] === 3;
+  if (blob.size < PMTILES_HEADER_BYTES) return false;
+  const head = new Uint8Array(await blob.slice(0, PMTILES_HEADER_BYTES).arrayBuffer());
+  if (String.fromCharCode(...head.subarray(0, 7)) !== "PMTiles" || head[7] !== 3) return false;
+  const view = new DataView(head.buffer);
+  for (let at = 8; at < 72; at += 16) {
+    const end = view.getBigUint64(at, true) + view.getBigUint64(at + 8, true);
+    if (end > BigInt(blob.size)) return false;
+  }
+  return true;
 }
 // One A4 print at 300 dpi needs 88-98 tiles, so 3,000 covers roughly 30 prints
 // or a long browsing session while staying within a few hundred MB.

@@ -272,7 +272,8 @@ export async function renderMapToImage({
         const layers = soekortLayersWithAnchors(sourceId, anchors, { variant: soekortVariant, opacity: overlay.opacity, pxPerMm });
         for (const { layer, beforeId } of layers) {
           map.addLayer(layer, beforeId);
-          soekortLayerIds.push(layer.id);
+          // queryRenderedFeatures also returns features drawn at opacity 0: at 0 % nothing shows, so nothing is credited.
+          if (overlay.opacity > 0) soekortLayerIds.push(layer.id);
         }
         continue;
       }

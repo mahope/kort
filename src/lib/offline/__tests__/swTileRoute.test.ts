@@ -228,8 +228,23 @@ describe("service worker and the tile route", () => {
 
 describe("service worker and the saved søkort file", () => {
   const FILE = "https://tiles.mahoje.dk/soekort.pmtiles";
-  // The PMTiles v3 header ("PMTiles", version 3), then two more bytes.
-  const BYTES = new Uint8Array([...new TextEncoder().encode("PMTiles"), 3, 8, 9]);
+  // A PMTiles v3 archive of `size` bytes: the 127-byte header, then root directory,
+  // metadata and tile data, as the header's offsets say. `cut` drops the end of
+  // the file, as a broken download does, and leaves the header as it was.
+  const pmtiles = (size: number, cut = size) => {
+    const bytes = new Uint8Array(size);
+    bytes.set(new TextEncoder().encode("PMTiles"));
+    bytes[7] = 3;
+    const view = new DataView(bytes.buffer);
+    const sections = [[127, 20], [147, 30], [177, 0], [177, size - 177]]; // root, metadata, leaves, tiles
+    sections.forEach(([offset, length], i) => {
+      view.setBigUint64(8 + 16 * i, BigInt(offset), true);
+      view.setBigUint64(16 + 16 * i, BigInt(length), true);
+    });
+    for (let i = 127; i < size; i++) bytes[i] = i % 251;
+    return bytes.slice(0, cut);
+  };
+  const BYTES = pmtiles(300);
   const network = { online: true };
   const respond = (url: string) =>
     url === FILE
@@ -242,17 +257,17 @@ describe("service worker and the saved søkort file", () => {
   it("saves the whole file and answers the map's range requests from it offline", async () => {
     const sw = loadWorker(network, { respond });
     const reply = (await sw.message({ type: "OFFLINE_FETCH", urls: [FILE] })) as { stored: { bytes: number }[] };
-    expect(reply.stored).toEqual([{ url: FILE, bytes: 10 }]);
+    expect(reply.stored).toEqual([{ url: FILE, bytes: 300 }]);
     network.online = false;
     const res = await sw.request(FILE, { range: "bytes=2-5" });
     expect(res?.status).toBe(206);
-    expect(res?.headers.get("content-range")).toBe("bytes 2-5/10");
+    expect(res?.headers.get("content-range")).toBe("bytes 2-5/300");
     expect(res?.headers.get("etag")).toBe('"v1"');
     expect([...new Uint8Array(await res!.arrayBuffer())]).toEqual([...BYTES.subarray(2, 6)]);
     // A range past the end is cut to the file, as the file server does.
-    const tail = await sw.request(FILE, { range: "bytes=8-100" });
-    expect([...new Uint8Array(await tail!.arrayBuffer())]).toEqual([8, 9]);
-    expect((await sw.request(FILE, { range: "bytes=20-30" }))?.status).toBe(416);
+    const tail = await sw.request(FILE, { range: "bytes=298-400" });
+    expect([...new Uint8Array(await tail!.arrayBuffer())]).toEqual([...BYTES.subarray(298)]);
+    expect((await sw.request(FILE, { range: "bytes=310-320" }))?.status).toBe(416);
   });
 
   it("goes to the network while the file is not saved, and stores nothing", async () => {
@@ -278,6 +293,24 @@ describe("service worker and the saved søkort file", () => {
     expect(reply.failed).toEqual([FILE]);
     const offline = await sw.caches.api.open(OFFLINE_CACHE_NAME);
     expect(await offline.keys()).toEqual([]);
+  });
+
+  it.each([
+    ["ends inside the tile data", 250],
+    ["ends inside the header", 60],
+  ])("saves no cut-off file that %s, and saves the host's file once it is whole again", async (_what, cut) => {
+    let whole = false;
+    const sw = loadWorker(network, {
+      respond: (url) => (url === FILE ? new Response(whole ? BYTES : pmtiles(300, cut), { status: 200, headers: { etag: '"v1"' } }) : undefined),
+    });
+    const reply = (await sw.message({ type: "OFFLINE_FETCH", urls: [FILE] })) as { stored: unknown[]; failed: string[] };
+    expect(reply).toMatchObject({ stored: [], failed: [FILE] });
+    const offline = await sw.caches.api.open(OFFLINE_CACHE_NAME);
+    expect(await offline.keys()).toEqual([]);
+    whole = true;
+    expect((await sw.request(FILE, { range: "bytes=0-3" }))?.status).toBe(200);
+    const again = (await sw.message({ type: "OFFLINE_FETCH", urls: [FILE] })) as { stored: unknown[] };
+    expect(again.stored).toEqual([{ url: FILE, bytes: 300 }]);
   });
 
   it("saves no PMTiles file from other hosts", async () => {

@@ -224,6 +224,16 @@ describe("renderMapToImage søkort", () => {
     await run({ ...base, baseLayer: "dtk25", overlays, onSoekortSources: (s: Set<string>) => (found = s) } as typeof base);
     expect(found).toEqual(new Set(["ddm"]));
   });
+
+  it("credits no depth source when Søkort is at 0 %", async () => {
+    // queryRenderedFeatures also returns features whose paint opacity is 0.
+    ctl.styleLayers = skaermkort;
+    ctl.depthDrawn = [["-major-", "ddm"], ["-areas-lake-", "novana"]];
+    let found: Set<string> | undefined;
+    const hidden = overlays.map((o) => ({ ...o, opacity: 0 }));
+    await run({ ...base, baseLayer: "skaermkort", style: "klassisk", overlays: hidden, onSoekortSources: (s: Set<string>) => (found = s) } as typeof base);
+    expect(found).toEqual(new Set());
+  });
 });
 
 describe("renderMapToImage vector overlays", () => {
