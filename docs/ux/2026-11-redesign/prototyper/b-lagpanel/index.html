@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="da" data-brand="mahoje" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retning B: Ét samlet lagpanel · prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brygada+1918:wght@400;600&family=Schibsted+Grotesk:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../_delt/base.css">
+<style>
+  .tabs { display: flex; border-bottom: 1px solid var(--border); margin: 0 -20px 20px; padding: 0 20px; gap: 4px; position: sticky; top: -20px; background: var(--side-bg); z-index: 2; }
+  .tabs [role=tab] {
+    position: relative; flex: 1; min-height: 48px; border: 0; background: none; font-size: 15px; font-weight: 500; color: var(--text-2);
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .tabs [role=tab]:hover { color: var(--fg); }
+  .tabs [role=tab][aria-selected="true"] { color: var(--fg); font-weight: 600; }
+  .tabs [role=tab][aria-selected="true"]::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 3px; background: var(--fg); }
+  :root[data-brand="solaris"] .tabs [role=tab][aria-selected="true"]::after { background: var(--primary); height: 4px; }
+  .tabs .count { font-size: 12px; min-width: 20px; padding: 0 6px; border-radius: 99px; background: var(--primary); color: var(--on-primary); font-weight: 600; }
+  .sub { font-family: var(--font-body); font-size: 14px; letter-spacing: 0; font-weight: 600; margin-bottom: 8px; }
+  .footlinks { display: flex; flex-wrap: wrap; gap: 0 12px; font-size: 13px; color: var(--muted); margin-top: 24px; }
+  .footlinks a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+  .basequick { position: absolute; left: 12px; bottom: 36px; z-index: 5; display: flex; gap: 6px; padding: 6px; }
+  .basequick button { width: 64px; padding: 0; border: 0; background: none; font-size: 11px; line-height: 1.2; color: var(--fg); text-align: center; }
+  .basequick .img { display: block; width: 64px; height: 44px; border-radius: var(--radius); background-size: cover; background-position: center; border: 1px solid var(--border); margin-bottom: 3px; }
+  .basequick button[aria-pressed="true"] .img { outline: 3px solid var(--selected-ring); outline-offset: 1px; }
+  @media (max-width: 767px) {
+    .tabs { margin: 0 -16px 16px; padding: 0 16px; top: 0; }
+    .basequick { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side" aria-label="Kortindstillinger">
+    <button type="button" class="grabber hide-desktop" aria-label="Gør panelet større"></button>
+    <div class="side-scroll">
+      <header class="brandhead">
+        <h1 data-brandname>Topografiske kort</h1>
+        <a class="wordmark only-mahoje" href="https://mahoje.dk" aria-label="Mahoje, til mahoje.dk"><svg viewBox="0 0 512 512" aria-hidden="true"><polyline points="62,400 182,168 262,284 342,118 452,400" fill="none" stroke="currentColor" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/></svg>Mahoje</a>
+        <span class="small only-solaris">Gratis topografiske kort fra spejderforeningen Solaris</span>
+      </header>
+
+      <div class="section">
+        <label class="label" for="sted">Find sted</label>
+        <div class="searchwrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"/></svg><input id="sted" class="input" type="search" placeholder="Adresse, sø, skov eller bakke" autocomplete="off" value="Mols Bjerge"></div>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Indstillinger">
+        <button type="button" role="tab" id="t-print" aria-controls="pane-print" aria-selected="true">Print</button>
+        <button type="button" role="tab" id="t-kort" aria-controls="pane-kort" aria-selected="false" tabindex="-1">Kortlag <span class="count" data-active-count></span></button>
+        <button type="button" role="tab" id="t-vaerk" aria-controls="pane-vaerk" aria-selected="false" tabindex="-1">Værktøjer</button>
+      </div>
+
+      <div role="tabpanel" id="pane-print" aria-labelledby="t-print" class="stack">
+        <div data-widget="scale"></div>
+        <div data-widget="paper"></div>
+        <div data-widget="orient"></div>
+        <div data-widget="coverage"></div>
+        <hr class="divider">
+        <h2 class="sub">Flere printvalg</h2>
+        <div data-widget="printextra"></div>
+      </div>
+
+      <div role="tabpanel" id="pane-kort" aria-labelledby="t-kort" hidden>
+        <div class="section">
+          <h2 class="sub" id="h-quick">Hurtigvalg</h2>
+          <div class="chips" style="grid-template-columns: repeat(2, minmax(0, 1fr));" role="group" aria-labelledby="h-quick" id="quickpresets"></div>
+          <p class="small" style="margin-top: 6px;">Sætter kort, lag og målestok. Alt kan ændres bagefter.</p>
+        </div>
+        <div class="section">
+          <h2 class="sub">Aktive lag</h2>
+          <div data-widget="activechips"></div>
+        </div>
+        <div class="section" data-widget="basemaps"></div>
+        <div class="section">
+          <h2 class="sub">Ekstra lag</h2>
+          <div data-widget="layers" id="b-layers" data-search="1" data-open=""></div>
+        </div>
+      </div>
+
+      <div role="tabpanel" id="pane-vaerk" aria-labelledby="t-vaerk" hidden>
+        <div id="toolmain"><div data-widget="toollist"></div></div>
+        <div id="toolview" hidden><div data-widget="toolpanel" data-tool="" data-back-label="Tilbage til værktøjer"></div></div>
+      </div>
+
+      <nav class="footlinks" aria-label="Om siden">
+        <a href="https://kort.mahoje.dk/kilder">Datakilder</a>
+        <a href="https://kort.mahoje.dk/om">Om</a>
+        <a href="https://github.com/mahope/kort">Open source på GitHub</a>
+      </nav>
+    </div>
+    <div class="side-foot">
+      <p class="sumline" data-summary></p>
+      <button type="button" class="btn btn-primary btn-block btn-lg" data-download data-icon="download"><span data-btn-label>Hent PDF</span></button>
+      <div class="progress" aria-hidden="true"><span></span></div>
+    </div>
+  </aside>
+
+  <main class="map" aria-label="Kort">
+    <div class="map-img" role="img" aria-label="Kort over Mols Bjerge (statisk billede i prototypen)"></div>
+    <div class="frame-wrap"><div class="frame"></div></div>
+    <div class="maptop">
+      <button type="button" class="mapbtn" id="open-kort-map" aria-controls="pane-kort" data-icon="layers"><span>Kortlag</span></button>
+    </div>
+    <div class="floatpanel basequick" role="group" aria-label="Skift baggrundskort hurtigt" id="basequick"></div>
+    <div class="mapctl">
+      <button type="button" class="mapbtn" data-zoom="pos" aria-label="Find min position" data-icon="locate"></button>
+      <div class="grp">
+        <button type="button" class="mapbtn" data-zoom="in" aria-label="Zoom ind" data-icon="plus"></button>
+        <button type="button" class="mapbtn" data-zoom="out" aria-label="Zoom ud" data-icon="minus"></button>
+      </div>
+    </div>
+    <div class="attrib"><span data-credit></span> · <a href="https://kort.mahoje.dk/kilder">Datakilder</a></div>
+  </main>
+</div>
+
+<script src="../_delt/kort.js"></script>
+<script>
+(function () {
+  const K = window.Kort;
+  const { h, $, $$ } = K;
+  const sheetApi = K.sheet($("#side"), { start: "mid" });
+  const isMobile = () => window.matchMedia("(max-width: 767px)").matches;
+
+  function selectTab(tab, focus) {
+    $$("[role=tab]").forEach((t) => {
+      const on = t === tab;
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+      $("#" + t.getAttribute("aria-controls")).hidden = !on;
+    });
+    if (focus) tab.focus();
+    $(".side-scroll").scrollTop = 0;
+  }
+  $$("[role=tab]").forEach((t) => t.addEventListener("click", () => selectTab(t)));
+  $(".tabs").addEventListener("keydown", (e) => {
+    const tabs = $$("[role=tab]");
+    const i = tabs.indexOf(document.activeElement);
+    const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+    if (i < 0 || !d) return;
+    e.preventDefault();
+    selectTab(tabs[(i + d + tabs.length) % tabs.length], true);
+  });
+
+  // The map button is a shortcut to the one layer panel, not a second menu.
+  $("#open-kort-map").addEventListener("click", () => {
+    selectTab($("#t-kort"));
+    if (isMobile()) sheetApi.set("max");
+    const s = $("#pane-kort input[type=search]");
+    if (s) s.focus();
+  });
+
+  // Quick base-map switch on the map (desktop): the four most used, same state as the panel.
+  const QUICK = ["dtk25", "skaermkort", "ortofoto", "lave"];
+  const SHORT = { dtk25: "Topografisk", skaermkort: "Skærmkort", ortofoto: "Luftfoto", lave: "1901–1971" };
+  function renderQuick() {
+    const q = $("#basequick");
+    q.replaceChildren(...QUICK.map((id) => {
+      const b = K.BASES.find((x) => x.id === id);
+      return h("button", { type: "button", "aria-pressed": String(K.state.base === id), onclick: () => K.set({ base: id }) },
+        h("span", { class: "img", style: { backgroundImage: `url("../_delt/kort/thumb-${b.thumb}.webp")` } }), SHORT[id]);
+    }));
+  }
+
+  let lastTool = null;
+  document.addEventListener("tool", (e) => {
+    lastTool = e.detail;
+    const tv = $("#toolview [data-widget=toolpanel]");
+    tv.dataset.tool = e.detail;
+    K.renderWidget(tv);
+    $("#toolmain").hidden = true;
+    $("#toolview").hidden = false;
+    if (isMobile()) sheetApi.set("max");
+    $("#toolview [data-tool-title]").focus();
+  });
+  $("#toolview").addEventListener("click", (e) => {
+    if (!e.target.closest("[data-back]")) return;
+    $("#toolview").hidden = true;
+    $("#toolmain").hidden = false;
+    const row = $(`#toolmain [data-tool="${lastTool}"]`);
+    if (row) row.focus();
+  });
+
+  function renderPresets() {
+    const g = $("#quickpresets");
+    const f = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.preset : null;
+    g.replaceChildren(...K.PRESETS.map((p) => h("button", { type: "button", class: "chip", "data-preset": p.id, "aria-pressed": String(K.state.preset === p.id), title: p.desc,
+      style: K.state.preset === p.id ? { background: "var(--primary)", color: "var(--on-primary)", borderColor: "var(--primary)", fontWeight: "600" } : {},
+      onclick: () => { K.applyPreset(p.id); K.toast(p.label + ": " + p.desc); } }, p.label)));
+    if (f) { const b = g.querySelector('[data-preset="' + f + '"]'); if (b) b.focus(); }
+  }
+  K.on(renderPresets);
+  K.on(renderQuick);
+  K.boot("B · Lagpanel");
+  renderQuick(); renderPresets();
+  window.__open = { sheet: sheetApi };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="da" data-brand="mahoje" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retning C: Hvor, hvad, print · prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brygada+1918:wght@400;600&family=Schibsted+Grotesk:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../_delt/base.css">
+<style>
+  :root { --side-w: 380px; }
+  .steps { display: flex; gap: 0; margin: 0 0 24px; counter-reset: step; }
+  .steps [role=tab] {
+    flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+    min-height: 56px; padding: 0 8px 10px 0; border: 0; border-bottom: 2px solid var(--border); background: none; text-align: left;
+    color: var(--text-2); font-size: 14px;
+  }
+  .steps [role=tab] .n {
+    display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+    border: 1.5px solid var(--border-strong); font-size: 13px; font-weight: 600; color: var(--text-2);
+  }
+  .steps [role=tab] .t { font-weight: 600; font-size: 15px; color: var(--fg); }
+  .steps [role=tab] .v { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .steps [role=tab][aria-selected="true"] { border-bottom-color: var(--fg); }
+  :root[data-brand="solaris"] .steps [role=tab][aria-selected="true"] { border-bottom: 4px solid var(--primary); }
+  .steps [role=tab][aria-selected="true"] .n { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+  .steps [role=tab]:hover .t { text-decoration: underline; text-underline-offset: 3px; }
+  .steph { font-size: 26px; margin-bottom: 4px; }
+  .stepd { color: var(--text-2); font-size: 15px; margin-bottom: 20px; }
+  .sub { font-family: var(--font-body); font-size: 14px; letter-spacing: 0; font-weight: 600; margin-bottom: 8px; }
+  .recent { display: grid; }
+  .recent button { display: flex; align-items: center; gap: 12px; min-height: 56px; border: 0; border-bottom: 1px solid var(--border); background: none; text-align: left; padding: 6px 4px; }
+  .recent button:hover { background: var(--surface-2); }
+  .recent .th { width: 48px; height: 36px; border-radius: var(--radius); background-size: cover; background-position: center; flex-shrink: 0; }
+  .recent .t { display: block; font-size: 15px; font-weight: 500; }
+  .recent .d { display: block; font-size: 13px; color: var(--muted); }
+  .footrow { display: grid; grid-template-columns: auto 1fr; gap: 8px; }
+  .expander { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; border: 0; background: none; padding: 0; font-size: 15px; font-weight: 600; text-align: left; }
+  .expander svg { width: 18px; height: 18px; margin-left: auto; color: var(--muted); transition: transform 150ms; }
+  .expander[aria-expanded="true"] svg { transform: rotate(180deg); }
+  .previewbox { background: var(--surface-2); border-radius: var(--radius); padding: 20px 12px 12px; margin-bottom: 20px; }
+  .step-print .frame { box-shadow: 0 0 0 9999px rgb(20 22 26 / 0.5); border-style: solid; }
+  .footlinks { display: flex; flex-wrap: wrap; gap: 0 12px; font-size: 13px; color: var(--muted); margin-top: 24px; }
+  .footlinks a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+  @media (max-width: 767px) {
+    .steps { margin-bottom: 16px; }
+    .steph { font-size: 22px; }
+    .stepd { margin-bottom: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side" aria-label="Lav et kort">
+    <button type="button" class="grabber hide-desktop" aria-label="Gør panelet større"></button>
+    <div class="side-scroll">
+      <header class="brandhead hide-mobile">
+        <h1 data-brandname>Topografiske kort</h1>
+        <a class="wordmark only-mahoje" href="https://mahoje.dk" aria-label="Mahoje, til mahoje.dk"><svg viewBox="0 0 512 512" aria-hidden="true"><polyline points="62,400 182,168 262,284 342,118 452,400" fill="none" stroke="currentColor" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/></svg>Mahoje</a>
+        <span class="small only-solaris">Gratis topografiske kort fra spejderforeningen Solaris</span>
+      </header>
+
+      <div class="steps" role="tablist" aria-label="Trin">
+        <button type="button" role="tab" id="s1" aria-controls="p1" aria-selected="true"><span class="n">1</span><span class="t">Hvor</span><span class="v">Mols Bjerge</span></button>
+        <button type="button" role="tab" id="s2" aria-controls="p2" aria-selected="false" tabindex="-1"><span class="n">2</span><span class="t">Hvad</span><span class="v" data-base-text></span></button>
+        <button type="button" role="tab" id="s3" aria-controls="p3" aria-selected="false" tabindex="-1"><span class="n">3</span><span class="t">Print</span><span class="v" data-scale-text></span></button>
+      </div>
+
+      <div id="mainview">
+        <section role="tabpanel" id="p1" aria-labelledby="s1">
+          <h2 class="steph" tabindex="-1">Hvor skal kortet vise?</h2>
+          <p class="stepd">Søg, eller flyt kortet, så rammen ligger, hvor du vil.</p>
+          <div class="section">
+            <label class="label" for="sted">Find sted</label>
+            <div class="searchwrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"/></svg><input id="sted" class="input" type="search" placeholder="Adresse, sø, skov eller bakke" autocomplete="off" value="Mols Bjerge"></div>
+            <button type="button" class="btn btn-block" style="margin-top: 8px;" data-zoom="pos" data-icon="locate">Brug min position</button>
+          </div>
+          <div class="section">
+            <h3 class="sub">Seneste kort</h3>
+            <div class="recent" id="recent"></div>
+          </div>
+          <div class="section">
+            <h3 class="sub">Har du en rute?</h3>
+            <div data-widget="toollist" data-only="import,bogmaerker"></div>
+          </div>
+        </section>
+
+        <section role="tabpanel" id="p2" aria-labelledby="s2" hidden>
+          <h2 class="steph" tabindex="-1">Hvad skal kortet vise?</h2>
+          <p class="stepd">Vælg et baggrundskort, og læg det på, du har brug for.</p>
+          <div class="section" data-widget="basemaps"></div>
+          <div class="section">
+            <h3 class="sub">Læg på kortet</h3>
+            <div data-widget="layers" id="c-layers" data-open="terraen,gitter"></div>
+          </div>
+          <div class="section">
+            <h3 class="sub">Dine egne streger</h3>
+            <div data-widget="toollist" data-only="tegn,profil,eksport"></div>
+          </div>
+        </section>
+
+        <section role="tabpanel" id="p3" aria-labelledby="s3" hidden>
+          <h2 class="steph" tabindex="-1">Sådan bliver dit kort</h2>
+          <p class="stepd" data-coverage></p>
+          <div class="previewbox"><div data-widget="preview" id="pv" data-w="300" data-h="300"></div></div>
+          <div class="section stack">
+            <div data-widget="scale"></div>
+            <div data-widget="paper"></div>
+            <div data-widget="orient"></div>
+          </div>
+          <div class="section">
+            <button type="button" class="expander" aria-expanded="false" aria-controls="printextra" id="exp-print">Flere printvalg<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 9l-7 7-7-7"/></svg></button>
+            <p class="small">Flere ark, drejning, opløsning, nordpil</p>
+            <div id="printextra" hidden data-widget="printextra" style="margin-top: 12px;"></div>
+          </div>
+          <div class="section">
+            <h3 class="sub">Efter print</h3>
+            <div data-widget="toollist" data-only="offline,del,historik"></div>
+          </div>
+        </section>
+
+        <nav class="footlinks" aria-label="Om siden">
+          <a href="https://kort.mahoje.dk/kilder">Datakilder</a>
+          <a href="https://kort.mahoje.dk/om">Om</a>
+          <a href="https://github.com/mahope/kort">Open source på GitHub</a>
+        </nav>
+      </div>
+      <div id="toolview" hidden><div data-widget="toolpanel" data-tool="" data-back-label="Tilbage"></div></div>
+    </div>
+    <div class="side-foot">
+      <p class="sumline" data-summary></p>
+      <div class="footrow" id="footrow">
+        <button type="button" class="btn btn-lg" data-download id="dl-secondary"><span data-btn-label>Hent PDF</span></button>
+        <button type="button" class="btn btn-primary btn-lg" id="next"></button>
+      </div>
+      <button type="button" class="btn btn-primary btn-block btn-lg" data-download id="dl-primary" data-icon="download" hidden><span data-btn-label>Hent PDF</span></button>
+      <div class="progress" aria-hidden="true"><span></span></div>
+    </div>
+  </aside>
+
+  <main class="map" aria-label="Kort">
+    <div class="map-img" role="img" aria-label="Kort over Mols Bjerge (statisk billede i prototypen)"></div>
+    <div class="frame-wrap"><div class="frame"></div></div>
+    <div class="maptop">
+      <button type="button" class="mapbtn" id="open-kort-map" data-icon="layers"><span>Kort og lag</span></button>
+    </div>
+    <div class="mapctl">
+      <button type="button" class="mapbtn" data-zoom="pos" aria-label="Find min position" data-icon="locate"></button>
+      <div class="grp">
+        <button type="button" class="mapbtn" data-zoom="in" aria-label="Zoom ind" data-icon="plus"></button>
+        <button type="button" class="mapbtn" data-zoom="out" aria-label="Zoom ud" data-icon="minus"></button>
+      </div>
+    </div>
+    <div class="attrib"><span data-credit></span> · <a href="https://kort.mahoje.dk/kilder">Datakilder</a></div>
+  </main>
+</div>
+
+<script src="../_delt/kort.js"></script>
+<script>
+(function () {
+  const K = window.Kort;
+  const { h, icon, $, $$ } = K;
+  const sheetApi = K.sheet($("#side"), { start: "mid" });
+  const isMobile = () => window.matchMedia("(max-width: 767px)").matches;
+  const NEXT = { s1: "Videre: vælg kort", s2: "Videre: print" };
+
+  function selectStep(tab, focus) {
+    $$(".steps [role=tab]").forEach((t) => {
+      const on = t === tab;
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+      $("#" + t.getAttribute("aria-controls")).hidden = !on;
+    });
+    $("#toolview").hidden = true;
+    $("#mainview").hidden = false;
+    const last = tab.id === "s3";
+    $("#footrow").hidden = last;
+    $("#dl-primary").hidden = !last;
+    $("#next").replaceChildren(document.createTextNode(NEXT[tab.id] || ""), icon("right"));
+    document.body.classList.toggle("step-print", last);
+    $(".side-scroll").scrollTop = 0;
+    if (last && isMobile()) sheetApi.set("max");
+    if (focus === "tab") tab.focus();
+    else if (focus === "heading") $("#" + tab.getAttribute("aria-controls") + " .steph").focus();
+    K.renderMap();
+  }
+  $$(".steps [role=tab]").forEach((t) => t.addEventListener("click", () => selectStep(t)));
+  $(".steps").addEventListener("keydown", (e) => {
+    const tabs = $$(".steps [role=tab]");
+    const i = tabs.indexOf(document.activeElement);
+    const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+    if (i < 0 || !d) return;
+    e.preventDefault();
+    selectStep(tabs[(i + d + tabs.length) % tabs.length], "tab");
+  });
+  $("#next").addEventListener("click", () => {
+    const cur = $(".steps [aria-selected=true]");
+    selectStep(cur.id === "s1" ? $("#s2") : $("#s3"), "heading");
+  });
+  $("#open-kort-map").addEventListener("click", () => { selectStep($("#s2"), "heading"); if (isMobile()) sheetApi.set("max"); });
+
+  $("#exp-print").addEventListener("click", (e) => {
+    const open = e.currentTarget.getAttribute("aria-expanded") === "true";
+    e.currentTarget.setAttribute("aria-expanded", String(!open));
+    $("#printextra").hidden = open;
+  });
+
+  // Recent prints double as "where": one tap restores place, map and print choices.
+  const RECENT = [
+    { t: "Mols Bjerge", d: "A4 · 1:25.000 · Topografisk kort", thumb: "dtk25", set: { base: "dtk25", scale: 25000, paper: "A4", orient: "portrait" } },
+    { t: "Kalø Vig", d: "A4 liggende · 1:50.000 · Sejlads", thumb: "sejlads", set: { base: "skaermkort", style: "klassisk", scale: 50000, paper: "A4", orient: "landscape", overlays: { havdybder: { on: true, variant: "dk", opacity: 0.8 }, soemaerker: { on: true, opacity: 1 } } } },
+    { t: "Agri Bavnehøj", d: "A3 · 1:10.000 · Orientering", thumb: "kurver", set: { base: "skaermkort", style: "daempet", scale: 10000, paper: "A3", orient: "portrait", overlays: { kurver: { on: true, variant: "2.5", opacity: 1 } } } },
+  ];
+  $("#recent").replaceChildren(...RECENT.map((r) => h("button", { type: "button", onclick: () => { K.set(Object.assign({ overlays: {} }, JSON.parse(JSON.stringify(r.set)))); K.toast(r.t + " er hentet frem. Tjek valgene under Print."); } },
+    h("span", { class: "th", style: { backgroundImage: `url("../_delt/kort/thumb-${r.thumb}.webp")` }, "aria-hidden": "true" }),
+    h("span", {}, h("span", { class: "t" }, r.t), h("span", { class: "d" }, r.d)))));
+
+  let lastTool = null;
+  document.addEventListener("tool", (e) => {
+    lastTool = e.detail;
+    const tv = $("#toolview [data-widget=toolpanel]");
+    tv.dataset.tool = e.detail;
+    K.renderWidget(tv);
+    $("#mainview").hidden = true;
+    $("#toolview").hidden = false;
+    if (isMobile()) sheetApi.set("max");
+    $(".side-scroll").scrollTop = 0;
+    $("#toolview [data-tool-title]").focus();
+  });
+  $("#toolview").addEventListener("click", (e) => {
+    if (!e.target.closest("[data-back]")) return;
+    $("#toolview").hidden = true;
+    $("#mainview").hidden = false;
+    const row = $(`#mainview [data-tool="${lastTool}"]`);
+    if (row) { row.scrollIntoView({ block: "center" }); row.focus(); }
+  });
+
+  K.boot("C · Trin");
+  selectStep($("#s1"));
+  window.__open = { sheet: sheetApi };
+})();
+</script>
+</body>
+</html>

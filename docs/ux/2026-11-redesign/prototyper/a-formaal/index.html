@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="da" data-brand="mahoje" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retning A: Start med formålet · prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Brygada+1918:wght@400;600&family=Schibsted+Grotesk:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="../_delt/base.css">
+<style>
+  .purpose { display: grid; gap: 6px; }
+  .prow {
+    display: grid; grid-template-columns: 64px 1fr 20px; align-items: center; gap: 12px;
+    width: 100%; min-height: 56px; padding: 6px 10px 6px 6px;
+    border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); text-align: left;
+  }
+  .prow:hover { border-color: var(--border-strong); }
+  .prow .th { width: 64px; height: 44px; border-radius: var(--radius); background-size: cover; background-position: center; }
+  .prow .th.eget { background: var(--surface-2); display: grid; place-items: center; color: var(--text-2); }
+  .prow .th.eget svg { width: 22px; height: 22px; }
+  .prow .t { display: block; font-size: 15px; font-weight: 600; }
+  .prow .d { display: block; font-size: 13px; color: var(--muted); line-height: 1.35; }
+  .prow .ok { width: 20px; height: 20px; color: var(--fg); visibility: hidden; }
+  .prow[aria-checked="true"] { border-color: var(--selected-ring); box-shadow: inset 0 0 0 1px var(--selected-ring); }
+  .prow[aria-checked="true"] .ok { visibility: visible; }
+  :root[data-brand="solaris"] .prow[aria-checked="true"] { background: #fffbe0; }
+  :root[data-brand="solaris"][data-theme="dark"] .prow[aria-checked="true"] { background: #2e2a12; }
+
+  .mapcard { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; background: var(--surface); }
+  .mapcard .between { align-items: flex-start; }
+  .mapcard .basename { font-size: 15px; font-weight: 600; }
+
+  .expander { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; border: 0; background: none; padding: 0; font-size: 15px; font-weight: 600; text-align: left; }
+  .expander svg { width: 18px; height: 18px; margin-left: auto; color: var(--muted); transition: transform 150ms; }
+  .expander[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+  .layerpanel { position: absolute; left: 12px; top: 64px; width: 400px; max-height: calc(100% - 120px); display: flex; flex-direction: column; z-index: 30; }
+  .layerpanel header { display: flex; align-items: center; justify-content: space-between; padding: 12px 8px 8px 20px; border-bottom: 1px solid var(--border); }
+  .layerpanel header h2 { font-size: 22px; }
+  .layerpanel .body { overflow-y: auto; padding: 16px 20px 20px; overscroll-behavior: contain; }
+  .layerpanel .presetline { font-size: 13px; color: var(--text-2); margin-bottom: 16px; }
+
+  .footlinks { display: flex; flex-wrap: wrap; gap: 0 12px; font-size: 13px; color: var(--muted); margin-top: 24px; }
+  .footlinks a { display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side" aria-label="Kortindstillinger">
+    <button type="button" class="grabber hide-desktop" aria-label="Gør panelet større"></button>
+    <div class="side-scroll">
+      <div id="mainview">
+        <header class="brandhead">
+          <h1 data-brandname>Topografiske kort</h1>
+          <a class="wordmark only-mahoje" href="https://mahoje.dk" aria-label="Mahoje, til mahoje.dk"><svg viewBox="0 0 512 512" aria-hidden="true"><polyline points="62,400 182,168 262,284 342,118 452,400" fill="none" stroke="currentColor" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/></svg>Mahoje</a>
+          <span class="small only-solaris">Gratis topografiske kort fra spejderforeningen Solaris</span>
+        </header>
+
+        <div class="section">
+          <label class="label" for="sted">Find sted</label>
+          <div class="searchwrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"/></svg><input id="sted" class="input" type="search" placeholder="Adresse, sø, skov eller bakke" autocomplete="off" value="Mols Bjerge"></div>
+        </div>
+
+        <section class="section" aria-labelledby="h-formaal">
+          <h2 id="h-formaal" class="label" style="font-family: var(--font-body); font-size: 14px; letter-spacing: 0; font-weight: 600;">Hvad skal kortet bruges til?</h2>
+          <div class="purpose" role="radiogroup" aria-labelledby="h-formaal" id="purpose"></div>
+        </section>
+
+        <section class="section" aria-label="Kortet">
+          <div class="mapcard">
+            <div class="between">
+              <div>
+                <span class="small">Kortet</span>
+                <p class="basename" data-base-text></p>
+              </div>
+              <button type="button" class="btn" id="open-layers-side" aria-controls="layerpanel" aria-expanded="false" data-icon="layers">Kort og lag</button>
+            </div>
+            <div data-widget="activechips" style="margin-top: 10px;"></div>
+          </div>
+        </section>
+
+        <section class="section stack" aria-label="Print">
+          <div data-widget="scale"></div>
+          <div data-widget="paper"></div>
+          <div data-widget="orient"></div>
+          <div data-widget="coverage"></div>
+        </section>
+
+        <section class="section">
+          <button type="button" class="expander" aria-expanded="false" aria-controls="printextra" id="exp-print">Flere printvalg<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 9l-7 7-7-7"/></svg></button>
+          <p class="small">Flere ark, drejning, opløsning, nordpil</p>
+          <div id="printextra" hidden data-widget="printextra" style="margin-top: 12px;"></div>
+        </section>
+
+        <section class="section" aria-labelledby="h-tools">
+          <h2 id="h-tools" class="label" style="font-family: var(--font-body); font-size: 14px; letter-spacing: 0; font-weight: 600;">Værktøjer</h2>
+          <div data-widget="toollist"></div>
+        </section>
+
+        <nav class="footlinks" aria-label="Om siden">
+          <a href="https://kort.mahoje.dk/kilder">Datakilder</a>
+          <a href="https://kort.mahoje.dk/om">Om</a>
+          <a href="https://github.com/mahope/kort">Open source på GitHub</a>
+        </nav>
+      </div>
+      <div id="toolview" hidden>
+        <div data-widget="toolpanel" data-tool="" data-back-label="Tilbage til kortindstillinger"></div>
+      </div>
+    </div>
+    <div class="side-foot">
+      <p class="sumline" data-summary></p>
+      <button type="button" class="btn btn-primary btn-block btn-lg" data-download data-icon="download"><span data-btn-label>Hent PDF</span></button>
+      <div class="progress" aria-hidden="true"><span></span></div>
+    </div>
+  </aside>
+
+  <main class="map" aria-label="Kort">
+    <div class="map-img" role="img" aria-label="Kort over Mols Bjerge (statisk billede i prototypen)"></div>
+    <div class="frame-wrap"><div class="frame"></div></div>
+    <div class="maptop">
+      <button type="button" class="mapbtn" id="open-layers-map" aria-controls="layerpanel" aria-expanded="false" data-icon="layers"><span>Kort og lag</span><span class="count on" data-active-count style="font-size:12px;padding:0 7px;border-radius:99px;background:var(--primary);color:var(--on-primary);"></span></button>
+    </div>
+    <div class="floatpanel layerpanel" id="layerpanel" role="dialog" aria-modal="false" aria-labelledby="lp-title" hidden>
+      <header>
+        <h2 id="lp-title">Kort og lag</h2>
+        <button type="button" class="iconbtn" id="close-layers" aria-label="Luk kort og lag" data-icon="close"></button>
+      </header>
+      <div class="body">
+        <p class="presetline" id="presetline"></p>
+        <div data-widget="basemaps" data-cols="4"></div>
+        <h3 class="label" style="margin-top: 24px; font-family: var(--font-body); font-size: 14px; letter-spacing: 0; font-weight: 600;">Ekstra lag</h3>
+        <div data-widget="layers" id="lp-layers" data-open="terraen"></div>
+      </div>
+    </div>
+    <div class="mapctl">
+      <button type="button" class="mapbtn" data-zoom="pos" aria-label="Find min position" data-icon="locate"></button>
+      <div class="grp">
+        <button type="button" class="mapbtn" data-zoom="in" aria-label="Zoom ind" data-icon="plus"></button>
+        <button type="button" class="mapbtn" data-zoom="out" aria-label="Zoom ud" data-icon="minus"></button>
+      </div>
+    </div>
+    <div class="scalebar hide-mobile">500 m</div>
+    <div class="attrib"><span data-credit></span> · <a href="https://kort.mahoje.dk/kilder">Datakilder</a></div>
+  </main>
+</div>
+<div class="scrim" id="scrim" hidden></div>
+
+<script src="../_delt/kort.js"></script>
+<script>
+(function () {
+  const K = window.Kort;
+  const { h, icon, $, $$ } = K;
+  const IMG = "../_delt/kort/thumb-";
+  const thumbs = { vandretur: "dtk25", orientering: "kurver", sejlads: "sejlads", historisk: "lave" };
+
+  function renderPurpose() {
+    const g = $("#purpose");
+    const cur = K.state.preset;
+    const focused = document.activeElement && document.activeElement.closest && document.activeElement.closest(".prow");
+    const refocus = focused ? focused.dataset.p : null;
+    g.replaceChildren();
+    const rows = K.PRESETS.map((p) => ({ id: p.id, label: p.label, desc: p.desc, thumb: thumbs[p.id] }))
+      .concat([{ id: "eget", label: "Eget valg", desc: "Vælg selv kort og lag", thumb: null }]);
+    rows.forEach((r, i) => {
+      const checked = cur === r.id;
+      const b = h("button", { type: "button", role: "radio", class: "prow", "aria-checked": String(checked), tabindex: checked || (!cur && i === 0) ? "0" : "-1", "data-p": r.id,
+        onclick: () => {
+          if (r.id === "eget") { K.set({ preset: "eget" }); openLayers(); return; }
+          K.applyPreset(r.id);
+          K.toast(r.label + ": kort, lag og målestok er sat. Du kan ændre alt bagefter.");
+        } },
+        r.thumb ? h("span", { class: "th", style: { backgroundImage: `url("${IMG}${r.thumb}.webp")` }, "aria-hidden": "true" }) : h("span", { class: "th eget", "aria-hidden": "true" }, icon("tune")),
+        h("span", {}, h("span", { class: "t" }, r.label), h("span", { class: "d" }, r.desc)),
+        icon("check", "ok"));
+      g.append(b);
+    });
+    if (refocus) { const b = $(`.prow[data-p="${refocus}"]`); if (b) b.focus(); }
+  }
+  $("#purpose").addEventListener("keydown", (e) => {
+    const btns = $$(".prow");
+    const i = btns.indexOf(document.activeElement);
+    const d = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+    if (i < 0 || !d) return;
+    e.preventDefault();
+    const j = (i + d + btns.length) % btns.length;
+    btns[j].click();
+    requestAnimationFrame(() => $$(".prow")[j].focus());
+  });
+
+  function presetLine() {
+    const p = K.PRESETS.find((x) => x.id === K.state.preset);
+    $("#presetline").textContent = p ? `Sat af "${p.label}". Ændrer du noget her, bliver det til dit eget valg.` : "Vælg baggrundskort og de lag, du vil have med i printet.";
+  }
+
+  // Layer panel: one home for base map and overlays, opened from the map or the sidebar.
+  let opener = null;
+  const sheetApi = K.sheet($("#side"), { start: "mid" });
+  const mobileQuery = window.matchMedia("(max-width: 767px)");
+  function isMobile() { return mobileQuery.matches; }
+  // On mobile the scrim makes the panel modal for taps; inert does the same for
+  // the keyboard, so Tab cannot reach anything behind it (also the prototype bar).
+  // Runs on open, close and when the viewport crosses the mobile breakpoint.
+  function syncModal() {
+    const p = $("#layerpanel");
+    const modal = !p.hidden && isMobile();
+    p.classList.toggle("sheetlike", modal);
+    p.setAttribute("aria-modal", String(modal));
+    $("#scrim").hidden = !modal;
+    // Everything behind is every sibling of the panel and of each of its ancestors,
+    // so the panel itself and the elements that contain it are never made inert.
+    const behind = [];
+    for (let n = p; n && n !== document.body; n = n.parentElement) {
+      behind.push(...Array.from(n.parentElement.children).filter((c) => c !== n && !c.matches("#scrim, script")));
+    }
+    behind.forEach((c) => (c.inert = modal));
+  }
+  mobileQuery.addEventListener("change", syncModal);
+  function openLayers(e) {
+    opener = (e && e.currentTarget) || document.activeElement;
+    $("#layerpanel").hidden = false;
+    syncModal();
+    $$("[aria-controls=layerpanel]").forEach((b) => b.setAttribute("aria-expanded", "true"));
+    $("#lp-title").setAttribute("tabindex", "-1");
+    $("#lp-title").focus();
+  }
+  function closeLayers() {
+    $("#layerpanel").hidden = true;
+    syncModal();
+    $$("[aria-controls=layerpanel]").forEach((b) => b.setAttribute("aria-expanded", "false"));
+    if (opener && opener.focus) opener.focus();
+  }
+  $("#open-layers-map").addEventListener("click", (e) => ($("#layerpanel").hidden ? openLayers(e) : closeLayers()));
+  $("#open-layers-side").addEventListener("click", openLayers);
+  $("#close-layers").addEventListener("click", closeLayers);
+  $("#scrim").addEventListener("click", closeLayers);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#layerpanel").hidden) closeLayers(); });
+
+  $("#exp-print").addEventListener("click", (e) => {
+    const open = e.currentTarget.getAttribute("aria-expanded") === "true";
+    e.currentTarget.setAttribute("aria-expanded", String(!open));
+    $("#printextra").hidden = open;
+  });
+
+  // Tools: drill into the sidebar instead of a long "advanced" list.
+  let lastTool = null;
+  document.addEventListener("tool", (e) => {
+    lastTool = e.detail;
+    const tv = $("#toolview [data-widget=toolpanel]");
+    tv.dataset.tool = e.detail;
+    K.renderWidget(tv);
+    $("#mainview").hidden = true;
+    $("#toolview").hidden = false;
+    if (isMobile() && sheetApi.get() !== "max") sheetApi.set("max");
+    $(".side-scroll").scrollTop = 0;
+    $("#toolview [data-tool-title]").focus();
+  });
+  $("#toolview").addEventListener("click", (e) => {
+    if (!e.target.closest("[data-back]")) return;
+    $("#toolview").hidden = true;
+    $("#mainview").hidden = false;
+    const row = $(`#mainview [data-tool="${lastTool}"]`);
+    if (row) { row.scrollIntoView({ block: "center" }); row.focus(); }
+  });
+
+  K.on(() => { renderPurpose(); presetLine(); });
+  K.state.preset = "vandretur";
+  K.state.grid = true;
+  K.boot("A · Formål");
+  renderPurpose(); presetLine();
+  window.__open = { layers: openLayers, close: closeLayers, sheet: sheetApi };
+})();
+</script>
+</body>
+</html>
