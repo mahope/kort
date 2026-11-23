@@ -96,7 +96,7 @@ export function UtmGridSettings() {
                 const v = e.target.value;
                 setGridSpacing(v === "auto" ? "auto" : (Number(v) as GridSpacing));
               }}
-              className="min-w-0 flex-1 rounded-lg border border-border px-2 py-1.5 text-sm bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="min-w-0 flex-1 rounded-lg border border-border px-2 py-1.5 text-sm pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:text-base bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             >
               {SPACING_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -105,7 +105,7 @@ export function UtmGridSettings() {
               ))}
             </select>
           </div>
-          <p className={`text-[11px] leading-snug ${print.coarsened ? "text-amber-700 dark:text-amber-400" : "text-text-muted"}`}>
+          <p className={`text-[11px] pointer-coarse:text-xs leading-snug ${print.coarsened ? "text-amber-700 dark:text-amber-400" : "text-text-muted"}`}>
             {printHint}
             {gridSpacing === "auto" && " På skærmen følger gitteret zoom."}
             {" "}Hver 10 km-linje er kraftigere.
@@ -125,7 +125,7 @@ export function UtmGridSettings() {
             <div role="radiogroup" aria-label="Talformat" className="flex rounded-lg border border-border overflow-hidden">
               {(
                 [
-                  { value: "short", label: "Kort", example: <><sup>5</sup>92</> },
+                  { value: "short", label: "Kort", example: <><sup className="pointer-coarse:text-xs">5</sup>92</> },
                   { value: "full", label: "Fuld km", example: <>592</> },
                 ] as { value: GridLabelFormat; label: string; example: React.ReactNode }[]
               ).map((o) => (
@@ -135,7 +135,7 @@ export function UtmGridSettings() {
                   role="radio"
                   aria-checked={gridLabelFormat === o.value}
                   onClick={() => setGridLabelFormat(o.value)}
-                  className={`flex-1 px-2 py-1.5 text-sm transition-colors ${
+                  className={`flex-1 px-2 py-1.5 text-sm pointer-coarse:min-h-11 pointer-coarse:min-w-11 transition-colors ${
                     gridLabelFormat === o.value
                       ? "bg-primary text-on-primary"
                       : "bg-surface text-foreground hover:bg-surface-secondary"
@@ -160,7 +160,7 @@ export function UtmGridSettings() {
               id="utm-zone-mode"
               value={utmZoneMode}
               onChange={(e) => setUtmZoneMode(e.target.value as UtmZoneMode)}
-              className="min-w-0 flex-1 rounded-lg border border-border px-2 py-1.5 text-sm bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="min-w-0 flex-1 rounded-lg border border-border px-2 py-1.5 text-sm pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:text-base bg-surface focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             >
               <option value="dk">32 – hele Danmark</option>
               <option value="std">Som GPS (33 på Bornholm)</option>

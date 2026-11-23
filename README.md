@@ -98,6 +98,11 @@ npm run build       # production build
 Unused code is checked with `npx knip@6.44.1`; `knip.json` lists the known
 false positives.
 
+On touch devices, the map and About page use 44 px targets and the map's
+text-entry fields use at least 16 px type. See the
+[touch audit](docs/screenshots/issue-23/NOTES.md) for the Playwright checks
+and screenshots for both brands.
+
 ## Environment variables
 
 All are optional and public (`NEXT_PUBLIC_*` values are baked into the client

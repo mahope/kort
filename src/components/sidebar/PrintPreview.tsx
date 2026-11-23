@@ -49,7 +49,7 @@ export function PrintPreview() {
           <div key={i} className="bg-surface" />
         ))}
       </div>
-      <p className="text-[10px] text-text-muted">
+      <p className="text-[10px] pointer-coarse:text-xs text-text-muted">
         {paperFormat} {orientation === "portrait" ? "stående" : "liggende"}
         {multiPage ? ` · ${cols}×${rows} = ${pageCount} sider` : ""}
       </p>

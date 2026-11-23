@@ -110,7 +110,7 @@ export function BookmarksPanel() {
         <button
           type="button"
           onClick={handleAdd}
-          className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-primary text-on-primary hover:bg-primary-hover transition-colors"
+          className="flex items-center gap-1 px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 rounded text-xs bg-primary text-on-primary hover:bg-primary-hover transition-colors"
         >
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -118,20 +118,20 @@ export function BookmarksPanel() {
           Gem position
         </button>
         {bookmarks.length > 0 && (
-          <div className="flex gap-1">
+          <div className="flex gap-1 pointer-coarse:items-center">
             <button
               type="button"
               onClick={handleExport}
-              className="text-[10px] text-text-secondary hover:text-foreground"
+              className="pointer-coarse:min-h-11 pointer-coarse:min-w-11 text-[10px] pointer-coarse:text-xs text-text-secondary hover:text-foreground"
               title="Eksportér bogmærker"
             >
               Eksport
             </button>
-            <span className="text-text-muted text-[10px]">|</span>
+            <span className="text-text-muted text-[10px] pointer-coarse:text-xs">|</span>
             <button
               type="button"
               onClick={handleImport}
-              className="text-[10px] text-text-secondary hover:text-foreground"
+              className="pointer-coarse:min-h-11 pointer-coarse:min-w-11 text-[10px] pointer-coarse:text-xs text-text-secondary hover:text-foreground"
               title="Importér bogmærker"
             >
               Import
@@ -157,12 +157,12 @@ export function BookmarksPanel() {
                   onBlur={submitRename}
                   onKeyDown={(e) => e.key === "Enter" && submitRename()}
                   autoFocus
-                  className="flex-1 bg-surface border border-border rounded px-1 py-0.5 text-xs"
+                  className="flex-1 pointer-coarse:min-w-11 pointer-coarse:min-h-11 pointer-coarse:text-base bg-surface border border-border rounded px-1 py-0.5 text-xs"
                 />
               ) : (
                 <button
                   type="button"
-                  className="flex-1 text-left truncate hover:text-primary"
+                  className="flex-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 text-left truncate hover:text-primary"
                   onClick={() => handleGoTo(b)}
                   onDoubleClick={() => startRename(b)}
                   title={`${b.name} — dobbeltklik for at omdøbe`}
@@ -174,7 +174,7 @@ export function BookmarksPanel() {
                 type="button"
                 onClick={() => removeBookmark(b.id)}
                 aria-label="Slet bogmærke"
-                className="text-text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-opacity"
+                className="pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:grid pointer-coarse:place-items-center text-text-muted hover:text-danger opacity-0 pointer-coarse:opacity-100 group-hover:opacity-100 transition-opacity"
               >
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

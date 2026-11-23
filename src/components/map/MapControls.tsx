@@ -55,7 +55,7 @@ export function MapControls() {
       </button>
 
       {isOpen && (
-        <div className="mt-2 w-64 max-h-[70vh] overflow-y-auto rounded-lg bg-surface/95 p-3 shadow-lg backdrop-blur-sm">
+        <div className="mt-2 w-64 max-h-[70vh] max-md:pointer-coarse:max-h-[calc(100dvh-var(--sheet-offset)-4.75rem)] overflow-y-auto rounded-lg bg-surface/95 p-3 shadow-lg backdrop-blur-sm">
           {/* Base layer */}
           <div className="mb-3">
             <h2 id="map-baseLayer-label" className="text-xs font-semibold text-text-secondary mb-2">Basiskort</h2>
@@ -79,7 +79,7 @@ export function MapControls() {
                           key={key}
                           type="button"
                           onClick={() => setStyle(key)}
-                          className={`rounded px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:px-3 text-xs transition-colors ${
+                          className={`rounded px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:px-3 text-xs transition-colors ${
                             currentStyle === key
                               ? "bg-primary text-on-primary"
                               : "bg-surface-secondary text-text-secondary hover:bg-border"

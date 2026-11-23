@@ -127,12 +127,12 @@ export function BottomSheet({ children, footer }: BottomSheetProps) {
       </div>
       <div
         data-sheet-scroll
-        className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain p-4 max-md:pt-0"
+        className={`min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain p-4 max-md:pt-0 ${position === "min" ? "max-md:pointer-coarse:pb-0" : ""}`}
       >
         {children}
       </div>
       {footer && (
-        <div className="shrink-0 border-t border-border bg-surface px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:bg-sidebar-bg">
+        <div className="shrink-0 border-t border-border bg-surface px-4 pt-3 max-md:pointer-coarse:pt-0.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:bg-sidebar-bg">
           {footer}
         </div>
       )}

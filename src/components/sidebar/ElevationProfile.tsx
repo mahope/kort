@@ -59,7 +59,7 @@ function ProfileChart({ profile }: { profile: NamedProfile }) {
           vectorEffect="non-scaling-stroke"
         />
       </svg>
-      <p className="text-[10px] text-text-muted mt-0.5">
+      <p className="text-[10px] pointer-coarse:text-xs text-text-muted mt-0.5">
         {formatDistance(data.distanceM)} · {Math.round(data.minEle)}–
         {Math.round(data.maxEle)} m · ↑{Math.round(data.ascentM)} ↓
         {Math.round(data.descentM)} m

@@ -317,7 +317,7 @@ export function OfflinePanel() {
           ))}
         </ul>
       )}
-      <p className="text-[10px] text-text-muted">
+      <p className="text-[10px] pointer-coarse:text-xs text-text-muted">
         Fliserne hentes højst seks ad gangen fra Dataforsyningen og bruges af kortet uden net. PDF kræver
         stadig internet.
       </p>
