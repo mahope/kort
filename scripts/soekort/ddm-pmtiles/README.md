@@ -54,7 +54,7 @@ Steps: `grids`, then `t1|t2|t3-areas|lines|emod`, `t1-sound`, `lakes`, then
 
 | | |
 | --- | --- |
-| `soekort.pmtiles` | **61.4 MB** (zoom 5-14): t1 54.8 MB, t2 5.9 MB, t3 0.7 MB |
+| `soekort.pmtiles` | **64.6 MB** (zoom 5-14): t1 58.0 MB, t2 5.9 MB, t3 0.7 MB |
 | Downloads | DDM 128 MB (9 s), EMODnet 98 one-degree WCS tiles (393 MB, about 2 min), NOVANA WFS (144 MB) |
 | `grids` | 4 min (incl. the EMODnet download) |
 | Vector steps | about 13.5 min of work in total; 6-8 min wall time with `xargs -P 6` (`t1-areas` alone takes 6-8 min) |
@@ -76,7 +76,7 @@ model (540 MB as Float32) and a few working copies of it.
 
    | Tier | Zoom | Grid | Blur (sigma) | Contour levels (m) | Dropped below |
    | --- | --- | --- | --- | --- | --- |
-   | t1 | 12-14 | 50 m, then cubic spline to 25 m | 40 m | 1, 2, 3, 5, 10, 15, 20, 30, 50, 100, 200 | 3,000 m², lines 200 m |
+   | t1 | 12-14 | 50 m, then cubic spline to 25 m | 40 m | 1, 2, 3, 4, 5, 10, 15, 20, 30, 50, 100, 200 | 3,000 m², lines 200 m |
    | t2 | 9-11 | 50 m | 90 m | 2, 5, 10, 20, 30, 50, 100, 200 | 60,000 m², lines 1 km |
    | t3 | 5-8 | 200 m block mean | 300 m | 2, 5, 10, 20, 50, 100, 200 | 1.5 km², lines 6 km |
 
@@ -154,7 +154,9 @@ ssh hetzner-main 'mv /opt/kort-tiles/html/soekort.pmtiles.ny /opt/kort-tiles/htm
 
 The URL is then `https://tiles.mahoje.dk/soekort.pmtiles` (CORS and range
 requests are already set up in `scripts/contours/nginx-kort-tiles.conf`;
-Cloudflare caches for a day). Not uploaded yet.
+Cloudflare does not cache `.pmtiles` today). Uploaded on 23 Nov 2026; the
+rebuild with the 4 m level replaced it the same evening, and the first file
+(without 4 m) is kept on the host as `/opt/kort-tiles/soekort-uden-4m.pmtiles.bak`.
 
 Keep the source file and its download date with the build: the DDM50 credit
 must name the date the data was fetched, and data fetched under the current

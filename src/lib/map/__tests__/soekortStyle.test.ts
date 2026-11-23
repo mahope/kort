@@ -158,8 +158,26 @@ describe("søkort style", () => {
   });
 
   it("gives the shallow-water variant a band for each of the first metres", () => {
-    expect(SOEKORT_VARIANTS.lavvande.bands.map(([d]) => d)).toEqual([0, 1, 2, 3, 5, 10]);
+    expect(SOEKORT_VARIANTS.lavvande.bands.map(([d]) => d)).toEqual([0, 1, 2, 3, 4, 5, 10]);
     expect(SOEKORT_VARIANTS.klassisk.bands.map(([d]) => d)).toEqual([0, 2, 5, 10, 20]);
+  });
+
+  it("draws and numbers every metre down to 5 m in the shallow-water variant, at sea and in lakes", () => {
+    const drawn = (variant: SoekortVariant, zoom: number, layer: string, src: string) => {
+      const shown = [...visible(all(soekortLayers("d", { variant })), zoom)];
+      return [1, 2, 3, 4, 5].filter((d) =>
+        shown.some((s) => s.includes(`"layer":"${layer}","src":"${src}","d":${d}${layer === "depth_labels" ? ',"k":"c"' : ""}}`))
+      );
+    };
+    for (const src of ["ddm", "novana"]) {
+      expect(drawn("lavvande", 13, "depth_contours", src)).toEqual([1, 2, 3, 4, 5]);
+      expect(drawn("lavvande", 13, "depth_labels", src)).toEqual([1, 2, 3, 4, 5]);
+      // The classic chart leaves the 4 m line out.
+      expect(drawn("klassisk", 13, "depth_contours", src)).toEqual([1, 2, 3, 5]);
+    }
+    // A 4 m band of its own, with its own colour.
+    const bands = [...visible(all(soekortLayers("d", { variant: "lavvande" })), 13)].filter((s) => s.startsWith("d-areas-sea ddm 4 m"));
+    expect(bands).toEqual(["d-areas-sea ddm 4 m: rgba(212,232,247,1)"]);
   });
 
   it.each(variants)("%s shows the same things at the same scale on screen and at 300 dpi", (variant) => {

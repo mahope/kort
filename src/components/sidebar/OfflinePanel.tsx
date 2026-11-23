@@ -213,7 +213,7 @@ export function OfflinePanel() {
             ca. <span className="font-medium text-foreground">{formatBytes(estimated)}</span>
           </p>
           {layerIds.includes("soekort") && (
-            <p>Søkortet gemmes som én fil for hele Danmark (ca. 61 MB) og tælles som én flise.</p>
+            <p>Søkortet gemmes som én fil for hele Danmark (ca. 65 MB) og tælles som én flise.</p>
           )}
           <p className="text-text-muted">
             Lag: {layerIds.map((id) => LAYER_LABELS[id] ?? id).join(", ")}

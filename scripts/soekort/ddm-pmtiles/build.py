@@ -67,7 +67,7 @@ NOVANA_WFS = (
 )
 
 # Contour depths; the band edges are the same levels.
-LEVELS_FINE = [1, 2, 3, 5, 10, 15, 20, 30, 50, 100, 200]
+LEVELS_FINE = [1, 2, 3, 4, 5, 10, 15, 20, 30, 50, 100, 200]
 TIERS = {
     "t1": dict(zoom=(12, 14), blur=40, out_cell=25, levels=LEVELS_FINE,
                min_area=3_000, min_len=200, label_spacing=2_000, label_half=90, sounding_block=1_000),

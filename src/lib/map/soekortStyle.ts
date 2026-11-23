@@ -46,10 +46,10 @@ interface DataTier {
 export const DATA_TIERS: readonly DataTier[] = [
   { from: 5, ddm: [2, 5, 10, 20, 50, 100, 200], emodnet: [10, 20, 50, 100, 200], lakes: false, soundings: false },
   { from: 9, ddm: [2, 5, 10, 20, 30, 50, 100, 200], emodnet: [5, 10, 20, 50, 100, 200], lakes: true, soundings: false },
-  { from: 12, ddm: [1, 2, 3, 5, 10, 15, 20, 30, 50, 100, 200], emodnet: [5, 10, 20, 50, 100, 200], lakes: true, soundings: true },
+  { from: 12, ddm: [1, 2, 3, 4, 5, 10, 15, 20, 30, 50, 100, 200], emodnet: [5, 10, 20, 50, 100, 200], lakes: true, soundings: true },
 ];
 // NOVANA lake data is the same in every tier that has lakes.
-const LAKE_LEVELS = [1, 2, 3, 5, 10, 15, 20, 30, 50, 100, 200];
+const LAKE_LEVELS = [1, 2, 3, 4, 5, 10, 15, 20, 30, 50, 100, 200];
 
 export type SoekortVariant = "klassisk" | "lavvande";
 
@@ -81,12 +81,11 @@ export const SOEKORT_VARIANTS: Record<SoekortVariant, VariantStyle> = {
     shoalMinZoom: 11.5,
     gridMinZoom: 13.5,
   },
-  // Kayak, canoe and dinghy: the first five metres in four bands (0-1, 1-2, 2-3, 3-5 m).
-  // The archive has no 4 m level (LEVELS_FINE in build.py), so 3-5 m stays one band.
+  // Kayak, canoe and dinghy: the first five metres metre by metre, every line numbered.
   lavvande: {
-    bands: [[0, "#7fb6e0"], [1, "#9cc8ea"], [2, "#b6d7f0"], [3, "#cde4f5"], [5, "#e3f0fa"], [10, "#f6fafd"]],
+    bands: [[0, "#7fb6e0"], [1, "#96c4e8"], [2, "#add3ee"], [3, "#c2def3"], [4, "#d4e8f7"], [5, "#e5f1fa"], [10, "#f6fafd"]],
     line: "#4f7fae",
-    major: [1, 2, 3, 5, 10, 20, 50],
+    major: [1, 2, 3, 4, 5, 10, 20, 50],
     safety: [1, 2, 3],
     minorMinZoom: 11,
     labelColor: "#2d5d8c",

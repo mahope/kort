@@ -160,7 +160,7 @@ describe("saving the søkort offline", () => {
     const without = areaTilePlan(mols, ["dtk25"]);
     expect(withFile.urls.filter((u) => u.endsWith(".pmtiles"))).toEqual(["https://tiles.mahoje.dk/soekort.pmtiles"]);
     expect(withFile.urls.length).toBe(without.urls.length + 1);
-    expect(withFile.bytes - without.bytes).toBe(61_378_648);
+    expect(withFile.bytes - without.bytes).toBe(64_584_452);
     expect(layerTileUrl("soekort", { z: 14, x: 8672, y: 5084 })).toBeNull();
   });
 

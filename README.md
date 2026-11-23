@@ -44,8 +44,8 @@ Example PDF: [example-a4-1-25000.pdf](https://github.com/mahope/kort/releases/do
   orthophoto, OpenStreetMap, two series of historic maps (1842-1971) or no base map at all.
 - **Overlays:** contours (0.5 m to 10 m, with height labels), hillshade, cadastre,
   place names, our own depth layer *Søkort* (depth bands, contours and soundings
-  for Danish waters and 80 lakes, in a classic style or a shallow-water style
-  for canoe, kayak and dinghy), seabed relief, sea marks (from about 1:50,000),
+  for Danish waters and 80 lakes, in a classic style or a shallow-water style with a band and a numbered contour
+  for each metre down to 5 m for canoe, kayak and dinghy), seabed relief, sea marks (from about 1:50,000),
   wrecks and historic lake charts (marked *not for navigation*).
 - **Scales** 1:5,000 to 1:500,000, or any custom scale from 1:1,000 to 1:1,000,000.
 - **Paper sizes** A5 to A2 in portrait or landscape, plus A1 and A0 as one sheet for a print shop.
@@ -191,7 +191,7 @@ src/
   raster base maps only the contours and numbers are drawn, because the bands
   reach 1 km past the model's coast. Old links to the depth layers it replaces
   (`ov=dd`, `ov=hd`, `ov=sd`) open *Søkort*. It is the one sea layer that can be
-  saved offline: the service worker stores the whole file (about 61 MB) and
+  saved offline: the service worker stores the whole file (about 65 MB) and
   answers the map's range requests from it.
 
 More detail: [Norway and Sweden](docs/nordic.md) ·

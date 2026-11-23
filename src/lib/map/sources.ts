@@ -130,8 +130,8 @@ const DDM_CREDIT = `Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 5
  */
 export const SOEKORT_DDM_RETRIEVED = "23.11.2026";
 
-/** Size of the hosted soekort.pmtiles, for the offline estimate (61.378.648 bytes on 23 Nov 2026). */
-const SOEKORT_BYTES = 61_378_648;
+/** Size of the hosted soekort.pmtiles, for the offline estimate (64.584.452 bytes on 23 Nov 2026, with the 4 m level). */
+const SOEKORT_BYTES = 64_584_452;
 
 /** Hosts the service worker saves a whole PMTiles file from; the same list as OFFLINE_FILE_HOSTS in public/sw.js. */
 export const SOEKORT_OFFLINE_HOSTS = ["tiles.mahoje.dk"];
