@@ -38,6 +38,6 @@
     "tailwindcss": "4.3.5",
     "typescript": "^6.0.3",
     "typescript7": "npm:typescript@7.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "5.1.1"
   }
 }
