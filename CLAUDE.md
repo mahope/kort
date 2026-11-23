@@ -4,12 +4,12 @@ Gratis webapplikation til udskrivning af danske topografiske kort som PDF.
 
 ## Tech Stack
 
-- **Next.js 16** (App Router, Turbopack) + **React 19** + **TypeScript 5.7**
+- **Next.js 16** (App Router, Turbopack) + **React 19** + **TypeScript 6**
 - **MapLibre GL JS 6** via react-map-gl for interaktivt kort
-- **Tailwind CSS 4.2** (CSS-first config i globals.css)
+- **Tailwind CSS 4.3** (CSS-first config i globals.css)
 - **Zustand 5** for state management
 - **jsPDF 4** for client-side PDF-generering
-- **Vitest 4** for tests
+- **Vitest 5** for tests
 
 ## Arkitektur
 
