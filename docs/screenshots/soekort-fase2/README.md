@@ -39,6 +39,9 @@ What to look for:
   23.11.2026" instead of "Indeholder WMS-tjeneste", and EMODnet or NOVANA only
   where the print holds their data (Limfjorden: Dybdemodellen only). Furesø has
   no depth data, so the box only has the navigation warning.
+- **Lavt vand** has a band and a contour for every metre down to 5 m from
+  1:25.000 (the tiles from zoom 12, rebuilt with the 4 m level). At 1:50.000
+  screen and PDF both use the coarser tier, which has 2 and 5 m only.
 - **Coast:** the bands lie under the skærmkort's land, so the coastline is the
   base map's, not the model's.
 - **Furesø** has no NOVANA survey and is not in the depth model: both before
