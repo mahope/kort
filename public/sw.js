@@ -26,10 +26,12 @@ function isOfflineFile(url) {
   return url.protocol === "https:" && OFFLINE_FILE_HOSTS.includes(url.hostname) && url.pathname.endsWith(".pmtiles");
 }
 
-// A whole PMTiles v3 archive: the 127-byte header ("PMTiles", version byte 3)
-// and every section it points to (root directory, metadata, leaf directories,
-// tile data; u64 offset and length pairs from byte 8) inside the file. A cut-off
-// download has a valid header but ends before its tile data.
+// A whole, readable PMTiles v3 archive: the 127-byte header ("PMTiles",
+// version byte 3), every section it points to (root directory, metadata, leaf
+// directories, tile data; u64 offset and length pairs from byte 8) inside the
+// file, tiles to read, and a root directory that unpacks to at least one entry.
+// A cut-off download has a valid header but ends before its tile data; an empty
+// or broken archive has no root directory or tiles.
 const PMTILES_HEADER_BYTES = 127;
 async function isPmtiles(blob) {
   if (blob.size < PMTILES_HEADER_BYTES) return false;
@@ -40,7 +42,26 @@ async function isPmtiles(blob) {
     const end = view.getBigUint64(at, true) + view.getBigUint64(at + 8, true);
     if (end > BigInt(blob.size)) return false;
   }
-  return true;
+  const rootOffset = Number(view.getBigUint64(8, true));
+  const rootLength = Number(view.getBigUint64(16, true));
+  // Tile data length (byte 64) and number of addressed tiles (byte 72).
+  if (rootOffset < PMTILES_HEADER_BYTES || rootLength === 0) return false;
+  if (view.getBigUint64(64, true) === 0n || view.getBigUint64(72, true) === 0n) return false;
+  try {
+    const root = await unpackDirectory(blob.slice(rootOffset, rootOffset + rootLength), head[97]);
+    // A directory starts with its entry count (a varint): 0 means no tiles.
+    return root.length > 0 && root[0] !== 0;
+  } catch {
+    return false;
+  }
+}
+
+// Internal compression (byte 97): 1 none, 2 gzip (what our build writes).
+async function unpackDirectory(blob, compression) {
+  if (compression === 1) return new Uint8Array(await blob.arrayBuffer());
+  if (compression !== 2) throw new Error("unsupported compression");
+  const stream = blob.stream().pipeThrough(new DecompressionStream("gzip"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 // One A4 print at 300 dpi needs 88-98 tiles, so 3,000 covers roughly 30 prints
 // or a long browsing session while staying within a few hundred MB.
@@ -320,6 +341,7 @@ async function offlineFetch(urls) {
         const etag = response.headers.get("etag");
         if (file && etag) headers.etag = etag;
         await cache.put(offlineKey(url), new Response(blob, { status: 200, headers }));
+        if (file) savedFileChecks.delete(offlineKey(url));
         stored.push({ url, bytes: blob.size });
       } catch {
         failed.push(url);
@@ -338,6 +360,7 @@ async function offlineDelete(urls) {
   const cache = await caches.open(OFFLINE_CACHE);
   let deleted = 0;
   for (const u of offlineUrls(urls, 5000)) {
+    savedFileChecks.delete(offlineKey(u));
     if (await cache.delete(offlineKey(u))) deleted++;
     // Tiles not yet moved to the tile route's keys (see legacyOfflineKey).
     const legacy = legacyOfflineKey(u);
@@ -415,15 +438,52 @@ async function savedTile(url) {
   return (await cache.match(legacy)) || cache.match(key);
 }
 
-// A saved whole file: answer "Range: bytes=a-b" with that slice (206), as the
-// file server does. Not saved: straight to the network, range header and all.
-async function offlineFileStrategy(request) {
+// Saved files this worker has checked, by key: "ok" or "stale". A copy an older
+// worker saved is checked again (it may predate the archive check above), and
+// while the host answers, a copy of another file version (an archive rebuilt
+// on the same URL) is passed over for the network.
+const savedFileChecks = new Map();
+
+async function usableSavedFile(url) {
   const cache = await caches.open(OFFLINE_CACHE);
-  const saved = await cache.match(offlineKey(request.url));
+  const key = offlineKey(url);
+  const response = await cache.match(key);
+  if (!response) return null;
+  const blob = await response.blob();
+  const known = savedFileChecks.get(key);
+  if (known) return known === "ok" ? { response, blob } : null;
+  if (!(await isPmtiles(blob))) {
+    // Unreadable as an archive: drop it, so the map reads the host's file.
+    await cache.delete(key);
+    return null;
+  }
+  let head;
+  try {
+    head = await fetch(url, { method: "HEAD", mode: "cors" });
+  } catch {
+    // Offline: the saved copy is all there is. Ask the host again next time.
+    return { response, blob };
+  }
+  if (!head.ok) return { response, blob };
+  const savedEtag = response.headers.get("etag");
+  const hostEtag = head.headers.get("etag");
+  const hostLength = head.headers.get("content-length");
+  const stale =
+    Boolean(savedEtag && hostEtag && savedEtag !== hostEtag) ||
+    (hostLength !== null && Number(hostLength) !== blob.size);
+  savedFileChecks.set(key, stale ? "stale" : "ok");
+  return stale ? null : { response, blob };
+}
+
+// A saved whole file: answer "Range: bytes=a-b" with that slice (206), as the
+// file server does. Not saved (or stale or broken, see usableSavedFile):
+// straight to the network, range header and all.
+async function offlineFileStrategy(request) {
+  const saved = await usableSavedFile(request.url);
   if (!saved) return fetch(request);
-  const blob = await saved.blob();
-  const headers = new Headers({ "content-type": saved.headers.get("content-type") || "application/octet-stream" });
-  const etag = saved.headers.get("etag");
+  const { blob } = saved;
+  const headers = new Headers({ "content-type": saved.response.headers.get("content-type") || "application/octet-stream" });
+  const etag = saved.response.headers.get("etag");
   if (etag) headers.set("etag", etag);
   const range = /^bytes=(\d+)-(\d*)$/.exec(request.headers.get("range") || "");
   if (!range) {

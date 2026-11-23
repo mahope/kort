@@ -13,10 +13,13 @@ All notable changes to this project are documented here. The format is based on
   waters, EMODnet outside them up to 59° N, NOVANA in 80 lakes). Sharp lines
   and numbers in the PDF at any dpi instead of enlarged 50 m WMS cells. Two
   styles in the sidebar: classic (five blue tints) and shallow water (bands at
-  1, 2, 3, 4 and 5 m, each with a numbered contour) for canoe, kayak and dinghy.
+  1, 2, 3, 4 and 5 m, each with a numbered contour, from 1:25.000) for canoe,
+  kayak and dinghy.
   On the skærmkort the bands go under the land; over raster base maps only
   contours and numbers are drawn. The URL is `NEXT_PUBLIC_SOEKORT_URL`.
 - The depth layer can be saved offline with an area (one file, about 65 MB).
+  Only a whole, readable archive is kept, and while the host answers, a saved
+  copy of an older version of the file is passed over for the current one.
 
 ### Changed
 - *Søkort* replaces *Havdybder Danmark*, *Havdybder Europa* and *Sødybder* in

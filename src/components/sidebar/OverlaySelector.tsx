@@ -9,7 +9,8 @@ import { SeaNotice } from "@/components/map/SeaNotice";
 
 const VARIANT_HINTS: Record<SoekortVariant, string> = {
   klassisk: "Fem blå toner, lavt vand mørkest.",
-  lavvande: "Lavt vand meter for meter de første 5 m, med kurver og tal for hver meter. Til kano, kajak og jolle.",
+  // The 1, 3 and 4 m levels are only in the tiles from zoom 12 (DATA_TIERS), i.e. 1:25.000 and closer.
+  lavvande: "Fra 1:25.000 og tættere: de første 5 m meter for meter, med kurver og tal for hver meter. Til kano, kajak og jolle.",
 };
 
 /** Klassisk or lavt vand, under the søkort layer while it is on. */

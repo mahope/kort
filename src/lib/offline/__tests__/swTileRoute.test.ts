@@ -1,6 +1,7 @@
 // @vitest-environment node
 // Node, not jsdom: the worker builds Responses from Blobs, which jsdom's Blob breaks.
 import { readFileSync } from "node:fs";
+import { gzipSync } from "node:zlib";
 import { beforeEach, describe, expect, it } from "vitest";
 import { LEGACY_TILE_TEMPLATES, legacyOutsideTileUrls } from "../legacyKeys";
 import { OFFLINE_CACHE_NAME } from "../areas";
@@ -228,20 +229,27 @@ describe("service worker and the tile route", () => {
 
 describe("service worker and the saved søkort file", () => {
   const FILE = "https://tiles.mahoje.dk/soekort.pmtiles";
-  // A PMTiles v3 archive of `size` bytes: the 127-byte header, then root directory,
-  // metadata and tile data, as the header's offsets say. `cut` drops the end of
-  // the file, as a broken download does, and leaves the header as it was.
-  const pmtiles = (size: number, cut = size) => {
+  // A PMTiles v3 archive of `size` bytes: the 127-byte header, then a gzipped
+  // root directory with one entry (count 1, tile id 0, run 1, length 10,
+  // offset 0), metadata and tile data, as the header's offsets say. `cut` drops
+  // the end of the file, as a broken download does, and leaves the header as it
+  // was. `root` replaces the root directory's bytes.
+  const pmtiles = (size: number, cut = size, root: Uint8Array = gzipSync(new Uint8Array([1, 0, 1, 10, 1]))) => {
     const bytes = new Uint8Array(size);
     bytes.set(new TextEncoder().encode("PMTiles"));
     bytes[7] = 3;
     const view = new DataView(bytes.buffer);
-    const sections = [[127, 20], [147, 30], [177, 0], [177, size - 177]]; // root, metadata, leaves, tiles
+    const meta = 127 + root.length;
+    const tiles = meta + 30;
+    const sections = [[127, root.length], [meta, 30], [tiles, 0], [tiles, size - tiles]]; // root, metadata, leaves, tiles
     sections.forEach(([offset, length], i) => {
       view.setBigUint64(8 + 16 * i, BigInt(offset), true);
       view.setBigUint64(16 + 16 * i, BigInt(length), true);
     });
-    for (let i = 127; i < size; i++) bytes[i] = i % 251;
+    view.setBigUint64(72, BigInt(1), true); // addressed tiles
+    bytes[97] = 2; // internal compression: gzip
+    for (let i = meta; i < size; i++) bytes[i] = i % 251;
+    bytes.set(root, 127);
     return bytes.slice(0, cut);
   };
   const BYTES = pmtiles(300);
@@ -311,6 +319,57 @@ describe("service worker and the saved søkort file", () => {
     expect((await sw.request(FILE, { range: "bytes=0-3" }))?.status).toBe(200);
     const again = (await sw.message({ type: "OFFLINE_FETCH", urls: [FILE] })) as { stored: unknown[] };
     expect(again.stored).toEqual([{ url: FILE, bytes: 300 }]);
+  });
+
+  it.each([
+    ["a header with empty sections", () => {
+      const head = new Uint8Array(127);
+      head.set(new TextEncoder().encode("PMTiles"));
+      head[7] = 3;
+      return head;
+    }],
+    ["a root directory that is not gzip", () => pmtiles(300, 300, new Uint8Array([1, 0, 1, 10, 1]))],
+    ["a root directory with no entries", () => pmtiles(300, 300, gzipSync(new Uint8Array([0])))],
+  ])("saves no archive with %s", async (_what, body) => {
+    const sw = loadWorker(network, { respond: (url) => (url === FILE ? new Response(body(), { status: 200 }) : undefined) });
+    const reply = (await sw.message({ type: "OFFLINE_FETCH", urls: [FILE] })) as { stored: unknown[]; failed: string[] };
+    expect(reply).toMatchObject({ stored: [], failed: [FILE] });
+  });
+
+  it("drops a broken copy an older worker saved and reads the host's file", async () => {
+    const sw = loadWorker(network, { respond });
+    const offline = await sw.caches.api.open(OFFLINE_CACHE_NAME);
+    await offline.put(FILE, new Response(pmtiles(300, 60), { status: 200, headers: { etag: '"v1"' } }));
+    const res = await sw.request(FILE, { range: "bytes=0-3" });
+    expect(res?.status).toBe(200);
+    expect(await res!.arrayBuffer()).toHaveProperty("byteLength", 300);
+    expect(await offline.keys()).toEqual([]);
+  });
+
+  it("passes over a saved copy of an older file version while the host answers", async () => {
+    const newer = pmtiles(320);
+    const sw = loadWorker(network, {
+      respond: (url) => (url === FILE ? new Response(newer, { status: 200, headers: { etag: '"v2"' } }) : undefined),
+    });
+    const offline = await sw.caches.api.open(OFFLINE_CACHE_NAME);
+    await offline.put(FILE, new Response(BYTES, { status: 200, headers: { etag: '"v1"' } }));
+    const res = await sw.request(FILE, { range: "bytes=0-3" });
+    expect(res?.headers.get("etag")).toBe('"v2"');
+    // Saving the area again stores the host's version, which is then used.
+    await sw.message({ type: "OFFLINE_FETCH", urls: [FILE] });
+    const again = await sw.request(FILE, { range: "bytes=0-3" });
+    expect(again?.status).toBe(206);
+    expect(again?.headers.get("content-range")).toBe("bytes 0-3/320");
+  });
+
+  it("serves the saved copy when the host cannot be reached", async () => {
+    const sw = loadWorker(network, { respond });
+    const offline = await sw.caches.api.open(OFFLINE_CACHE_NAME);
+    await offline.put(FILE, new Response(BYTES, { status: 200, headers: { etag: '"v0"' } }));
+    network.online = false;
+    const res = await sw.request(FILE, { range: "bytes=0-3" });
+    expect(res?.status).toBe(206);
+    expect(res?.headers.get("etag")).toBe('"v0"');
   });
 
   it("saves no PMTiles file from other hosts", async () => {
