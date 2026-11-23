@@ -11,7 +11,7 @@ Det her er med i alle retningerne. Det kan også bygges alene, hvis ingen af ret
 - **Værktøjerne åbnes ét ad gangen** i sidepanelet med en tilbageknap. Avanceret tilstand og de seks genveje forsvinder.
 - **Advarslen ved havlag** står både i lagpanelet og som skilt på kortet, som i dag. Krediteringen på kortet skifter med kilden.
 - **Solaris** får en grå tekstfarve, der består AA (#6b6560 i stedet for #a8a29e), og den valgte tilstand får en mørk kant, så valget ikke kun vises med gul.
-- Touch-mål på mindst 44 px, synligt fokus, piletaster i radiogrupper og faner, og Escape lukker paneler. Testscriptet `scripts/protos.mjs` fandt kun to slags mål under 44 px på mobil: linket "Datakilder" i krediteringen (25 px, som i dag) og krydset på et aktivt lag (40 px). Begge ligger over AA-minimum på 24 px.
+- Touch-mål på mindst 44 px, synligt fokus, piletaster i radiogrupper og faner, og Escape lukker paneler. Testscriptet `scripts/protos.mjs` måler alle synlige kontroller på mobil, også dem uden for skærmen, og slår bagefter alt til, der giver flere kontroller (stil på Skærmkort, lagvarianter, aktive lag, gitter, flere ark, alle faner og værktøjer). Det finder ingen mål under 44 px. Linket "Datakilder" i krediteringen er 44 px højt og rækker op over kortet, så selve striben forbliver smal.
 
 Byggeomfang for det fælles grundlag: **3-4 dage**.
 

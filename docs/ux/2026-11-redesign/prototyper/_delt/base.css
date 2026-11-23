@@ -204,8 +204,7 @@ a { color: inherit; }
 .seg button { flex: 1; min-height: 44px; border: 0; background: var(--surface); font-size: 14px; padding: 0 8px; }
 .seg button + button { border-left: 1px solid var(--border); }
 .seg button[aria-checked="true"] { background: var(--primary); color: var(--on-primary); font-weight: 600; }
-.seg.small button { min-height: 36px; font-size: 13px; }
-@media (pointer: coarse) { .seg.small button { min-height: 44px; } }
+.seg.small button { min-height: 44px; font-size: 13px; }
 
 .check { display: flex; align-items: flex-start; gap: 12px; min-height: 44px; padding: 10px 0; cursor: pointer; }
 .check input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--primary); flex-shrink: 0; }
@@ -229,7 +228,7 @@ a { color: inherit; }
 .input::placeholder { color: var(--muted); }
 .searchwrap { position: relative; }
 .searchwrap svg { position: absolute; left: 12px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
-input[type="range"] { width: 100%; accent-color: var(--primary); min-height: 32px; }
+input[type="range"] { width: 100%; accent-color: var(--primary); min-height: 44px; }
 :root[data-brand="solaris"] input[type="range"] { accent-color: #b89a00; }
 
 .notice { display: flex; gap: 10px; padding: 10px 12px; border-radius: var(--radius); background: var(--warn-bg); color: var(--warn-fg); font-size: 13px; line-height: 1.45; }
@@ -269,7 +268,8 @@ input[type="range"] { width: 100%; accent-color: var(--primary); min-height: 32p
 .maptop { position: absolute; left: 12px; top: 12px; right: 12px; display: flex; gap: 8px; align-items: flex-start; z-index: 6; pointer-events: none; }
 .maptop > * { pointer-events: auto; }
 .attrib { position: absolute; right: 0; bottom: 0; z-index: 4; background: rgb(255 255 255 / 0.85); color: #15181c; font-size: 11px; padding: 2px 8px; border-top-left-radius: var(--radius); }
-.attrib a { color: inherit; display: inline-block; padding: 4px 0; }
+/* 44 px tall target that reaches up over the map; the negative margin keeps the strip itself slim. */
+.attrib a { color: inherit; display: inline-flex; align-items: flex-end; min-height: 44px; margin-top: -28px; padding: 0 2px 2px; vertical-align: bottom; }
 .seabadge { position: absolute; left: 12px; top: 64px; z-index: 4; background: rgb(255 255 255 / 0.92); color: #15181c; font-size: 13px; font-weight: 600; padding: 4px 8px; border-radius: var(--radius); box-shadow: var(--shadow); pointer-events: none; }
 .scalebar { position: absolute; left: 12px; bottom: 10px; z-index: 4; font-size: 11px; color: #15181c; background: rgb(255 255 255 / 0.85); padding: 0 6px; border: 1px solid #15181c; border-top: 0; min-width: 50px; }
 
@@ -303,8 +303,8 @@ input[type="range"] { width: 100%; accent-color: var(--primary); min-height: 32p
 
 /* Active-layer chips */
 .activechips { display: flex; flex-wrap: wrap; gap: 6px; }
-.achip { display: inline-flex; align-items: center; gap: 2px; min-height: 40px; padding: 0 4px 0 10px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border); font-size: 13px; }
-.achip button { width: 40px; height: 40px; border: 0; border-radius: 50%; background: none; display: inline-flex; align-items: center; justify-content: center; }
+.achip { display: inline-flex; align-items: center; gap: 2px; min-height: 44px; padding: 0 4px 0 10px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border); font-size: 13px; }
+.achip button { width: 44px; height: 44px; border: 0; border-radius: 50%; background: none; display: inline-flex; align-items: center; justify-content: center; }
 .achip button:hover { background: var(--border); }
 .achip svg { width: 14px; height: 14px; }
 
@@ -370,7 +370,8 @@ input[type="range"] { width: 100%; accent-color: var(--primary); min-height: 32p
 /* Paper preview */
 .pv-paper { display: grid; gap: 3px; margin: 0 auto; }
 .pv-sheet { position: relative; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 0.25); }
-.pv-map { position: relative; background-repeat: no-repeat; overflow: hidden; outline: 1px solid #15181c; }
+.pv-map { position: relative; overflow: hidden; outline: 1px solid #15181c; }
+.pv-img { position: absolute; background-repeat: no-repeat; background-size: 100% 100%; }
 .pv-map.blank { background: #fbfbfa; }
 .pv-grid { position: absolute; inset: 0; background-image: linear-gradient(rgb(30 64 175 / 0.55) 1px, transparent 1px), linear-gradient(90deg, rgb(30 64 175 / 0.55) 1px, transparent 1px); background-position: center; }
 .pv-north { position: absolute; right: 4px; top: 4px; font: 700 9px/1 Arial, sans-serif; color: #15181c; background: #fff; padding: 2px 3px; border: 1px solid #15181c; }

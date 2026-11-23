@@ -197,12 +197,20 @@
   let opener = null;
   const sheetApi = K.sheet($("#side"), { start: "mid" });
   function isMobile() { return window.matchMedia("(max-width: 767px)").matches; }
+  // On mobile the scrim makes the panel modal for taps; inert does the same for
+  // the keyboard, so Tab cannot reach the map controls or the sheet behind it.
+  function setModal(modal) {
+    $("#layerpanel").setAttribute("aria-modal", String(modal));
+    const behind = [$("#side"), ...Array.from($(".map").children).filter((c) => c.id !== "layerpanel")];
+    behind.forEach((c) => (c.inert = modal));
+  }
   function openLayers(e) {
     opener = (e && e.currentTarget) || document.activeElement;
     const p = $("#layerpanel");
     p.hidden = false;
     p.classList.toggle("sheetlike", isMobile());
     $("#scrim").hidden = !isMobile();
+    setModal(isMobile());
     $$("[aria-controls=layerpanel]").forEach((b) => b.setAttribute("aria-expanded", "true"));
     $("#lp-title").setAttribute("tabindex", "-1");
     $("#lp-title").focus();
@@ -210,6 +218,7 @@
   function closeLayers() {
     $("#layerpanel").hidden = true;
     $("#scrim").hidden = true;
+    setModal(false);
     $$("[aria-controls=layerpanel]").forEach((b) => b.setAttribute("aria-expanded", "false"));
     if (opener && opener.focus) opener.focus();
   }

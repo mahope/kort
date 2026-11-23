@@ -25,7 +25,22 @@ Appen har tre steder, man kan indstille ting: sidepanelet (på mobil et bottom s
 
 ### Sidepanelet i avanceret tilstand
 
-Kortlag (15 lag), Import & Lag, Tegning & Mål, Højdeprofil, Eksport, Udskrivning (rotation, opløsning, nordpil, målestokslineal, flere ark), Offline, Del, Bogmærker og Historik. Panelet bliver 2.432 px højt på desktop (2,7 skærmhøjder) og 3.312 px på mobil (`nu-mahoje-1440x900-07-avanceret-bund.webp`).
+Ti sektioner under hinanden. Panelet bliver 2.432 px højt på desktop (2,7 skærmhøjder) og 3.312 px på mobil (`nu-mahoje-1440x900-07-avanceret-bund.webp`).
+
+| Sektion | Valg og funktioner | Kode |
+|---|---|---|
+| Kortlag | De samme 15 lag som i Kortlag-menuen, hvert med en skyder "Gennemsigtighed" | `OverlaySelector.tsx` |
+| Import & Lag | Åbn GPX, KML eller GeoJSON (også ved at trække filen ind). Listen "Importerede lag" kan vise, skjule og slette hvert lag | `FileImport.tsx`, `ImportedLayerList.tsx` |
+| Tegning & Mål | Tegneværktøj: punkt, linje, polygon, cirkel, rektangel og vælg. Fortryd og gentag, navn på hver tegning, stil (farve, tykkelse, linjestil, fyld), slet én eller alle. Mål: afstand eller areal | `DrawToolbar.tsx`, `StylePanel.tsx`, `MeasureTool.tsx` |
+| Højdeprofil | Vises kun, når en tegnet eller importeret linje har højder | `ElevationProfile.tsx` |
+| Eksport | Tegninger som GPX, KML eller GeoJSON, og "Kopiér GeoJSON" | `ExportPanel.tsx` |
+| Udskrivning | Rotation (skyder og tal, -180° til 180°, nulstil). Opløsning 150, 200 eller 300 DPI. Nordpil og målestokslineal i printet (to afkrydsninger). Flersidet udskrift: ark på tværs (1-5), ark på langs (1-5), overlap 0-20 mm (standard 10 mm), advarsel når kortet er drejet, og samlet størrelse i cm | `BearingSelector.tsx`, `DpiSelector.tsx`, `PrintAids.tsx`, `MultiPageSelector.tsx` |
+| Offline | Gem printrammen på zoom 12-16 med valgfri lag, fremdrift med pause og fortsæt, liste over gemte områder. Skærmkort, OpenStreetMap og kortene uden for Danmark kan ikke gemmes | `OfflinePanel.tsx` |
+| Del | "Del kort" kopierer et link med sted, målestok, papir og lag | `ShareButton.tsx` |
+| Bogmærker | Gem stedet, gå til et bogmærke, slet, og eksportér eller importér alle som fil | `BookmarksPanel.tsx` |
+| Historik | Tidligere udskrifter: gå til samme kort igen, eller ryd hele historikken | `HistoryPanel.tsx` |
+
+I prototyperne flytter alle valgene fra Udskrivning ind under printflowet ("Flere printvalg"). Overlap og advarslen om rotation står ved "Flere ark", fordi de kun gælder dér.
 
 ### Kortlag-menuen over kortet
 

@@ -133,6 +133,7 @@
     multi: false,
     cols: 2,
     rows: 2,
+    overlap: 10,
     dpi: 200,
     rotation: 0,
     region: "dk",
@@ -150,7 +151,13 @@
     const item = allItems().find((i) => i.id === id);
     const next = Object.assign({}, cur, patch);
     if (next.on && item && item.variants && !next.variant) next.variant = item.def;
-    set({ overlays: Object.assign({}, state.overlays, { [id]: next }), preset: patch.on !== undefined ? "eget" : state.preset });
+    set({ overlays: Object.assign({}, state.overlays, { [id]: next }), preset: patch.on !== undefined || patch.variant !== undefined ? "eget" : state.preset });
+  }
+  // A manual change that departs from the chosen purpose turns it into "Eget valg".
+  function manual(patch) {
+    const p = PRESETS.find((x) => x.id === state.preset);
+    const differs = p && Object.keys(patch).some((k) => k in p.set && p.set[k] !== patch[k]);
+    set(Object.assign({}, patch, differs ? { preset: "eget" } : {}));
   }
   function allItems() { return GROUPS.flatMap((g) => g.items); }
   function activeOverlays() { return allItems().filter((i) => overlayOn(i.id)); }
@@ -257,13 +264,23 @@
     }
     return state.base;
   }
+  // Short versions of the credits in src/lib/map/sources.ts. The background
+  // image decides part of it: "sejlads" was captured with EMODnet depths and
+  // OpenSeaMap on (scripts/current.mjs), whatever the controls say now.
+  const DDM_SHORT = "Dybder: Geodatastyrelsen, Danmarks Dybdemodel 50 m, ikke til navigation";
   function credit() {
-    const parts = [];
-    if (state.base === "osm") parts.push("© OpenStreetMap-bidragydere");
-    else parts.push("© Klimadatastyrelsen");
-    if (overlayOn("soemaerker")) parts.push("Sømærker © OpenSeaMap");
-    if (overlayOn("havdybder") && state.overlays.havdybder.variant === "eu") parts.push("Dybder: EMODnet");
-    return parts.join(" · ");
+    const parts = new Set();
+    if (state.base === "osm") parts.add("© OpenStreetMap-bidragydere");
+    else if (state.base !== "none") parts.add("© Klimadatastyrelsen");
+    if (mapImage() === "sejlads") { parts.add("Dybder: EMODnet (CC BY 4.0)"); parts.add("Sømærker: OpenSeaMap"); }
+    if (["kurver", "skygge", "stednavne", "matrikel"].some(overlayOn)) parts.add("© Klimadatastyrelsen");
+    if (overlayOn("havdybder")) parts.add(state.overlays.havdybder.variant === "eu" ? "Dybder: EMODnet (CC BY 4.0)" : DDM_SHORT);
+    if (overlayOn("havbund")) parts.add(DDM_SHORT);
+    if (overlayOn("soemaerker")) parts.add("Sømærker: OpenSeaMap");
+    if (overlayOn("soedybder")) parts.add("Sødybder: Danmarks Miljøportal");
+    if (overlayOn("indsoekort")) parts.add("Indsøkort: Geodatastyrelsen (CC BY 4.0)");
+    if (overlayOn("vrag")) parts.add("Vrag: EMODnet Human Activities (CC BY 4.0)");
+    return Array.from(parts).join(" · ");
   }
   function renderMap() {
     const img = $(".map-img");
@@ -335,7 +352,8 @@
       if (j === null) return;
       e.preventDefault();
       btns[j].click();
-      requestAnimationFrame(() => { const nb = $$("[role=radio]", g.isConnected ? g : document.querySelector(`[aria-label="${label}"]`)); if (nb[j]) nb[j].focus(); });
+      // A re-render restores focus to the new choice (renderWidget); otherwise move it here.
+      if (g.isConnected) btns[j].focus();
     });
     return g;
   }
@@ -352,19 +370,19 @@
     const opts = SCALES.map((s) => ({ value: s, label: nf.format(s), aria: fmtScale(s) }));
     opts.push({ value: "andet", label: "Andet", aria: "Anden målestok" });
     const cur = state.customScale || !SCALES.includes(state.scale) ? "andet" : state.scale;
-    const g = radioGroup("Målestok", opts, cur, (v) => (v === "andet" ? set({ customScale: true }) : set({ scale: Number(v), customScale: false, preset: state.preset })), "chips");
+    const g = radioGroup("Målestok", opts, cur, (v) => (v === "andet" ? manual({ customScale: true }) : manual({ scale: Number(v), customScale: false })), "chips");
     wrap.append(g);
     if (cur === "andet") {
       wrap.append(h("div", { class: "row", style: { marginTop: "8px" } }, h("span", { class: "note" }, "1:"),
         h("input", { class: "input", style: { paddingLeft: "12px" }, inputmode: "numeric", "aria-label": "Anden målestok (nævner)", value: String(state.scale), placeholder: "15000",
-          onchange: (e) => { const n = parseInt(e.target.value.replace(/\D/g, ""), 10); if (n >= 1000 && n <= 1000000) set({ scale: n }); } })));
+          onchange: (e) => { const n = parseInt(e.target.value.replace(/\D/g, ""), 10); if (n >= 1000 && n <= 1000000) manual({ scale: n }); } })));
     }
     return wrap;
   };
   W.paper = () => h("div", {}, h("span", { class: "label" }, "Papir"),
-    radioGroup("Papirformat", Object.keys(PAPERS).map((p) => ({ value: p, label: p, aria: `${p} (${PAPERS[p][0]} × ${PAPERS[p][1]} mm)` })), state.paper, (v) => set({ paper: v }), "chips cols-6"));
+    radioGroup("Papirformat", Object.keys(PAPERS).map((p) => ({ value: p, label: p, aria: `${p} (${PAPERS[p][0]} × ${PAPERS[p][1]} mm)` })), state.paper, (v) => manual({ paper: v }), "chips cols-6"));
   W.orient = () => h("div", {}, h("span", { class: "label" }, "Retning"),
-    radioGroup("Retning", [{ value: "portrait", label: "Stående" }, { value: "landscape", label: "Liggende" }], state.orient, (v) => set({ orient: v }), "seg"));
+    radioGroup("Retning", [{ value: "portrait", label: "Stående" }, { value: "landscape", label: "Liggende" }], state.orient, (v) => manual({ orient: v }), "seg"));
   W.coverage = () => h("p", { class: "note tnum", "data-coverage": "" }, coverageText());
 
   W.basemaps = (el) => {
@@ -386,12 +404,16 @@
       const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
       if (!d) return;
       e.preventDefault();
-      btns[(i + d + btns.length) % btns.length].click();
+      const next = BASES[(i + d + btns.length) % btns.length];
+      btns[BASES.indexOf(next)].click();
+      // The click re-renders the grid; move focus to the new choice, not the old one.
+      const nb = $(`[data-focus="base-${next.id}"]`, el);
+      if (nb) nb.focus();
     });
     wrap.append(g);
     if (state.base === "skaermkort") {
       wrap.append(h("div", { style: { marginTop: "12px" } }, h("span", { class: "label" }, "Stil på skærmkortet"),
-        radioGroup("Stil på skærmkortet", STYLES.map((s) => ({ value: s.id, label: s.label })), state.style, (v) => set({ style: v }), "seg small")));
+        radioGroup("Stil på skærmkortet", STYLES.map((s) => ({ value: s.id, label: s.label })), state.style, (v) => manual({ style: v }), "seg small")));
     }
     return wrap;
   };
@@ -422,7 +444,7 @@
 
   W.gridset = () => {
     const wrap = h("div", { class: "stack" });
-    wrap.append(switchBtn("grid", "Koordinatgitter", "UTM-linjer til GPS og kompas", state.grid, () => set({ grid: !state.grid })));
+    wrap.append(switchBtn("grid", "Koordinatgitter", "UTM-linjer til GPS og kompas", state.grid, () => manual({ grid: !state.grid })));
     if (state.grid) {
       wrap.append(h("div", { style: { marginLeft: "0" } },
         h("label", { class: "label", for: "gridsys" }, "Koordinatsystem"),
@@ -482,7 +504,7 @@
       wrap.append(h("span", { class: "achip", role: "listitem" }, i.label + v,
         h("button", { type: "button", "aria-label": "Slå " + i.label + " fra", onclick: () => setOverlay(i.id, { on: false }) }, icon("close"))));
     });
-    if (state.grid) wrap.append(h("span", { class: "achip", role: "listitem" }, "Koordinatgitter", h("button", { type: "button", "aria-label": "Slå koordinatgitter fra", onclick: () => set({ grid: false }) }, icon("close"))));
+    if (state.grid) wrap.append(h("span", { class: "achip", role: "listitem" }, "Koordinatgitter", h("button", { type: "button", "aria-label": "Slå koordinatgitter fra", onclick: () => manual({ grid: false }) }, icon("close"))));
     return wrap;
   };
 
@@ -496,6 +518,9 @@
           h("span", { class: "tnum", style: { minWidth: "24px", textAlign: "center" }, "aria-live": "polite" }, String(state[key])),
           h("button", { type: "button", class: "iconbtn", "aria-label": lbl + ": flere", onclick: () => set({ [key]: Math.min(6, state[key] + 1) }) }, icon("plus"))));
       wrap.append(stepper("Ark på tværs", "cols"), stepper("Ark på langs", "rows"));
+      wrap.append(h("div", {}, h("label", { class: "label", for: "overlap" }, "Overlap ", h("span", { class: "hint tnum" }, state.overlap + " mm")),
+        h("input", { id: "overlap", type: "range", min: "0", max: "20", step: "1", value: String(state.overlap), "data-focus": "overlap", oninput: (e) => set({ overlap: Number(e.target.value) }) })));
+      if (state.rotation) wrap.append(h("p", { class: "notice", role: "note" }, icon("warn"), h("span", {}, "Kortet er drejet. Sæt rotationen til 0°, ellers passer arkene ikke sammen.")));
     }
     wrap.append(h("div", {}, h("label", { class: "label", for: "rot" }, "Drej kortet ", h("span", { class: "hint tnum" }, state.rotation + "°")),
       h("input", { id: "rot", type: "range", min: "-180", max: "180", step: "1", value: String(state.rotation), "data-focus": "rot", oninput: (e) => set({ rotation: Number(e.target.value) }) })));
@@ -526,10 +551,17 @@
       const cellW = innerW / a.cols, cellH = innerH / a.rows;
       const offX = -(800 - groundW / 2 + (groundW / a.cols) * c) * z;
       const offY = -(500 - groundH / 2 + (groundH / a.rows) * r) * z;
+      // The frame turns on the map and the PDF prints it upright, so the map
+      // (and its grid and north) turns the other way around the frame centre.
+      const img = h("div", { class: "pv-img", style: {
+        left: offX + "px", top: offY + "px", width: 1600 * z + "px", height: 1000 * z + "px",
+        backgroundImage: name ? `url("${IMG}${name}.webp")` : "",
+        transformOrigin: `${800 * z}px ${500 * z}px`,
+        transform: state.rotation ? `rotate(${-state.rotation}deg)` : "" } },
+        state.grid ? h("div", { class: "pv-grid", style: { backgroundSize: `${(1000 / M_PER_PX) * z}px ${(1000 / M_PER_PX) * z}px` } }) : null);
       paper.append(h("div", { class: "pv-sheet", style: { padding: MARGIN_MM * k + "px" } },
-        h("div", { class: "pv-map" + (name ? "" : " blank"), style: name ? { backgroundImage: `url("${IMG}${name}.webp")`, backgroundSize: `${1600 * z}px ${1000 * z}px`, backgroundPosition: `${offX}px ${offY}px`, width: cellW + "px", height: cellH + "px" } : { width: cellW + "px", height: cellH + "px" } },
-          state.grid ? h("div", { class: "pv-grid", style: { backgroundSize: `${(1000 / M_PER_PX) * z}px ${(1000 / M_PER_PX) * z}px` } }) : null,
-          state.northArrow ? h("span", { class: "pv-north", "aria-hidden": "true" }, "N") : null),
+        h("div", { class: "pv-map" + (name ? "" : " blank"), style: { width: cellW + "px", height: cellH + "px" } }, img,
+          state.northArrow ? h("span", { class: "pv-north", "aria-hidden": "true", style: state.rotation ? { transform: `rotate(${-state.rotation}deg)` } : {} }, "N") : null),
         h("div", { class: "pv-foot" }, h("span", {}, fmtScale(state.scale)), h("span", { "data-credit": "" }, credit()))));
     }
     wrap.append(paper, h("figcaption", { class: "small tnum", style: { marginTop: "8px" } }, `${state.paper} ${state.orient === "portrait" ? "stående" : "liggende"}${state.multi ? ` · ${a.cols} × ${a.rows} = ${a.cols * a.rows} ark` : ""} · ${state.dpi} dpi`));
@@ -608,16 +640,15 @@
     const fn = W[el.dataset.widget];
     if (!fn) return;
     const active = document.activeElement;
-    const key = active && el.contains(active) ? active.getAttribute("data-focus") || (active.getAttribute("role") === "radio" ? "radio:" + active.closest("[role=radiogroup]").getAttribute("aria-label") + ":" + active.dataset.v : null) : null;
+    const key = active && el.contains(active) ? active.getAttribute("data-focus") || (active.getAttribute("role") === "radio" ? "radio:" + active.closest("[role=radiogroup]").getAttribute("aria-label") : null) : null;
     const caret = key === "layersearch" ? active.selectionStart : null;
     el.replaceChildren(fn(el));
     if (key) {
       let target = null;
       if (key.startsWith("radio:")) {
-        const [, lbl, v] = key.split(":");
+        const lbl = key.slice("radio:".length);
         const g = $$("[role=radiogroup]", el).find((x) => x.getAttribute("aria-label") === lbl);
         target = g && $$("[role=radio]", g).find((b) => b.getAttribute("aria-checked") === "true");
-        void v;
       } else target = $(`[data-focus="${key}"]`, el);
       if (target) { target.focus(); if (caret !== null) target.setSelectionRange(caret, caret); }
     }
@@ -689,6 +720,9 @@
         } else pos = pos === "max" ? "mid" : pos === "mid" ? "max" : "mid";
         apply();
       });
+      g.setAttribute("aria-keyshortcuts", "ArrowUp ArrowDown");
+      // Enter and Space fire a click without pointer events (detail 0): same as a tap.
+      g.addEventListener("click", (e) => { if (e.detail === 0) { pos = pos === "max" ? "mid" : "max"; apply(); } });
       g.addEventListener("keydown", (e) => {
         if (e.key === "ArrowUp") { pos = pos === "min" ? "mid" : "max"; apply(); e.preventDefault(); }
         if (e.key === "ArrowDown") { pos = pos === "max" ? "mid" : "min"; apply(); e.preventDefault(); }

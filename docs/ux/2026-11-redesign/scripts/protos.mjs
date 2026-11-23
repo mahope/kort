@@ -75,18 +75,55 @@ const PLAN = {
   ] },
 };
 
+// Every rendered control counts, also the ones scrolled out of view.
 async function smallTargets(page) {
   return page.evaluate(() => {
     const out = [];
     for (const el of document.querySelectorAll("button, a, select, input, [role=radio], [role=tab], label.check")) {
-      if (el.closest(".protobar") || el.closest("[hidden]")) continue;
+      if (el.closest(".protobar") || !el.checkVisibility()) continue;
       if (el.matches("input[type=checkbox]") && el.closest("label.check")) continue;
       const r = el.getBoundingClientRect();
-      if (!r.width || !r.height || r.bottom < 0 || r.top > innerHeight || r.right < 0 || r.left > innerWidth) continue;
+      if (!r.width || !r.height) continue;
       if (r.height < 43.5 || r.width < 43.5) out.push(`${el.tagName.toLowerCase()} "${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 30)}" ${Math.round(r.width)}x${Math.round(r.height)}`);
     }
     return out;
   });
+}
+
+// The screenshots only show some states. On mobile, also turn on everything that
+// adds controls (Skærmkort styles, layer variants, active chips, grid, several
+// sheets, rotation) and visit every tab, open group, expander and tool panel.
+async function sweep(page) {
+  const found = new Set();
+  const measure = async () => (await smallTargets(page)).forEach((s) => found.add(s));
+  await page.evaluate(() => {
+    const K = window.Kort;
+    K.set({ base: "skaermkort", multi: true, grid: true, rotation: 10 });
+    K.setOverlay("kurver", { on: true });
+    K.setOverlay("havdybder", { on: true });
+    if (window.__open) window.__open.sheet.set("max");
+    if (window.__open && window.__open.layers) window.__open.layers();
+  });
+  await page.waitForTimeout(300);
+  const openAll = () => page.evaluate(() => {
+    const K = window.Kort;
+    K.$$("[data-widget=layers]").forEach((el) => { el.dataset.open = K.GROUPS.map((g) => g.id).join(","); K.renderWidget(el); });
+    K.$$(".expander[aria-expanded=false]").forEach((b) => b.checkVisibility() && b.click());
+  });
+  const tabs = await page.locator("[role=tab]").count();
+  for (let i = 0; i < Math.max(1, tabs); i++) {
+    if (tabs) await page.locator("[role=tab]").nth(i).evaluate((t) => t.click());
+    await openAll();
+    await page.waitForTimeout(200);
+    await measure();
+  }
+  for (const id of await page.evaluate(() => window.Kort.TOOLS.map((t) => t.id))) {
+    await page.evaluate((x) => document.dispatchEvent(new CustomEvent("tool", { detail: x })), id);
+    await page.waitForTimeout(150);
+    await measure();
+    await page.evaluate(() => { const b = window.Kort.$$("[data-back]").find((x) => x.checkVisibility()); if (b) b.click(); });
+  }
+  return Array.from(found);
 }
 
 const browser = await chromium.launch();
@@ -120,6 +157,15 @@ for (const [key, plan] of Object.entries(PLAN)) {
     }
     await ctx.close();
   }
+  const ctx = await browser.newContext({ viewport: { width: MOBILE.width, height: MOBILE.height }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: "da-DK" });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto(pathToFileURL(path.join(protoDir, plan.dir, "index.html")).href + "?ren=1", { waitUntil: "networkidle" });
+  const small = await sweep(page);
+  report[`${key}-mobil-alle-tilstande`] = { errors, small };
+  console.log(`${key}-mobil-alle-tilstande`, errors.length ? "FEJL " + errors.join(" | ") : "ok", small.length ? `små mål: ${small.join("; ")}` : "");
+  await ctx.close();
 }
 fs.writeFileSync(path.join(outDir, `rapport${only ? "-" + only : ""}.json`), JSON.stringify(report, null, 2));
 await browser.close();
