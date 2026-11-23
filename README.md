@@ -180,7 +180,7 @@ Bigger themes right now: our own map tiles behind a CDN instead of live WMS
 a trip ([#36](https://github.com/mahope/kort/issues/36)) and moving map layers
 to Datafordeleren as Dataforsyningen closes services ([#5](https://github.com/mahope/kort/issues/5)).
 
-Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first.
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first. Release notes are in [CHANGELOG.md](CHANGELOG.md).
 
 ## License and data attribution
 
