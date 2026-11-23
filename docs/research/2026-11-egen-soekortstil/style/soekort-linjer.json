@@ -1,0 +1,945 @@
+{
+  "version": 8,
+  "name": "Søkort: Linjer (sparsomt blæk)",
+  "metadata": {
+    "kort:about": "Depth layers only, sizes for the screen (96 dpi). In a base map: the 'sea' layers go right after the sea polygon, the 'lake' layers after the lake fills, the labels below the place names (see withDepth in style.mjs). For print, regenerate with depthLayers(id, { variant, pxPerMm: dpi / 25.4 }).",
+    "kort:groups": {
+      "sea": [
+        "dybder-areas-sea",
+        "dybder-minor-sea",
+        "dybder-major-sea",
+        "dybder-safety-sea"
+      ],
+      "lake": [
+        "dybder-areas-lake",
+        "dybder-minor-lake",
+        "dybder-major-lake",
+        "dybder-safety-lake"
+      ],
+      "labels": [
+        "dybder-contour-labels-major",
+        "dybder-contour-labels-minor",
+        "dybder-shoals",
+        "dybder-soundings"
+      ]
+    }
+  },
+  "glyphs": "https://cdn.dataforsyningen.dk/assets/vector_tiles_assets/latest/glyphs/{fontstack}/{range}.pbf",
+  "sources": {
+    "dybder": {
+      "type": "vector",
+      "url": "pmtiles://https://tiles.mahoje.dk/soekort.pmtiles",
+      "attribution": "Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning, hentet [dato]. Model og data er ikke egnet til navigation. EMODnet Bathymetry (CC BY 4.0). Sødybder: Danmarks Miljøportal (NOVANA)"
+    }
+  },
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#deedff"
+      }
+    },
+    {
+      "id": "dybder-areas-sea",
+      "type": "fill",
+      "source": "dybder",
+      "source-layer": "depth_areas",
+      "paint": {
+        "fill-color": [
+          "step",
+          [
+            "get",
+            "d0"
+          ],
+          "#c4def2",
+          2,
+          "#e2eff9",
+          5,
+          "#ffffff"
+        ],
+        "fill-opacity": 1,
+        "fill-antialias": false
+      },
+      "filter": [
+        "all",
+        [
+          "!=",
+          [
+            "get",
+            "src"
+          ],
+          "novana"
+        ]
+      ]
+    },
+    {
+      "id": "dybder-minor-sea",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "minzoom": 12.5,
+      "filter": [
+        "all",
+        [
+          "!=",
+          [
+            "get",
+            "src"
+          ],
+          "novana"
+        ],
+        [
+          "all",
+          [
+            "!",
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  2,
+                  5,
+                  10,
+                  20,
+                  50,
+                  100,
+                  200
+                ]
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                50,
+                100,
+                200,
+                3,
+                15,
+                30
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#2f6496",
+        "line-width": 0.5,
+        "line-opacity": 0.8
+      }
+    },
+    {
+      "id": "dybder-major-sea",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "!=",
+          [
+            "get",
+            "src"
+          ],
+          "novana"
+        ],
+        [
+          "all",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "!",
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  2,
+                  5
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#2f6496",
+        "line-width": 0.8,
+        "line-opacity": 1
+      }
+    },
+    {
+      "id": "dybder-safety-sea",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "!=",
+          [
+            "get",
+            "src"
+          ],
+          "novana"
+        ],
+        [
+          "in",
+          [
+            "get",
+            "d"
+          ],
+          [
+            "literal",
+            [
+              2,
+              5
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#2f6496",
+        "line-width": 1.2,
+        "line-opacity": 1
+      }
+    },
+    {
+      "id": "dybder-areas-lake",
+      "type": "fill",
+      "source": "dybder",
+      "source-layer": "depth_areas",
+      "paint": {
+        "fill-color": [
+          "step",
+          [
+            "get",
+            "d0"
+          ],
+          "#c4def2",
+          2,
+          "#e2eff9",
+          5,
+          "#ffffff"
+        ],
+        "fill-opacity": 1,
+        "fill-antialias": false
+      },
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "get",
+            "src"
+          ],
+          "novana"
+        ]
+      ]
+    },
+    {
+      "id": "dybder-minor-lake",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "minzoom": 12.5,
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "get",
+            "src"
+          ],
+          "novana"
+        ],
+        [
+          "all",
+          [
+            "!",
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  2,
+                  5,
+                  10,
+                  20,
+                  50,
+                  100,
+                  200
+                ]
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                50,
+                100,
+                200,
+                3,
+                15,
+                30
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#2f6496",
+        "line-width": 0.5,
+        "line-opacity": 0.8
+      }
+    },
+    {
+      "id": "dybder-major-lake",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "get",
+            "src"
+          ],
+          "novana"
+        ],
+        [
+          "all",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "!",
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  2,
+                  5
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#2f6496",
+        "line-width": 0.8,
+        "line-opacity": 1
+      }
+    },
+    {
+      "id": "dybder-safety-lake",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "get",
+            "src"
+          ],
+          "novana"
+        ],
+        [
+          "in",
+          [
+            "get",
+            "d"
+          ],
+          [
+            "literal",
+            [
+              2,
+              5
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#2f6496",
+        "line-width": 1.2,
+        "line-opacity": 1
+      }
+    },
+    {
+      "id": "dybder-contour-labels-major",
+      "type": "symbol",
+      "source": "dybder",
+      "source-layer": "depth_labels",
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "get",
+            "k"
+          ],
+          "c"
+        ],
+        [
+          "in",
+          [
+            "get",
+            "d"
+          ],
+          [
+            "literal",
+            [
+              2,
+              5,
+              10,
+              20,
+              50,
+              100,
+              200,
+              3,
+              15,
+              30
+            ]
+          ]
+        ],
+        [
+          "in",
+          [
+            "get",
+            "d"
+          ],
+          [
+            "literal",
+            [
+              2,
+              5,
+              10,
+              20,
+              50,
+              100,
+              200
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "text-field": [
+          "to-string",
+          [
+            "get",
+            "d"
+          ]
+        ],
+        "text-font": [
+          "Open Sans Regular"
+        ],
+        "text-size": 10.5,
+        "text-rotate": [
+          "get",
+          "a"
+        ],
+        "text-rotation-alignment": "map",
+        "text-pitch-alignment": "map",
+        "text-padding": 22.67716535433071,
+        "symbol-sort-key": [
+          "-",
+          0,
+          [
+            "to-number",
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  2,
+                  5
+                ]
+              ]
+            ]
+          ]
+        ]
+      },
+      "paint": {
+        "text-color": "#1f4f7d",
+        "text-halo-color": "rgba(255,255,255,0.92)",
+        "text-halo-width": 1.3228346456692914,
+        "text-opacity": 1
+      }
+    },
+    {
+      "id": "dybder-contour-labels-minor",
+      "type": "symbol",
+      "source": "dybder",
+      "source-layer": "depth_labels",
+      "minzoom": 12.5,
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "get",
+            "k"
+          ],
+          "c"
+        ],
+        [
+          "in",
+          [
+            "get",
+            "d"
+          ],
+          [
+            "literal",
+            [
+              2,
+              5,
+              10,
+              20,
+              50,
+              100,
+              200,
+              3,
+              15,
+              30
+            ]
+          ]
+        ],
+        [
+          "!",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "text-field": [
+          "to-string",
+          [
+            "get",
+            "d"
+          ]
+        ],
+        "text-font": [
+          "Open Sans Regular"
+        ],
+        "text-size": 10.5,
+        "text-rotate": [
+          "get",
+          "a"
+        ],
+        "text-rotation-alignment": "map",
+        "text-pitch-alignment": "map",
+        "text-padding": 22.67716535433071,
+        "symbol-sort-key": [
+          "-",
+          0,
+          [
+            "to-number",
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  2,
+                  5
+                ]
+              ]
+            ]
+          ]
+        ]
+      },
+      "paint": {
+        "text-color": "#1f4f7d",
+        "text-halo-color": "rgba(255,255,255,0.92)",
+        "text-halo-width": 1.3228346456692914,
+        "text-opacity": 1
+      }
+    },
+    {
+      "id": "dybder-shoals",
+      "type": "symbol",
+      "source": "dybder",
+      "source-layer": "depth_labels",
+      "minzoom": 12,
+      "filter": [
+        "all",
+        [
+          "==",
+          [
+            "get",
+            "k"
+          ],
+          "s"
+        ],
+        [
+          "<",
+          [
+            "get",
+            "d"
+          ],
+          5
+        ]
+      ],
+      "layout": {
+        "text-field": [
+          "case",
+          [
+            "all",
+            [
+              "<",
+              [
+                "get",
+                "d"
+              ],
+              10
+            ],
+            [
+              ">",
+              [
+                "round",
+                [
+                  "*",
+                  [
+                    "-",
+                    [
+                      "get",
+                      "d"
+                    ],
+                    [
+                      "floor",
+                      [
+                        "get",
+                        "d"
+                      ]
+                    ]
+                  ],
+                  10
+                ]
+              ],
+              0
+            ]
+          ],
+          [
+            "format",
+            [
+              "to-string",
+              [
+                "floor",
+                [
+                  "get",
+                  "d"
+                ]
+              ]
+            ],
+            {},
+            [
+              "to-string",
+              [
+                "round",
+                [
+                  "*",
+                  [
+                    "-",
+                    [
+                      "get",
+                      "d"
+                    ],
+                    [
+                      "floor",
+                      [
+                        "get",
+                        "d"
+                      ]
+                    ]
+                  ],
+                  10
+                ]
+              ]
+            ],
+            {
+              "font-scale": 0.72
+            }
+          ],
+          [
+            "format",
+            [
+              "to-string",
+              [
+                "floor",
+                [
+                  "get",
+                  "d"
+                ]
+              ]
+            ],
+            {}
+          ]
+        ],
+        "text-font": [
+          "Open Sans Regular"
+        ],
+        "text-size": 10,
+        "text-padding": 5.669291338582678,
+        "symbol-sort-key": [
+          "get",
+          "d"
+        ]
+      },
+      "paint": {
+        "text-color": "#2b3f55",
+        "text-halo-color": "rgba(255,255,255,0.75)",
+        "text-halo-width": 0.8,
+        "text-opacity": 1
+      }
+    },
+    {
+      "id": "dybder-soundings",
+      "type": "symbol",
+      "source": "dybder",
+      "source-layer": "depth_labels",
+      "minzoom": 14,
+      "filter": [
+        "==",
+        [
+          "get",
+          "k"
+        ],
+        "g"
+      ],
+      "layout": {
+        "text-field": [
+          "case",
+          [
+            "all",
+            [
+              "<",
+              [
+                "get",
+                "d"
+              ],
+              10
+            ],
+            [
+              ">",
+              [
+                "round",
+                [
+                  "*",
+                  [
+                    "-",
+                    [
+                      "get",
+                      "d"
+                    ],
+                    [
+                      "floor",
+                      [
+                        "get",
+                        "d"
+                      ]
+                    ]
+                  ],
+                  10
+                ]
+              ],
+              0
+            ]
+          ],
+          [
+            "format",
+            [
+              "to-string",
+              [
+                "floor",
+                [
+                  "get",
+                  "d"
+                ]
+              ]
+            ],
+            {},
+            [
+              "to-string",
+              [
+                "round",
+                [
+                  "*",
+                  [
+                    "-",
+                    [
+                      "get",
+                      "d"
+                    ],
+                    [
+                      "floor",
+                      [
+                        "get",
+                        "d"
+                      ]
+                    ]
+                  ],
+                  10
+                ]
+              ]
+            ],
+            {
+              "font-scale": 0.72
+            }
+          ],
+          [
+            "format",
+            [
+              "to-string",
+              [
+                "floor",
+                [
+                  "get",
+                  "d"
+                ]
+              ]
+            ],
+            {}
+          ]
+        ],
+        "text-font": [
+          "Open Sans Regular"
+        ],
+        "text-size": 9,
+        "text-padding": 9.448818897637796,
+        "symbol-sort-key": [
+          "get",
+          "d"
+        ]
+      },
+      "paint": {
+        "text-color": "#56697d",
+        "text-halo-color": "rgba(255,255,255,0.6)",
+        "text-halo-width": 0.6,
+        "text-opacity": 1
+      }
+    }
+  ]
+}

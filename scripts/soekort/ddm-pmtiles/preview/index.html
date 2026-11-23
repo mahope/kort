@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<title>Søkortstil, prøve</title>
+<link rel="stylesheet" href="/lib/maplibre/maplibre-gl.css">
+<style>
+  html, body { margin: 0; background: #fff; font-family: "Open Sans", Arial, sans-serif; }
+  #page #map.screen { position: fixed; inset: 0; }
+  #page { position: relative; background: #fff; }
+  #page #map { position: absolute; }
+  #footer { position: absolute; color: #222; line-height: 1.35; }
+  #footer b { font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="page"><div id="map"></div><div id="footer"></div></div>
+<script src="/lib/pmtiles.js"></script>
+<script type="module">
+// ?lat=&lng=&scale=25000&variant=klassisk|lavvande|linjer|none&mode=screen|a4&title=
+import * as maplibregl from "/lib/maplibre/maplibre-gl.mjs";
+import { withDepth, VARIANTS } from "/style.mjs";
+
+const q = new URLSearchParams(location.search);
+const lat = Number(q.get("lat") || 55.05);
+const lng = Number(q.get("lng") || 10.62);
+const scale = Number(q.get("scale") || 25000);
+const variant = q.get("variant") || "klassisk";
+const mode = q.get("mode") || "screen";
+const dpi = mode === "a4" ? 300 : 96;
+const pxPerMm = dpi / 25.4;
+window.__errors = [];
+
+// MapLibre (512 px tiles): ground metres per pixel = cos(lat) * 40075016.686 / (512 * 2^zoom).
+const groundRes = (scale * 0.0254) / dpi;
+const zoom = Math.log2((Math.cos((lat * Math.PI) / 180) * 40075016.686) / (512 * groundRes));
+
+const page = document.getElementById("page");
+const mapDiv = document.getElementById("map");
+const footer = document.getElementById("footer");
+if (mode === "a4") {
+  // A4 portrait at 300 dpi, 10 mm margins, a 12 mm footer like the app's PDF.
+  const mm = (v) => Math.round(v * pxPerMm);
+  Object.assign(page.style, { width: `${mm(210)}px`, height: `${mm(297)}px` });
+  Object.assign(mapDiv.style, { left: `${mm(10)}px`, top: `${mm(10)}px`, width: `${mm(190)}px`, height: `${mm(265)}px` });
+  Object.assign(footer.style, { left: `${mm(10)}px`, top: `${mm(277)}px`, width: `${mm(190)}px`, fontSize: `${mm(2.2)}px` });
+} else {
+  mapDiv.className = "screen";
+  footer.style.display = "none";
+}
+
+maplibregl.setWorkerUrl("/lib/maplibre/maplibre-gl-worker.mjs");
+const protocol = new pmtiles.Protocol();
+maplibregl.addProtocol("pmtiles", protocol.tile);
+
+// Everything remote goes through the local proxy.
+const transformRequest = (url) => (/^https?:\/\//.test(url) && !url.startsWith(location.origin) ? { url: `/proxy?u=${encodeURIComponent(url)}` } : { url });
+const BASE = "https://cdn.dataforsyningen.dk/assets/vector_tiles_assets/latest/styles/official/3857_skaermkort_klassisk.json";
+const base = await (await fetch(transformRequest(BASE).url)).json();
+const pm = `pmtiles://${location.origin}/data/soekort.pmtiles`;
+const header = await new pmtiles.PMTiles(`${location.origin}/data/soekort.pmtiles`).getMetadata();
+const credit = header.attribution || "";
+const style = variant === "none" ? base : withDepth(base, "dybder", pm, credit, { variant, pxPerMm });
+
+const map = new maplibregl.Map({
+  container: mapDiv,
+  style,
+  center: [lng, lat],
+  zoom,
+  transformRequest,
+  interactive: mode !== "a4",
+  attributionControl: mode === "a4" ? false : { compact: false },
+  pixelRatio: 1,
+  maxCanvasSize: [8192, 8192],
+  canvasContextAttributes: { preserveDrawingBuffer: true },
+  fadeDuration: 0,
+});
+map.on("error", (e) => window.__errors.push(String(e.error?.message || e.error || e)));
+if (mode === "a4") {
+  const v = VARIANTS[variant];
+  footer.innerHTML =
+    `<b>${q.get("title") || ""}</b>, 1:${scale.toLocaleString("da-DK")}, ${v ? v.label : "uden dybder"}. ` +
+    `Kort: Klimadatastyrelsen (CC BY 4.0). ${credit}. IKKE TIL NAVIGATION.`;
+}
+map.once("load", () => {
+  map.once("idle", () => {
+    window.__zoom = map.getZoom();
+    window.__ready = true;
+  });
+});
+window.__map = map;
+</script>
+</body>
+</html>
