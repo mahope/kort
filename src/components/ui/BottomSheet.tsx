@@ -37,11 +37,17 @@ export function BottomSheet({ children, footer }: BottomSheetProps) {
   const dragging = useRef(false);
   const startY = useRef(0);
   const startHeight = useRef(0);
+  const minDragHeight = useRef(SNAP_MIN_PX);
   const didDrag = useRef(false);
   const lastDragHeight = useRef<number | null>(null);
   const sheetRef = useRef<HTMLElement>(null);
 
-  const height = dragHeight !== null ? `${dragHeight}px` : `var(--sheet-${position})`;
+  const handleRef = useRef<HTMLButtonElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
+
+  const height = dragHeight !== null ? `${dragHeight}px` : position === "min"
+    ? "max(var(--sheet-min), var(--sheet-touch-min, 0px))"
+    : `var(--sheet-${position})`;
 
   useEffect(() => {
     const root = document.documentElement;
@@ -55,21 +61,40 @@ export function BottomSheet({ children, footer }: BottomSheetProps) {
   // its centre into the visible area above the sheet. 0 when it is a sidebar.
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)");
+    const touch = window.matchMedia("(pointer: coarse)");
+    const root = document.documentElement;
+    const handle = handleRef.current;
+    const footer = footerRef.current;
     const publish = (e?: Event) => {
       // An on-screen keyboard shrinks the viewport while typing; re-padding
       // the map then would make it jump under the user's eyes.
       const el = document.activeElement;
       if (e?.type === "resize" && el instanceof HTMLElement && el.matches("input, textarea, select")) return;
+      if (mq.matches || !touch.matches || !handle) {
+        root.style.removeProperty("--sheet-touch-min");
+      } else {
+        // The footer includes safe-area padding and can grow as its content changes.
+        const handleHeight = handle.getBoundingClientRect().height;
+        const footerHeight = footer?.getBoundingClientRect().height ?? 0;
+        root.style.setProperty("--sheet-touch-min", `${Math.ceil(handleHeight + footerHeight)}px`);
+      }
       const px = mq.matches ? 0 : snapPointsPx()[position];
       setSheetPx(px);
-      document.documentElement.style.setProperty("--map-pad-bottom", `${px}px`);
+      root.style.setProperty("--map-pad-bottom", `${px}px`);
     };
+    const observer = new ResizeObserver(() => publish());
+    if (handle) observer.observe(handle, { box: "border-box" });
+    if (footer) observer.observe(footer, { box: "border-box" });
     publish();
+    touch.addEventListener("change", publish);
     mq.addEventListener("change", publish);
     window.addEventListener("resize", publish);
     // Resizes skipped while typing (keyboard) are caught up when focus leaves.
     document.addEventListener("focusout", publish);
     return () => {
+      observer.disconnect();
+      root.style.removeProperty("--sheet-touch-min");
+      touch.removeEventListener("change", publish);
       mq.removeEventListener("change", publish);
       window.removeEventListener("resize", publish);
       document.removeEventListener("focusout", publish);
@@ -80,8 +105,9 @@ export function BottomSheet({ children, footer }: BottomSheetProps) {
     dragging.current = true;
     didDrag.current = false;
     startY.current = e.clientY;
-    startHeight.current = sheetRef.current?.getBoundingClientRect().height ?? SNAP_MIN_PX;
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    minDragHeight.current = sheetHeightPx("min", window.innerHeight);
+    startHeight.current = sheetRef.current?.getBoundingClientRect().height ?? minDragHeight.current;
+    e.currentTarget.setPointerCapture(e.pointerId);
   }, []);
 
   const onPointerMove = useCallback((e: React.PointerEvent) => {
@@ -89,7 +115,7 @@ export function BottomSheet({ children, footer }: BottomSheetProps) {
     didDrag.current = true;
     const maxHeight = window.innerHeight * SNAP_MAX_FRAC;
     const delta = startY.current - e.clientY;
-    const next = Math.max(SNAP_MIN_PX, Math.min(maxHeight, startHeight.current + delta));
+    const next = Math.max(minDragHeight.current, Math.min(maxHeight, startHeight.current + delta));
     lastDragHeight.current = next;
     setDragHeight(next);
   }, []);
@@ -102,11 +128,15 @@ export function BottomSheet({ children, footer }: BottomSheetProps) {
       if (h !== null) setPosition(nearestPosition(h));
       lastDragHeight.current = null;
       setDragHeight(null);
-    } else {
-      // Tap: toggle between minimized and mid
-      setPosition(position === "min" ? "mid" : "min");
     }
-  }, [position, setPosition]);
+  }, [setPosition]);
+
+  const onPointerCancel = useCallback(() => {
+    dragging.current = false;
+    didDrag.current = true;
+    lastDragHeight.current = null;
+    setDragHeight(null);
+  }, []);
 
   return (
     <aside
@@ -115,24 +145,33 @@ export function BottomSheet({ children, footer }: BottomSheetProps) {
       data-dragging={dragHeight !== null}
       className="fixed inset-x-0 bottom-0 z-40 flex flex-col max-md:h-[var(--sheet-h)] rounded-t-2xl max-md:pr-[env(safe-area-inset-right)] max-md:pl-[env(safe-area-inset-left)] bg-surface shadow-[0_-4px_20px_rgba(0,0,0,0.15)] transition-[height] duration-200 ease-out data-[dragging=true]:transition-none md:static md:w-80 md:shrink-0 md:rounded-none md:border-r md:border-sidebar-border md:bg-sidebar-bg md:shadow-none"
     >
-      <div
+      <button
+        ref={handleRef}
+        type="button"
         data-sheet-handle
-        className="flex shrink-0 cursor-grab touch-none items-center justify-center py-3 active:cursor-grabbing md:hidden"
+        aria-label="Kortindstillinger"
+        aria-expanded={position !== "min"}
+        aria-controls="sheet-settings"
+        className="flex shrink-0 cursor-grab touch-none items-center justify-center py-3 pointer-coarse:min-h-11 active:cursor-grabbing md:hidden"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onClick={(e) => {
+          if (e.detail === 0 || !didDrag.current) setPosition(position === "min" ? "mid" : "min");
+        }}
       >
-        <div className="h-1 w-10 rounded-full bg-text-muted" />
-      </div>
+        <span className="h-1 w-10 rounded-full bg-text-muted" />
+      </button>
       <div
+        id="sheet-settings"
         data-sheet-scroll
-        className={`min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain p-4 max-md:pt-0 ${position === "min" ? "max-md:pointer-coarse:pb-0" : ""}`}
+        className={`min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain p-4 max-md:pt-0 ${position === "min" ? "max-md:pointer-coarse:invisible max-md:pointer-coarse:pb-0" : ""}`}
       >
         {children}
       </div>
       {footer && (
-        <div className="shrink-0 border-t border-border bg-surface px-4 pt-3 max-md:pointer-coarse:pt-0.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:bg-sidebar-bg">
+        <div ref={footerRef} className="shrink-0 border-t border-border bg-surface px-4 pt-3 max-md:pointer-coarse:pt-0.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:bg-sidebar-bg">
           {footer}
         </div>
       )}

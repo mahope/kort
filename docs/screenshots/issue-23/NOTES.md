@@ -63,6 +63,36 @@ axe-core 4.14.0. Use `CHECK=1` to make a 390 px regression fail the command.
 NEXT_PUBLIC_BRAND=mahoje BASE=http://localhost:3123 OUT=/tmp/kort-audit CHECK=1 node scripts/audit-touch-a11y.mjs
 ```
 
+## Review follow-up
+
+The revised audit scrolls each target into view and samples hit points on a
+44×44 px area. With a popup open, it verifies hit areas in the active popup;
+the underlying controls are measured geometrically and checked for hit
+coverage in the closed state. Covering the layer panel with a temporary
+fixed overlay made the audit fail on 22 targets.
+
+At 390×844, the Solaris review baseline (`91699e2`) had one undersized
+target in each of start, search, advanced and layers. The sheet handle was
+390×28 px. Importing the synthetic GeoJSON exposed three more undersized
+targets: hide (20×20), name (278×16) and delete (18×18). The handle and all
+three layer controls now have at least 44×44 px on coarse pointers.
+
+With a 34 px bottom inset simulated by Chromium, the minimized sheet's PDF
+button previously ended at y=831, 21 px into the reserved area. It now ends
+at y=810. The minimized sheet fits the handle and pinned footer, including
+safe-area padding. The audit exercises import, hide, show, style expansion,
+delete, tap to minimize, Enter to expand and drag to minimize.
+
+After the review fixes, both brands returned zero targets under 44 px, zero
+text fields under 16 px, zero text under 12 px in the audited scope and zero
+axe 4.14.0 `target-size` findings in all nine states at 390×844. The import
+style panel still has axe findings for accessible names. The color picker
+does not expose a text entry field. Physical iOS Safari was not tested.
+
+[Review screenshots (390×844, Solaris)](recheck/solaris-review.webp).
+Import is shown on the left and the minimized sheet with the simulated
+inset on the right. The review baseline is above the corrected version.
+
 ## PR title
 
 Complete touch target sizing on the map and About page
@@ -71,8 +101,10 @@ Complete touch target sizing on the map and About page
 
 Size the remaining touch targets to at least 44×44 px on the map and About
 page. Increase small helper text to 12 px and keep text fields at 16 px or
-above. Keep the layer popover scrollable above the mobile sheet and the
-attribution toggle reachable when its links wrap.
+above. Size the imported-layer controls and the sheet handle for touch.
+Keep the layer popover scrollable above the mobile sheet, the attribution
+toggle reachable when links wrap, and the pinned PDF button above the
+bottom safe area.
 
 Playwright and axe 4.14.0 pass at 390×844 for Mahoje and Solaris. Build,
 lint, typecheck and 495 Vitest tests pass. Before and after screenshots

@@ -109,7 +109,7 @@ export function MeasureTool() {
           {measurements.map((m, i) => (
             <div
               key={m.id}
-              className="text-xs bg-surface-secondary rounded px-2 py-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 flex items-center justify-between"
+              className="text-xs bg-surface-secondary rounded px-2 py-1 flex items-center justify-between"
             >
               <span className="text-text-secondary">
                 {mode === "distance" ? "Afstand" : "Areal"} {measurements.length > 1 ? i + 1 : ""}

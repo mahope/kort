@@ -23,7 +23,7 @@ export function ImportedLayerList() {
             <button
               type="button"
               onClick={() => toggleVisibility(layer.id)}
-              className="text-text-muted hover:text-text-secondary p-0.5"
+              className="text-text-muted hover:text-text-secondary p-0.5 pointer-coarse:grid pointer-coarse:place-items-center pointer-coarse:min-h-11 pointer-coarse:min-w-11"
               title={layer.visible ? "Skjul lag" : "Vis lag"}
             >
               {layer.visible ? (
@@ -47,7 +47,7 @@ export function ImportedLayerList() {
             {/* Name - click to expand */}
             <button
               type="button"
-              className="flex-1 text-left text-xs truncate hover:text-primary"
+              className="flex-1 text-left text-xs truncate hover:text-primary pointer-coarse:min-h-11 pointer-coarse:min-w-11"
               onClick={() => setExpandedId(expandedId === layer.id ? null : layer.id)}
               title={layer.name}
             >
@@ -58,7 +58,7 @@ export function ImportedLayerList() {
             <button
               type="button"
               onClick={() => removeLayer(layer.id)}
-              className="text-text-muted hover:text-accent p-0.5"
+              className="text-text-muted hover:text-accent p-0.5 pointer-coarse:grid pointer-coarse:place-items-center pointer-coarse:min-h-11 pointer-coarse:min-w-11"
               title="Slet lag"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
