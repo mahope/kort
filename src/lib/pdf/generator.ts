@@ -459,36 +459,30 @@ export function drawGridLabels(
         cornerLabels.add(key);
         return true;
       });
-    let groupStart = 0;
-    let groupEnd = 0;
-    for (const [i, { t, label }] of crossings.entries()) {
-      if (i === groupEnd) {
-        groupStart = i;
-        // Different grid lines can meet the frame at the same point.
-        while (groupEnd < crossings.length && Math.abs(crossings[groupEnd].t - t) < 1e-7) groupEnd++;
-      }
-      // Fit each label between the midpoints to its neighbours and keep the
-      // ink on the map side of the corner crop marks.
-      const previous = crossings[groupStart - 1];
-      const next = crossings[groupEnd];
-      const groupLeft = previous ? (previous.t + crossings[groupStart].t) / 2 : 0;
-      const groupRight = next ? (crossings[groupEnd - 1].t + next.t) / 2 : length;
-      const count = groupEnd - groupStart;
-      const groupWidth = count === 1 ? groupRight - groupLeft : Math.min(groupRight - groupLeft, count * (horizontal ? 14 : 5));
-      const groupOrigin = Math.max(groupLeft, Math.min(t - groupWidth / 2, groupRight - groupWidth));
-      const slot = groupWidth / count;
-      const start = groupOrigin + (i - groupStart) * slot;
-      const end = start + slot;
-      const inset = Math.min(0.35, (end - start) / 4);
-      const available = end - start - 2 * inset;
+    const gap = 0.7;
+    const labels = crossings.map(({ t, label }) => {
       const { wp, wm } = measure(label, 1);
       const width = wp + wm;
       const labelHeight = !mgrs && label.prefix ? (LABEL_PT * 0.3 + PREFIX_PT * 0.72) * PT_TO_MM : height;
-      const scale = horizontal
-        ? Math.min(1, available / width)
-        : Math.min(1, available / labelHeight, (marginMm - 2) / width);
-      const half = (horizontal ? width : labelHeight) * scale / 2;
-      const position = Math.max(start + inset + half, Math.min(t, end - inset - half));
+      const scale = horizontal ? 1 : Math.min(1, (marginMm - 2) / width);
+      const extent = (horizontal ? width : labelHeight) * scale;
+      return { t, label, labelHeight, scale, extent };
+    });
+
+    // Reserve room for every label before placing the first one. Close
+    // crossings can borrow space along the edge without shrinking the text.
+    const required = labels.reduce((total, { extent }) => total + extent + gap, 0);
+    const edgeScale = required > length ? length / required : 1;
+    const inset = gap * edgeScale / 2;
+    let remaining = required * edgeScale;
+    let start = 0;
+    for (const entry of labels) {
+      const { t, label, labelHeight, extent } = entry;
+      const scale = entry.scale * edgeScale;
+      const half = extent * edgeScale / 2;
+      const position = Math.max(start, Math.min(t - half - inset, length - remaining)) + half + inset;
+      start = position + half + inset;
+      remaining -= 2 * (half + inset);
       if (horizontal) {
         const baseline = side === "top" ? rect.top - 1.5 : rect.bottom + 1.2 + labelHeight * scale;
         drawLabel(label, rect.left + position, baseline, "center", scale);

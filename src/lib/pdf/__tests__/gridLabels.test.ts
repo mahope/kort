@@ -36,6 +36,38 @@ describe("PDF grid labels", () => {
     }
   });
 
+  it.each(["mgrs", "utm", "dktm2"] as const)("keeps %s labels readable at closely spaced corner crossings", (system) => {
+    const pdf = new jsPDF({ unit: "mm", format: "a4" });
+    const labels: { x: number; y: number; size: number; width: number }[] = [];
+    const drawText = pdf.text.bind(pdf);
+    vi.spyOn(pdf, "text").mockImplementation((label, x, y, options) => {
+      const value = String(label);
+      if (/(?:^| )(?:00|51)$/.test(value)) {
+        const width = pdf.getTextWidth(value);
+        labels.push({ x: options?.align === "center" ? x - width / 2 : x, y, size: pdf.getFontSize(), width });
+      }
+      return drawText(label, x, y, options);
+    });
+    const lines: ZonedGridLine[] = [
+      { axis: "E", value: 600000, zone: 32, cls: "major", coords: [[10.6, 56], [10.6, 55.9]] },
+      { axis: "N", value: 6251000, zone: 32, cls: "major", coords: [[10.59, 56], [10.59, 55.9]] },
+    ];
+    const project = (lng: number, lat: number) => lat === 56
+      ? { x: lng === 10.6 ? rect.left : rect.left + 1, y: rect.top }
+      : { x: lng === 10.6 ? rect.right : rect.right - 1, y: rect.bottom };
+    drawGridLabels(pdf, { toMm: project }, rect, 10, lines, { system, labelFormat: "short" });
+
+    expect(labels).toHaveLength(4);
+    for (const edge of [labels.filter(({ y }) => y < rect.top), labels.filter(({ y }) => y > rect.bottom)]) {
+      expect(edge).toHaveLength(2);
+      expect(edge.map(({ size }) => size)).toEqual([8, 8]);
+      const [first, second] = edge.sort((a, b) => a.x - b.x);
+      expect(first.x).toBeGreaterThan(rect.left);
+      expect(first.x + first.width).toBeLessThan(second.x);
+      expect(second.x + second.width).toBeLessThan(rect.right);
+    }
+  });
+
   it("labels a diagonal line once where it meets a shared corner", () => {
     const pdf = new jsPDF({ unit: "mm", format: "a4" });
     const text = vi.spyOn(pdf, "text");

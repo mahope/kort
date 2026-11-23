@@ -12,8 +12,9 @@ MGRS 100 km square letters and the kilometre digits within that square.
 At 100 km boundaries, square letters use the line's exact UTM ordinate so
 polyline interpolation cannot select the preceding square on screen or in PDFs.
 On single- and multi-sheet PDFs, grid lines clipped at a frame edge are
-labelled on that edge. Labels are fitted between adjacent crossings and
-the frame corners. On multi-sheet PDFs the heading sits above the top labels.
+labelled on that edge. Where crossings are close together, labels can shift
+along the edge to stay readable and clear of one another and the frame
+corners. On multi-sheet PDFs the heading sits above the top labels.
 
 **DKTM1-4** ("Dansk Transversal Mercator", EPSG:4093-4096) are four ETRS89
 transverse Mercator zones used in Danish surveying. Unlike UTM's 6° zones,
