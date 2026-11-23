@@ -138,6 +138,44 @@ describe("GET /api/tiles/[layer]/[z]/[x]/[y]", () => {
     await expectNoKeyLeak(res);
   });
 
+  it("answers 504 when upstream stalls after the headers, and logs no key", async () => {
+    const stalled = new ReadableStream<Uint8Array>({
+      start(c) {
+        c.enqueue(new Uint8Array(10));
+        c.error(new DOMException(`timed out https://wms.datafordeler.dk/x?apikey=${KEY}`, "TimeoutError"));
+      },
+    });
+    fetchMock.mockResolvedValue(new Response(stalled, { status: 200, headers: { "content-type": "image/png" } }));
+    const res = await call("dtk25", MOLS.z, MOLS.x, `${MOLS.y}.png`);
+    expect(res.status).toBe(504);
+    await expectNoKeyLeak(res);
+  });
+
+  it("stops reading a tile without Content-Length once it passes 4 MB", async () => {
+    // 64 MB in 1 MB chunks.
+    let pulled = 0;
+    const huge = new ReadableStream<Uint8Array>({
+      pull(c) {
+        if (++pulled > 64) c.close();
+        else c.enqueue(new Uint8Array(1024 * 1024));
+      },
+    });
+    fetchMock.mockResolvedValue(new Response(huge, { status: 200, headers: { "content-type": "image/png" } }));
+    const res = await call("dtk25", MOLS.z, MOLS.x, `${MOLS.y}.png`);
+    expect(res.status).toBe(502);
+    expect(pulled).toBeLessThan(10);
+  });
+
+  it("bypasses Next's instrumented fetch, whose tracing records the full URL", async () => {
+    const instrumented = Object.assign(vi.fn(), { _nextOriginalFetch: fetchMock });
+    vi.stubGlobal("fetch", instrumented);
+    fetchMock.mockResolvedValue(image());
+    const res = await call("dtk25", MOLS.z, MOLS.x, `${MOLS.y}.png`);
+    expect(res.status).toBe(200);
+    expect(instrumented).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
   it("passes upstream throttling on as 503", async () => {
     fetchMock.mockResolvedValue(new Response("slow down", { status: 429 }));
     const res = await call("historisk_hoeje", MOLS.z, MOLS.x, `${MOLS.y}.png`);

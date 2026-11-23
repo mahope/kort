@@ -46,7 +46,9 @@ PLAYWRIGHT_DIR=<node_modules med playwright> BASE_URL=http://localhost:3871 node
 
 Lægger Datafordeler-nøglen på hos serveren (se `docs/tokens.md`). Tilladelsesliste over lag og format,
 z/x/y fra stien (heltal, z 0-22, inden for Danmark), ingen query-parametre, kun kendte værter, ingen
-redirects, svar kun når upstream sender det forventede billedformat, højst 4 MB. Rate limit: 3.000
+redirects, svar kun når upstream sender det forventede billedformat, højst 4 MB (læsningen stopper ved
+grænsen, også uden `Content-Length`). Upstream-kaldet bruger den oprindelige fetch, som Next har wrappet, fordi Nexts
+OpenTelemetry-spans ellers gemmer hele URL'en med nøglen i `http.url` og span-navnet. Rate limit: 3.000
 fliser pr. minut pr. klient med samme nøgle og tabel som nedenfor; et A4-print i 300 dpi er 88-352 fliser
 pr. lag, og en spejdergruppe kan dele én IP.
 

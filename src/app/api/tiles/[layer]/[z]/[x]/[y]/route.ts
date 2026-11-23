@@ -36,6 +36,41 @@ function fail(status: number, message: string, extra: Record<string, string> = {
   });
 }
 
+/**
+ * Next wraps the global fetch and records the full request URL (here with the
+ * key) as `http.url` and in the span name of its OpenTelemetry spans. Use the
+ * fetch it wrapped, so no tracing exporter ever sees the key.
+ */
+function uninstrumentedFetch(): typeof fetch {
+  const f = globalThis.fetch as typeof fetch & { _nextOriginalFetch?: typeof fetch };
+  return f._nextOriginalFetch ?? f;
+}
+
+/** The whole body, or null as soon as it passes `max` bytes (then the rest is never read). */
+async function readCapped(stream: ReadableStream<Uint8Array> | null, max: number): Promise<Uint8Array<ArrayBuffer> | null> {
+  if (!stream) return new Uint8Array(0);
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > max) {
+      await reader.cancel().catch(() => {});
+      return null;
+    }
+    chunks.push(value);
+  }
+  const body = new Uint8Array(total);
+  let offset = 0;
+  for (const c of chunks) {
+    body.set(c, offset);
+    offset += c.byteLength;
+  }
+  return body;
+}
+
 type Params = { layer: string; z: string; x: string; y: string };
 
 export async function GET(req: NextRequest, { params }: { params: Promise<Params> }): Promise<Response> {
@@ -60,36 +95,37 @@ export async function GET(req: NextRequest, { params }: { params: Promise<Params
   const source = apiKey ? "datafordeler" : "dataforsyningen";
   const mime = tileMimeType(format);
 
-  let upstream: Response;
+  let body: Uint8Array<ArrayBuffer> | null;
   try {
-    upstream = await fetch(upstreamTileUrl(layer, tile, format, apiKey), {
+    // The timeout covers the body too: a stall mid-tile lands in the catch.
+    const upstream = await uninstrumentedFetch()(upstreamTileUrl(layer, tile, format, apiKey), {
       cache: "no-store",
       redirect: "error",
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });
+
+    const type = (upstream.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+    // WMS servers answer errors with 200 + XML; only the expected image type passes.
+    if (!upstream.ok || type !== mime) {
+      console.warn(`tiles: ${layer} upstream ${source} answered ${upstream.status} ${type || "-"}`);
+      await upstream.body?.cancel().catch(() => {});
+      // Throttling upstream reads as 503 here, so offline saving stops instead of pushing on.
+      const status = upstream.status === 429 || upstream.status === 503 ? 503 : 502;
+      return fail(status, "Kortflisen kunne ikke hentes");
+    }
+
+    const length = Number(upstream.headers.get("content-length") ?? 0);
+    if (length > MAX_TILE_BYTES) {
+      await upstream.body?.cancel().catch(() => {});
+      return fail(502, "Kortflisen er for stor");
+    }
+    body = await readCapped(upstream.body, MAX_TILE_BYTES);
   } catch (err) {
     // Log the kind of failure only: the error can quote the URL, which holds the key.
     console.warn(`tiles: ${layer} upstream ${source} failed (${err instanceof Error ? err.name : "unknown"})`);
     return fail(504, "Kortflisen kunne ikke hentes");
   }
-
-  const type = (upstream.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
-  // WMS servers answer errors with 200 + XML; only the expected image type passes.
-  if (!upstream.ok || type !== mime) {
-    console.warn(`tiles: ${layer} upstream ${source} answered ${upstream.status} ${type || "-"}`);
-    await upstream.body?.cancel().catch(() => {});
-    // Throttling upstream reads as 503 here, so offline saving stops instead of pushing on.
-    const status = upstream.status === 429 || upstream.status === 503 ? 503 : 502;
-    return fail(status, "Kortflisen kunne ikke hentes");
-  }
-
-  const length = Number(upstream.headers.get("content-length") ?? 0);
-  if (length > MAX_TILE_BYTES) {
-    await upstream.body?.cancel().catch(() => {});
-    return fail(502, "Kortflisen er for stor");
-  }
-  const body = await upstream.arrayBuffer();
-  if (body.byteLength > MAX_TILE_BYTES) return fail(502, "Kortflisen er for stor");
+  if (!body) return fail(502, "Kortflisen er for stor");
 
   return new Response(body, {
     status: 200,
