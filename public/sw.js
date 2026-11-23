@@ -9,8 +9,14 @@ const OFFLINE_CACHE = "topoprint-offline-v2";
 // (the worker is plain JS and cannot import it).
 const OFFLINE_CONCURRENCY = 6;
 const OFFLINE_MAX_BATCH = 24;
-// Only Dataforsyningen tiles may be bulk-fetched (OSM's policy forbids it).
+// Only Dataforsyningen tiles and our own tile route (/api/tiles, the Danish
+// layers via Datafordeleren) may be bulk-fetched (OSM's policy forbids it).
 const OFFLINE_HOSTS = ["api.dataforsyningen.dk"];
+const TILE_ROUTE_PREFIX = "/api/tiles/";
+
+function isTileRoute(url) {
+  return url.origin === self.location.origin && url.pathname.startsWith(TILE_ROUTE_PREFIX);
+}
 // One A4 print at 300 dpi needs 88-98 tiles, so 3,000 covers roughly 30 prints
 // or a long browsing session while staying within a few hundred MB.
 const MAX_TILE_ENTRIES = 3000;
@@ -81,8 +87,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Map tiles: cache-first, revalidated at most once per 24 h
+  // Map tiles: cache-first, revalidated at most once per 24 h. Our own tile
+  // route is same-origin, so it must be caught before the same-origin branch.
   if (
+    isTileRoute(url) ||
     url.hostname === "api.dataforsyningen.dk" ||
     url.hostname === "tile.openstreetmap.org" ||
     url.hostname === "cdn.dataforsyningen.dk"
@@ -219,11 +227,12 @@ self.addEventListener("message", (event) => {
   );
 });
 
-// Cache key without the access token, so saved areas survive a token rotation.
+// Cache key without the access token or key, so saved areas survive a rotation.
 // Keep identical to offlineCacheKey() in src/lib/offline/tiles.ts.
 function offlineKey(url) {
   const u = new URL(url);
   u.searchParams.delete("token");
+  u.searchParams.delete("apikey");
   return u.href;
 }
 
@@ -238,7 +247,7 @@ function offlineUrls(urls, limit) {
         return null;
       }
     })
-    .filter((u) => u && u.protocol === "https:" && OFFLINE_HOSTS.includes(u.hostname))
+    .filter((u) => u && (isTileRoute(u) || (u.protocol === "https:" && OFFLINE_HOSTS.includes(u.hostname))))
     .slice(0, limit)
     .map((u) => u.href);
 }

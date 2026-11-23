@@ -32,11 +32,9 @@ describe("offline tiles", () => {
     expect(maxY).toBeCloseTo(20037508.342789244, 6);
   });
 
-  it("expands the DTK25 screen template to a JPEG WMS url", () => {
+  it("expands the DTK25 screen template to a JPEG tile-route url", () => {
     const url = expandTileUrl(getRasterBaseLayers("screen").dtk25.tiles[0], { z: 13, x: 4390, y: 2560 });
-    expect(url).toContain("FORMAT=image/jpeg");
-    expect(url).toContain("TRANSPARENT=FALSE");
-    expect(url).not.toContain("{");
+    expect(url).toBe(`${window.location.origin}/api/tiles/dtk25/13/4390/2560.jpg`);
   });
 
   it("an A4 frame at 1:25.000 is a few hundred tiles on z13-16", () => {

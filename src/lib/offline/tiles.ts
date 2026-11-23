@@ -2,11 +2,18 @@ import type { BaseLayer, OverlayId } from "@/types/map";
 import type { PrintFrameBounds } from "@/types/print";
 import { getRasterBaseLayers, OVERLAY_SOURCES } from "@/lib/map/sources";
 import { padBounds } from "@/lib/geo/bounds";
+import { tileBBox3857, type TileCoord } from "@/lib/tiles/bbox";
 
-/** Cache key for a tile: the URL without access token (identical to offlineKey in public/sw.js). */
+export { tileBBox3857, type TileCoord };
+
+/**
+ * Cache key for a tile: the URL without access token or key (identical to
+ * offlineKey in public/sw.js). Tiles from our own route carry neither.
+ */
 export function offlineCacheKey(url: string): string {
   const u = new URL(url);
   u.searchParams.delete("token");
+  u.searchParams.delete("apikey");
   return u.href;
 }
 
@@ -24,11 +31,6 @@ const CONFIRM_TILE_COUNT = 2000;
 const CONFIRM_BYTES = 100 * 1024 * 1024;
 /** Hard ceiling so a mistake (huge multi-page area) cannot hammer the service. */
 export const MAX_TILE_COUNT = 20000;
-
-const EPSG3857_RADIUS = 6378137;
-const EXTENT_AT_ZOOM0 = 2 * Math.PI * EPSG3857_RADIUS;
-const ORIGIN_X = -Math.PI * EPSG3857_RADIUS;
-const ORIGIN_Y = Math.PI * EPSG3857_RADIUS;
 
 /**
  * Base layers that can be saved. OSM is excluded on purpose (its tile usage
@@ -54,12 +56,6 @@ const AVG_TILE_BYTES: Record<string, number> = {
   stednavne: 8 * 1024,
   matrikel: 8 * 1024,
 };
-
-export interface TileCoord {
-  z: number;
-  x: number;
-  y: number;
-}
 
 export function isBaseLayerSaveable(layer: BaseLayer): boolean {
   return layer in SAVEABLE_BASE;
@@ -90,15 +86,6 @@ export function tilesForBounds(
     }
   }
   return tiles;
-}
-
-/** Same number formatting as MapLibre's `{bbox-epsg-3857}`, so cache keys match. */
-export function tileBBox3857({ z, x, y }: TileCoord): string {
-  const tilesAtZoom = 2 ** z;
-  const tileExtent = EXTENT_AT_ZOOM0 / tilesAtZoom;
-  const gridMinY = ORIGIN_Y - EXTENT_AT_ZOOM0;
-  const rowFromBottom = tilesAtZoom - y - 1;
-  return `${ORIGIN_X + x * tileExtent},${gridMinY + rowFromBottom * tileExtent},${ORIGIN_X + (x + 1) * tileExtent},${gridMinY + (rowFromBottom + 1) * tileExtent}`;
 }
 
 export function expandTileUrl(template: string, tile: TileCoord): string {
