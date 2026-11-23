@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getBrand } from "@/config/brand";
+import { LINK_CLASS, LINK_MUTED_CLASS } from "@/lib/ui/linkClasses";
 
 export const metadata: Metadata = {
   title: "Udskriv Topografisk Kort som PDF - Gratis Dansk Kortudskrivning",
@@ -231,7 +232,7 @@ export default function LandingPage() {
               href="https://dataforsyningen.dk/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:text-primary-hover underline underline-offset-2"
+              className={LINK_CLASS}
             >
               Dataforsyningen
             </a>{" "}
@@ -242,7 +243,7 @@ export default function LandingPage() {
               href="https://confluence.sdfi.dk/pages/viewpage.action?pageId=234782998"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:text-primary-hover underline underline-offset-2"
+              className={LINK_CLASS}
             >
               Adressevælger
             </a>
@@ -251,7 +252,7 @@ export default function LandingPage() {
               href="https://www.klimadatastyrelsen.dk/data/danske-stednavne"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:text-primary-hover underline underline-offset-2"
+              className={LINK_CLASS}
             >
               Danske Stednavne
             </a>
@@ -275,14 +276,14 @@ export default function LandingPage() {
           <p className="mt-6 text-xs text-text-muted">
             <Link
               href="/om"
-              className="hover:text-text-secondary underline underline-offset-2"
+              className={LINK_MUTED_CLASS}
             >
               Om projektet
             </Link>
             {" "}&middot;{" "}
             <Link
               href="/kilder"
-              className="hover:text-text-secondary underline underline-offset-2"
+              className={LINK_MUTED_CLASS}
             >
               Datakilder
             </Link>
@@ -291,7 +292,7 @@ export default function LandingPage() {
               href={getBrand().github}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-text-secondary underline underline-offset-2"
+              className={LINK_MUTED_CLASS}
             >
               Open source
             </a>
@@ -300,7 +301,7 @@ export default function LandingPage() {
               href={getBrand().credit.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-text-secondary underline underline-offset-2"
+              className={LINK_MUTED_CLASS}
             >
               {getBrand().credit.label}
             </a>

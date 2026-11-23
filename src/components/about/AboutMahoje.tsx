@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { LINK_CLASS } from "@/lib/ui/linkClasses";
 
 export default function AboutMahoje() {
   return (
@@ -50,7 +51,7 @@ export default function AboutMahoje() {
                   href="https://mahoje.dk"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary hover:text-primary-hover underline underline-offset-2"
+                  className={LINK_CLASS}
                 >
                   mahoje.dk
                 </a>
@@ -120,7 +121,7 @@ export default function AboutMahoje() {
                 href="https://plausible.io/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:text-primary-hover underline underline-offset-2"
+                className={LINK_CLASS}
               >
                 Plausible Analytics
               </a>{" "}
@@ -130,7 +131,7 @@ export default function AboutMahoje() {
                 href="https://dataforsyningen.dk/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:text-primary-hover underline underline-offset-2"
+                className={LINK_CLASS}
               >
                 Dataforsyningen
               </a>{" "}
@@ -138,7 +139,7 @@ export default function AboutMahoje() {
               rådighed for alle. Se alle{" "}
               <Link
                 href="/kilder"
-                className="text-primary hover:text-primary-hover underline underline-offset-2"
+                className={LINK_CLASS}
               >
                 datakilder, licenser og hvordan kortet er bygget
               </Link>
@@ -206,14 +207,14 @@ export default function AboutMahoje() {
                 href="https://github.com/mahope/kort/issues"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary hover:text-primary-hover underline underline-offset-2"
+                className={LINK_CLASS}
               >
                 issue på GitHub
               </a>
               , eller skriv til mig på{" "}
               <a
                 href="mailto:mads@mahoje.dk"
-                className="text-primary hover:text-primary-hover underline underline-offset-2"
+                className={LINK_CLASS}
               >
                 mads@mahoje.dk
               </a>
