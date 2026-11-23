@@ -142,21 +142,20 @@ const DDM_MAXZOOM = 11;
 /** EMODnet's cells are about 115 m (about 200 EPSG:3857 metres here): zoom 10. */
 const EMODNET_MAXZOOM = 10;
 
-/** Depth blues a little stronger, so shallow and deep water tell apart over the base map's own blue. */
+/** A little more contrast, so shallow and deep water tell apart over the base map's own blue. */
 const DDM_DEPTH_PAINT: RasterSourceConfig["paint"] = {
   "raster-resampling": "linear",
-  "raster-saturation": 0.25,
-  "raster-contrast": 0.15,
+  "raster-contrast": 0.1,
 };
 
 /**
  * The exaggerated hillshade is black in steep channels. Lifting the darkest
- * tone to mid grey keeps the seabed shapes but stops them muddying the water;
+ * tone to dark grey keeps the seabed shapes but stops them muddying the water;
  * the layer also draws under the depth colours (see mapStore).
  */
 const DDM_RELIEF_PAINT: RasterSourceConfig["paint"] = {
   "raster-resampling": "linear",
-  "raster-brightness-min": 0.45,
+  "raster-brightness-min": 0.25,
 };
 
 /**
@@ -276,6 +275,11 @@ export interface RasterSourceConfig {
   printTiles?: (dpi: number) => string[];
   /** Highest tile zoom the PDF requests at this paper resolution; MapLibre enlarges above it. */
   printMaxzoom?: (dpi: number) => number;
+  /**
+   * Lowest map zoom the layer is drawn at on screen (96 dpi). The PDF draws it
+   * from the same paper scale: its zoom is higher by log2(dpi / 96).
+   */
+  minzoom?: number;
 }
 
 /** The tile templates the PDF requests for a source at this paper resolution. */
@@ -286,6 +290,11 @@ export function printTilesFor(cfg: RasterSourceConfig, dpi: number): string[] {
 /** `{ maxzoom }` for the PDF at this paper resolution: `printMaxzoom` when set, else as on screen. */
 export function printZoomLimit(cfg: RasterSourceConfig, dpi: number): { maxzoom?: number } {
   return cfg.printMaxzoom ? { maxzoom: cfg.printMaxzoom(dpi) } : sourceZoomLimit(cfg);
+}
+
+/** `{ minzoom }` for the layer: as set for the screen, or for the same paper scale at `dpi`. */
+export function layerMinzoom(cfg: RasterSourceConfig, dpi = 96): { minzoom?: number } {
+  return cfg.minzoom === undefined ? {} : { minzoom: cfg.minzoom + Math.log2(dpi / 96) };
 }
 
 /** `{ maxzoom }` for sources that set one, else nothing (MapLibre rejects `maxzoom: undefined`). */
@@ -516,6 +525,10 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
   soemaerker: {
     tiles: [OPENSEAMAP_URL],
     maxzoom: 18,
+    // OpenSeaMap has no calmer variant. Its zoom-12 tiles pile every harbour's
+    // buoys, beacons and light sectors into one clump, so start at zoom 11.5
+    // (zoom-13 tiles): about 1:58.000 in a Danish PDF, and as close in on screen.
+    minzoom: 11.5,
     tileSize: 256,
     attribution: "Sømærker: &copy; <a href='https://www.openseamap.org'>OpenSeaMap</a>, &copy; OpenStreetMap-bidragydere",
     credit: "Sømærker: OpenSeaMap, OpenStreetMap-bidragydere",
@@ -561,7 +574,7 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     tileSize: 512,
     vector: "vrag",
     attribution:
-      "Vrag: <a href='https://emodnet.ec.europa.eu/en/human-activities'>EMODnet Human Activities</a> (CC BY 4.0), data fra UK Hydrographic Office (<a href='https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/'>OGL v3.0</a>)",
+      "Vrag: <a href='https://emodnet.ec.europa.eu/en/human-activities'>EMODnet Human Activities</a> (CC BY 4.0), UKHO (<a href='https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/'>OGL v3.0</a>)",
     credit:
       "Vrag: EMODnet Human Activities (CC BY 4.0). Indeholder data fra UK Hydrographic Office, Open Government Licence v3.0",
     noOffline: true,
@@ -581,9 +594,9 @@ export const OVERLAY_LABELS: Record<OverlayId, string> = {
   dybdemodel: "Havdybder Danmark (Dybdemodel 50 m)",
   havbund: "Havbundens relief (Dybdemodel, skyggekort)",
   havdybder: "Havdybder Europa (EMODnet, grovere)",
-  soemaerker: "Sømærker (OpenSeaMap)",
+  soemaerker: "Sømærker (OpenSeaMap, fra ca. 1:50.000)",
   kurverNorge: "Højdekurver Norge (Kartverket)",
-  soedybder: "Sødybder (dybdekurver i 80 søer)",
+  soedybder: "Sødybder (dybdekurver i 80 søer, mest i Jylland)",
   indsoekort: "Historiske indsøkort (dybdekort over søer som bilag)",
   vrag: "Skibsvrag (EMODnet)",
 };

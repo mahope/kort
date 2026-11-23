@@ -46,46 +46,43 @@ export function retryTiles(map: MaplibreMap, failed: Map<string, FailedTile>) {
 }
 
 /** Pauses before each new attempt at a tile that failed on screen. */
-export const SCREEN_RETRY_DELAYS_MS = [2000, 6000, 20000] as const;
+const SCREEN_RETRY_DELAYS_MS = [2000, 6000, 20000] as const;
+
+type MapEvent = TileEvent & { target: MaplibreMap; error?: unknown };
 
 /**
  * On screen MapLibre never asks again for a tile that failed (a WMS timeout or
  * a 5xx from Dataforsyningen), so the map kept a grey square of background
- * until the user panned. Ask again a few times, with growing pauses. Returns a
- * function that stops it.
+ * until the user panned. These handlers ask again a few times, with growing
+ * pauses. Pass them to the map as onError and onSourceData: they must be there
+ * from the start, since the first tiles load before the map's load event.
  */
-export function retryFailedTilesOnScreen(
-  map: MaplibreMap,
-  delays: readonly number[] = SCREEN_RETRY_DELAYS_MS
-): () => void {
+export function screenTileRetry(delays: readonly number[] = SCREEN_RETRY_DELAYS_MS) {
   const attempts = new Map<string, number>();
   const timers = new Set<ReturnType<typeof setTimeout>>();
-
-  const onError = (e: unknown) => {
-    const ev = e as TileEvent;
-    const tileKey = ev.tile?.tileID?.key;
-    if (!ev.sourceId || tileKey === undefined) return;
-    const key = `${ev.sourceId}/${tileKey}`;
-    const attempt = attempts.get(key) ?? 0;
-    if (attempt >= delays.length) return; // the server keeps failing: leave it
-    attempts.set(key, attempt + 1);
-    const timer = setTimeout(() => {
-      timers.delete(timer);
-      retryTiles(map, new Map([[key, { sourceId: ev.sourceId!, tileKey }]]));
-    }, delays[attempt]);
-    timers.add(timer);
-  };
-  const onData = (e: unknown) => {
-    const ev = e as TileEvent;
-    if (ev.dataType === "source" && ev.tile && ev.sourceId) attempts.delete(`${ev.sourceId}/${ev.tile.tileID?.key}`);
-  };
-
-  map.on("error", onError);
-  map.on("data", onData);
-  return () => {
-    map.off("error", onError);
-    map.off("data", onData);
-    for (const t of timers) clearTimeout(t);
-    timers.clear();
+  return {
+    onError(e: MapEvent) {
+      // What react-map-gl does without an onError handler.
+      if (e.error) console.error(e.error);
+      const { sourceId } = e;
+      const tileKey = e.tile?.tileID?.key;
+      if (!sourceId || tileKey === undefined) return;
+      const key = `${sourceId}/${tileKey}`;
+      const attempt = attempts.get(key) ?? 0;
+      if (attempt >= delays.length) return; // the server keeps failing: leave it
+      attempts.set(key, attempt + 1);
+      const timer = setTimeout(() => {
+        timers.delete(timer);
+        retryTiles(e.target, new Map([[key, { sourceId, tileKey }]]));
+      }, delays[attempt]);
+      timers.add(timer);
+    },
+    onSourceData(e: TileEvent) {
+      if (e.tile && e.sourceId) attempts.delete(`${e.sourceId}/${e.tile.tileID?.key}`);
+    },
+    stop() {
+      for (const t of timers) clearTimeout(t);
+      timers.clear();
+    },
   };
 }

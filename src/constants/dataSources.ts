@@ -141,7 +141,8 @@ export const DATA_SOURCES: DataSource[] = [
     name: "Danmarks Dybdemodel, 50 m opløsning",
     provider: "Geodatastyrelsen via Dataforsyningen",
     usedFor: "Havdybder i danske farvande og havbundens relief (skyggekort).",
-    delivery: "WMS (wms/ddm, lagene ddm_50m_dybde_relief og ddm_50m_skyggekort_overdrevet).",
+    delivery:
+      "WMS (wms/ddm, lagene ddm_50m_dybde og ddm_50m_skyggekort_overdrevet), hentet i modellens egen opløsning og forstørret glat i appen.",
     licence: "Geodatastyrelsens vilkår for DDM50 (maj 2024): gratis, også kommercielt, men ikke til navigation",
     licenceUrl: DDM_TERMS_URL,
     credit:
@@ -157,7 +158,7 @@ export const DATA_SOURCES: DataSource[] = [
     delivery: "WMS (ows.emodnet-bathymetry.eu, emodnet:mean_multicolour), omfarvet til blå i appen.",
     licence: "CC BY 4.0",
     licenceUrl: "https://emodnet.ec.europa.eu/en/terms-use-emodnet-online-services-data-and-data-products",
-    credit: "\"Dybder: EMODnet Bathymetry (CC BY 4.0). Ikke til navigation\" på kortet og PDF'en.",
+    credit: "\"Dybder: EMODnet Bathymetry (CC BY 4.0)\" på kortet og PDF'en. Advarslen om navigation står på kortet og PDF'en for alle havlag.",
     layers: ["havdybder"],
     notForNavigation: true,
   },
@@ -165,11 +166,12 @@ export const DATA_SOURCES: DataSource[] = [
     id: "openseamap",
     name: "OpenSeaMap sømærker",
     provider: "OpenSeaMap og OpenStreetMap-bidragydere",
-    usedFor: "Laget Sømærker: bøjer, fyr, båker og andre sømærker.",
+    usedFor:
+      "Laget Sømærker: bøjer, fyr, båker og andre sømærker. Vises fra ca. 1:50.000, fordi OpenSeaMaps fliser længere ude samler havnenes sømærker i klumper.",
     delivery: "Gennemsigtige PNG-fliser (tiles.openseamap.org). Gemmes aldrig offline, fordi værtens vilkår ikke dækker masse-download.",
     licence: "Kortfliser CC BY-SA 2.0, data ODbL (OpenStreetMap)",
     licenceUrl: "https://www.openstreetmap.org/copyright",
-    credit: "\"Sømærker: © OpenSeaMap, © OpenStreetMap-bidragydere. Ikke til navigation\" på kortet og PDF'en.",
+    credit: "\"Sømærker: © OpenSeaMap, © OpenStreetMap-bidragydere\" på kortet og PDF'en.",
     layers: ["soemaerker"],
     notForNavigation: true,
   },
@@ -216,7 +218,7 @@ export const DATA_SOURCES: DataSource[] = [
     licence: "CC BY 4.0 (EMODnet); UKHO-data under Open Government Licence v3.0",
     licenceUrl: "https://emodnet.ec.europa.eu/en/terms-use-emodnet-online-services-data-and-data-products",
     credit:
-      "\"Vrag: EMODnet Human Activities (CC BY 4.0). Indeholder data fra UK Hydrographic Office, Open Government Licence v3.0\" på kortet og PDF'en.",
+      "\"Vrag: EMODnet Human Activities (CC BY 4.0). Indeholder data fra UK Hydrographic Office, Open Government Licence v3.0\" på PDF'en og her. Kortet skriver det kort (\"UKHO (OGL v3.0)\") med link til licensen; OGL tillader at linke til kildeangivelsen.",
     layers: ["vrag"],
     notForNavigation: true,
     retrieved: SOEKORT_RETRIEVED,

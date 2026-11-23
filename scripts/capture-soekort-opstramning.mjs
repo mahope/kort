@@ -9,13 +9,14 @@ import path from "node:path";
 const { chromium } = await import(process.env.KORT_PLAYWRIGHT_MODULE || "playwright");
 const [OUT = "docs/screenshots/soekort-opstramning", PREFIX = "efter"] = process.argv.slice(2);
 const port = 6000 + Math.floor(Math.random() * 1000);
-const base = `http://localhost:${port}`;
+// KORT_BASE_URL (e.g. https://kort.mahoje.dk) captures a deployed site instead of a local next start.
+const base = process.env.KORT_BASE_URL || `http://localhost:${port}`;
 
 const CASES = [
   { name: "svendborgsund", q: "c=55.0450,10.6100,13.00&s=25000&f=A4&o=p&d=300&ov=dd,hb,hd,sm,vr" },
   { name: "oehavet", q: "c=55.0500,10.6200,11.60&s=50000&f=A4&o=l&d=150&ov=dd,hb,hd,sm,vr" },
   { name: "furesoe", q: "c=55.8020,12.4200,13.00&s=25000&f=A4&o=l&d=150&ov=sd,ik" },
-  { name: "kattegat", q: "c=56.6000,11.4500,10.70&s=100000&f=A4&o=l&d=150&ov=dd,hb,hd,sm,vr" },
+  { name: "kattegat", q: "c=56.6900,11.5000,10.70&s=100000&f=A4&o=l&d=150&ov=dd,hb,hd,sm,vr" },
 ];
 
 /** PNG to a small lossy WebP next to it, so the repo stays light. */
@@ -24,7 +25,9 @@ function toWebp(png) {
   execFileSync("rm", [png]);
 }
 
-const server = spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(port)], { stdio: ["ignore", "pipe", "pipe"] });
+const server = process.env.KORT_BASE_URL
+  ? { exitCode: null, kill() {}, stdout: { on() {} }, stderr: { on() {} } }
+  : spawn(process.execPath, ["node_modules/next/dist/bin/next", "start", "-p", String(port)], { stdio: ["ignore", "pipe", "pipe"] });
 let serverOutput = "";
 server.stdout.on("data", (c) => (serverOutput += c));
 server.stderr.on("data", (c) => (serverOutput += c));

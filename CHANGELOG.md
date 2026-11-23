@@ -5,6 +5,28 @@ All notable changes to this project are documented here. The format is based on
 [Semantic Versioning](https://semver.org/). Kort deploys continuously from
 `main`; tagged releases mark milestones.
 
+## [Unreleased]
+
+### Changed
+- Sea layers read like a chart: Danmarks Dybdemodel draws as smooth blue depths
+  (the plain depth layer, enlarged from the model's own 50 m cells instead of
+  grey-black blocks), the seabed relief always lies under the depth colours,
+  and sea marks are toned down and start at about 1:50,000, where OpenSeaMap's
+  symbols no longer clump. Same look in the PDF.
+- Shorter on-map credit with the sea layers on (two lines instead of three at
+  1440 px). Dybdemodellen's required sentence, "Indeholder WMS-tjeneste", the
+  terms link and "Model og data er ikke egnet til navigation" stay word for word.
+- The lake depth layer says which lakes it covers (80 lakes, mostly in Jutland;
+  not Furesø).
+
+### Fixed
+- A map tile that failed to load (a timeout or server error at Dataforsyningen)
+  stayed a grey square until the map moved; it is now requested again.
+- A shared link without opacities (`ov=dd,hb`) showed every layer at 100 %, so
+  the grey relief covered the sea; it now uses each layer's default.
+- An overlay switched on later no longer draws over the ones below it in the
+  list (the relief over the depths, or the depths over the wrecks).
+
 ## [0.1.0] - 2026-11-23
 
 First tagged release, and the day the project became open source under the MIT

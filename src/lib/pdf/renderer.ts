@@ -8,6 +8,7 @@ import { transformRequest } from "@/lib/map/styles";
 import {
   getBaseMapStyle,
   getRasterBaseLayers,
+  layerMinzoom,
   NORDIC_TOPO_SOURCES,
   OVERLAY_SOURCES,
   printTilesFor,
@@ -266,6 +267,7 @@ export async function renderMapToImage({
         id: `${sourceId}-layer`,
         type: "raster",
         source: sourceId,
+        ...layerMinzoom(sourceConfig, dpi),
         paint: { "raster-opacity": overlay.opacity, ...sourceConfig.paint },
       });
     }

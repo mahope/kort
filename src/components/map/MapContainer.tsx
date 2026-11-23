@@ -22,6 +22,7 @@ import {
   KDS_MAP_ATTRIBUTION,
   NORDIC_MAP_ATTRIBUTION,
   NORDIC_TOPO_SOURCES,
+  layerMinzoom,
   OVERLAY_SOURCES,
   sourceZoomLimit,
   usesNordicTopo,
@@ -35,7 +36,7 @@ import { GeolocationButton } from "./GeolocationButton";
 import { ImportedLayers } from "./ImportedLayers";
 import { UtmGrid } from "./UtmGrid";
 import { configureMaplibreWorker } from "@/lib/map/workerUrl";
-import { retryFailedTilesOnScreen } from "@/lib/map/tileRetry";
+import { screenTileRetry } from "@/lib/map/tileRetry";
 
 // terra-draw (~44 KB gz) is only needed once the user starts drawing or has
 // persisted drawings to restore.
@@ -69,13 +70,8 @@ export function MapContainer() {
   }, []);
   const mapRef = useRef<MapRef>(null);
   // A failed tile is asked for again instead of staying a grey square.
-  const stopTileRetry = useRef<(() => void) | null>(null);
-  useEffect(() => () => stopTileRetry.current?.(), []);
-  const onLoad = useCallback((e: { target: import("maplibre-gl").Map }) => {
-    collapseAttributionOnTouch(e);
-    stopTileRetry.current?.();
-    stopTileRetry.current = retryFailedTilesOnScreen(e.target);
-  }, []);
+  const tileRetry = useMemo(() => screenTileRetry(), []);
+  useEffect(() => () => tileRetry.stop(), [tileRetry]);
   const viewState = useMapStore((s) => s.viewState);
   const setViewState = useMapStore((s) => s.setViewState);
   const style = useMapStore((s) => s.style);
@@ -148,7 +144,9 @@ export function MapContainer() {
       {...viewState}
       padding={padding}
       onMove={onMove}
-      onLoad={onLoad}
+      onLoad={collapseAttributionOnTouch}
+      onError={tileRetry.onError}
+      onSourceData={tileRetry.onSourceData}
       mapStyle={mapStyle}
       transformRequest={transformRequest}
       maxBounds={[...MAP_BOUNDS[0], ...MAP_BOUNDS[1]]}
@@ -243,6 +241,7 @@ export function MapContainer() {
           <Layer
             id={`${overlay.id}-overlay-layer`}
             type="raster"
+            {...layerMinzoom(OVERLAY_SOURCES[overlay.id])}
             layout={{ visibility: overlay.enabled ? "visible" : "none" }}
             paint={{ "raster-opacity": overlay.opacity, ...OVERLAY_SOURCES[overlay.id].paint }}
           />

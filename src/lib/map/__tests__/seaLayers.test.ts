@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { DDM_TERMS_PAGE_URL, DDM_TERMS_URL, NAVIGATION_WARNING, OVERLAY_LABELS, OVERLAY_SOURCES, SEA_OVERLAYS, kdsPrintCredit, sourceZoomLimit } from "../sources";
+import { DDM_TERMS_PAGE_URL, DDM_TERMS_URL, NAVIGATION_WARNING, OVERLAY_LABELS, OVERLAY_SOURCES, SEA_OVERLAYS, kdsPrintCredit, layerMinzoom, sourceZoomLimit } from "../sources";
 import { offlineLayerIds } from "@/lib/offline/tiles";
 import { deserializeState, serializeState } from "@/lib/url/urlState";
 import { thirdPartyCredits, drawThirdPartyCredits, overviewCreditsBox } from "@/lib/pdf/generator";
@@ -66,6 +66,14 @@ describe("overlay layers", () => {
 
   it("caps OpenSeaMap at its last zoom, so 1:5.000 at 300 dpi enlarges instead of failing", () => {
     expect(sourceZoomLimit(OVERLAY_SOURCES.soemaerker)).toEqual({ maxzoom: 18 });
+  });
+
+  it("starts the sea marks at the same paper scale on screen and in the PDF", () => {
+    // OpenSeaMap's zoom-12 tiles are a clump of symbols.
+    expect(layerMinzoom(OVERLAY_SOURCES.soemaerker)).toEqual({ minzoom: 11.5 });
+    // A 300 dpi PDF has 300/96 times the pixels per paper millimetre: same scale, higher zoom.
+    expect(layerMinzoom(OVERLAY_SOURCES.soemaerker, 300).minzoom).toBeCloseTo(11.5 + Math.log2(300 / 96));
+    expect(layerMinzoom(OVERLAY_SOURCES.dybdemodel, 300)).toEqual({});
   });
 
   it("uses the smoothed 2.5 m contours for contours25", () => {

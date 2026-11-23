@@ -26,7 +26,7 @@ const DEFAULT_OVERLAYS: OverlayState[] = [
   { id: "havbund", enabled: false, opacity: 0.5 },
   // The finer Danish model covers EMODnet.
   { id: "havdybder", enabled: false, opacity: 0.6 },
-  { id: "dybdemodel", enabled: false, opacity: 0.8 },
+  { id: "dybdemodel", enabled: false, opacity: 0.75 },
   { id: "soemaerker", enabled: false, opacity: 0.85 },
   { id: "kurverNorge", enabled: false, opacity: 1 },
   // Vector points and lines on top of every raster layer.
