@@ -110,6 +110,11 @@ export function MapContainer() {
       // The source is created once, so its zoom limit must follow the layer too
       // (OSM stops at 19, ortofoto goes to 20); setTiles reloads with it.
       raster.maxzoom = rasterBase.maxzoom ?? 22;
+      // Likewise the bounds (the Danish layers stop at Denmark, OSM does not).
+      // setTiles reloads from these options but keeps old tileBounds when the
+      // new options have none, so clear them first.
+      raster._options.bounds = rasterBase.bounds;
+      raster.tileBounds = undefined as unknown as typeof raster.tileBounds;
       raster.setTiles(rasterBase.tiles);
     }
   }, [rasterBase]);
@@ -173,6 +178,7 @@ export function MapContainer() {
           tiles={rasterBase.tiles}
           tileSize={rasterBase.tileSize}
           {...sourceZoomLimit(rasterBase)}
+          {...(rasterBase.bounds ? { bounds: rasterBase.bounds } : {})}
           attribution={rasterBase.attribution}
         >
           <Layer id="base-raster-layer" type="raster" layout={{ visibility: nordic ? "none" : "visible" }} />

@@ -4,12 +4,13 @@ import { createRoot } from "react-dom/client";
 import { useMapStore } from "@/stores/mapStore";
 import { KDS_MAP_ATTRIBUTION, NORDIC_MAP_ATTRIBUTION } from "@/lib/map/sources";
 import { MapContainer } from "../MapContainer";
+import { DENMARK_TILE_BOUNDS } from "@/lib/tiles/routeLayers";
 
 vi.mock("maplibre-gl", () => ({ default: {}, setWorkerUrl: () => {} }));
 vi.mock("react-map-gl/maplibre", () => ({
   default: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  Source: ({ id, children }: { id: string; children: ReactNode }) => (
-    <div data-source={id}>{children}</div>
+  Source: ({ id, bounds, children }: { id: string; bounds?: number[]; children: ReactNode }) => (
+    <div data-source={id} data-bounds={bounds?.join(",")}>{children}</div>
   ),
   Layer: ({ id }: { id: string }) => <div data-layer={id} />,
   NavigationControl: () => null,
@@ -55,6 +56,19 @@ it("removes and restores the raster layer while keeping the selected contours", 
     act(() => setBaseLayer("dtk25"));
     expect(container.querySelector(rasterLayer)).not.toBeNull();
     expect(container.querySelector(contours)).not.toBeNull();
+  } finally {
+    act(() => root.unmount());
+  }
+});
+
+it("limits the Danish raster base map to the tile route's bounds", () => {
+  const container = document.createElement("div");
+  const root = createRoot(container);
+  try {
+    useMapStore.getState().setBaseLayer("dtk25");
+    act(() => root.render(<MapContainer />));
+    const source = container.querySelector('[data-source="base-raster"]');
+    expect(source?.getAttribute("data-bounds")).toBe(DENMARK_TILE_BOUNDS.join(","));
   } finally {
     act(() => root.unmount());
   }
