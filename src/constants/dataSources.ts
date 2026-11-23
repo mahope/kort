@@ -158,7 +158,7 @@ export const DATA_SOURCES: DataSource[] = [
     provider:
       "Beregnet af kort.mahoje.dk fra Danmarks Dybdemodel 50 m (Geodatastyrelsen), EMODnet Bathymetry og dybdekortene over danske søer (Miljøstyrelsen, NOVANA)",
     usedFor:
-      "Laget Søkort: dybdebånd, dybdekurver og dybdetal i danske farvande (Dybdemodellen), grovere uden for dem (EMODnet, til 59° N) og i 80 søer (NOVANA). To stile: klassisk søkort og lavt vand (de første 5 m meter for meter) til kano, kajak og jolle. Dybdebåndene vises kun på Skærmkort; over andre baggrundskort kun kurver og tal.",
+      "Laget Søkort: dybdebånd, dybdekurver og dybdetal i danske farvande (Dybdemodellen), grovere uden for dem (EMODnet, til 59° N) og i 80 søer (NOVANA). To stile: klassisk søkort og lavt vand (bånd ved 1, 2, 3 og 5 m) til kano, kajak og jolle. Dybdebåndene vises kun på Skærmkort; over andre baggrundskort kun kurver og tal.",
     delivery: `Én PMTiles-fil med vektorfliser (tiles.mahoje.dk/soekort.pmtiles), bygget af vores script scripts/soekort/ddm-pmtiles af Dybdemodellens GeoTIFF fra Geodatastyrelsens åbne download, hentet ${SOEKORT_DDM_RETRIEVED}. Filen må gemmes offline.`,
     licence:
       "Geodatastyrelsens vilkår for DDM50 (maj 2024): gratis og i øvrigt ubegrænset brugsret, også kommercielt, men ikke til navigation; EMODnet CC BY 4.0; NOVANA efter vilkår for brug af danske offentlige data",

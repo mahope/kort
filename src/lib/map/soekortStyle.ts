@@ -26,8 +26,7 @@ const FONT = ["Open Sans Regular"];
 export const SOEKORT_URL =
   process.env.NEXT_PUBLIC_SOEKORT_URL || "https://tiles.mahoje.dk/soekort.pmtiles";
 
-/** The tile layers and the `src` values the build writes (build.py). */
-export const SOEKORT_SOURCE_LAYERS = ["depth_areas", "depth_contours", "depth_labels"] as const;
+/** The `src` values the build writes (build.py). */
 export type SoekortSrc = "ddm" | "emodnet" | "novana";
 export const SOEKORT_SRCS: readonly SoekortSrc[] = ["ddm", "emodnet", "novana"];
 
@@ -82,7 +81,8 @@ export const SOEKORT_VARIANTS: Record<SoekortVariant, VariantStyle> = {
     shoalMinZoom: 11.5,
     gridMinZoom: 13.5,
   },
-  // Kayak, canoe and dinghy: the first five metres split metre by metre.
+  // Kayak, canoe and dinghy: the first five metres in four bands (0-1, 1-2, 2-3, 3-5 m).
+  // The archive has no 4 m level (LEVELS_FINE in build.py), so 3-5 m stays one band.
   lavvande: {
     bands: [[0, "#7fb6e0"], [1, "#9cc8ea"], [2, "#b6d7f0"], [3, "#cde4f5"], [5, "#e3f0fa"], [10, "#f6fafd"]],
     line: "#4f7fae",
@@ -339,14 +339,10 @@ export interface SoekortAnchors {
  * above all fills and roads, below the base map's place names, so names win
  * collisions.
  *
- * `isBase` tells the base map's own layers from ones the app added on top
- * (raster overlays, imports, the depth layers themselves).
+ * `base` is the base map's own layers only, without those the app added on
+ * top (on screen: baseLayersOf in SoekortLayers.tsx; the PDF reads them first).
  */
-export function soekortAnchors(
-  layers: readonly { id: string; type: string }[],
-  isBase: (layer: { id: string; type: string }) => boolean = () => true
-): SoekortAnchors | null {
-  const base = layers.filter(isBase);
+export function soekortAnchors(base: readonly { id: string; type: string }[]): SoekortAnchors | null {
   const sea = base.findIndex((l) => l.id === "vand_hav");
   if (sea < 0) return null;
   const lastIndex = (pred: (l: { id: string; type: string }) => boolean) =>

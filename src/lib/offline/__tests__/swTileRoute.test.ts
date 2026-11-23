@@ -228,7 +228,8 @@ describe("service worker and the tile route", () => {
 
 describe("service worker and the saved søkort file", () => {
   const FILE = "https://tiles.mahoje.dk/soekort.pmtiles";
-  const BYTES = new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  // The PMTiles v3 header ("PMTiles", version 3), then two more bytes.
+  const BYTES = new Uint8Array([...new TextEncoder().encode("PMTiles"), 3, 8, 9]);
   const network = { online: true };
   const respond = (url: string) =>
     url === FILE
@@ -247,7 +248,7 @@ describe("service worker and the saved søkort file", () => {
     expect(res?.status).toBe(206);
     expect(res?.headers.get("content-range")).toBe("bytes 2-5/10");
     expect(res?.headers.get("etag")).toBe('"v1"');
-    expect([...new Uint8Array(await res!.arrayBuffer())]).toEqual([2, 3, 4, 5]);
+    expect([...new Uint8Array(await res!.arrayBuffer())]).toEqual([...BYTES.subarray(2, 6)]);
     // A range past the end is cut to the file, as the file server does.
     const tail = await sw.request(FILE, { range: "bytes=8-100" });
     expect([...new Uint8Array(await tail!.arrayBuffer())]).toEqual([8, 9]);
@@ -267,6 +268,16 @@ describe("service worker and the saved søkort file", () => {
     await sw.message({ type: "OFFLINE_DELETE", urls: [FILE] });
     network.online = false;
     await expect(sw.request(FILE, { range: "bytes=0-3" })).rejects.toThrow("offline");
+  });
+
+  it("saves no error page the host sends with status 200", async () => {
+    const page = () => new Response("<html>502 Bad Gateway</html>", { status: 200, headers: { "content-type": "text/html" } });
+    const sw = loadWorker(network, { respond: (url) => (url === FILE ? page() : undefined) });
+    const reply = (await sw.message({ type: "OFFLINE_FETCH", urls: [FILE] })) as { stored: unknown[]; failed: string[] };
+    expect(reply.stored).toEqual([]);
+    expect(reply.failed).toEqual([FILE]);
+    const offline = await sw.caches.api.open(OFFLINE_CACHE_NAME);
+    expect(await offline.keys()).toEqual([]);
   });
 
   it("saves no PMTiles file from other hosts", async () => {

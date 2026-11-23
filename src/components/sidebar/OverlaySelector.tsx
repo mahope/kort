@@ -9,7 +9,7 @@ import { SeaNotice } from "@/components/map/SeaNotice";
 
 const VARIANT_HINTS: Record<SoekortVariant, string> = {
   klassisk: "Fem blå toner, lavt vand mørkest.",
-  lavvande: "De første 5 m meter for meter og en kurve med tal for hver meter. Til kano, kajak og jolle.",
+  lavvande: "Lavt vand i fire bånd (0-1, 1-2, 2-3 og 3-5 m) med kurver og tal ved 1, 2, 3 og 5 m. Til kano, kajak og jolle.",
 };
 
 /** Klassisk or lavt vand, under the søkort layer while it is on. */

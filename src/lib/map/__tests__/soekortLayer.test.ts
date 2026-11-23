@@ -1,4 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
+import { readFileSync } from "node:fs";
 import {
   DDM_TERMS_PAGE_URL,
   DDM_TERMS_URL,
@@ -6,8 +7,10 @@ import {
   REPLACED_BY_SOEKORT,
   SEA_OVERLAYS,
   SOEKORT_CREDITS,
+  SOEKORT_OFFLINE_HOSTS,
   overlayInMenu,
   soekortCredits,
+  soekortOffline,
 } from "../sources";
 import { deserializeState, serializeState } from "@/lib/url/urlState";
 import { thirdPartyCredits } from "@/lib/pdf/generator";
@@ -27,7 +30,8 @@ describe("søkort layer", () => {
     expect(map).toContain(`href='${DDM_TERMS_URL}'`);
     expect(map).toContain("Model og data er ikke egnet til navigation");
     expect(map).toContain("EMODnet Bathymetry");
-    expect(map).toContain("vilkår for brug af danske offentlige data");
+    // NOVANA: the whole credit sentence, as in the PDF.
+    expect(map.replace(/<[^>]+>/g, "")).toContain("Indeholder data, som benyttes i henhold til vilkår for brug af danske offentlige data");
     expect(OVERLAY_SOURCES.soekort.notForNavigation).toBe(true);
     expect(SEA_OVERLAYS).toContain("soekort");
   });
@@ -103,6 +107,23 @@ describe("old links to the replaced depth layers", () => {
     expect(serializeState({ overlays: [], soekortVariant: "lavvande" })).not.toContain("sv=");
     expect(deserializeState("sv=zz").soekortVariant).toBeUndefined();
   });
+
+  it("ignore codes that are only Object's own properties", () => {
+    for (const code of ["constructor", "toString", "__proto__", "hasOwnProperty"]) {
+      const s = deserializeState(`ov=sk,${code}&sv=${code}&l=${code}&v=${code}`);
+      expect(s.overlays, code).toEqual([{ id: "soekort" }]);
+      expect(s.soekortVariant, code).toBeUndefined();
+      expect(s.baseLayer, code).toBeUndefined();
+      expect(s.style, code).toBeUndefined();
+    }
+  });
+
+  it("round-trip EMODnet chosen without the søkort, outside Denmark", () => {
+    const overlays = [{ id: "havdybder" as const, opacity: 0.6 }];
+    const qs = serializeState({ lat: 59.9, lng: 10.7, zoom: 10, overlays });
+    expect(qs).toContain("ov=he-60");
+    expect(deserializeState(qs).overlays).toEqual(overlays);
+  });
 });
 
 describe("the overlay menu", () => {
@@ -121,6 +142,16 @@ describe("the overlay menu", () => {
 
 describe("saving the søkort offline", () => {
   const mols = { north: 56.22, south: 56.21, east: 10.57, west: 10.56 };
+
+  it("is only offered when the service worker saves from the file's host", () => {
+    expect(soekortOffline("https://tiles.mahoje.dk/soekort.pmtiles")).toHaveProperty("offlineFile.url", "https://tiles.mahoje.dk/soekort.pmtiles");
+    expect(soekortOffline("https://tiles.example.org/soekort.pmtiles")).toEqual({ noOffline: true });
+    expect(soekortOffline("http://tiles.mahoje.dk/soekort.pmtiles")).toEqual({ noOffline: true });
+    expect(soekortOffline("/soekort.pmtiles")).toEqual({ noOffline: true });
+    // The two host lists stay the same.
+    const sw = readFileSync("public/sw.js", "utf8").match(/const OFFLINE_FILE_HOSTS = (\[[^\]]*\]);/)?.[1];
+    expect(JSON.parse(sw!)).toEqual(SOEKORT_OFFLINE_HOSTS);
+  });
 
   it("saves the one file instead of tiles, counted once with its size", () => {
     const ids = offlineLayerIds("dtk25", [{ id: "soekort", enabled: true }]);

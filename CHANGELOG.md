@@ -12,8 +12,8 @@ All notable changes to this project are documented here. The format is based on
   tiles from `tiles.mahoje.dk/soekort.pmtiles` (Danmarks Dybdemodel in Danish
   waters, EMODnet outside them up to 59° N, NOVANA in 80 lakes). Sharp lines
   and numbers in the PDF at any dpi instead of enlarged 50 m WMS cells. Two
-  styles in the sidebar: classic (five blue tints) and shallow water (the first
-  5 m metre by metre, 1 m contours with numbers) for canoe, kayak and dinghy.
+  styles in the sidebar: classic (five blue tints) and shallow water (bands at
+  1, 2, 3 and 5 m, each with a numbered contour) for canoe, kayak and dinghy.
   On the skærmkort the bands go under the land; over raster base maps only
   contours and numbers are drawn. The URL is `NEXT_PUBLIC_SOEKORT_URL`.
 - The depth layer can be saved offline with an area (one file, about 61 MB).

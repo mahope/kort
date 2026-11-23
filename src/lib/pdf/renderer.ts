@@ -23,7 +23,6 @@ import { contourLayers, contourSourceUrl, ensurePmtilesProtocol, SCREEN_PX_PER_M
 import { vectorOverlayLayers, vectorOverlaySource } from "@/lib/map/vectorOverlays";
 import {
   DEFAULT_SOEKORT_VARIANT,
-  SOEKORT_SOURCE_LAYERS,
   SOEKORT_URL,
   soekortAnchors,
   soekortLayersWithAnchors,
@@ -257,6 +256,7 @@ export async function renderMapToImage({
     }
 
     // Add active overlays
+    const soekortLayerIds: string[] = [];
     const activeOverlays = overlays.filter((o) => o.enabled);
     for (const overlay of activeOverlays) {
       const sourceConfig = OVERLAY_SOURCES[overlay.id];
@@ -270,7 +270,10 @@ export async function renderMapToImage({
         ensurePmtilesProtocol();
         map.addSource(sourceId, { type: "vector", url: `pmtiles://${SOEKORT_URL}` });
         const layers = soekortLayersWithAnchors(sourceId, anchors, { variant: soekortVariant, opacity: overlay.opacity, pxPerMm });
-        for (const { layer, beforeId } of layers) map.addLayer(layer, beforeId);
+        for (const { layer, beforeId } of layers) {
+          map.addLayer(layer, beforeId);
+          soekortLayerIds.push(layer.id);
+        }
         continue;
       }
       if (sourceConfig.contourInterval) {
@@ -392,7 +395,7 @@ export async function renderMapToImage({
     }
 
     if (onSoekortSources && soekortOn) {
-      onSoekortSources(soekortSourcesIn(map, "soekort-overlay"));
+      onSoekortSources(soekortSourcesIn(map, soekortLayerIds));
     }
 
     // WebGL silently clamps oversized canvases; never deliver a downscaled map.
@@ -417,14 +420,18 @@ export async function renderMapToImage({
   }
 }
 
-/** The `src` values in the loaded tiles of the søkort source (the frame, rounded out to whole tiles). */
-function soekortSourcesIn(map: maplibregl.Map, sourceId: string): Set<string> {
+/**
+ * The `src` values the print's depth layers drew on the canvas. Rendered
+ * features, not the loaded tiles: those reach past the frame and hold layers
+ * the style leaves out (bands over a raster base map), and a source is only
+ * credited for data the print shows.
+ */
+function soekortSourcesIn(map: maplibregl.Map, layerIds: string[]): Set<string> {
   const found = new Set<string>();
-  for (const sourceLayer of SOEKORT_SOURCE_LAYERS) {
-    for (const f of map.querySourceFeatures(sourceId, { sourceLayer })) {
-      const src = f.properties?.src;
-      if (typeof src === "string") found.add(src);
-    }
+  if (layerIds.length === 0) return found;
+  for (const f of map.queryRenderedFeatures({ layers: layerIds })) {
+    const src = f.properties?.src;
+    if (typeof src === "string") found.add(src);
   }
   return found;
 }

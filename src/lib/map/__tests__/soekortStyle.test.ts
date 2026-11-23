@@ -126,16 +126,6 @@ describe("søkort style", () => {
     expect(at("d-soundings-z12")).toBeLessThan(at("tekst_punkt_by"));
   });
 
-  it("finds the insertion points between layers the app has added on top", () => {
-    const app = [
-      { id: "soekort-overlay-areas-sea-z5", type: "fill", source: "soekort-overlay" },
-      { id: "hillshade-overlay-layer", type: "raster", source: "hillshade-overlay" },
-    ];
-    const layers = [BASE_LAYERS[0], app[0], ...BASE_LAYERS.slice(1), app[1]];
-    const isBase = (l: { id: string }) => !app.some((a) => a.id === l.id);
-    expect(soekortAnchors(layers, isBase)).toEqual({ sea: "linje_færgerute", lake: "veje_primær", labels: "tekst_punkt_by" });
-  });
-
   it("has no insertion points without a skærmkort, and then leaves the bands out", () => {
     expect(soekortAnchors([{ id: "background", type: "background" }])).toBeNull();
     const layers = soekortLayersWithAnchors("d", null);

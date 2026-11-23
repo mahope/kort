@@ -133,6 +133,25 @@ export const SOEKORT_DDM_RETRIEVED = "23.11.2026";
 /** Size of the hosted soekort.pmtiles, for the offline estimate (61.378.648 bytes on 23 Nov 2026). */
 const SOEKORT_BYTES = 61_378_648;
 
+/** Hosts the service worker saves a whole PMTiles file from; the same list as OFFLINE_FILE_HOSTS in public/sw.js. */
+export const SOEKORT_OFFLINE_HOSTS = ["tiles.mahoje.dk"];
+
+/**
+ * The søkort's offline setting: the whole file when the service worker saves
+ * from its host, otherwise not offered offline (another NEXT_PUBLIC_SOEKORT_URL
+ * host would only give the base map's tiles).
+ */
+export function soekortOffline(url: string): { offlineFile: { url: string; bytes: number } } | { noOffline: true } {
+  let saved = false;
+  try {
+    const u = new URL(url);
+    saved = u.protocol === "https:" && SOEKORT_OFFLINE_HOSTS.includes(u.hostname) && u.pathname.endsWith(".pmtiles");
+  } catch {
+    // Not an absolute URL: nothing the service worker would save.
+  }
+  return saved ? { offlineFile: { url, bytes: SOEKORT_BYTES } } : { noOffline: true };
+}
+
 const SOEKORT_DDM_TEXT =
   `Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning, hentet ${SOEKORT_DDM_RETRIEVED}`;
 const DDM_NOT_FOR_NAVIGATION = "Model og data er ikke egnet til navigation";
@@ -158,7 +177,7 @@ export function soekortCredits(shown?: ReadonlySet<string>): string[] {
 const SOEKORT_ATTRIBUTION =
   `Dybder: ${SOEKORT_DDM_TEXT} (<a href='${DDM_TERMS_URL}'>vilkår</a>). ${DDM_NOT_FOR_NAVIGATION}` +
   ` &middot; <a href='https://emodnet.ec.europa.eu/en/bathymetry'>EMODnet Bathymetry</a> (CC BY 4.0)` +
-  ` &middot; Sødybder: <a href='https://arealdata.miljoeportal.dk/'>Danmarks Miljøportal</a> (NOVANA), <a href='${NOVANA_TERMS_URL}'>vilkår for brug af danske offentlige data</a>`;
+  ` &middot; Sødybder: <a href='https://arealdata.miljoeportal.dk/'>Danmarks Miljøportal</a> (NOVANA). Indeholder data, som benyttes i henhold til <a href='${NOVANA_TERMS_URL}'>vilkår for brug af danske offentlige data</a>`;
 
 /**
  * EMODnet Bathymetry (CC BY 4.0), mean depth, transparent over land. The
@@ -510,7 +529,7 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     // The PDF names only the sources in the frame (soekortCredits); this is the main one.
     credit: SOEKORT_CREDITS.ddm,
     // Our own file may be saved: DDM50 may be copied and distributed, and the credit carries the download date.
-    offlineFile: { url: SOEKORT_URL, bytes: SOEKORT_BYTES },
+    ...soekortOffline(SOEKORT_URL),
     notForNavigation: true,
   },
   havbund: {

@@ -50,13 +50,15 @@ const OVERLAY_CODES: Record<string, OverlayId> = {
   mk: "matrikel",
   dd: "dybdemodel",
   hb: "havbund",
-  hd: "havdybder",
+  hd: "havdybder", // old links: opens soekort (see REPLACED_BY_SOEKORT)
   sm: "soemaerker",
   kn: "kurverNorge",
   sd: "soedybder",
   ik: "indsoekort",
   vr: "vrag",
   sk: "soekort",
+  // EMODnet chosen on its own since soekort came; written instead of `hd`, so the link does not turn soekort on.
+  he: "havdybder",
 };
 
 /** Variant codes (`sv=`); the default, klassisk, is left out of links. */
@@ -162,6 +164,11 @@ function normalizeBearing(deg: number): number {
   return ((((deg + 180) % 360) + 360) % 360) - 180;
 }
 
+/** A code's value, own keys only: `constructor` or `toString` in a link must not resolve to Object's. */
+function lookup<T>(codes: Record<string, T>, code: string): T | undefined {
+  return Object.hasOwn(codes, code) ? codes[code] : undefined;
+}
+
 export function deserializeState(search: string): UrlState {
   const params = new URLSearchParams(search);
   const state: UrlState = {};
@@ -194,7 +201,7 @@ export function deserializeState(search: string): UrlState {
   if (l) {
     // Accept a short code (sk, of, ...) or a full value; ignore anything else
     // so a manipulated URL can't inject an unknown layer id into the store.
-    if (BASE_LAYER_CODES[l]) {
+    if (lookup(BASE_LAYER_CODES, l)) {
       state.baseLayer = BASE_LAYER_CODES[l];
     } else if ((Object.values(BASE_LAYER_CODES) as string[]).includes(l)) {
       state.baseLayer = l as BaseLayer;
@@ -203,7 +210,7 @@ export function deserializeState(search: string): UrlState {
 
   const v = params.get("v");
   if (v) {
-    if (STYLE_CODES[v]) {
+    if (lookup(STYLE_CODES, v)) {
       state.style = STYLE_CODES[v];
     } else if ((Object.values(STYLE_CODES) as string[]).includes(v)) {
       state.style = v as MapStyle;
@@ -237,9 +244,9 @@ export function deserializeState(search: string): UrlState {
     const overlays: UrlOverlay[] = [];
     for (const token of ov.split(",")) {
       const [code, pct] = token.split("-");
-      const id = OVERLAY_CODES[code];
+      const id = lookup(OVERLAY_CODES, code);
       if (!id) continue;
-      if (REPLACED_BY_SOEKORT.includes(id)) {
+      if (REPLACED_BY_SOEKORT.includes(id) && code !== "he") {
         // Old links to the depth layers open our own søkort, at its own opacity
         // (the old numbers were for semi-transparent rasters).
         if (!overlays.some((o) => o.id === "soekort")) overlays.push({ id: "soekort" });
@@ -259,7 +266,8 @@ export function deserializeState(search: string): UrlState {
   }
 
   const sv = params.get("sv");
-  if (sv && SOEKORT_VARIANT_CODES[sv]) state.soekortVariant = SOEKORT_VARIANT_CODES[sv];
+  const variant = sv ? lookup(SOEKORT_VARIANT_CODES, sv) : undefined;
+  if (variant) state.soekortVariant = variant;
 
   if (params.get("g") === "1") state.showUtmGrid = true;
   const gs = params.get("gs");

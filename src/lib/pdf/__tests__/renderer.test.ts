@@ -25,7 +25,8 @@ const ctl = {
   sourcePolls: 0,
   styleLayers: [] as { id: string; type: string }[], // the base style's layers (getStyle)
   added: [] as [string, string | undefined][], // addLayer(id, beforeId)
-  depthSrc: [] as string[], // `src` of the søkort features in the loaded tiles
+  // Søkort features the style draws: [part of the layer id, `src`]; only layers that were added are queried.
+  depthDrawn: [] as [string, string][],
 };
 
 function fakeGl() {
@@ -87,8 +88,9 @@ class FakeMap {
   addSource = addSource;
   addLayer(layer: { id: string }, beforeId?: string) { ctl.added.push([layer.id, beforeId]); }
   getStyle() { return { layers: ctl.styleLayers }; }
-  querySourceFeatures(_id: string, { sourceLayer }: { sourceLayer: string }) {
-    return sourceLayer === "depth_contours" ? ctl.depthSrc.map((src) => ({ properties: { src } })) : [];
+  queryRenderedFeatures({ layers }: { layers: string[] }) {
+    const added = layers.filter((id) => ctl.added.some(([lid]) => lid === id));
+    return ctl.depthDrawn.filter(([part]) => added.some((id) => id.includes(part))).map(([, src]) => ({ properties: { src } }));
   }
   remove() {}
   getCanvas() {
@@ -132,7 +134,7 @@ async function run(opts = base) {
 beforeEach(() => {
   vi.useFakeTimers();
   addSource.mockClear();
-  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], errorsWithoutTile: [], reloads: 0, removed: [], updates: 0, notNeeded: [], noUpdate: false, maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [], sourceBusyPolls: 0, sourcePolls: 0, styleLayers: [], added: [], depthSrc: [] });
+  Object.assign(ctl, { canvasW: 100, canvasH: 100, failOnLoad: [], failOnReload: [], errorsWithoutTile: [], reloads: 0, removed: [], updates: 0, notNeeded: [], noUpdate: false, maxSize: 8192, blob: true, tiles: [], gpuBusyPolls: 0, gpuCalls: [], sourceBusyPolls: 0, sourcePolls: 0, styleLayers: [], added: [], depthDrawn: [] });
   Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
 });
 afterEach(() => vi.useRealTimers());
@@ -206,11 +208,21 @@ describe("renderMapToImage søkort", () => {
     expect(ids.every(([, b]) => b === undefined)).toBe(true);
   });
 
-  it("reports which depth sources the print's tiles hold, for the credits", async () => {
-    ctl.depthSrc = ["ddm", "novana", "ddm"];
+  it("reports which depth sources the print draws, for the credits", async () => {
+    ctl.styleLayers = skaermkort;
+    ctl.depthDrawn = [["-major-", "ddm"], ["-areas-lake-", "novana"], ["-minor-", "ddm"]];
     let found: Set<string> | undefined;
-    await run({ ...base, overlays, onSoekortSources: (s: Set<string>) => (found = s) } as typeof base);
+    await run({ ...base, baseLayer: "skaermkort", style: "klassisk", overlays, onSoekortSources: (s: Set<string>) => (found = s) } as typeof base);
     expect(found).toEqual(new Set(["ddm", "novana"]));
+  });
+
+  it("does not credit a source only in layers the style leaves out", async () => {
+    // Over DTK25 the bands are not drawn, so a lake band in the tiles shows nothing.
+    ctl.styleLayers = [{ id: "background", type: "background" }];
+    ctl.depthDrawn = [["-major-", "ddm"], ["-areas-lake-", "novana"]];
+    let found: Set<string> | undefined;
+    await run({ ...base, baseLayer: "dtk25", overlays, onSoekortSources: (s: Set<string>) => (found = s) } as typeof base);
+    expect(found).toEqual(new Set(["ddm"]));
   });
 });
 

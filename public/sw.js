@@ -25,6 +25,12 @@ function isTileRoute(url) {
 function isOfflineFile(url) {
   return url.protocol === "https:" && OFFLINE_FILE_HOSTS.includes(url.hostname) && url.pathname.endsWith(".pmtiles");
 }
+
+// A PMTiles v3 archive starts with "PMTiles" and the version byte 3.
+async function isPmtiles(blob) {
+  const head = new Uint8Array(await blob.slice(0, 8).arrayBuffer());
+  return head.length === 8 && String.fromCharCode(...head.subarray(0, 7)) === "PMTiles" && head[7] === 3;
+}
 // One A4 print at 300 dpi needs 88-98 tiles, so 3,000 covers roughly 30 prints
 // or a long browsing session while staying within a few hundred MB.
 const MAX_TILE_ENTRIES = 3000;
@@ -296,6 +302,8 @@ async function offlineFetch(urls) {
           throw new Error("bad");
         }
         const blob = await response.blob();
+        // A host error page can come back as 200 too: keep only a real PMTiles v3 archive.
+        if (file && !(await isPmtiles(blob))) throw new Error("not a PMTiles file");
         const headers = { "content-type": type };
         // The PMTiles reader checks that every range comes from the same file version.
         const etag = response.headers.get("etag");
