@@ -112,12 +112,15 @@ const DHM_CONTOURS_25_URL =
 /**
  * Danmarks Dybdemodel 2024, 50 m (Geodatastyrelsen): free to copy, publish and
  * use commercially, with the credit, a link to the terms and "not for
- * navigation". The relief style is already blue, so no paint is needed.
- * Covers Danish waters only; EMODnet covers the rest.
+ * navigation". Covers Danish waters only; EMODnet covers the rest.
+ *
+ * `ddm_50m_dybde` is the plain light-to-dark blue depth ramp. The service's
+ * `ddm_50m_dybde_relief` bakes the grey hillshade into it (black streaks in
+ * every channel); the relief is its own layer, `havbund`, instead.
  */
 const DDM_DEPTH_URL =
   `https://api.dataforsyningen.dk/wms/ddm?service=WMS&version=1.1.1&request=GetMap` +
-  `&LAYERS=ddm_50m_dybde_relief&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE` +
+  `&LAYERS=ddm_50m_dybde&STYLES=&FORMAT=image/png&TRANSPARENT=TRUE` +
   `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}&token=${DATAFORSYNINGEN_TOKEN}`;
 
 /**
@@ -125,7 +128,36 @@ const DDM_DEPTH_URL =
  * hillshade, grey and transparent over land. Same terms and credit as the
  * depth colours, so the PDF names Dybdemodellen once for both.
  */
-const DDM_RELIEF_URL = DDM_DEPTH_URL.replace("LAYERS=ddm_50m_dybde_relief", "LAYERS=ddm_50m_skyggekort_overdrevet");
+const DDM_RELIEF_URL = DDM_DEPTH_URL.replace("LAYERS=ddm_50m_dybde", "LAYERS=ddm_50m_skyggekort_overdrevet");
+
+/**
+ * The model's cells are 50 m, about 87 EPSG:3857 metres in Danish latitudes:
+ * one pixel of a 256 px tile at zoom 11. The WMS draws the cells as hard
+ * squares at any finer zoom, so ask for zoom 11 at most and let MapLibre
+ * enlarge it with linear resampling: smooth depths instead of blocks, on
+ * screen and in the PDF.
+ */
+const DDM_MAXZOOM = 11;
+
+/** EMODnet's cells are about 115 m (about 200 EPSG:3857 metres here): zoom 10. */
+const EMODNET_MAXZOOM = 10;
+
+/** Depth blues a little stronger, so shallow and deep water tell apart over the base map's own blue. */
+const DDM_DEPTH_PAINT: RasterSourceConfig["paint"] = {
+  "raster-resampling": "linear",
+  "raster-saturation": 0.25,
+  "raster-contrast": 0.15,
+};
+
+/**
+ * The exaggerated hillshade is black in steep channels. Lifting the darkest
+ * tone to mid grey keeps the seabed shapes but stops them muddying the water;
+ * the layer also draws under the depth colours (see mapStore).
+ */
+const DDM_RELIEF_PAINT: RasterSourceConfig["paint"] = {
+  "raster-resampling": "linear",
+  "raster-brightness-min": 0.45,
+};
 
 /**
  * The DDM50 terms themselves (PDF, May 2024). They say a copy must be made
@@ -217,7 +249,14 @@ export interface RasterSourceConfig {
   /** Short credit for the PDF footer (plain text). */
   credit?: string;
   /** Extra raster paint (besides opacity), shared by screen and PDF. */
-  paint?: { "raster-hue-rotate"?: number; "raster-saturation"?: number; "raster-contrast"?: number };
+  paint?: {
+    "raster-hue-rotate"?: number;
+    "raster-saturation"?: number;
+    "raster-contrast"?: number;
+    "raster-brightness-min"?: number;
+    "raster-brightness-max"?: number;
+    "raster-resampling"?: "linear" | "nearest";
+  };
   /** Third-party host whose terms do not cover bulk prefetching: never saved offline. */
   noOffline?: boolean;
   /** Sea data: the PDF carries "Ikke til navigation". */
@@ -445,8 +484,10 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
   dybdemodel: {
     tiles: [DDM_DEPTH_URL],
     tileSize: 256,
+    maxzoom: DDM_MAXZOOM,
     attribution: DDM_ATTRIBUTION,
     credit: DDM_CREDIT,
+    paint: DDM_DEPTH_PAINT,
     // Saved tiles would need a download date in the credit instead of "WMS-tjeneste".
     noOffline: true,
     notForNavigation: true,
@@ -454,18 +495,21 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
   havbund: {
     tiles: [DDM_RELIEF_URL],
     tileSize: 256,
+    maxzoom: DDM_MAXZOOM,
     attribution: DDM_ATTRIBUTION,
     credit: DDM_CREDIT,
+    paint: DDM_RELIEF_PAINT,
     noOffline: true,
     notForNavigation: true,
   },
   havdybder: {
     tiles: [EMODNET_DEPTH_URL],
     tileSize: 256,
-    attribution: "Dybder: <a href='https://emodnet.ec.europa.eu/en/bathymetry'>EMODnet Bathymetry</a> (CC BY 4.0). Ikke til navigation",
+    maxzoom: EMODNET_MAXZOOM,
+    attribution: "Dybder: <a href='https://emodnet.ec.europa.eu/en/bathymetry'>EMODnet Bathymetry</a> (CC BY 4.0)",
     credit: "Dybder: EMODnet Bathymetry (CC BY 4.0)",
     // Red-yellow ramp turned into blue-cyan, toned down so the map stays readable.
-    paint: { "raster-hue-rotate": 200, "raster-saturation": -0.3 },
+    paint: { "raster-hue-rotate": 200, "raster-saturation": -0.3, "raster-resampling": "linear" },
     noOffline: true,
     notForNavigation: true,
   },
@@ -473,7 +517,7 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     tiles: [OPENSEAMAP_URL],
     maxzoom: 18,
     tileSize: 256,
-    attribution: "Sømærker: &copy; <a href='https://www.openseamap.org'>OpenSeaMap</a>, &copy; OpenStreetMap-bidragydere. Ikke til navigation",
+    attribution: "Sømærker: &copy; <a href='https://www.openseamap.org'>OpenSeaMap</a>, &copy; OpenStreetMap-bidragydere",
     credit: "Sømærker: OpenSeaMap, OpenStreetMap-bidragydere",
     noOffline: true,
     notForNavigation: true,
@@ -497,7 +541,7 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     tileSize: 512,
     vector: "soedybder",
     attribution:
-      "Sødybder: <a href='https://arealdata.miljoeportal.dk/'>Danmarks Miljøportal</a> (NOVANA). Indeholder data, som benyttes i henhold til <a href='https://miljoeportal.dk/dataansvar/vilkaar-for-brug/'>vilkår for brug af danske offentlige data</a>. Ikke til navigation",
+      "Sødybder: <a href='https://arealdata.miljoeportal.dk/'>Danmarks Miljøportal</a> (NOVANA). Indeholder data, som benyttes i henhold til <a href='https://miljoeportal.dk/dataansvar/vilkaar-for-brug/'>vilkår for brug af danske offentlige data</a>",
     credit:
       "Sødybder: Miljøstyrelsen/Danmarks Miljøportal (NOVANA), forenklet af kort.mahoje.dk. Indeholder data, som benyttes i henhold til vilkår for brug af danske offentlige data",
     noOffline: true,
@@ -507,7 +551,7 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     tiles: [soekortDataUrl("indsoekort")],
     tileSize: 512,
     vector: "indsoekort",
-    attribution: `Historiske indsøkort: &copy; Geodatastyrelsen (Thorkild Høy m.fl.), <a href='${KDS_LICENCE_URL}'>CC BY 4.0</a>. Historiske kort, ikke til navigation`,
+    attribution: `Historiske indsøkort: &copy; Geodatastyrelsen (Thorkild Høy m.fl.), <a href='${KDS_LICENCE_URL}'>CC BY 4.0</a>`,
     credit: "Historiske indsøkort: Geodatastyrelsen (Thorkild Høy m.fl.), CC BY 4.0. Historiske kort, ikke egnet til navigation",
     noOffline: true,
     notForNavigation: true,
@@ -517,7 +561,7 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
     tileSize: 512,
     vector: "vrag",
     attribution:
-      "Vrag: <a href='https://emodnet.ec.europa.eu/en/human-activities'>EMODnet Human Activities</a> (CC BY 4.0), data fra UK Hydrographic Office (<a href='https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/'>OGL v3.0</a>). Ikke til navigation",
+      "Vrag: <a href='https://emodnet.ec.europa.eu/en/human-activities'>EMODnet Human Activities</a> (CC BY 4.0), data fra UK Hydrographic Office (<a href='https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/'>OGL v3.0</a>)",
     credit:
       "Vrag: EMODnet Human Activities (CC BY 4.0). Indeholder data fra UK Hydrographic Office, Open Government Licence v3.0",
     noOffline: true,

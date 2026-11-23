@@ -23,7 +23,8 @@ describe("overlay layers", () => {
   it("credits Danmarks Dybdemodel as its terms require", () => {
     const src = OVERLAY_SOURCES.dybdemodel;
     expect(src.tiles[0]).toContain("/wms/ddm?");
-    expect(src.tiles[0]).toContain("LAYERS=ddm_50m_dybde_relief");
+    // The plain blue depths: the _relief variant has the grey hillshade baked in.
+    expect(src.tiles[0]).toContain("LAYERS=ddm_50m_dybde&");
     // Credit text, "WMS-tjeneste", not for navigation, and a link to the terms.
     expect(src.credit).toContain("Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning");
     expect(src.credit).toContain("Indeholder WMS-tjeneste");
@@ -38,13 +39,23 @@ describe("overlay layers", () => {
     const src = OVERLAY_SOURCES.havbund;
     expect(src.tiles[0]).toContain("/wms/ddm?");
     expect(src.tiles[0]).toContain("LAYERS=ddm_50m_skyggekort_overdrevet");
-    expect(src.tiles[0]).not.toContain("ddm_50m_dybde_relief");
     expect(src.credit).toBe(OVERLAY_SOURCES.dybdemodel.credit);
     expect(src.attribution).toBe(OVERLAY_SOURCES.dybdemodel.attribution);
     expect(SEA_OVERLAYS).toContain("havbund");
-    // Draws above the blue depth colours, half transparent, so both read together.
+    // Never over the depth colours: the grey relief muddied the water.
     const order = useMapStore.getState().overlays.map((o) => o.id);
-    expect(order.indexOf("havbund")).toBeGreaterThan(order.indexOf("dybdemodel"));
+    expect(order.indexOf("havbund")).toBeLessThan(order.indexOf("dybdemodel"));
+    expect(order.indexOf("havbund")).toBeLessThan(order.indexOf("havdybder"));
+  });
+
+  it("enlarges the coarse depth models smoothly instead of drawing their cells as blocks", () => {
+    // 50 m cells are one pixel at zoom 11; EMODnet's 115 m ones at zoom 10.
+    expect(sourceZoomLimit(OVERLAY_SOURCES.dybdemodel)).toEqual({ maxzoom: 11 });
+    expect(sourceZoomLimit(OVERLAY_SOURCES.havbund)).toEqual({ maxzoom: 11 });
+    expect(sourceZoomLimit(OVERLAY_SOURCES.havdybder)).toEqual({ maxzoom: 10 });
+    for (const id of ["dybdemodel", "havbund", "havdybder"] as const) {
+      expect(OVERLAY_SOURCES[id].paint?.["raster-resampling"]).toBe("linear");
+    }
   });
 
   it("credits Klimadatastyrelsen with the CC BY 4.0 licence and the sources page on the PDF", () => {
@@ -55,7 +66,6 @@ describe("overlay layers", () => {
 
   it("caps OpenSeaMap at its last zoom, so 1:5.000 at 300 dpi enlarges instead of failing", () => {
     expect(sourceZoomLimit(OVERLAY_SOURCES.soemaerker)).toEqual({ maxzoom: 18 });
-    expect(sourceZoomLimit(OVERLAY_SOURCES.havdybder)).toEqual({});
   });
 
   it("uses the smoothed 2.5 m contours for contours25", () => {
@@ -63,10 +73,9 @@ describe("overlay layers", () => {
   });
 
   it("marks the sea layers as not for navigation and keeps them out of offline saving", () => {
-    for (const id of SEA_OVERLAYS) {
-      expect(OVERLAY_SOURCES[id].notForNavigation).toBe(true);
-      expect(OVERLAY_SOURCES[id].attribution).toMatch(/ikke (egnet )?til navigation/i);
-    }
+    for (const id of SEA_OVERLAYS) expect(OVERLAY_SOURCES[id].notForNavigation).toBe(true);
+    // The map badge says it for every sea layer; Dybdemodellen's terms also want it in the credit.
+    expect(OVERLAY_SOURCES.dybdemodel.attribution).toContain("Model og data er ikke egnet til navigation");
     const ids = offlineLayerIds("dtk25", all.map((id) => ({ id, enabled: true })));
     expect(ids).toContain("contours25");
     expect(ids).not.toContain("havdybder");

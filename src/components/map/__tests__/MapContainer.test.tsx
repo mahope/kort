@@ -11,7 +11,9 @@ vi.mock("react-map-gl/maplibre", () => ({
   Source: ({ id, children }: { id: string; children: ReactNode }) => (
     <div data-source={id}>{children}</div>
   ),
-  Layer: ({ id }: { id: string }) => <div data-layer={id} />,
+  Layer: ({ id, layout }: { id: string; layout?: { visibility?: string } }) => (
+    <div data-layer={id} data-visibility={layout?.visibility} />
+  ),
   NavigationControl: () => null,
   ScaleControl: () => null,
   // Like react-map-gl: the options are read once, when the control is created.
@@ -55,6 +57,30 @@ it("removes and restores the raster layer while keeping the selected contours", 
     act(() => setBaseLayer("dtk25"));
     expect(container.querySelector(rasterLayer)).not.toBeNull();
     expect(container.querySelector(contours)).not.toBeNull();
+  } finally {
+    act(() => root.unmount());
+  }
+});
+
+it("keeps every raster overlay mounted in the store's order, hidden while off", () => {
+  // MapLibre adds a new layer on top, so mounting on toggle drew the grey
+  // seabed relief over depth colours switched on earlier.
+  const container = document.createElement("div");
+  const root = createRoot(container);
+  const ids = () => [...container.querySelectorAll("[data-layer$='-overlay-layer']")].map((l) => l.getAttribute("data-layer"));
+  const visibility = (id: string) => container.querySelector(`[data-layer="${id}"]`)?.getAttribute("data-visibility");
+  try {
+    act(() => useMapStore.getState().setOverlayEnabled("dybdemodel", true));
+    act(() => root.render(<MapContainer />));
+    const before = ids();
+    expect(before.indexOf("havbund-overlay-layer")).toBeGreaterThan(-1);
+    expect(before.indexOf("havbund-overlay-layer")).toBeLessThan(before.indexOf("dybdemodel-overlay-layer"));
+    expect(visibility("havbund-overlay-layer")).toBe("none");
+    expect(visibility("dybdemodel-overlay-layer")).toBe("visible");
+
+    act(() => useMapStore.getState().setOverlayEnabled("havbund", true));
+    expect(visibility("havbund-overlay-layer")).toBe("visible");
+    expect(ids()).toEqual(before);
   } finally {
     act(() => root.unmount());
   }

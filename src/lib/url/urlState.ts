@@ -7,7 +7,8 @@ import { isGridSpacing, type GridSpacing, type GridLabelFormat, type UtmZoneMode
 
 interface UrlOverlay {
   id: OverlayId;
-  opacity: number;
+  /** Absent: the layer's default opacity (a hand-written link like `ov=dd,hb`). */
+  opacity?: number;
 }
 
 interface UrlState {
@@ -113,7 +114,7 @@ export function serializeState(state: UrlState): string {
     params.set(
       "ov",
       state.overlays
-        .map((o) => `${OVERLAY_TO_CODE[o.id]}-${Math.round(o.opacity * 100)}`)
+        .map((o) => (o.opacity === undefined ? OVERLAY_TO_CODE[o.id] : `${OVERLAY_TO_CODE[o.id]}-${Math.round(o.opacity * 100)}`))
         .join(",")
     );
   }
@@ -226,9 +227,8 @@ export function deserializeState(search: string): UrlState {
       const [code, pct] = token.split("-");
       const id = OVERLAY_CODES[code];
       if (!id) continue;
-      const parsed = pct !== undefined ? Number(pct) : 100;
-      const opacity = isNaN(parsed) ? 1 : Math.min(1, Math.max(0, parsed / 100));
-      overlays.push({ id, opacity });
+      const parsed = pct ? Number(pct) : NaN;
+      overlays.push(isNaN(parsed) ? { id } : { id, opacity: Math.min(1, Math.max(0, parsed / 100)) });
     }
     if (overlays.length > 0) state.overlays = overlays;
   }

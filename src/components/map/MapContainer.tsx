@@ -35,6 +35,7 @@ import { GeolocationButton } from "./GeolocationButton";
 import { ImportedLayers } from "./ImportedLayers";
 import { UtmGrid } from "./UtmGrid";
 import { configureMaplibreWorker } from "@/lib/map/workerUrl";
+import { retryFailedTilesOnScreen } from "@/lib/map/tileRetry";
 
 // terra-draw (~44 KB gz) is only needed once the user starts drawing or has
 // persisted drawings to restore.
@@ -67,6 +68,14 @@ export function MapContainer() {
     preconnect("https://cdn.dataforsyningen.dk", { crossOrigin: "anonymous" });
   }, []);
   const mapRef = useRef<MapRef>(null);
+  // A failed tile is asked for again instead of staying a grey square.
+  const stopTileRetry = useRef<(() => void) | null>(null);
+  useEffect(() => () => stopTileRetry.current?.(), []);
+  const onLoad = useCallback((e: { target: import("maplibre-gl").Map }) => {
+    collapseAttributionOnTouch(e);
+    stopTileRetry.current?.();
+    stopTileRetry.current = retryFailedTilesOnScreen(e.target);
+  }, []);
   const viewState = useMapStore((s) => s.viewState);
   const setViewState = useMapStore((s) => s.setViewState);
   const style = useMapStore((s) => s.style);
@@ -139,7 +148,7 @@ export function MapContainer() {
       {...viewState}
       padding={padding}
       onMove={onMove}
-      onLoad={collapseAttributionOnTouch}
+      onLoad={onLoad}
       mapStyle={mapStyle}
       transformRequest={transformRequest}
       maxBounds={[...MAP_BOUNDS[0], ...MAP_BOUNDS[1]]}
@@ -179,9 +188,14 @@ export function MapContainer() {
         </Source>
       )}
 
-      {/* Overlays (generic loop) */}
-      {overlays.filter((o) => o.enabled).map((overlay) => {
+      {/* Overlays (generic loop). Raster overlays are always mounted and only
+          hidden when off (hidden layers request no tiles): MapLibre puts a
+          newly added layer on top, so mounting on toggle would draw e.g. the
+          grey seabed relief over the depth colours, or the depths over the
+          wrecks. Mounted once, they keep the store's order. */}
+      {overlays.map((overlay) => {
         const vector = OVERLAY_SOURCES[overlay.id].vector;
+        if (!overlay.enabled && (vector || OVERLAY_SOURCES[overlay.id].contourInterval)) return null;
         if (vector) {
           const sourceId = `${overlay.id}-overlay`;
           return (
@@ -229,6 +243,7 @@ export function MapContainer() {
           <Layer
             id={`${overlay.id}-overlay-layer`}
             type="raster"
+            layout={{ visibility: overlay.enabled ? "visible" : "none" }}
             paint={{ "raster-opacity": overlay.opacity, ...OVERLAY_SOURCES[overlay.id].paint }}
           />
         </Source>
