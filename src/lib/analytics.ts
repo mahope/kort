@@ -23,7 +23,7 @@ export async function trackEvent(
   event: string,
   props?: Record<string, string>
 ) {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || !initialized) return;
 
   const { track } = await import("@plausible-analytics/tracker");
   track(event, { props });
