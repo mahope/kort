@@ -31,7 +31,7 @@ export function ensurePmtilesProtocol(): void {
     } catch (err) {
       if (!abort.signal.aborted) {
         const url = params.url.replace(/^pmtiles:\/\//, "");
-        for (const archive of [...protocol.tiles.keys()]) {
+        for (const archive of protocol.tiles.keys()) {
           if (url === archive || url.startsWith(`${archive}/`)) protocol.tiles.delete(archive);
         }
       }

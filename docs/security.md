@@ -21,7 +21,7 @@ Sættes i `next.config.ts` for alle ruter (Cloudflare foran).
   `tile.openstreetmap.org`, `ows.emodnet-bathymetry.eu` og `tiles.openseamap.org` (img og connect; de to sidste er de valgfrie havlag),
   `cache.kartverket.no`, `wms.geonorge.no` og `tile.opentopomap.org` (kortene over Norge og Sverige),
   `api.kartverket.no` (norske stednavne i søgningen, kun connect),
-  `adressevaelger.dk`, `tiles.mahoje.dk` (vores egne 5/10 m-højdekurver som PMTiles) og `analytics.holstjensen.eu` (kun connect).
+  `adressevaelger.dk`, `tiles.mahoje.dk` (vores egne 5/10 m-højdekurver og søkortet som PMTiles; værterne følger `NEXT_PUBLIC_CONTOURS_URL` og `NEXT_PUBLIC_SOEKORT_URL`) og `analytics.holstjensen.eu` (kun connect).
   `img-src` har desuden `data:` og `blob:`.
 - `font-src`: `'self' data:`. Kortets skrifttyper hentes som `.pbf`-glyphs via `connect-src`.
 - `script-src`: `'self' 'unsafe-inline'`. `'unsafe-eval'` er fjernet; MapLibre 5 kører uden

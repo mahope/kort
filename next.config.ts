@@ -17,9 +17,14 @@ const OPENTOPOMAP = "https://tile.opentopomap.org";
 const NORDIC = `${KARTVERKET_CACHE} ${KARTVERKET_WMS} ${OPENTOPOMAP}`;
 // Norwegian place-name search (src/lib/api/norwegianPlaces.ts).
 const KARTVERKET_API = "https://api.kartverket.no";
-// Our own 5/10 m contours (PMTiles, read with range requests; src/lib/map/contours.ts).
-// Host of the contour PMTiles; follows NEXT_PUBLIC_CONTOURS_URL like src/lib/map/contours.ts.
-const KORT_TILES = new URL(process.env.NEXT_PUBLIC_CONTOURS_URL || "https://tiles.mahoje.dk/kurver-5m.pmtiles").origin;
+// Our own PMTiles, read with range requests: the 5/10 m contours (src/lib/map/contours.ts)
+// and the søkort (src/lib/map/soekortStyle.ts). Hosts follow their NEXT_PUBLIC_ URLs; one entry when they match.
+const KORT_TILES = [
+  ...new Set([
+    new URL(process.env.NEXT_PUBLIC_CONTOURS_URL || "https://tiles.mahoje.dk/kurver-5m.pmtiles").origin,
+    new URL(process.env.NEXT_PUBLIC_SOEKORT_URL || "https://tiles.mahoje.dk/soekort.pmtiles").origin,
+  ]),
+].join(" ");
 
 // The app has two inline <script>s (theme + JSON-LD), so script-src keeps
 // 'unsafe-inline'. MapLibre runs its workers from blob: URLs. Network-facing
