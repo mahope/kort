@@ -17,6 +17,7 @@ import {
   type RasterSourceConfig,
 } from "@/lib/map/sources";
 import { mapRegionForBounds, nordicSourcesInBounds, type MapRegion } from "@/lib/geo/regions";
+import { padBounds } from "@/lib/geo/bounds";
 import { getMaxCanvasSize, canvasLimitMessage } from "./limits";
 import { contourLayers, contourSourceUrl, ensurePmtilesProtocol, SCREEN_PX_PER_MM } from "@/lib/map/contours";
 import { vectorOverlayLayers, vectorOverlaySource } from "@/lib/map/vectorOverlays";
@@ -139,12 +140,6 @@ function retryTiles(map: maplibregl.Map, failed: Map<string, FailedTile>) {
   // hidden tab no frame at all) in which areTilesLoaded() saw nothing missing.
   internals._update();
   internals.redraw?.();
-}
-
-function padBounds(b: PrintFrameBounds, ratio: number): PrintFrameBounds {
-  const dx = (b.east - b.west) * ratio;
-  const dy = (b.north - b.south) * ratio;
-  return { west: b.west - dx, east: b.east + dx, south: b.south - dy, north: b.north + dy };
 }
 
 function sleep(ms: number) {

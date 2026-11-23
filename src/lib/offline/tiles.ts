@@ -1,6 +1,7 @@
 import type { BaseLayer, OverlayId } from "@/types/map";
 import type { PrintFrameBounds } from "@/types/print";
 import { getRasterBaseLayers, OVERLAY_SOURCES } from "@/lib/map/sources";
+import { padBounds } from "@/lib/geo/bounds";
 
 /** Cache key for a tile: the URL without access token (identical to offlineKey in public/sw.js). */
 export function offlineCacheKey(url: string): string {
@@ -10,7 +11,7 @@ export function offlineCacheKey(url: string): string {
 }
 
 /** Share of the frame size added on each side, so panning near the edge still hits the cache. */
-const OFFLINE_PADDING = 0.25;
+export const OFFLINE_PADDING = 0.25;
 
 /** Tile zoom levels saved for an area (tileSize 256, as the on-screen map). */
 export const OFFLINE_MIN_ZOOM = 12;
@@ -127,20 +128,8 @@ function templateFor(layerId: string): string | null {
 }
 
 /** All tile URLs an area needs, deduplicated. */
-export function padBounds(bounds: PrintFrameBounds, ratio = OFFLINE_PADDING): PrintFrameBounds {
-  const dx = (bounds.east - bounds.west) * ratio;
-  const dy = (bounds.north - bounds.south) * ratio;
-  return {
-    ...bounds,
-    west: bounds.west - dx,
-    east: bounds.east + dx,
-    south: bounds.south - dy,
-    north: bounds.north + dy,
-  };
-}
-
 export function areaTileUrls(bounds: PrintFrameBounds, layerIds: string[]): string[] {
-  const tiles = tilesForBounds(padBounds(bounds));
+  const tiles = tilesForBounds(padBounds(bounds, OFFLINE_PADDING));
   const urls = new Set<string>();
   for (const id of layerIds) {
     const template = templateFor(id);
