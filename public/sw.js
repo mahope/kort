@@ -302,9 +302,74 @@ async function offlineDelete(urls) {
   return { deleted };
 }
 
+// Areas saved before the tile route sit under their old Dataforsyningen keys
+// until the page has moved them (src/lib/offline/legacyKeys.ts; keep these
+// templates identical to LEGACY_TILE_TEMPLATES there, minus the token, which
+// the key leaves out anyway). Keyed by "<route layer>.<format>".
+const LEGACY_WMS =
+  "service=WMS&version=1.1.1&request=GetMap&SRS=EPSG:3857&WIDTH=256&HEIGHT=256";
+const LEGACY_DHM = `https://api.dataforsyningen.dk/dhm_DAF?${LEGACY_WMS}&STYLES=&TRANSPARENT=TRUE&FORMAT=image/png`;
+function legacyWms(service, layers, rest = "TRANSPARENT=TRUE&FORMAT=image/png") {
+  return `https://api.dataforsyningen.dk/${service}?${LEGACY_WMS}&LAYERS=${layers}&STYLES=default&${rest}&BBOX={bbox}`;
+}
+const LEGACY_ROUTE_TEMPLATES = {
+  "ortofoto.jpg":
+    "https://api.dataforsyningen.dk/orto_foraar_webm_DAF?service=WMTS&request=GetTile&version=1.0.0" +
+    "&layer=orto_foraar_webm&style=default&TileMatrixSet=DFD_GoogleMapsCompatible" +
+    "&TileMatrix={z}&TileRow={y}&TileCol={x}&format=image/jpeg",
+  "dtk25.jpg": legacyWms("dtk_25_DAF", "DTK25", "TRANSPARENT=FALSE&FORMAT=image/jpeg"),
+  "historisk_hoeje.png": legacyWms("topo20_hoeje_maalebordsblade_DAF", "dtk_hoeje_maalebordsblade"),
+  "historisk_lave.png": legacyWms("topo20_lave_maalebordsblade_DAF", "dtk_lave_maalebordsblade"),
+  "stednavne.png": legacyWms("danske_stednavne_DAF", "danske_stednavne"),
+  "contours.png": `${LEGACY_DHM}&LAYERS=dhm_kurve_0_5_m&BBOX={bbox}`,
+  "contours25.png": `${LEGACY_DHM}&LAYERS=dhm_kurve_traditionel&BBOX={bbox}`,
+  "hillshade.png": `${LEGACY_DHM}&LAYERS=dhm_terraen_skyggekort&BBOX={bbox}`,
+};
+
+// Same arithmetic as tileBBox3857 in src/lib/tiles/bbox.ts.
+function tileBBox3857(z, x, y) {
+  const r = 6378137;
+  const world = 2 * Math.PI * r;
+  const originX = -Math.PI * r;
+  const tilesAtZoom = 2 ** z;
+  const extent = world / tilesAtZoom;
+  const gridMinY = Math.PI * r - world;
+  const row = tilesAtZoom - y - 1;
+  return `${originX + x * extent},${gridMinY + row * extent},${originX + (x + 1) * extent},${gridMinY + (row + 1) * extent}`;
+}
+
+function legacyOfflineKey(url) {
+  const u = new URL(url);
+  // The cadastre moved from forvaltning2_udv to wms/forvaltning2 with the same query.
+  if (u.hostname === "api.dataforsyningen.dk" && u.pathname === "/wms/forvaltning2") {
+    u.pathname = "/forvaltning2_udv";
+    return offlineKey(u.href);
+  }
+  if (!isTileRoute(u)) return null;
+  const m = u.pathname.slice(TILE_ROUTE_PREFIX.length).match(/^(\w+)\/(\d+)\/(\d+)\/(\d+)\.(png|jpg)$/);
+  const template = m && LEGACY_ROUTE_TEMPLATES[`${m[1]}.${m[5]}`];
+  if (!template) return null;
+  const [z, x, y] = [m[2], m[3], m[4]].map(Number);
+  return offlineKey(
+    template
+      .replace("{z}", z)
+      .replace("{x}", x)
+      .replace("{y}", y)
+      .replace("{bbox}", tileBBox3857(z, x, y))
+  );
+}
+
+async function savedTile(url) {
+  const cache = await caches.open(OFFLINE_CACHE);
+  const saved = await cache.match(offlineKey(url));
+  if (saved) return saved;
+  const legacy = legacyOfflineKey(url);
+  return legacy ? cache.match(legacy) : undefined;
+}
+
 // Cache-first; entries older than 24 h are refreshed in the background.
 async function tileStrategy(request, event) {
-  const saved = await (await caches.open(OFFLINE_CACHE)).match(offlineKey(request.url));
+  const saved = await savedTile(request.url);
   if (saved) return saved;
   const cache = await caches.open(TILE_CACHE);
   const cached = await cache.match(request);

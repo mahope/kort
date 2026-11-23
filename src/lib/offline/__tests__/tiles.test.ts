@@ -9,6 +9,7 @@ import {
   offlineLayerIds,
   checkStart,
   confirmReason,
+  estimateAreaBytes,
   estimateBytes,
   lngLatToTile,
 } from "../tiles";
@@ -74,6 +75,17 @@ describe("offline tiles", () => {
       const [z, x, y] = new URL(u).pathname.split("/").slice(-3).map((p) => parseInt(p, 10));
       expect(tileIntersects({ z, x, y }, DENMARK_TILE_BOUNDS)).toBe(true);
     }
+  });
+
+  it("estimates bytes from each layer's own tile count", () => {
+    // DTK25 stops at the route's bounds; the cadastre does not.
+    const gedser = { north: 54.6, south: 54.0, east: 12.0, west: 11.8 };
+    const dtk = areaTileUrls(gedser, ["dtk25"]).length;
+    const matrikel = areaTileUrls(gedser, ["matrikel"]).length;
+    expect(dtk).toBeLessThan(matrikel);
+    expect(estimateAreaBytes(gedser, ["dtk25", "matrikel"])).toBe(
+      estimateBytes(dtk, ["dtk25"]) + estimateBytes(matrikel, ["matrikel"])
+    );
   });
 
   it("requires confirmation above 2,000 tiles or 100 MB and warns on quota", () => {

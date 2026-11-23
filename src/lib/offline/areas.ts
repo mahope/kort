@@ -32,23 +32,39 @@ export async function findMissingAreas(
 /** Set once the saved tiles sit under the tile-route keys (see legacyKeys.ts). */
 const KEYS_MIGRATED_FLAG = "offline-tile-keys";
 const KEYS_MIGRATED_VALUE = "tile-route";
-let migration: Promise<void> | null = null;
+let migration: Promise<boolean> | null = null;
 
 /**
  * Moves areas saved before the tile route to the new keys, once per browser.
- * The map (service worker) and the offline panel both wait on it; run before
- * findMissingAreas, which would otherwise drop those areas as evicted.
+ * Resolves true once the saved tiles sit under the current keys, false if the
+ * move failed (e.g. storage full); then the flag stays unset and the next load
+ * tries again. Until then the service worker falls back to the old keys.
  */
-export function ensureOfflineKeysMigrated(): Promise<void> {
+export function ensureOfflineKeysMigrated(): Promise<boolean> {
   migration ??= (async () => {
-    if (typeof caches === "undefined" || typeof localStorage === "undefined") return;
-    if (localStorage.getItem(KEYS_MIGRATED_FLAG) === KEYS_MIGRATED_VALUE) return;
+    if (typeof caches === "undefined" || typeof localStorage === "undefined") return false;
+    if (localStorage.getItem(KEYS_MIGRATED_FLAG) === KEYS_MIGRATED_VALUE) return true;
     const areas = useOfflineStore.getState().areas;
     if (areas.length > 0) await migrateLegacyTileKeys(areas, await caches.open(OFFLINE_CACHE_NAME));
     localStorage.setItem(KEYS_MIGRATED_FLAG, KEYS_MIGRATED_VALUE);
+    return true;
   })().catch(() => {
-    // Try again on the next load.
     migration = null;
+    return false;
   });
   return migration;
+}
+
+/**
+ * Removes saved areas whose tiles the browser has evicted, and returns their
+ * ids. Does nothing until the key migration has succeeded: before that, areas
+ * saved under the old keys would look evicted.
+ */
+export async function dropEvictedAreas(): Promise<string[]> {
+  if (!(await ensureOfflineKeysMigrated())) return [];
+  const cache = await caches.open(OFFLINE_CACHE_NAME);
+  const { areas, removeArea } = useOfflineStore.getState();
+  const missing = await findMissingAreas(areas, cache);
+  for (const id of missing) removeArea(id);
+  return missing;
 }

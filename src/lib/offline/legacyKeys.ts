@@ -36,27 +36,25 @@ export const LEGACY_TILE_TEMPLATES: Record<string, string> = {
   hillshade: `${DHM}&LAYERS=dhm_terraen_skyggekort&BBOX={bbox-epsg-3857}`,
 };
 
-type TileCache = Pick<Cache, "match" | "put" | "delete">;
+type TileCache = Pick<Cache, "match" | "put" | "delete" | "keys">;
 
 /**
  * Moves the tiles of saved areas from their old keys to the current ones.
- * Returns how many tiles moved. A layer whose first, middle and last old key
- * are all absent is skipped, so the common case (nothing to move) is cheap.
+ * Returns how many tiles moved. Every old key is checked against one listing
+ * of the cache, so partial downloads move completely. Throws if the cache
+ * refuses a write (quota): the old tiles stay, and the next load tries again.
  */
 export async function migrateLegacyTileKeys(areas: OfflineArea[], cache: TileCache): Promise<number> {
+  const present = new Set((await cache.keys()).map((r) => r.url));
   let moved = 0;
   for (const area of areas) {
     const tiles = areaTiles(area.bounds);
-    if (tiles.length === 0) continue;
     for (const id of area.layerIds) {
       const legacy = LEGACY_TILE_TEMPLATES[id];
       if (!legacy) continue;
-      const oldKey = (i: number) => offlineCacheKey(expandTileUrl(legacy, tiles[i]));
-      const sample = [0, Math.floor(tiles.length / 2), tiles.length - 1];
-      const hits = await Promise.all(sample.map((i) => cache.match(oldKey(i))));
-      if (hits.every((h) => !h)) continue;
       for (let i = 0; i < tiles.length; i++) {
-        const key = oldKey(i);
+        const key = offlineCacheKey(expandTileUrl(legacy, tiles[i]));
+        if (!present.has(key)) continue;
         const saved = await cache.match(key);
         if (!saved) continue;
         const url = layerTileUrl(id, tiles[i]);

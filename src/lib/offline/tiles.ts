@@ -147,6 +147,15 @@ export function estimateBytes(tileCountPerLayer: number, layerIds: string[]): nu
   );
 }
 
+/** Estimated size of an area, from each layer's own tile count (layers stop at their bounds). */
+export function estimateAreaBytes(bounds: PrintFrameBounds, layerIds: string[]): number {
+  const tiles = areaTiles(bounds);
+  return layerIds.reduce(
+    (sum, id) => sum + estimateBytes(tiles.filter((t) => layerTileUrl(id, t)).length, [id]),
+    0
+  );
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / (1024 * 1024)).toLocaleString("da-DK", {

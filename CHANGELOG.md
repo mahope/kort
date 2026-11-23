@@ -17,7 +17,9 @@ All notable changes to this project are documented here. The format is based on
   Geodatastyrelsen on the map, in the PDF and on `/kilder` (#5).
 - The service worker caches and saves tiles from the tile route for offline use.
   Areas saved before are moved to the new cache keys on the first load, so they
-  keep working offline.
+  keep working offline. Until the move is done (or if storage is full), the
+  service worker still finds their tiles under the old keys, and the areas stay
+  in the list.
 
 ### Added
 - A short, closable notice over Danish views during Dataforsyningen's platform

@@ -1,5 +1,9 @@
 import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it } from "vitest";
+import { LEGACY_TILE_TEMPLATES } from "../legacyKeys";
+import { OFFLINE_CACHE_NAME } from "../areas";
+import { areaTiles, expandTileUrl, layerTileUrl, offlineCacheKey } from "../tiles";
+import { DTK25_TILES_URL } from "@/lib/map/sources";
 
 // Runs public/sw.js against fake Cache Storage and network, to check that
 // tiles from our own route (/api/tiles, same-origin) are cached like the
@@ -7,6 +11,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 const ORIGIN = "https://kort.example";
 const TILE = `${ORIGIN}/api/tiles/dtk25/14/8672/5084.jpg`;
+const mols = { north: 56.22, south: 56.21, east: 10.57, west: 10.56 };
 
 type Handler = (event: unknown) => void;
 
@@ -47,7 +52,7 @@ function fakeCaches(opts: { full?: boolean } = {}) {
   };
 }
 
-function loadWorker(network: { online: boolean }, opts: { full?: boolean } = {}) {
+function loadWorker(network: { online: boolean }, opts: { full?: boolean; origin?: string } = {}) {
   const handlers: Record<string, Handler> = {};
   const caches = fakeCaches(opts);
   const fetchFn = async (input: string | Request) => {
@@ -56,7 +61,7 @@ function loadWorker(network: { online: boolean }, opts: { full?: boolean } = {})
     return new Response(new Uint8Array([1, 2, 3]), { status: 200, headers: { "content-type": "image/jpeg" } });
   };
   const self = {
-    location: new URL(`${ORIGIN}/sw.js`),
+    location: new URL(`${opts.origin ?? ORIGIN}/sw.js`),
     addEventListener: (type: string, fn: Handler) => (handlers[type] = fn),
     skipWaiting: () => {},
     clients: { claim: () => {} },
@@ -122,6 +127,34 @@ describe("service worker and the tile route", () => {
     const res = await sw.request(TILE);
     expect(res?.status).toBe(200);
     expect(res?.headers.get("content-type")).toBe("image/jpeg");
+  });
+
+  it("serves a saved tile still under its old key while the migration runs", async () => {
+    const tiles = areaTiles(mols);
+    const sample = [tiles[0], tiles[Math.floor(tiles.length / 2)], tiles[tiles.length - 1]];
+    for (const id of Object.keys(LEGACY_TILE_TEMPLATES)) {
+      for (const t of sample) {
+        const url = layerTileUrl(id, t)!;
+        const sw = loadWorker(network, { origin: new URL(url).origin });
+        const offline = await sw.caches.api.open(OFFLINE_CACHE_NAME);
+        await offline.put(offlineCacheKey(expandTileUrl(LEGACY_TILE_TEMPLATES[id], t)), new Response("old"));
+        network.online = false;
+        const res = await sw.request(url);
+        expect(res?.status, `${id} ${url}`).toBe(200);
+        expect(await res?.text()).toBe("old");
+        network.online = true;
+      }
+    }
+  });
+
+  it("does not serve an old JPEG screen tile for the PDF's PNG", async () => {
+    const t = areaTiles(mols)[0];
+    const png = expandTileUrl(DTK25_TILES_URL, t);
+    const sw = loadWorker(network, { origin: new URL(png).origin });
+    const offline = await sw.caches.api.open(OFFLINE_CACHE_NAME);
+    await offline.put(offlineCacheKey(expandTileUrl(LEGACY_TILE_TEMPLATES.dtk25, t)), new Response("old"));
+    network.online = false;
+    expect((await sw.request(png))?.status).toBe(503);
   });
 
   it("does not bulk-fetch other same-origin paths or foreign hosts", async () => {

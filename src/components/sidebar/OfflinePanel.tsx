@@ -8,7 +8,7 @@ import { useUiStore } from "@/stores/uiStore";
 import {
   areaTileUrls,
   checkStart,
-  estimateBytes,
+  estimateAreaBytes,
   formatBytes,
   isBaseLayerSaveable,
   offlineLayerIds,
@@ -17,7 +17,7 @@ import {
   confirmReason,
   MAX_TILE_COUNT,
 } from "@/lib/offline/tiles";
-import { ensureOfflineKeysMigrated, findMissingAreas, OFFLINE_CACHE_NAME } from "@/lib/offline/areas";
+import { dropEvictedAreas } from "@/lib/offline/areas";
 import { deleteTiles, downloadTiles, type DownloadProgress } from "@/lib/offline/download";
 import { usesNordicTopo } from "@/lib/map/sources";
 import { useMapRegion } from "@/lib/hooks/useMapRegion";
@@ -61,13 +61,8 @@ export function OfflinePanel() {
     if (typeof caches === "undefined") return;
     let alive = true;
     (async () => {
-      // Areas saved before the tile route still sit under the old keys.
-      await ensureOfflineKeysMigrated();
-      const cache = await caches.open(OFFLINE_CACHE_NAME);
-      const missing = await findMissingAreas(useOfflineStore.getState().areas, cache);
-      if (!alive) return;
-      for (const id of missing) removeArea(id);
-      if (missing.length > 0) {
+      const missing = await dropEvictedAreas();
+      if (alive && missing.length > 0) {
         addToast("info", "Et gemt område er ikke længere i browserens lager og er fjernet fra listen");
       }
     })().catch(() => undefined);
@@ -92,7 +87,10 @@ export function OfflinePanel() {
     () => (frameBounds ? areaTileUrls(frameBounds, layerIds) : []),
     [frameBounds, layerIds]
   );
-  const estimated = estimateBytes(urls.length / Math.max(1, layerIds.length), layerIds);
+  const estimated = useMemo(
+    () => (frameBounds ? estimateAreaBytes(frameBounds, layerIds) : 0),
+    [frameBounds, layerIds]
+  );
   const check = checkStart(urls.length, estimated, available);
 
   // Free quota, re-read whenever the plan changes (and after a run).
