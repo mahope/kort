@@ -75,16 +75,40 @@ const PLAN = {
   ] },
 };
 
-// Every rendered control counts, also the ones scrolled out of view.
+// Every rendered control counts, also the ones scrolled out of view. The box is
+// not enough: a control can be 44 px tall and still be half covered by another
+// one, so the tappable size is measured with elementFromPoint. The longest run
+// of hits along the vertical centre line gives the height, and the longest run
+// along the horizontal line through the middle of that run gives the width.
+// The outermost pixel on each side is not sampled (anti-aliased edges and borders
+// shared with a neighbour) but still counts. Controls that get no hits at all
+// (behind a modal, inert) are not reachable right now and are skipped.
 async function smallTargets(page) {
   return page.evaluate(() => {
     const out = [];
+    const hits = (el, x, y) => { const t = document.elementFromPoint(x, y); return !!t && (el === t || el.contains(t) || (el.control && el.control === t)); };
+    const longestRun = (n, test) => {
+      let best = 0, bestMid = -1, run = 0;
+      for (let i = 1; i < n - 1; i++) {
+        if (test(i)) { run++; if (run > best) { best = run; bestMid = i - (run - 1) / 2; } } else run = 0;
+      }
+      return best ? [best + 2, bestMid] : [0, -1];
+    };
     for (const el of document.querySelectorAll("button, a, select, input, [role=radio], [role=tab], label.check")) {
-      if (el.closest(".protobar") || !el.checkVisibility()) continue;
+      if (el.closest(".protobar") || el.closest("[inert]") || !el.checkVisibility()) continue;
       if (el.matches("input[type=checkbox]") && el.closest("label.check")) continue;
-      const r = el.getBoundingClientRect();
+      let r = el.getBoundingClientRect();
       if (!r.width || !r.height) continue;
-      if (r.height < 43.5 || r.width < 43.5) out.push(`${el.tagName.toLowerCase()} "${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 30)}" ${Math.round(r.width)}x${Math.round(r.height)}`);
+      const name = `${el.tagName.toLowerCase()} "${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 30)}"`;
+      if (r.height < 43.5 || r.width < 43.5) { out.push(`${name} ${Math.round(r.width)}x${Math.round(r.height)}`); continue; }
+      el.scrollIntoView({ block: "center", inline: "center" });
+      r = el.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const [hgt, mid] = longestRun(Math.floor(r.height), (i) => hits(el, cx, r.top + i + 0.5));
+      if (!hgt) continue;
+      const cy = r.top + mid + 0.5;
+      const [wid] = longestRun(Math.floor(r.width), (i) => hits(el, r.left + i + 0.5, cy));
+      if (hgt < 43.5 || wid < 43.5) out.push(`${name} trykflade ${wid}x${hgt} (boks ${Math.round(r.width)}x${Math.round(r.height)})`);
     }
     return out;
   });
@@ -101,8 +125,6 @@ async function sweep(page) {
     K.set({ base: "skaermkort", multi: true, grid: true, rotation: 10 });
     K.setOverlay("kurver", { on: true });
     K.setOverlay("havdybder", { on: true });
-    if (window.__open) window.__open.sheet.set("max");
-    if (window.__open && window.__open.layers) window.__open.layers();
   });
   await page.waitForTimeout(300);
   const openAll = () => page.evaluate(() => {
@@ -110,6 +132,19 @@ async function sweep(page) {
     K.$$("[data-widget=layers]").forEach((el) => { el.dataset.open = K.GROUPS.map((g) => g.id).join(","); K.renderWidget(el); });
     K.$$(".expander[aria-expanded=false]").forEach((b) => b.checkVisibility() && b.click());
   });
+  // The sheet in its start position, where the map controls and the credit link show.
+  await measure();
+  // A's layer panel is modal on mobile: measure it open, then close it again so
+  // the controls behind it are no longer inert.
+  if (await page.evaluate(() => !!(window.__open && window.__open.layers))) {
+    await page.evaluate(() => window.__open.layers());
+    await openAll();
+    await page.waitForTimeout(200);
+    await measure();
+    await page.evaluate(() => window.__open.close());
+  }
+  await page.evaluate(() => window.__open && window.__open.sheet.set("max"));
+  await page.waitForTimeout(300);
   const tabs = await page.locator("[role=tab]").count();
   for (let i = 0; i < Math.max(1, tabs); i++) {
     if (tabs) await page.locator("[role=tab]").nth(i).evaluate((t) => t.click());

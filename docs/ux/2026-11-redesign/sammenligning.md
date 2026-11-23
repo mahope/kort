@@ -11,7 +11,7 @@ Det her er med i alle retningerne. Det kan også bygges alene, hvis ingen af ret
 - **Værktøjerne åbnes ét ad gangen** i sidepanelet med en tilbageknap. Avanceret tilstand og de seks genveje forsvinder.
 - **Advarslen ved havlag** står både i lagpanelet og som skilt på kortet, som i dag. Krediteringen på kortet skifter med kilden.
 - **Solaris** får en grå tekstfarve, der består AA (#6b6560 i stedet for #a8a29e), og den valgte tilstand får en mørk kant, så valget ikke kun vises med gul.
-- Touch-mål på mindst 44 px, synligt fokus, piletaster i radiogrupper og faner, og Escape lukker paneler. Testscriptet `scripts/protos.mjs` måler alle synlige kontroller på mobil, også dem uden for skærmen, og slår bagefter alt til, der giver flere kontroller (stil på Skærmkort, lagvarianter, aktive lag, gitter, flere ark, alle faner og værktøjer). Det finder ingen mål under 44 px. Linket "Datakilder" i krediteringen er 44 px højt og rækker op over kortet, så selve striben forbliver smal.
+- Touch-mål på mindst 44 px, synligt fokus, piletaster i radiogrupper og faner, og Escape lukker paneler. Testscriptet `scripts/protos.mjs` måler alle synlige kontroller på mobil, også dem uden for skærmen, og slår bagefter alt til, der giver flere kontroller (stil på Skærmkort, lagvarianter, aktive lag, gitter, flere ark, alle faner og værktøjer). Det måler ikke kun elementets boks, men den flade, der faktisk kan trykkes på: `elementFromPoint` langs midterlinjen, så en kontrol, som en anden kontrol delvist dækker, også tæller som for lille. Det finder ingen mål under 44 px. Linket "Datakilder" i krediteringen er 44 px højt og rækker op over kortet, så selve striben forbliver smal; kortknapperne ligger over det område, så de ikke dækker linket. `scripts/adfaerd.mjs` tjekker desuden linkets fulde højde i alle tre prototyper.
 
 Byggeomfang for det fælles grundlag: **3-4 dage**.
 
@@ -94,5 +94,6 @@ Skærmbilleder: `c-desktop-01-hvor`, `-02-hvad`, `-03-print`, `-04-print-flere-a
 
 - Kortet er ét fast billede (zoom 13,1). Rammen er beregnet fra målestok og papir, men bliver skaleret ned, når den ikke kan være på skærmen. Kun nogle lag ændrer billedet (havdybder og sømærker, højdekurver, Skærmkortets stil).
 - Søgning, zoom, position, tegning, import, offline og PDF er attrap. Knapperne viser en besked i stedet.
+- Flere ark og overlap virker på rammen og i forhåndsvisningen: større overlap lægger arkene tættere, så nabokanterne ses som dobbelte linjer. Selve opdelingen i PDF'en er ikke bygget.
 - Norge og Sverige er ikke med.
 - Solaris bruger systemets skrift, som appen gør i dag.

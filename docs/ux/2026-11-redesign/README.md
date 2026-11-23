@@ -35,8 +35,8 @@ Kortet er et fast billede over Mols Bjerge, og søgning, tegning, offline og PDF
 | `skaermbilleder/a-*`, `b-*`, `c-*` | Prototyperne på desktop og mobil, lyst og mørkt, Mahoje og Solaris |
 | `skaermbilleder/touchmaal-rapport.json` | Konsolfejl og touch-mål under 44 px pr. skærmbillede og for alle tilstande på mobil |
 | `scripts/current.mjs` | Tager skærmbilleder af appen og kortbillederne til prototyperne |
-| `scripts/protos.mjs` | Tager skærmbilleder af prototyperne og tjekker touch-mål, også i de tilstande der ikke fotograferes |
-| `scripts/adfaerd.mjs` | Tjekker kreditering, forhåndsvisning ved drejning, tastaturfokus og mobilpanelet |
+| `scripts/protos.mjs` | Tager skærmbilleder af prototyperne og tjekker den trykbare flade af touch-mål, også i de tilstande der ikke fotograferes |
+| `scripts/adfaerd.mjs` | Tjekker kreditering, Datakilder-linkets trykflade, forhåndsvisning ved drejning og overlap, formålenes gitter, tastaturfokus og mobilpanelet |
 
 Scripts køres med Playwright: `PW_DIR=<mappe med playwright> node scripts/protos.mjs <ud-mappe> [a|b|c]` og `node scripts/adfaerd.mjs`.
 

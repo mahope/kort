@@ -8,16 +8,17 @@ const require = createRequire((process.env.PW_DIR || "/home/mads/dev/shots") + "
 const { chromium } = require("playwright");
 
 const protoDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../prototyper");
-const url = (dir) => pathToFileURL(path.join(protoDir, dir, "index.html")).href + "?ren=1";
+const url = (dir, query = "?ren=1") => pathToFileURL(path.join(protoDir, dir, "index.html")).href + query;
 const DESKTOP = { viewport: { width: 1440, height: 900 } };
 const MOBILE = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 };
 
 const browser = await chromium.launch();
 let failed = 0;
 async function check(name, dir, opts, fn) {
-  const ctx = await browser.newContext(opts);
+  const { url: query, ...ctxOpts } = opts;
+  const ctx = await browser.newContext(ctxOpts);
   const page = await ctx.newPage();
-  await page.goto(url(dir), { waitUntil: "networkidle" });
+  await page.goto(url(dir, query), { waitUntil: "networkidle" });
   try {
     await fn(page);
     console.log("ok  ", name);
@@ -84,6 +85,61 @@ await check("Mobil: Enter på panelhåndtaget skifter størrelse", "c-trin", MOB
   await p.keyboard.press(" ");
   const again = await p.locator("#side").getAttribute("data-pos");
   expect(again === before, `mellemrum: ${again}`);
+});
+
+for (const dir of ["a-formaal", "b-lagpanel", "c-trin"]) {
+  await check(`${dir} mobil: Datakilder kan trykkes i hele sin højde`, dir, MOBILE, async (p) => {
+    const missed = await p.evaluate(() => {
+      const a = document.querySelector(".attrib a");
+      const r = a.getBoundingClientRect();
+      const out = [];
+      for (let y = Math.ceil(r.top) + 1; y < r.bottom - 1; y++) {
+        const t = document.elementFromPoint(r.left + r.width / 2, y);
+        if (!(t && a.contains(t))) out.push(y);
+      }
+      return out.length + " af " + Math.round(r.height - 2);
+    });
+    expect(missed.startsWith("0 "), "punkter uden for linket: " + missed);
+  });
+}
+
+await check("A mobil uden ?ren=1: prototypelinjen er bag dæmpningen, og skift til desktop ophæver den", "a-formaal", { ...MOBILE, url: "" }, async (p) => {
+  await p.click("#open-layers-map");
+  for (let i = 0; i < 40; i++) {
+    await p.keyboard.press("Tab");
+    const where = await p.evaluate(() => (document.activeElement.closest("#layerpanel") || document.activeElement === document.body ? "ok" : document.activeElement.outerHTML.slice(0, 60)));
+    expect(where === "ok", "fokus bag panelet: " + where);
+  }
+  await p.setViewportSize({ width: 1440, height: 900 });
+  await p.waitForTimeout(200);
+  const s = await p.evaluate(() => ({ scrim: document.querySelector("#scrim").hidden, inert: !!document.querySelector("#side").inert, bar: !!(document.querySelector(".protobar") || {}).inert }));
+  expect(s.scrim && !s.inert && !s.bar, "efter skift til desktop: " + JSON.stringify(s));
+});
+
+await check("A: Vandretur holder UTM; et andet koordinatsystem gør det til Eget valg, og Vandretur sætter UTM igen", "a-formaal", DESKTOP, async (p) => {
+  await p.click(".prow[data-p='vandretur']");
+  await p.click("#open-layers-map");
+  await p.evaluate(() => { const K = window.Kort; K.$$("[data-widget=layers]").forEach((el) => { el.dataset.open = "gitter"; K.renderWidget(el); }); });
+  await p.locator("#gridsys").first().selectOption("mgrs");
+  let st = await p.evaluate(() => [window.Kort.state.preset, window.Kort.state.gridSystem]);
+  expect(st[0] === "eget", "formål efter MGRS: " + st);
+  await p.click(".prow[data-p='vandretur']");
+  st = await p.evaluate(() => [window.Kort.state.preset, window.Kort.state.gridSystem]);
+  expect(st[0] === "vandretur" && st[1] === "utm", "efter Vandretur igen: " + st);
+});
+
+await check("C: større overlap flytter arkene i forhåndsvisningen og på kortet", "c-trin", DESKTOP, async (p) => {
+  await p.getByRole("tab", { name: /Print/ }).click();
+  await p.evaluate(() => window.Kort.set({ multi: true, cols: 2, rows: 2, overlap: 10 }));
+  const read = () => p.evaluate(() => ({
+    pv: Array.from(document.querySelectorAll(".pv-img")).map((e) => e.style.left + "," + e.style.top).join(" "),
+    frame: Array.from(document.querySelectorAll(".frame .sheet")).map((e) => e.style.left + "," + e.style.width).join(" "),
+  }));
+  const before = await read();
+  await p.evaluate(() => window.Kort.set({ overlap: 20 }));
+  const after = await read();
+  expect(before.pv !== after.pv, "forhåndsvisningens ark er uændrede: " + after.pv);
+  expect(before.frame !== after.frame, "arkene på kortet er uændrede: " + after.frame);
 });
 
 await browser.close();

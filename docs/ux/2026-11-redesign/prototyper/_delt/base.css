@@ -251,14 +251,14 @@ input[type="range"] { width: 100%; accent-color: var(--primary); min-height: 44p
   position: relative;
   border: 2px dashed var(--frame);
   box-shadow: 0 0 0 9999px rgb(20 22 26 / 0.28);
-  display: grid;
   transition: width 160ms, height 160ms, transform 160ms;
 }
-.frame .sheet { border: 1px dashed rgb(220 38 38 / 0.7); }
+.frame .sheet { position: absolute; box-sizing: border-box; border: 1px dashed rgb(220 38 38 / 0.7); }
 .frame-tag { position: absolute; left: 6px; bottom: 6px; background: var(--surface); color: var(--fg); font-size: 12px; padding: 3px 8px; border-radius: var(--radius); box-shadow: var(--shadow); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .crosshair { position: absolute; left: 50%; top: 50%; width: 28px; height: 28px; transform: translate(-50%, -50%); color: #15181c; pointer-events: none; }
 
-.mapctl { position: absolute; right: 12px; bottom: 40px; display: flex; flex-direction: column; gap: 8px; z-index: 5; }
+/* Sits above the 44 px Datakilder target in the credit strip, so the buttons never cover it. */
+.mapctl { position: absolute; right: 12px; bottom: 56px; display: flex; flex-direction: column; gap: 8px; z-index: 5; }
 .mapctl .grp { display: flex; flex-direction: column; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
 .mapctl .grp button + button { border-top: 1px solid var(--border); }
 .mapbtn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 44px; height: 44px; padding: 0 12px; border: 0; background: var(--surface); color: var(--fg); font-size: 15px; font-weight: 500; border-radius: var(--radius); box-shadow: var(--shadow); }
@@ -350,11 +350,13 @@ input[type="range"] { width: 100%; accent-color: var(--primary); min-height: 44p
   :root[data-brand="mahoje"] .side { border-radius: 12px 12px 0 0; }
   .side-scroll { padding: 0 16px 16px; }
   .side-foot { padding: 10px 16px max(12px, env(safe-area-inset-bottom)); }
-  .grabber { display: flex !important; justify-content: center; align-items: center; height: 44px; margin-bottom: -12px; width: 100%; border: 0; background: none; flex-shrink: 0; touch-action: none; }
+  .grabber { display: flex !important; justify-content: center; align-items: center; height: 44px; width: 100%; border: 0; background: none; flex-shrink: 0; touch-action: none; }
   .grabber::before { content: ""; width: 40px; height: 4px; border-radius: 2px; background: var(--muted); }
   .brandhead { margin-bottom: 16px; padding-bottom: 12px; }
   .brandhead h1 { font-size: 20px; }
-  .mapctl { bottom: calc(var(--sheet-peek, 0px) + 12px); }
+  /* No top padding in the sheet, so a negative margin would slide under the handle. */
+  .drillhead { margin-top: 0; }
+  .mapctl { bottom: calc(var(--sheet-peek, 0px) + 56px); }
   .attrib { bottom: var(--sheet-peek, 0px); }
   .scalebar { display: none; }
   .protobar { left: 8px; bottom: auto; top: 64px; }

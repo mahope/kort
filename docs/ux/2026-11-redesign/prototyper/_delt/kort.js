@@ -65,11 +65,11 @@
 
   const PRESETS = [
     { id: "vandretur", label: "Vandretur", desc: "Topografisk kort, 1:25.000, UTM-gitter",
-      set: { base: "dtk25", style: "klassisk", overlays: {}, scale: 25000, paper: "A4", orient: "portrait", grid: true } },
+      set: { base: "dtk25", style: "klassisk", overlays: {}, scale: 25000, paper: "A4", orient: "portrait", grid: true, gridSystem: "utm" } },
     { id: "orientering", label: "Orientering", desc: "Dæmpet kort, kurver for hver 2,5 m, 1:10.000",
       set: { base: "skaermkort", style: "daempet", overlays: { kurver: { on: true, variant: "2.5", opacity: 1 }, skygge: { on: true, opacity: 0.4 } }, scale: 10000, paper: "A4", orient: "portrait", grid: false } },
     { id: "sejlads", label: "Sejlads og kano", desc: "Havdybder, sømærker og sødybder, 1:50.000",
-      set: { base: "skaermkort", style: "klassisk", overlays: { havdybder: { on: true, variant: "dk", opacity: 0.8 }, soemaerker: { on: true, opacity: 1 }, soedybder: { on: true, opacity: 1 } }, scale: 50000, paper: "A4", orient: "landscape", grid: true } },
+      set: { base: "skaermkort", style: "klassisk", overlays: { havdybder: { on: true, variant: "dk", opacity: 0.8 }, soemaerker: { on: true, opacity: 1 }, soedybder: { on: true, opacity: 1 } }, scale: 50000, paper: "A4", orient: "landscape", grid: true, gridSystem: "utm" } },
     { id: "historisk", label: "Historisk", desc: "Lave Målebordsblade fra 1901–1971",
       set: { base: "lave", style: "klassisk", overlays: {}, scale: 25000, paper: "A3", orient: "portrait", grid: false } },
   ];
@@ -214,9 +214,13 @@
     if (state.orient === "landscape") [w, h2] = [h2, w];
     const cols = state.multi ? state.cols : 1;
     const rows = state.multi ? state.rows : 1;
-    const gw = ((w - 2 * MARGIN_MM) / 1000) * state.scale * cols;
-    const gh = ((h2 - 2 * MARGIN_MM) / 1000) * state.scale * rows;
-    return { w, h: h2, cols, rows, gw, gh };
+    // Ground per sheet, and the strip neighbouring sheets share (overlap is mm on paper).
+    const cw = ((w - 2 * MARGIN_MM) / 1000) * state.scale;
+    const ch = ((h2 - 2 * MARGIN_MM) / 1000) * state.scale;
+    const ov = state.multi ? (state.overlap / 1000) * state.scale : 0;
+    const gw = cw * cols - ov * (cols - 1);
+    const gh = ch * rows - ov * (rows - 1);
+    return { w, h: h2, cols, rows, cw, ch, ov, gw, gh };
   }
   function baseLabel() {
     const b = BASES.find((x) => x.id === state.base);
@@ -306,11 +310,16 @@
       frame.style.width = Math.max(24, fw) + "px";
       frame.style.height = Math.max(24, fh) + "px";
       frame.style.transform = state.rotation ? `rotate(${state.rotation}deg)` : "";
-      frame.style.gridTemplateColumns = `repeat(${a.cols}, 1fr)`;
-      frame.style.gridTemplateRows = `repeat(${a.rows}, 1fr)`;
+      // Neighbouring sheets share the overlap strip, so a larger overlap moves them closer.
+      const pct = (v, total) => (v / total) * 100 + "%";
       frame.replaceChildren(
         h("span", { class: "frame-tag" }, `${state.paper} · ${fmtScale(state.scale)}`),
-        ...Array.from({ length: a.cols * a.rows }, () => h("div", { class: "sheet" })));
+        ...Array.from({ length: a.cols * a.rows }, (_, i) => {
+          const c = i % a.cols, r = Math.floor(i / a.cols);
+          return h("div", { class: "sheet", style: {
+            left: pct(c * (a.cw - a.ov), a.gw), top: pct(r * (a.ch - a.ov), a.gh),
+            width: pct(a.cw, a.gw), height: pct(a.ch, a.gh) } });
+        }));
     }
     $$("[data-credit]").forEach((el) => (el.textContent = credit()));
     // Same rule as SeaBadge in the app: always on the map while a sea layer is on.
@@ -449,7 +458,7 @@
       wrap.append(h("div", { style: { marginLeft: "0" } },
         h("label", { class: "label", for: "gridsys" }, "Koordinatsystem"),
         (() => {
-          const s = h("select", { id: "gridsys", class: "select", onchange: (e) => set({ gridSystem: e.target.value }) });
+          const s = h("select", { id: "gridsys", class: "select", onchange: (e) => manual({ gridSystem: e.target.value }) });
           [["utm", "UTM"], ["mgrs", "MGRS · WGS84"], ["dktm1", "DKTM1 · ETRS89"], ["dktm2", "DKTM2 · ETRS89"], ["dktm3", "DKTM3 · ETRS89"], ["dktm4", "DKTM4 · ETRS89"]].forEach(([v, l]) => s.append(h("option", { value: v, selected: state.gridSystem === v }, l)));
           return s;
         })(),
@@ -546,11 +555,13 @@
     // Crop of the background that matches the frame on the map.
     const groundW = a.gw / M_PER_PX, groundH = a.gh / M_PER_PX;
     const innerW = pw - 2 * MARGIN_MM * k * a.cols, innerH = ph - 2 * MARGIN_MM * k * a.rows;
-    const z = innerW / groundW;
+    const cellW = innerW / a.cols, cellH = innerH / a.rows;
+    const z = cellW / (a.cw / M_PER_PX);
+    // Each sheet starts one sheet minus the overlap after the previous one.
+    const stepX = (a.cw - a.ov) / M_PER_PX, stepY = (a.ch - a.ov) / M_PER_PX;
     for (let r = 0; r < a.rows; r++) for (let c = 0; c < a.cols; c++) {
-      const cellW = innerW / a.cols, cellH = innerH / a.rows;
-      const offX = -(800 - groundW / 2 + (groundW / a.cols) * c) * z;
-      const offY = -(500 - groundH / 2 + (groundH / a.rows) * r) * z;
+      const offX = -(800 - groundW / 2 + stepX * c) * z;
+      const offY = -(500 - groundH / 2 + stepY * r) * z;
       // The frame turns on the map and the PDF prints it upright, so the map
       // (and its grid and north) turns the other way around the frame centre.
       const img = h("div", { class: "pv-img", style: {
