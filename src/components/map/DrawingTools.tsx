@@ -185,7 +185,7 @@ function DrawingToolsImpl() {
         return {
           id,
           geojson: name
-            ? { ...geojson, properties: { ...(geojson.properties ?? {}), name } }
+            ? { ...geojson, properties: { ...geojson.properties, name } }
             : geojson,
           style: existingStyles.get(id) ?? { ...DRAW_DEFAULT_STYLE },
         };

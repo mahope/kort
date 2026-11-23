@@ -124,7 +124,8 @@ function retryTiles(map: maplibregl.Map, failed: Map<string, FailedTile>) {
   if (typeof internals._update !== "function") return;
   const managers = internals.style?.tileManagers;
   let removed = 0;
-  for (const [key, { sourceId, tileKey }] of [...failed]) {
+  // Iterate a snapshot: the loop deletes from `failed`.
+  for (const [key, { sourceId, tileKey }] of Array.from(failed)) {
     const manager = managers?.[sourceId];
     if (tileKey === undefined || !manager?._removeTile) continue;
     manager._removeTile(tileKey);

@@ -136,8 +136,8 @@ export function magneticDeclinationAtYear(lat: number, lng: number, year: number
   const P: number[][] = [];
   const dP: number[][] = [];
   for (let n = 0; n <= N_MAX; n++) {
-    P.push(new Array(n + 1).fill(0));
-    dP.push(new Array(n + 1).fill(0));
+    P.push(Array.from({ length: n + 1 }, () => 0));
+    dP.push(Array.from({ length: n + 1 }, () => 0));
   }
   P[0][0] = 1;
   for (let n = 1; n <= N_MAX; n++) {

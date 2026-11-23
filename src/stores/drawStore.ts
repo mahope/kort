@@ -88,7 +88,7 @@ export const useDrawStore = create<DrawStore>()(
                   ...f,
                   geojson: {
                     ...f.geojson,
-                    properties: { ...(f.geojson.properties ?? {}), name },
+                    properties: { ...f.geojson.properties, name },
                   },
                 }
               : f
