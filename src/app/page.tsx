@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/sidebar/Sidebar";
 import { LoadingOverlay } from "@/components/map/LoadingOverlay";
 import { MapControls } from "@/components/map/MapControls";
 import { SeaBadge } from "@/components/map/SeaNotice";
+import { ServiceWindowNotice } from "@/components/map/ServiceWindowNotice";
 import { CoordinateReadout } from "@/components/map/CoordinateReadout";
 import { ZoomToPrintAreaButton } from "@/components/map/ZoomToPrintAreaButton";
 import { KeyboardShortcuts } from "@/components/map/KeyboardShortcuts";
@@ -13,6 +14,7 @@ import { UrlSync } from "@/components/map/UrlSync";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
 import { ToastContainer } from "@/components/ui/Toast";
 import { registerServiceWorker } from "@/lib/pwa/register";
+import { ensureOfflineKeysMigrated } from "@/lib/offline/areas";
 import { useUiStore } from "@/stores/uiStore";
 
 const MapContainer = dynamic(
@@ -34,6 +36,8 @@ export default function Home() {
 
   useEffect(() => {
     registerServiceWorker();
+    // Saved areas from before the tile route: move their tiles to the new keys.
+    void ensureOfflineKeysMigrated();
   }, []);
 
   return (
@@ -44,6 +48,7 @@ export default function Home() {
         <MapContainer />
         <MapControls />
         <SeaBadge />
+        <ServiceWindowNotice />
         <CoordinateReadout />
         <ZoomToPrintAreaButton />
         <LoadingOverlay />

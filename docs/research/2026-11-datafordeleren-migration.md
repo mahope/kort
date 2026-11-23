@@ -18,9 +18,11 @@ under [Open points](#7-open-points).
   Gsearch closes on 26 Nov. For Kort that means:
   - **Opens 30 Nov:** `Forvaltning2` WMS (our cadastre alternative), `Ddm` WMS (sea depths),
     `Arkivmeta` API (lake-chart index) and `Kort25` WMS ("Danmarkskortet", see below).
-  - **Opens in Q1 2027:** `Skaermkort_vector_tiles`, which is **Kort's default base map**
-    (Skærmkort klassisk). From 26 Nov until some day in Q1 2027, Kort has no working default
-    map in Denmark unless we switch.
+  - **Opens in Q1 2027:** `Skaermkort_vector_tiles`, the Skærmkort base map (four styles).
+    From 26 Nov until some day in Q1 2027, Skærmkort does not work. *Correction (23 Nov,
+    section 8):* Kort's default base layer is DTK25 (`baseLayer: "dtk25"` in
+    `src/stores/mapStore.ts`), not Skærmkort; `klassisk` is only the default *style* when a
+    user picks Skærmkort.
   - **On neither list:** `dtk_25_DAF`, `orto_foraar_webm_DAF`, `topo20_*_DAF`,
     `danske_stednavne_DAF`, `dhm_DAF`, `forvaltning2_udv` and `dhm_wcs_DAF` (all on the closure
     list), and the `arkivkort` IIIF scans (on no list). The `dhm` WMS on the opening list is
@@ -103,7 +105,7 @@ The PDF and the offline feature use the same templates as the screen. Every chan
 | 3 Nov 2026 | Opening list: 45 services open on 30 Nov, 29 in Q1 2027. Login on every service; new key lifetimes; Gsearch closes 26 Nov | [KDS 3 Nov 2026][kds-nov], [opening list][open-list] |
 | **26 Nov 2026 16:00** | Service window starts. Nothing on Dataforsyningen answers. Services on the closure list and not on the opening list (all our `_DAF` layers, `forvaltning2_udv`, `dhm_wcs_DAF`) are not expected back | [KDS 3 Nov 2026][kds-nov] (inferred from both lists) |
 | **30 Nov 2026 08:00** | `Forvaltning2`, `Ddm`, `Arkivmeta`, `Kort25` back on the new platform | [opening list][open-list] |
-| Q1 2027 | `Skaermkort_vector_tiles` back (Kort's default base map) | [opening list][open-list] |
+| Q1 2027 | `Skaermkort_vector_tiles` back (the Skærmkort base map) | [opening list][open-list] |
 | 15 Jan 2027 | Old Datafordeler access stops (see above) | [KDS 25 Jun 2026][kds-dafo] |
 
 Since early November the Dataforsyningen site cannot be updated ("Af sikkerhedsmæssige årsager
@@ -374,7 +376,8 @@ the service window opens on Thursday 26 Nov 16:00, so steps 1-4 have about three
 
 ## 7. Open points
 
-These need a Datafordeler API key or an answer from KDS:
+Points 1-3 were answered with a key on 23 Nov; see section 8. The rest still need an answer
+from KDS:
 
 1. EPSG:3857 on the Datafordeler WMS services (`dtk_25`, `topo20_*`, `Danske_Stednavne`, `dhm`),
    tested with `SRS=EPSG:3857` and 256 px tiles.
@@ -392,6 +395,25 @@ These need a Datafordeler API key or an answer from KDS:
    window and until Q1 2027.
 8. Whether Kort's public Dataforsyningen token still works after the 30 Nov login change.
 9. Whether `kort.solaris.dk` sits behind Cloudflare, which matters for D1 (b) and for caching.
+
+## 8. Tested with a Datafordeler key (23 Nov 2026)
+
+Done while building the tile route (`/api/tiles`, PR for #5). One 256 px EPSG:3857 tile per
+layer over Mols Bjerge at zoom 14 and 17, the old `_DAF` URL against the Datafordeler URL:
+
+- **EPSG:3857 works on every service** (`dtk_25`, `topo20_hoeje/lave`, `Danske_Stednavne`,
+  `dhm`, and the orthophoto WMTS with `DFD_GoogleMapsCompatible`).
+- **The tiles are byte-identical** (same md5) to today's `_DAF` tiles for DTK25 (PNG and JPEG),
+  orthophoto, Høje and Lave Målebordsblade, Danske Stednavne and all three DHM layers. The
+  cadastre on `wms/forvaltning2` is identical to `forvaltning2_udv` too.
+- **Layer names:** DTK25 is `dtk25` (the current edition; `dtk_25` is the group with every
+  year since 2002 and draws differently). The Danske Stednavne group layer is
+  `danske_stednavne`, as on Dataforsyningen. DHM keeps `dhm_kurve_0_5_m`,
+  `dhm_kurve_traditionel` and `dhm_terraen_skyggekort`. `STYLES=` (empty) works everywhere.
+- **Headers:** WMS answers carry no `Cache-Control` or `ETag`; the orthophoto WMTS sends
+  `Cache-Control: max-age=172800`. `Access-Control-Allow-Origin: *` on a `200` as well.
+- **GetCapabilities writes the caller's API key into every `OnlineResource` URL** in its answer.
+  A proxy must never pass capabilities (or any non-image answer) on to the browser.
 
 [list]: https://dataforsyningen.dk/asset/PDF/Mapningstabel/Oversigt_tjenester_lukkes.pdf
 [kds-jun]: https://www.klimadatastyrelsen.dk/om-klimadatastyrelsen/nyheder/nyhedsarkiv/2026/jun/vi-fremtidssikrer-dataforsyningen

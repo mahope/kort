@@ -9,12 +9,15 @@ import {
   offlineLayerIds,
   checkStart,
   confirmReason,
+  areaTilePlan,
   estimateBytes,
   lngLatToTile,
 } from "../tiles";
 import { groundExtentToBounds, calculatePrintArea } from "@/lib/geo/calculations";
 import { padBounds } from "@/lib/geo/bounds";
 import { getRasterBaseLayers } from "@/lib/map/sources";
+import { tileIntersects } from "@/lib/tiles/bbox";
+import { DENMARK_TILE_BOUNDS } from "@/lib/tiles/routeLayers";
 
 describe("offline tiles", () => {
   it("maps lng/lat to the known tile", () => {
@@ -32,11 +35,9 @@ describe("offline tiles", () => {
     expect(maxY).toBeCloseTo(20037508.342789244, 6);
   });
 
-  it("expands the DTK25 screen template to a JPEG WMS url", () => {
+  it("expands the DTK25 screen template to a JPEG tile-route url", () => {
     const url = expandTileUrl(getRasterBaseLayers("screen").dtk25.tiles[0], { z: 13, x: 4390, y: 2560 });
-    expect(url).toContain("FORMAT=image/jpeg");
-    expect(url).toContain("TRANSPARENT=FALSE");
-    expect(url).not.toContain("{");
+    expect(url).toBe(`${window.location.origin}/api/tiles/dtk25/13/4390/2560.jpg`);
   });
 
   it("an A4 frame at 1:25.000 is a few hundred tiles on z13-16", () => {
@@ -61,6 +62,30 @@ describe("offline tiles", () => {
     const urls = areaTileUrls(bounds, ids);
     expect(urls.length).toBe(perLayer * 2);
     expect(new Set(urls).size).toBe(urls.length);
+  });
+
+  it("leaves out tiles the route refuses, outside the layer's bounds", () => {
+    // From Gedser across 54.3° N into the Baltic.
+    const gedser = { north: 54.6, south: 54.0, east: 12.0, west: 11.8 };
+    const all = tilesForBounds(padBounds(gedser, OFFLINE_PADDING));
+    const urls = areaTileUrls(gedser, ["dtk25"]);
+    expect(urls.length).toBeGreaterThan(0);
+    expect(urls.length).toBeLessThan(all.length);
+    for (const u of urls) {
+      const [z, x, y] = new URL(u).pathname.split("/").slice(-3).map((p) => parseInt(p, 10));
+      expect(tileIntersects({ z, x, y }, DENMARK_TILE_BOUNDS)).toBe(true);
+    }
+  });
+
+  it("estimates bytes from each layer's own tile count", () => {
+    // DTK25 stops at the route's bounds; the cadastre does not.
+    const gedser = { north: 54.6, south: 54.0, east: 12.0, west: 11.8 };
+    const dtk = areaTileUrls(gedser, ["dtk25"]).length;
+    const matrikel = areaTileUrls(gedser, ["matrikel"]).length;
+    expect(dtk).toBeLessThan(matrikel);
+    expect(areaTilePlan(gedser, ["dtk25", "matrikel"]).bytes).toBe(
+      estimateBytes(dtk, ["dtk25"]) + estimateBytes(matrikel, ["matrikel"])
+    );
   });
 
   it("requires confirmation above 2,000 tiles or 100 MB and warns on quota", () => {

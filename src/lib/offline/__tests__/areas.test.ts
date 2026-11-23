@@ -15,17 +15,17 @@ const area = (id: string, layerIds: string[]): OfflineArea => ({
 });
 
 function cacheWith(keys: Set<string>) {
-  return { match: async (k: string) => (keys.has(k) ? ({} as Response) : undefined) };
+  return { keys: async () => [...keys].map((k) => new Request(k)) };
 }
 
 describe("findMissingAreas", () => {
-  it("flags an area whose sampled tiles are all gone", async () => {
+  it("flags an area whose tiles are all gone", async () => {
     expect(await findMissingAreas([area("a", ["dtk25"])], cacheWith(new Set()))).toEqual(["a"]);
   });
 
-  it("keeps an area while any sampled tile is cached", async () => {
+  it("keeps an area while any of its tiles is cached", async () => {
     const urls = areaTileUrls(bounds, ["dtk25"]);
-    const keys = new Set([offlineCacheKey(urls[0])]);
+    const keys = new Set([offlineCacheKey(urls[1])]);
     expect(await findMissingAreas([area("a", ["dtk25"])], cacheWith(keys))).toEqual([]);
   });
 

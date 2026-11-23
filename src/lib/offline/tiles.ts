@@ -1,12 +1,19 @@
 import type { BaseLayer, OverlayId } from "@/types/map";
 import type { PrintFrameBounds } from "@/types/print";
-import { getRasterBaseLayers, OVERLAY_SOURCES } from "@/lib/map/sources";
+import { getRasterBaseLayers, OVERLAY_SOURCES, type RasterSourceConfig } from "@/lib/map/sources";
 import { padBounds } from "@/lib/geo/bounds";
+import { tileBBox3857, tileIntersects, type TileCoord } from "@/lib/tiles/bbox";
 
-/** Cache key for a tile: the URL without access token (identical to offlineKey in public/sw.js). */
+export { tileBBox3857, type TileCoord };
+
+/**
+ * Cache key for a tile: the URL without access token or key (identical to
+ * offlineKey in public/sw.js). Tiles from our own route carry neither.
+ */
 export function offlineCacheKey(url: string): string {
   const u = new URL(url);
   u.searchParams.delete("token");
+  u.searchParams.delete("apikey");
   return u.href;
 }
 
@@ -25,18 +32,13 @@ const CONFIRM_BYTES = 100 * 1024 * 1024;
 /** Hard ceiling so a mistake (huge multi-page area) cannot hammer the service. */
 export const MAX_TILE_COUNT = 20000;
 
-const EPSG3857_RADIUS = 6378137;
-const EXTENT_AT_ZOOM0 = 2 * Math.PI * EPSG3857_RADIUS;
-const ORIGIN_X = -Math.PI * EPSG3857_RADIUS;
-const ORIGIN_Y = Math.PI * EPSG3857_RADIUS;
-
 /**
  * Base layers that can be saved. OSM is excluded on purpose (its tile usage
  * policy forbids bulk downloads) and the vector "skærmkort" needs style, glyphs
  * and sprites, which are not tile-addressable.
  */
 const SCREEN_RASTER = getRasterBaseLayers("screen");
-const SAVEABLE_BASE: Partial<Record<BaseLayer, { tiles: string[] }>> = {
+const SAVEABLE_BASE: Partial<Record<BaseLayer, RasterSourceConfig>> = {
   ortofoto: SCREEN_RASTER.ortofoto,
   dtk25: SCREEN_RASTER.dtk25,
   historisk_hoeje: SCREEN_RASTER.historisk_hoeje,
@@ -54,12 +56,6 @@ const AVG_TILE_BYTES: Record<string, number> = {
   stednavne: 8 * 1024,
   matrikel: 8 * 1024,
 };
-
-export interface TileCoord {
-  z: number;
-  x: number;
-  y: number;
-}
 
 export function isBaseLayerSaveable(layer: BaseLayer): boolean {
   return layer in SAVEABLE_BASE;
@@ -92,15 +88,6 @@ export function tilesForBounds(
   return tiles;
 }
 
-/** Same number formatting as MapLibre's `{bbox-epsg-3857}`, so cache keys match. */
-export function tileBBox3857({ z, x, y }: TileCoord): string {
-  const tilesAtZoom = 2 ** z;
-  const tileExtent = EXTENT_AT_ZOOM0 / tilesAtZoom;
-  const gridMinY = ORIGIN_Y - EXTENT_AT_ZOOM0;
-  const rowFromBottom = tilesAtZoom - y - 1;
-  return `${ORIGIN_X + x * tileExtent},${gridMinY + rowFromBottom * tileExtent},${ORIGIN_X + (x + 1) * tileExtent},${gridMinY + (rowFromBottom + 1) * tileExtent}`;
-}
-
 export function expandTileUrl(template: string, tile: TileCoord): string {
   return template
     .replace(/{z}/g, String(tile.z))
@@ -120,23 +107,50 @@ export function offlineLayerIds(
   return ids;
 }
 
-function templateFor(layerId: string): string | null {
-  const base = SAVEABLE_BASE[layerId as BaseLayer];
-  if (base) return base.tiles[0];
-  const overlay = OVERLAY_SOURCES[layerId as OverlayId];
-  return overlay ? overlay.tiles[0] : null;
+function sourceFor(layerId: string): Pick<RasterSourceConfig, "tiles" | "bounds"> | null {
+  return SAVEABLE_BASE[layerId as BaseLayer] ?? OVERLAY_SOURCES[layerId as OverlayId] ?? null;
+}
+
+/**
+ * The URL a saved layer uses for one tile, or null for unknown layers and for
+ * tiles outside the layer's bounds: MapLibre never asks for those (and the
+ * tile route refuses them).
+ */
+export function layerTileUrl(layerId: string, tile: TileCoord): string | null {
+  const source = sourceFor(layerId);
+  if (!source || (source.bounds && !tileIntersects(tile, source.bounds))) return null;
+  return expandTileUrl(source.tiles[0], tile);
+}
+
+/** The tiles (padded) an area covers on each saved zoom level. */
+export function areaTiles(bounds: PrintFrameBounds): TileCoord[] {
+  return tilesForBounds(padBounds(bounds, OFFLINE_PADDING));
+}
+
+/**
+ * All tile URLs an area needs, deduplicated, and its estimated size from each
+ * layer's own tile count (layers stop at their bounds), in one pass.
+ */
+export function areaTilePlan(bounds: PrintFrameBounds, layerIds: string[]): { urls: string[]; bytes: number } {
+  const tiles = areaTiles(bounds);
+  const urls = new Set<string>();
+  let bytes = 0;
+  for (const id of layerIds) {
+    let count = 0;
+    for (const t of tiles) {
+      const url = layerTileUrl(id, t);
+      if (!url) continue;
+      urls.add(url);
+      count++;
+    }
+    bytes += estimateBytes(count, [id]);
+  }
+  return { urls: [...urls], bytes };
 }
 
 /** All tile URLs an area needs, deduplicated. */
 export function areaTileUrls(bounds: PrintFrameBounds, layerIds: string[]): string[] {
-  const tiles = tilesForBounds(padBounds(bounds, OFFLINE_PADDING));
-  const urls = new Set<string>();
-  for (const id of layerIds) {
-    const template = templateFor(id);
-    if (!template) continue;
-    for (const t of tiles) urls.add(expandTileUrl(template, t));
-  }
-  return [...urls];
+  return areaTilePlan(bounds, layerIds).urls;
 }
 
 export function estimateBytes(tileCountPerLayer: number, layerIds: string[]): number {
