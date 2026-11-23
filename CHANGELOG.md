@@ -16,6 +16,8 @@ All notable changes to this project are documented here. The format is based on
 - Cadastre (Matrikelskel) moved to `wms/forvaltning2` and is credited to
   Geodatastyrelsen on the map, in the PDF and on `/kilder` (#5).
 - The service worker caches and saves tiles from the tile route for offline use.
+  Areas saved before are moved to the new cache keys on the first load, so they
+  keep working offline.
 
 ### Added
 - A short, closable notice over Danish views during Dataforsyningen's platform
