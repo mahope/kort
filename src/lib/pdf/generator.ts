@@ -22,7 +22,7 @@ import {
 } from "@/lib/map/sources";
 import { boundsTouchSweden, mapRegionAt, mapRegionForBounds, nordicSourcesInBounds, type MapRegion } from "@/lib/geo/regions";
 import { timed, yieldToMain } from "./timing";
-import { applyPrintPreferences, drawControlLine } from "./controlLine";
+import { applyPrintPreferences, drawControlLine, drawPrintBox } from "./controlLine";
 import { calculateMultiPageGrid, calculatePrintArea } from "@/lib/geo/calculations";
 import { LARGE_FORMATS, printDpi } from "@/constants/paperFormats";
 import { effectiveDpi, getMaxCanvasSize } from "./limits";
@@ -220,24 +220,26 @@ export function drawScaleBar(
   const nice = niceNumber(barDistanceM);
   const actualBarMm = (nice * 1000) / scale;
 
-  const x = layout.marginMm + 5;
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(7);
+  const label = nice >= 1000 ? `${nice / 1000} km` : `${nice} m`;
+  const boxX = layout.marginMm + 5;
+  const width = Math.max(actualBarMm, pdf.getTextWidth(label));
+  const pad = 2;
+  const centerX = boxX + pad + width / 2;
+  const x = centerX - actualBarMm / 2;
   const y = layout.marginMm + layout.mapHeightMm - 5;
+
+  drawPrintBox(pdf, boxX, y - 4.5, width + 2 * pad, 8);
 
   pdf.setDrawColor(0);
   pdf.setLineWidth(0.5);
-  pdf.setFillColor(0, 0, 0);
-
-  // Bar line
   pdf.line(x, y, x + actualBarMm, y);
-  // End ticks
   pdf.line(x, y - 1.5, x, y + 1.5);
   pdf.line(x + actualBarMm, y - 1.5, x + actualBarMm, y + 1.5);
 
-  // Label
-  pdf.setFontSize(7);
   pdf.setTextColor(0);
-  const label = nice >= 1000 ? `${nice / 1000} km` : `${nice} m`;
-  pdf.text(label, x + actualBarMm / 2, y - 2.5, { align: "center" });
+  pdf.text(label, centerX, y - 2, { align: "center" });
 }
 
 function niceNumber(value: number): number {
