@@ -2,6 +2,8 @@
 
 import { useState, useSyncExternalStore } from "react";
 import { useMapRegion } from "@/lib/hooks/useMapRegion";
+import { SEA_OVERLAYS } from "@/lib/map/sources";
+import { useMapStore } from "@/stores/mapStore";
 import {
   isInServiceWindow,
   SERVICE_WINDOW_DISMISS_KEY,
@@ -26,6 +28,7 @@ function readDismissed(): boolean {
 /** Short, closable notice over Danish views during Dataforsyningen's platform move. */
 export function ServiceWindowNotice() {
   const region = useMapRegion();
+  const seaOn = useMapStore((s) => s.overlays.some((o) => o.enabled && SEA_OVERLAYS.includes(o.id)));
   // Server snapshot 0 = outside the window, so the prerendered page never shows it.
   const now = useSyncExternalStore(subscribeMinute, minuteNow, () => 0);
   const [dismissed, setDismissed] = useState(readDismissed);
@@ -39,11 +42,15 @@ export function ServiceWindowNotice() {
     } catch {}
   };
 
+  // Below the row of top controls (layer button, coordinate panel), and below
+  // the sea warning badge when that is shown, so the notice never covers it.
   return (
     <div
       role="status"
       data-testid="service-window-notice"
-      className="absolute left-1/2 top-3 z-[5] flex w-[min(30rem,calc(100%-8rem))] -translate-x-1/2 items-start gap-1 rounded bg-white/95 py-1 pl-3 pr-1 text-sm leading-snug text-slate-900 shadow-md"
+      className={`absolute left-3 right-3 z-[5] flex items-start gap-1 rounded bg-white/95 py-1 pl-3 pr-1 text-sm leading-snug text-slate-900 shadow-md md:right-auto md:w-[30rem] ${
+        seaOn ? "top-[6.5rem]" : "top-[4.25rem]"
+      }`}
     >
       <p className="py-2">{SERVICE_WINDOW_TEXT}</p>
       <button

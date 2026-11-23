@@ -41,7 +41,7 @@ export const DENMARK_TILE_BOUNDS: [number, number, number, number] = [7.5, 54.3,
 /** Highest tile zoom the route serves (MapLibre's own ceiling). */
 export const TILE_ROUTE_MAX_ZOOM = 22;
 
-export const TILE_ROUTE_PATH = "/api/tiles";
+const TILE_ROUTE_PATH = "/api/tiles";
 
 export function isTileRouteLayer(value: string): value is TileRouteLayer {
   return (TILE_ROUTE_LAYERS as readonly string[]).includes(value);

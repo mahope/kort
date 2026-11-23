@@ -4,7 +4,7 @@
  * map shows a short notice over Danish views until it ends. It removes itself
  * afterwards; delete this file and ServiceWindowNotice when convenient.
  */
-export const SERVICE_WINDOW = {
+const SERVICE_WINDOW = {
   start: Date.parse("2026-11-26T16:00:00+01:00"),
   end: Date.parse("2026-11-30T08:00:00+01:00"),
 } as const;

@@ -14,14 +14,17 @@ function keyOf(req: string | Request): string {
   return typeof req === "string" ? new URL(req, ORIGIN).href : req.url;
 }
 
-function fakeCaches() {
+function fakeCaches(opts: { full?: boolean } = {}) {
   const stores = new Map<string, Map<string, Response>>();
   const open = async (name: string) => {
     if (!stores.has(name)) stores.set(name, new Map());
     const m = stores.get(name)!;
     return {
       match: async (req: string | Request) => m.get(keyOf(req))?.clone(),
-      put: async (req: string | Request, res: Response) => void m.set(keyOf(req), res),
+      put: async (req: string | Request, res: Response) => {
+        if (opts.full) throw new DOMException("quota", "QuotaExceededError");
+        m.set(keyOf(req), res);
+      },
       delete: async (req: string | Request) => m.delete(keyOf(req)),
       keys: async () => [...m.keys()].map((u) => new Request(u)),
       add: async () => {},
@@ -44,9 +47,9 @@ function fakeCaches() {
   };
 }
 
-function loadWorker(network: { online: boolean }) {
+function loadWorker(network: { online: boolean }, opts: { full?: boolean } = {}) {
   const handlers: Record<string, Handler> = {};
-  const caches = fakeCaches();
+  const caches = fakeCaches(opts);
   const fetchFn = async (input: string | Request) => {
     if (!network.online) throw new TypeError("offline");
     void input;
@@ -112,6 +115,13 @@ describe("service worker and the tile route", () => {
     expect(reply.failed).toHaveLength(0);
     network.online = false;
     expect((await sw.request(TILE))?.status).toBe(200);
+  });
+
+  it("still shows a fetched tile when the cache is full", async () => {
+    const sw = loadWorker(network, { full: true });
+    const res = await sw.request(TILE);
+    expect(res?.status).toBe(200);
+    expect(res?.headers.get("content-type")).toBe("image/jpeg");
   });
 
   it("does not bulk-fetch other same-origin paths or foreign hosts", async () => {

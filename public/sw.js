@@ -336,10 +336,15 @@ async function fetchAndStoreTile(cache, request) {
       statusText: response.statusText,
       headers,
     });
-    await cache.put(request, stamped);
-    if (++tilesSinceTrim >= 50) {
-      tilesSinceTrim = 0;
-      await trimCache(cache, MAX_TILE_ENTRIES);
+    try {
+      await cache.put(request, stamped);
+      if (++tilesSinceTrim >= 50) {
+        tilesSinceTrim = 0;
+        await trimCache(cache, MAX_TILE_ENTRIES);
+      }
+    } catch {
+      // Storage full (quota) or unavailable: still show the tile we fetched,
+      // instead of turning a good answer into "Tile unavailable".
     }
   }
   return response;

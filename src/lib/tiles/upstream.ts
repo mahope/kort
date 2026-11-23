@@ -33,7 +33,7 @@ const DF_API = "https://api.dataforsyningen.dk";
 
 const DHM_DAFO = "/DHMNedboer/dhm/1.0.0/WMS";
 
-export const UPSTREAM_LAYERS: Record<TileRouteLayer, WmsLayer | WmtsLayer> = {
+const UPSTREAM_LAYERS: Record<TileRouteLayer, WmsLayer | WmtsLayer> = {
   dtk25: {
     kind: "wms",
     // `dtk25` is the current edition; `dtk_25` is the group with every year.
