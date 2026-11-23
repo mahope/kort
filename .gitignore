@@ -49,3 +49,6 @@ PRD.md
 
 # Local env files; .env.example documents the variables
 !.env.example
+
+# Python
+__pycache__/
