@@ -50,7 +50,9 @@ Example PDF: [example-a4-1-25000.pdf](https://github.com/mahope/kort/releases/do
 - **Multi-page prints and floor maps:** up to 5 × 5 sheets with overlap, an
   overview page, corner marks and sheet labels.
 - **Coordinate grids:** UTM, MGRS and DKTM1-4 on screen and in the PDF, plus a
-  readout of the coordinate under the crosshair.
+  readout of the coordinate under the crosshair. When grid labels are enabled,
+  lines that meet the map frame are labelled on each sheet, including lines
+  clipped at the edge of the frame.
 - **Magnetic declination** (WMM2025) on screen and as a diagram in the PDF.
 - **Norway and Sweden:** the map switches to Kartverket and OpenTopoMap when you
   pan across the border.

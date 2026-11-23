@@ -64,7 +64,7 @@ export function computeZonedGrid(bounds: LngLatBounds, spacing: number, mode: Ut
   return result;
 }
 
-export interface GridIntersection { t: number; label: { prefix: string; main: string } }
+export interface GridIntersection { t: number; lineKey: string; label: { prefix: string; main: string } }
 
 // In projected units (mm or px). Inverting and reprojecting a clip boundary
 // can leave its endpoints this far short of the edge due to roundoff.
@@ -78,7 +78,11 @@ export function gridIntersections(
   const dx = to[0] - from[0], dy = to[1] - from[1];
   const length = Math.hypot(dx, dy);
   const out: GridIntersection[] = [];
+  const crossingsByLine = new Map<string, number[]>();
   for (const line of lines) {
+    const key = `${line.zone}:${line.axis}:${line.value}`;
+    const positions = crossingsByLine.get(key) ?? [];
+    crossingsByLine.set(key, positions);
     for (let i = 1; i < line.coords.length; i++) {
       const a = project(...line.coords[i - 1]), b = project(...line.coords[i]);
       const sx = b.x - a.x, sy = b.y - a.y;
@@ -90,6 +94,10 @@ export function gridIntersections(
       const segmentT = (ax * dy - ay * dx) / det;
       const u = Math.max(0, Math.min(1, segmentT));
       if (segmentT !== u && Math.abs(segmentT - u) * Math.hypot(sx, sy) > GRID_ENDPOINT_TOLERANCE) continue;
+      // Adjacent segments and clipped fragments can share a crossing.
+      const position = t * length;
+      if (positions.some((seen) => Math.abs(seen - position) <= GRID_ENDPOINT_TOLERANCE)) continue;
+      positions.push(position);
       let label = formatGridLabel(line.value, format);
       if (system === "mgrs") {
         const p = line.coords[i - 1], q = line.coords[i];
@@ -111,7 +119,7 @@ export function gridIntersections(
         const principal = formatGridLabel(line.value, "short").main;
         label = { prefix: `${square} `, main: principal };
       }
-      out.push({ t: t * length, label });
+      out.push({ t: position, lineKey: key, label });
     }
   }
   return out.sort((a, b) => a.t - b.t);
