@@ -5,22 +5,39 @@
     "kort:about": "Depth layers only, sizes for the screen (96 dpi). In a base map: the 'sea' layers go right after the sea polygon, the 'lake' layers after the lake fills, the labels below the place names (see withDepth in style.mjs). For print, regenerate with depthLayers(id, { variant, pxPerMm: dpi / 25.4 }).",
     "kort:groups": {
       "sea": [
-        "dybder-areas-sea",
-        "dybder-minor-sea",
-        "dybder-major-sea",
-        "dybder-safety-sea"
+        "dybder-areas-sea-z5",
+        "dybder-areas-sea-z9",
+        "dybder-areas-sea-z12",
+        "dybder-minor-sea-z9",
+        "dybder-minor-sea-z12",
+        "dybder-major-sea-z5",
+        "dybder-major-sea-z9",
+        "dybder-major-sea-z12",
+        "dybder-safety-sea-z5",
+        "dybder-safety-sea-z9",
+        "dybder-safety-sea-z12"
       ],
       "lake": [
-        "dybder-areas-lake",
-        "dybder-minor-lake",
-        "dybder-major-lake",
-        "dybder-safety-lake"
+        "dybder-areas-lake-z5",
+        "dybder-areas-lake-z9",
+        "dybder-areas-lake-z12",
+        "dybder-minor-lake-z9",
+        "dybder-minor-lake-z12",
+        "dybder-major-lake-z5",
+        "dybder-major-lake-z9",
+        "dybder-major-lake-z12",
+        "dybder-safety-lake-z5",
+        "dybder-safety-lake-z9",
+        "dybder-safety-lake-z12"
       ],
       "labels": [
-        "dybder-contour-labels-major",
-        "dybder-contour-labels-minor",
-        "dybder-shoals",
-        "dybder-soundings"
+        "dybder-contour-labels-major-z5",
+        "dybder-contour-labels-major-z9",
+        "dybder-contour-labels-major-z12",
+        "dybder-contour-labels-minor-z9",
+        "dybder-contour-labels-minor-z12",
+        "dybder-shoals-z12",
+        "dybder-soundings-z12"
       ]
     }
   },
@@ -29,7 +46,7 @@
     "dybder": {
       "type": "vector",
       "url": "pmtiles://https://tiles.mahoje.dk/soekort.pmtiles",
-      "attribution": "Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning, hentet [dato]. Model og data er ikke egnet til navigation. EMODnet Bathymetry (CC BY 4.0). Sødybder: Danmarks Miljøportal (NOVANA)"
+      "attribution": "Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning, hentet 23.11.2026. Model og data er ikke egnet til navigation (<a href=\"https://dataforsyningen.dk/asset/PDF/rettigheder_vilkaar/Vilk%C3%A5r%20og%20betingelser%20for%20brug%20af%20marine%20data%20indeholdt%20i%20Danmarks%20Dybdemodel%2050%20m%20opl%C3%B8sning.pdf\">vilkår</a>). EMODnet Bathymetry (CC BY 4.0). Sødybder: Danmarks Miljøportal (NOVANA)"
     }
   },
   "layers": [
@@ -41,28 +58,61 @@
       }
     },
     {
-      "id": "dybder-areas-sea",
+      "id": "dybder-areas-sea-z5",
       "type": "fill",
       "source": "dybder",
       "source-layer": "depth_areas",
       "paint": {
         "fill-color": [
-          "step",
+          "match",
           [
             "get",
-            "d0"
+            "src"
           ],
-          "#7fb6e0",
-          1,
-          "#9cc8ea",
-          2,
-          "#b6d7f0",
-          3,
-          "#cde4f5",
-          5,
-          "#e3f0fa",
-          10,
-          "#f6fafd"
+          "novana",
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            1,
+            "#9cc8ea",
+            2,
+            "#b6d7f0",
+            3,
+            "#cde4f5",
+            5,
+            "#e3f0fa",
+            10,
+            "#f6fafd"
+          ],
+          "emodnet",
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            10,
+            "#f6fafd"
+          ],
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            2,
+            "#b6d7f0",
+            5,
+            "#e3f0fa",
+            10,
+            "#f6fafd"
+          ]
         ],
         "fill-opacity": 1,
         "fill-antialias": false
@@ -70,35 +120,537 @@
       "filter": [
         "all",
         [
-          "!=",
+          "match",
           [
             "get",
             "src"
           ],
-          "novana"
-        ]
-      ]
-    },
-    {
-      "id": "dybder-minor-sea",
-      "type": "line",
-      "source": "dybder",
-      "source-layer": "depth_contours",
-      "minzoom": 11,
-      "filter": [
-        "all",
-        [
-          "!=",
-          [
-            "get",
-            "src"
-          ],
-          "novana"
+          "novana",
+          false,
+          "emodnet",
+          true,
+          true
         ],
         [
           "all",
           [
-            "!",
+            "!=",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ]
+        ]
+      ],
+      "maxzoom": 9
+    },
+    {
+      "id": "dybder-areas-sea-z9",
+      "type": "fill",
+      "source": "dybder",
+      "source-layer": "depth_areas",
+      "paint": {
+        "fill-color": [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            1,
+            "#9cc8ea",
+            2,
+            "#b6d7f0",
+            3,
+            "#cde4f5",
+            5,
+            "#e3f0fa",
+            10,
+            "#f6fafd"
+          ],
+          "emodnet",
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            5,
+            "#e3f0fa",
+            10,
+            "#f6fafd"
+          ],
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            2,
+            "#b6d7f0",
+            5,
+            "#e3f0fa",
+            10,
+            "#f6fafd"
+          ]
+        ],
+        "fill-opacity": 1,
+        "fill-antialias": false
+      },
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          true,
+          true
+        ],
+        [
+          "all",
+          [
+            "!=",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ]
+        ]
+      ],
+      "minzoom": 9,
+      "maxzoom": 12
+    },
+    {
+      "id": "dybder-areas-sea-z12",
+      "type": "fill",
+      "source": "dybder",
+      "source-layer": "depth_areas",
+      "paint": {
+        "fill-color": [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            1,
+            "#9cc8ea",
+            2,
+            "#b6d7f0",
+            3,
+            "#cde4f5",
+            5,
+            "#e3f0fa",
+            10,
+            "#f6fafd"
+          ],
+          "emodnet",
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            5,
+            "#e3f0fa",
+            10,
+            "#f6fafd"
+          ],
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            1,
+            "#9cc8ea",
+            2,
+            "#b6d7f0",
+            3,
+            "#cde4f5",
+            5,
+            "#e3f0fa",
+            10,
+            "#f6fafd"
+          ]
+        ],
+        "fill-opacity": 1,
+        "fill-antialias": false
+      },
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          true,
+          true
+        ],
+        [
+          "all",
+          [
+            "!=",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ]
+        ]
+      ],
+      "minzoom": 12
+    },
+    {
+      "id": "dybder-minor-sea-z9",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                30,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "!=",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ],
+          [
+            "all",
+            [
+              "!",
+              [
+                "in",
+                [
+                  "get",
+                  "d"
+                ],
+                [
+                  "literal",
+                  [
+                    1,
+                    2,
+                    3,
+                    5,
+                    10,
+                    20,
+                    50
+                  ]
+                ]
+              ]
+            ],
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  1,
+                  2,
+                  3,
+                  5,
+                  10,
+                  20,
+                  50,
+                  15,
+                  30,
+                  100,
+                  200
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#4f7fae",
+        "line-width": 0.5,
+        "line-opacity": 0.8
+      },
+      "minzoom": 11,
+      "maxzoom": 12
+    },
+    {
+      "id": "dybder-minor-sea-z12",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3,
+                5,
+                10,
+                15,
+                20,
+                30,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "!=",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ],
+          [
+            "all",
+            [
+              "!",
+              [
+                "in",
+                [
+                  "get",
+                  "d"
+                ],
+                [
+                  "literal",
+                  [
+                    1,
+                    2,
+                    3,
+                    5,
+                    10,
+                    20,
+                    50
+                  ]
+                ]
+              ]
+            ],
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  1,
+                  2,
+                  3,
+                  5,
+                  10,
+                  20,
+                  50,
+                  15,
+                  30,
+                  100,
+                  200
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#4f7fae",
+        "line-width": 0.5,
+        "line-opacity": 0.8
+      },
+      "minzoom": 12
+    },
+    {
+      "id": "dybder-major-sea-z5",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          false,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "!=",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ],
+          [
+            "all",
             [
               "in",
               [
@@ -117,93 +669,22 @@
                   50
                 ]
               ]
-            ]
-          ],
-          [
-            "in",
-            [
-              "get",
-              "d"
             ],
             [
-              "literal",
+              "!",
               [
-                1,
-                2,
-                3,
-                5,
-                10,
-                20,
-                50,
-                15,
-                30,
-                100,
-                200
-              ]
-            ]
-          ]
-        ]
-      ],
-      "layout": {
-        "line-join": "round",
-        "line-cap": "round"
-      },
-      "paint": {
-        "line-color": "#4f7fae",
-        "line-width": 0.5,
-        "line-opacity": 0.8
-      }
-    },
-    {
-      "id": "dybder-major-sea",
-      "type": "line",
-      "source": "dybder",
-      "source-layer": "depth_contours",
-      "filter": [
-        "all",
-        [
-          "!=",
-          [
-            "get",
-            "src"
-          ],
-          "novana"
-        ],
-        [
-          "all",
-          [
-            "in",
-            [
-              "get",
-              "d"
-            ],
-            [
-              "literal",
-              [
-                1,
-                2,
-                3,
-                5,
-                10,
-                20,
-                50
-              ]
-            ]
-          ],
-          [
-            "!",
-            [
-              "in",
-              [
-                "get",
-                "d"
-              ],
-              [
-                "literal",
+                "in",
                 [
-                  1,
-                  2,
-                  3
+                  "get",
+                  "d"
+                ],
+                [
+                  "literal",
+                  [
+                    1,
+                    2,
+                    3
+                  ]
                 ]
               ]
             ]
@@ -218,108 +699,76 @@
         "line-color": "#4f7fae",
         "line-width": 0.8,
         "line-opacity": 1
-      }
+      },
+      "maxzoom": 9
     },
     {
-      "id": "dybder-safety-sea",
+      "id": "dybder-major-sea-z9",
       "type": "line",
       "source": "dybder",
       "source-layer": "depth_contours",
       "filter": [
         "all",
         [
-          "!=",
+          "match",
           [
             "get",
             "src"
           ],
-          "novana"
-        ],
-        [
-          "in",
+          "novana",
+          true,
+          "emodnet",
           [
-            "get",
-            "d"
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
           ],
           [
-            "literal",
+            "in",
             [
-              1,
-              2,
-              3
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                30,
+                50,
+                100,
+                200
+              ]
             ]
           ]
-        ]
-      ],
-      "layout": {
-        "line-join": "round",
-        "line-cap": "round"
-      },
-      "paint": {
-        "line-color": "#4f7fae",
-        "line-width": 1.2,
-        "line-opacity": 1
-      }
-    },
-    {
-      "id": "dybder-areas-lake",
-      "type": "fill",
-      "source": "dybder",
-      "source-layer": "depth_areas",
-      "paint": {
-        "fill-color": [
-          "step",
-          [
-            "get",
-            "d0"
-          ],
-          "#7fb6e0",
-          1,
-          "#9cc8ea",
-          2,
-          "#b6d7f0",
-          3,
-          "#cde4f5",
-          5,
-          "#e3f0fa",
-          10,
-          "#f6fafd"
-        ],
-        "fill-opacity": 1,
-        "fill-antialias": false
-      },
-      "filter": [
-        "all",
-        [
-          "==",
-          [
-            "get",
-            "src"
-          ],
-          "novana"
-        ]
-      ]
-    },
-    {
-      "id": "dybder-minor-lake",
-      "type": "line",
-      "source": "dybder",
-      "source-layer": "depth_contours",
-      "minzoom": 11,
-      "filter": [
-        "all",
-        [
-          "==",
-          [
-            "get",
-            "src"
-          ],
-          "novana"
         ],
         [
           "all",
           [
-            "!",
+            "!=",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ],
+          [
+            "all",
             [
               "in",
               [
@@ -338,93 +787,22 @@
                   50
                 ]
               ]
-            ]
-          ],
-          [
-            "in",
-            [
-              "get",
-              "d"
             ],
             [
-              "literal",
+              "!",
               [
-                1,
-                2,
-                3,
-                5,
-                10,
-                20,
-                50,
-                15,
-                30,
-                100,
-                200
-              ]
-            ]
-          ]
-        ]
-      ],
-      "layout": {
-        "line-join": "round",
-        "line-cap": "round"
-      },
-      "paint": {
-        "line-color": "#4f7fae",
-        "line-width": 0.5,
-        "line-opacity": 0.8
-      }
-    },
-    {
-      "id": "dybder-major-lake",
-      "type": "line",
-      "source": "dybder",
-      "source-layer": "depth_contours",
-      "filter": [
-        "all",
-        [
-          "==",
-          [
-            "get",
-            "src"
-          ],
-          "novana"
-        ],
-        [
-          "all",
-          [
-            "in",
-            [
-              "get",
-              "d"
-            ],
-            [
-              "literal",
-              [
-                1,
-                2,
-                3,
-                5,
-                10,
-                20,
-                50
-              ]
-            ]
-          ],
-          [
-            "!",
-            [
-              "in",
-              [
-                "get",
-                "d"
-              ],
-              [
-                "literal",
+                "in",
                 [
-                  1,
-                  2,
-                  3
+                  "get",
+                  "d"
+                ],
+                [
+                  "literal",
+                  [
+                    1,
+                    2,
+                    3
+                  ]
                 ]
               ]
             ]
@@ -439,35 +817,207 @@
         "line-color": "#4f7fae",
         "line-width": 0.8,
         "line-opacity": 1
-      }
+      },
+      "minzoom": 9,
+      "maxzoom": 12
     },
     {
-      "id": "dybder-safety-lake",
+      "id": "dybder-major-sea-z12",
       "type": "line",
       "source": "dybder",
       "source-layer": "depth_contours",
       "filter": [
         "all",
         [
-          "==",
+          "match",
           [
             "get",
             "src"
           ],
-          "novana"
-        ],
-        [
-          "in",
+          "novana",
+          true,
+          "emodnet",
           [
-            "get",
-            "d"
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
           ],
           [
-            "literal",
+            "in",
             [
-              1,
-              2,
-              3
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3,
+                5,
+                10,
+                15,
+                20,
+                30,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "!=",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ],
+          [
+            "all",
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  1,
+                  2,
+                  3,
+                  5,
+                  10,
+                  20,
+                  50
+                ]
+              ]
+            ],
+            [
+              "!",
+              [
+                "in",
+                [
+                  "get",
+                  "d"
+                ],
+                [
+                  "literal",
+                  [
+                    1,
+                    2,
+                    3
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#4f7fae",
+        "line-width": 0.8,
+        "line-opacity": 1
+      },
+      "minzoom": 12
+    },
+    {
+      "id": "dybder-safety-sea-z5",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          false,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "!=",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3
+              ]
             ]
           ]
         ]
@@ -480,62 +1030,1468 @@
         "line-color": "#4f7fae",
         "line-width": 1.2,
         "line-opacity": 1
-      }
+      },
+      "maxzoom": 9
     },
     {
-      "id": "dybder-contour-labels-major",
+      "id": "dybder-safety-sea-z9",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                30,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "!=",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#4f7fae",
+        "line-width": 1.2,
+        "line-opacity": 1
+      },
+      "minzoom": 9,
+      "maxzoom": 12
+    },
+    {
+      "id": "dybder-safety-sea-z12",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3,
+                5,
+                10,
+                15,
+                20,
+                30,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "!=",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#4f7fae",
+        "line-width": 1.2,
+        "line-opacity": 1
+      },
+      "minzoom": 12
+    },
+    {
+      "id": "dybder-areas-lake-z5",
+      "type": "fill",
+      "source": "dybder",
+      "source-layer": "depth_areas",
+      "paint": {
+        "fill-color": [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            1,
+            "#9cc8ea",
+            2,
+            "#b6d7f0",
+            3,
+            "#cde4f5",
+            5,
+            "#e3f0fa",
+            10,
+            "#f6fafd"
+          ],
+          "emodnet",
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            10,
+            "#f6fafd"
+          ],
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            2,
+            "#b6d7f0",
+            5,
+            "#e3f0fa",
+            10,
+            "#f6fafd"
+          ]
+        ],
+        "fill-opacity": 1,
+        "fill-antialias": false
+      },
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          false,
+          "emodnet",
+          true,
+          true
+        ],
+        [
+          "all",
+          [
+            "==",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ]
+        ]
+      ],
+      "maxzoom": 9
+    },
+    {
+      "id": "dybder-areas-lake-z9",
+      "type": "fill",
+      "source": "dybder",
+      "source-layer": "depth_areas",
+      "paint": {
+        "fill-color": [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            1,
+            "#9cc8ea",
+            2,
+            "#b6d7f0",
+            3,
+            "#cde4f5",
+            5,
+            "#e3f0fa",
+            10,
+            "#f6fafd"
+          ],
+          "emodnet",
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            5,
+            "#e3f0fa",
+            10,
+            "#f6fafd"
+          ],
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            2,
+            "#b6d7f0",
+            5,
+            "#e3f0fa",
+            10,
+            "#f6fafd"
+          ]
+        ],
+        "fill-opacity": 1,
+        "fill-antialias": false
+      },
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          true,
+          true
+        ],
+        [
+          "all",
+          [
+            "==",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ]
+        ]
+      ],
+      "minzoom": 9,
+      "maxzoom": 12
+    },
+    {
+      "id": "dybder-areas-lake-z12",
+      "type": "fill",
+      "source": "dybder",
+      "source-layer": "depth_areas",
+      "paint": {
+        "fill-color": [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            1,
+            "#9cc8ea",
+            2,
+            "#b6d7f0",
+            3,
+            "#cde4f5",
+            5,
+            "#e3f0fa",
+            10,
+            "#f6fafd"
+          ],
+          "emodnet",
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            5,
+            "#e3f0fa",
+            10,
+            "#f6fafd"
+          ],
+          [
+            "step",
+            [
+              "get",
+              "d0"
+            ],
+            "#7fb6e0",
+            1,
+            "#9cc8ea",
+            2,
+            "#b6d7f0",
+            3,
+            "#cde4f5",
+            5,
+            "#e3f0fa",
+            10,
+            "#f6fafd"
+          ]
+        ],
+        "fill-opacity": 1,
+        "fill-antialias": false
+      },
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          true,
+          true
+        ],
+        [
+          "all",
+          [
+            "==",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ]
+        ]
+      ],
+      "minzoom": 12
+    },
+    {
+      "id": "dybder-minor-lake-z9",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                30,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "==",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ],
+          [
+            "all",
+            [
+              "!",
+              [
+                "in",
+                [
+                  "get",
+                  "d"
+                ],
+                [
+                  "literal",
+                  [
+                    1,
+                    2,
+                    3,
+                    5,
+                    10,
+                    20,
+                    50
+                  ]
+                ]
+              ]
+            ],
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  1,
+                  2,
+                  3,
+                  5,
+                  10,
+                  20,
+                  50,
+                  15,
+                  30,
+                  100,
+                  200
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#4f7fae",
+        "line-width": 0.5,
+        "line-opacity": 0.8
+      },
+      "minzoom": 11,
+      "maxzoom": 12
+    },
+    {
+      "id": "dybder-minor-lake-z12",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3,
+                5,
+                10,
+                15,
+                20,
+                30,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "==",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ],
+          [
+            "all",
+            [
+              "!",
+              [
+                "in",
+                [
+                  "get",
+                  "d"
+                ],
+                [
+                  "literal",
+                  [
+                    1,
+                    2,
+                    3,
+                    5,
+                    10,
+                    20,
+                    50
+                  ]
+                ]
+              ]
+            ],
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  1,
+                  2,
+                  3,
+                  5,
+                  10,
+                  20,
+                  50,
+                  15,
+                  30,
+                  100,
+                  200
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#4f7fae",
+        "line-width": 0.5,
+        "line-opacity": 0.8
+      },
+      "minzoom": 12
+    },
+    {
+      "id": "dybder-major-lake-z5",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          false,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "==",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ],
+          [
+            "all",
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  1,
+                  2,
+                  3,
+                  5,
+                  10,
+                  20,
+                  50
+                ]
+              ]
+            ],
+            [
+              "!",
+              [
+                "in",
+                [
+                  "get",
+                  "d"
+                ],
+                [
+                  "literal",
+                  [
+                    1,
+                    2,
+                    3
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#4f7fae",
+        "line-width": 0.8,
+        "line-opacity": 1
+      },
+      "maxzoom": 9
+    },
+    {
+      "id": "dybder-major-lake-z9",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                30,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "==",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ],
+          [
+            "all",
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  1,
+                  2,
+                  3,
+                  5,
+                  10,
+                  20,
+                  50
+                ]
+              ]
+            ],
+            [
+              "!",
+              [
+                "in",
+                [
+                  "get",
+                  "d"
+                ],
+                [
+                  "literal",
+                  [
+                    1,
+                    2,
+                    3
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#4f7fae",
+        "line-width": 0.8,
+        "line-opacity": 1
+      },
+      "minzoom": 9,
+      "maxzoom": 12
+    },
+    {
+      "id": "dybder-major-lake-z12",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3,
+                5,
+                10,
+                15,
+                20,
+                30,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "==",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ],
+          [
+            "all",
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  1,
+                  2,
+                  3,
+                  5,
+                  10,
+                  20,
+                  50
+                ]
+              ]
+            ],
+            [
+              "!",
+              [
+                "in",
+                [
+                  "get",
+                  "d"
+                ],
+                [
+                  "literal",
+                  [
+                    1,
+                    2,
+                    3
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#4f7fae",
+        "line-width": 0.8,
+        "line-opacity": 1
+      },
+      "minzoom": 12
+    },
+    {
+      "id": "dybder-safety-lake-z5",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          false,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "==",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#4f7fae",
+        "line-width": 1.2,
+        "line-opacity": 1
+      },
+      "maxzoom": 9
+    },
+    {
+      "id": "dybder-safety-lake-z9",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                30,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "==",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#4f7fae",
+        "line-width": 1.2,
+        "line-opacity": 1
+      },
+      "minzoom": 9,
+      "maxzoom": 12
+    },
+    {
+      "id": "dybder-safety-lake-z12",
+      "type": "line",
+      "source": "dybder",
+      "source-layer": "depth_contours",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3,
+                5,
+                10,
+                15,
+                20,
+                30,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "==",
+            [
+              "get",
+              "src"
+            ],
+            "novana"
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "line-join": "round",
+        "line-cap": "round"
+      },
+      "paint": {
+        "line-color": "#4f7fae",
+        "line-width": 1.2,
+        "line-opacity": 1
+      },
+      "minzoom": 12
+    },
+    {
+      "id": "dybder-contour-labels-major-z5",
       "type": "symbol",
       "source": "dybder",
       "source-layer": "depth_labels",
       "filter": [
         "all",
         [
-          "==",
+          "match",
           [
             "get",
-            "k"
+            "src"
           ],
-          "c"
-        ],
-        [
-          "in",
+          "novana",
+          false,
+          "emodnet",
           [
-            "get",
-            "d"
-          ],
-          [
-            "literal",
+            "in",
             [
-              1,
-              2,
-              3,
-              5,
-              10,
-              20,
-              50,
-              15,
-              30,
-              100,
-              200
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
             ]
           ]
         ],
         [
-          "in",
+          "all",
           [
-            "get",
-            "d"
+            "==",
+            [
+              "get",
+              "k"
+            ],
+            "c"
           ],
           [
-            "literal",
+            "in",
             [
-              1,
-              2,
-              3,
-              5,
-              10,
-              20,
-              50
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3,
+                5,
+                10,
+                20,
+                50,
+                15,
+                30,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3,
+                5,
+                10,
+                20,
+                50
+              ]
             ]
           ]
         ]
@@ -587,49 +2543,97 @@
         "text-halo-color": "rgba(255,255,255,0.92)",
         "text-halo-width": 1.3228346456692914,
         "text-opacity": 1
-      }
+      },
+      "maxzoom": 9
     },
     {
-      "id": "dybder-contour-labels-minor",
+      "id": "dybder-contour-labels-major-z9",
       "type": "symbol",
       "source": "dybder",
       "source-layer": "depth_labels",
-      "minzoom": 11,
       "filter": [
         "all",
         [
-          "==",
+          "match",
           [
             "get",
-            "k"
+            "src"
           ],
-          "c"
-        ],
-        [
-          "in",
+          "novana",
+          true,
+          "emodnet",
           [
-            "get",
-            "d"
-          ],
-          [
-            "literal",
+            "in",
             [
-              1,
-              2,
-              3,
-              5,
-              10,
-              20,
-              50,
-              15,
-              30,
-              100,
-              200
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                30,
+                50,
+                100,
+                200
+              ]
             ]
           ]
         ],
         [
-          "!",
+          "all",
+          [
+            "==",
+            [
+              "get",
+              "k"
+            ],
+            "c"
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3,
+                5,
+                10,
+                20,
+                50,
+                15,
+                30,
+                100,
+                200
+              ]
+            ]
+          ],
           [
             "in",
             [
@@ -698,14 +2702,505 @@
         "text-halo-color": "rgba(255,255,255,0.92)",
         "text-halo-width": 1.3228346456692914,
         "text-opacity": 1
-      }
+      },
+      "minzoom": 9,
+      "maxzoom": 12
     },
     {
-      "id": "dybder-shoals",
+      "id": "dybder-contour-labels-major-z12",
       "type": "symbol",
       "source": "dybder",
       "source-layer": "depth_labels",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3,
+                5,
+                10,
+                15,
+                20,
+                30,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "==",
+            [
+              "get",
+              "k"
+            ],
+            "c"
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3,
+                5,
+                10,
+                20,
+                50,
+                15,
+                30,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3,
+                5,
+                10,
+                20,
+                50
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "text-field": [
+          "to-string",
+          [
+            "get",
+            "d"
+          ]
+        ],
+        "text-font": [
+          "Open Sans Regular"
+        ],
+        "text-size": 10.5,
+        "text-rotate": [
+          "get",
+          "a"
+        ],
+        "text-rotation-alignment": "map",
+        "text-pitch-alignment": "map",
+        "text-padding": 22.67716535433071,
+        "symbol-sort-key": [
+          "-",
+          0,
+          [
+            "to-number",
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  1,
+                  2,
+                  3
+                ]
+              ]
+            ]
+          ]
+        ]
+      },
+      "paint": {
+        "text-color": "#2d5d8c",
+        "text-halo-color": "rgba(255,255,255,0.92)",
+        "text-halo-width": 1.3228346456692914,
+        "text-opacity": 1
+      },
+      "minzoom": 12
+    },
+    {
+      "id": "dybder-contour-labels-minor-z9",
+      "type": "symbol",
+      "source": "dybder",
+      "source-layer": "depth_labels",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                2,
+                5,
+                10,
+                20,
+                30,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "==",
+            [
+              "get",
+              "k"
+            ],
+            "c"
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3,
+                5,
+                10,
+                20,
+                50,
+                15,
+                30,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "!",
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  1,
+                  2,
+                  3,
+                  5,
+                  10,
+                  20,
+                  50
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "text-field": [
+          "to-string",
+          [
+            "get",
+            "d"
+          ]
+        ],
+        "text-font": [
+          "Open Sans Regular"
+        ],
+        "text-size": 10.5,
+        "text-rotate": [
+          "get",
+          "a"
+        ],
+        "text-rotation-alignment": "map",
+        "text-pitch-alignment": "map",
+        "text-padding": 22.67716535433071,
+        "symbol-sort-key": [
+          "-",
+          0,
+          [
+            "to-number",
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  1,
+                  2,
+                  3
+                ]
+              ]
+            ]
+          ]
+        ]
+      },
+      "paint": {
+        "text-color": "#2d5d8c",
+        "text-halo-color": "rgba(255,255,255,0.92)",
+        "text-halo-width": 1.3228346456692914,
+        "text-opacity": 1
+      },
       "minzoom": 11,
+      "maxzoom": 12
+    },
+    {
+      "id": "dybder-contour-labels-minor-z12",
+      "type": "symbol",
+      "source": "dybder",
+      "source-layer": "depth_labels",
+      "filter": [
+        "all",
+        [
+          "match",
+          [
+            "get",
+            "src"
+          ],
+          "novana",
+          true,
+          "emodnet",
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                5,
+                10,
+                20,
+                50,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3,
+                5,
+                10,
+                15,
+                20,
+                30,
+                50,
+                100,
+                200
+              ]
+            ]
+          ]
+        ],
+        [
+          "all",
+          [
+            "==",
+            [
+              "get",
+              "k"
+            ],
+            "c"
+          ],
+          [
+            "in",
+            [
+              "get",
+              "d"
+            ],
+            [
+              "literal",
+              [
+                1,
+                2,
+                3,
+                5,
+                10,
+                20,
+                50,
+                15,
+                30,
+                100,
+                200
+              ]
+            ]
+          ],
+          [
+            "!",
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  1,
+                  2,
+                  3,
+                  5,
+                  10,
+                  20,
+                  50
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "layout": {
+        "text-field": [
+          "to-string",
+          [
+            "get",
+            "d"
+          ]
+        ],
+        "text-font": [
+          "Open Sans Regular"
+        ],
+        "text-size": 10.5,
+        "text-rotate": [
+          "get",
+          "a"
+        ],
+        "text-rotation-alignment": "map",
+        "text-pitch-alignment": "map",
+        "text-padding": 22.67716535433071,
+        "symbol-sort-key": [
+          "-",
+          0,
+          [
+            "to-number",
+            [
+              "in",
+              [
+                "get",
+                "d"
+              ],
+              [
+                "literal",
+                [
+                  1,
+                  2,
+                  3
+                ]
+              ]
+            ]
+          ]
+        ]
+      },
+      "paint": {
+        "text-color": "#2d5d8c",
+        "text-halo-color": "rgba(255,255,255,0.92)",
+        "text-halo-width": 1.3228346456692914,
+        "text-opacity": 1
+      },
+      "minzoom": 12
+    },
+    {
+      "id": "dybder-shoals-z12",
+      "type": "symbol",
+      "source": "dybder",
+      "source-layer": "depth_labels",
       "filter": [
         "all",
         [
@@ -835,14 +3330,14 @@
         "text-halo-color": "rgba(255,255,255,0.75)",
         "text-halo-width": 0.8,
         "text-opacity": 1
-      }
+      },
+      "minzoom": 12
     },
     {
-      "id": "dybder-soundings",
+      "id": "dybder-soundings-z12",
       "type": "symbol",
       "source": "dybder",
       "source-layer": "depth_labels",
-      "minzoom": 12.5,
       "filter": [
         "==",
         [
@@ -961,7 +3456,8 @@
         "text-halo-color": "rgba(255,255,255,0.6)",
         "text-halo-width": 0.6,
         "text-opacity": 1
-      }
+      },
+      "minzoom": 12.5
     }
   ]
 }

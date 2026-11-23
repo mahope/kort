@@ -78,9 +78,11 @@ const map = new maplibregl.Map({
 map.on("error", (e) => window.__errors.push(String(e.error?.message || e.error || e)));
 if (mode === "a4") {
   const v = VARIANTS[variant];
+  // Paper cannot follow a link: name the page the terms are on (as the app's PDF does).
+  const paperCredit = credit.replace(/<a href="[^"]*">([^<]*)<\/a>/g, "$1: gst.dk/ansvarsomraader/soekort-og-marine-data/soeopmaaling-og-dybdedata/danmarks-dybdemodel");
   footer.innerHTML =
     `<b>${q.get("title") || ""}</b>, 1:${scale.toLocaleString("da-DK")}, ${v ? v.label : "uden dybder"}. ` +
-    `Kort: Klimadatastyrelsen (CC BY 4.0). ${credit}. IKKE TIL NAVIGATION.`;
+    `Kort: Klimadatastyrelsen (CC BY 4.0). ${paperCredit}. IKKE TIL NAVIGATION.`;
 }
 map.once("load", () => {
   map.once("idle", () => {

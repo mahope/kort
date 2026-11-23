@@ -32,6 +32,7 @@ const todo = only.length ? shots.filter((t) => only.some((o) => `${t.site.name}-
 
 const server = spawn(process.execPath, [path.join(HERE, "serve.mjs"), String(port)], { stdio: ["ignore", "pipe", "inherit"], env: process.env });
 let browser;
+const failed = [];
 try {
   for (let i = 0; ; i++) {
     try { if ((await fetch(`${base}/style.mjs`)).ok) break; } catch {}
@@ -50,7 +51,13 @@ try {
     await page.goto(`${base}/?${q}`);
     await page.waitForFunction(() => window.__ready === true, null, { timeout: 300000 });
     const errors = await page.evaluate(() => window.__errors);
-    if (errors.length) console.warn(`${site.name}: ${errors.slice(0, 3).join(" | ")}`);
+    if (errors.length) {
+      // A failed tile leaves holes: keep the old image rather than overwrite it with an incomplete one.
+      console.error(`${site.name}-${mode}-${variant}: NOT SAVED, ${errors.length} map errors: ${errors.slice(0, 3).join(" | ")}`);
+      failed.push(`${site.name}-${mode}-${variant}`);
+      await context.close();
+      continue;
+    }
     const png = await page.screenshot({ type: "png" });
     const file = path.join(OUT, `${site.name}-egen-${variant}-${mode === "a4" ? "a4-300dpi" : "skaerm"}.webp`);
     await writeFile(file, await toWebp(browser, png, mode === "a4" ? 0.8 : 0.86));
@@ -65,4 +72,8 @@ try {
 } finally {
   await browser?.close();
   server.kill();
+}
+if (failed.length) {
+  console.error(`${failed.length} shots not saved (rerun them by name): ${failed.join(" ")}`);
+  process.exitCode = 1;
 }

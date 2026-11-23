@@ -17,4 +17,5 @@ docker run --rm -u "$(id -u):$(id -g)" \
   -v "$W:/work" -v "$REPO:/repo:ro" -v "$HERE:/scripts:ro" \
   -w /work kort-ddm python3 /scripts/build.py /work --repo /repo "$@"
 echo "byggetid: $(( $(date +%s) - start )) s"
-ls -la "$W"/*.pmtiles
+# A single step (e.g. grids) may not have written any PMTiles yet.
+find "$W" -maxdepth 1 -name '*.pmtiles' -exec ls -la {} +

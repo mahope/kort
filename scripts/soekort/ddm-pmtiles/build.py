@@ -79,10 +79,15 @@ TIERS = {
 EMOD_LEVELS = {"t1": [5, 10, 20, 50, 100, 200], "t2": [5, 10, 20, 50, 100, 200], "t3": [10, 20, 50, 100, 200]}
 FILL_CELLS = 20  # 1 km past the model's coast, under the base map's land
 
+# The DDM50 terms must be made available to third parties: the link goes with the file.
+DDM_TERMS_URL = (  # = DDM_TERMS_URL in src/lib/map/sources.ts
+    "https://dataforsyningen.dk/asset/PDF/rettigheder_vilkaar/Vilk%C3%A5r%20og%20betingelser%20for%20brug%20af%20"
+    "marine%20data%20indeholdt%20i%20Danmarks%20Dybdemodel%2050%20m%20opl%C3%B8sning.pdf"
+)
 ATTRIBUTION = (
     "Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning, hentet {date}. "
-    "Model og data er ikke egnet til navigation. EMODnet Bathymetry (CC BY 4.0). "
-    "Sødybder: Danmarks Miljøportal (NOVANA)"
+    'Model og data er ikke egnet til navigation (<a href="' + DDM_TERMS_URL + '">vilkår</a>). '
+    "EMODnet Bathymetry (CC BY 4.0). Sødybder: Danmarks Miljøportal (NOVANA)"
 )
 
 S3034 = osr.SpatialReference()
@@ -389,6 +394,17 @@ def place_labels(pts, d, src, out, spacing, half):
             break
 
 
+def nan_mean(a, size):
+    """Mean over a size x size window of the finite cells only; NaN where the window has none."""
+    w = np.isfinite(a)
+    v = ndimage.uniform_filter(np.where(w, a, 0).astype(np.float64), size=size, mode="nearest")
+    n = ndimage.uniform_filter(w.astype(np.float64), size=size, mode="nearest")
+    with np.errstate(invalid="ignore", divide="ignore"):
+        out = v / n
+    out[n < 1e-9] = np.nan
+    return out.astype(np.float32)
+
+
 def write_soundings(raw, smooth, gt, block_m, out):
     """Shoal soundings (local minima of the smoothed model, k=s) and a sparse grid (k=g).
 
@@ -400,7 +416,8 @@ def write_soundings(raw, smooth, gt, block_m, out):
     win = int(round(750 / cell)) | 1
     s = np.where(np.isfinite(smooth), smooth, 9999)
     mn = ndimage.minimum_filter(s, size=win, mode="nearest")
-    ring = ndimage.uniform_filter(np.where(np.isfinite(smooth), smooth, np.nan), size=win * 2 + 1, mode="nearest")
+    # uniform_filter would spread NaN far beyond the window; average the finite cells instead.
+    ring = nan_mean(smooth, win * 2 + 1)
     valid_all = ndimage.minimum_filter(np.isfinite(raw).astype(np.uint8), size=win) == 1
     with np.errstate(invalid="ignore"):
         shoal = (s == mn) & valid_all & (smooth < 30) & (ring - smooth > 1.0)
@@ -511,11 +528,15 @@ class Build:
             prev = json.load(open(state))
             if prev["bbox"] != args.bbox:
                 raise SystemExit(f"{self.work} was built with bbox {prev['bbox']}; use another workdir")
+            # Grids and emod vectors are cached: builds with and without EMODnet must not share them.
+            if prev.get("no_emodnet", False) != args.no_emodnet:
+                raise SystemExit(f"{self.work} was built with no_emodnet={prev.get('no_emodnet', False)}; "
+                                 "use another workdir")
         else:
             digest = sha256(self.raw_path)
             if digest != DDM_SHA256:
                 log(f"WARNING: {DDM_FILE} has sha256 {digest}, not the 2024 v2.0 file; a new model version?")
-            json.dump({"bbox": args.bbox, "ddm_sha256": digest, "ddm_date": self.date}, open(state, "w"))
+            json.dump({"bbox": args.bbox, "no_emodnet": args.no_emodnet, "ddm_sha256": digest, "ddm_date": self.date}, open(state, "w"))
 
     def bbox_ll(self):
         if not self.args.bbox:
@@ -625,16 +646,19 @@ class Build:
                "-r1", "--no-feature-limit", "--no-tile-size-limit", "--buffer=16",
                "-P"]
         # Each file holds one tier's areas, lines, labels (or all three for emod/lakes); split by geometry.
+        # The split is redone on every tiles run (cheap), so it can never lag behind the vectors.
+        layers = {"Polygon": "depth_areas", "LineString": "depth_contours", "Point": "depth_labels"}
         for f in files:
-            for layer, geom in (("depth_areas", "Polygon"), ("depth_contours", "LineString"), ("depth_labels", "Point")):
-                split = os.path.join(self.vec, f"split_{tier}_{layer}_{f}")
-                if not os.path.exists(split):
-                    with open(os.path.join(self.vec, f), encoding="utf-8") as src, open(split, "w", encoding="utf-8") as dst:
-                        for line in src:
-                            t = json.loads(line)["geometry"]["type"].replace("Multi", "")
-                            if t == geom:
-                                dst.write(line)
-                cmd += ["-L", f"{layer}:{split}"]
+            splits = {geom: os.path.join(self.vec, f"split_{tier}_{layer}_{f}") for geom, layer in layers.items()}
+            outs = {geom: open(path, "w", encoding="utf-8") for geom, path in splits.items()}
+            with open(os.path.join(self.vec, f), encoding="utf-8") as src:
+                for line in src:
+                    t = json.loads(line)["geometry"]["type"].replace("Multi", "")
+                    if t in outs:
+                        outs[t].write(line)
+            for o in outs.values():
+                o.close()
+            cmd += [arg for geom, layer in layers.items() for arg in ("-L", f"{layer}:{splits[geom]}")]
         subprocess.run(cmd, check=True)
         os.replace(p + ".part.pmtiles", p)
         log(f"tiles {tier}: {os.path.getsize(p) / 1e6:.1f} MB")

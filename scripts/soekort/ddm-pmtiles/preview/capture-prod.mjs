@@ -46,20 +46,7 @@ try {
       const file = path.join(OUT, `${s.name}-prod-a4-300dpi.webp`);
       await writeFile(file, await toWebp(browser, page1, 0.8));
       // Same crop size as the preview's, around the page centre.
-      const dims = await (async () => {
-        const ctx = await browser.newContext();
-        const p = await ctx.newPage();
-        const d = await p.evaluate(async (b64) => {
-          const i = new Image();
-          i.src = `data:image/png;base64,${b64}`;
-          await i.decode();
-          return [i.width, i.height];
-        }, page1.toString("base64"));
-        await ctx.close();
-        return d;
-      })();
-      await writeFile(file.replace(".webp", "-udsnit.webp"),
-        await toWebp(browser, page1, 0.86, { clip: [dims[0] / 2 - 700, dims[1] / 2 - 450, 1400, 900] }));
+      await writeFile(file.replace(".webp", "-udsnit.webp"), await toWebp(browser, page1, 0.86, { centre: [1400, 900] }));
     }
     console.log(`${s.name}: ${PROD}/?${q}`);
     await context.close();

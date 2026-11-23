@@ -29,7 +29,10 @@ scripts/soekort/ddm-pmtiles/build.sh ~/dev/soekort-ddm/test --bbox 4013000 31030
 `build.sh` builds the Docker image (`Dockerfile`) and runs `build.py` in it.
 Every step is cached in the workdir (downloads, grids, GeoJSONSeq, per-tier
 PMTiles), so a rerun only does what is missing; `--force` redoes the named
-steps. Independent steps can run in parallel:
+steps. A workdir is tied to its `--bbox` and `--no-emodnet` (the build refuses
+a mismatch; use another workdir), and every `tiles-*` step splits the vectors
+anew, so it always reads what the vector steps wrote last. Independent steps
+can run in parallel:
 
 ```sh
 printf '%s\n' t1-areas t1-lines t1-sound t1-emod t2-areas t2-lines t2-emod t3-areas t3-lines t3-emod lakes \
@@ -51,7 +54,7 @@ Steps: `grids`, then `t1|t2|t3-areas|lines|emod`, `t1-sound`, `lakes`, then
 
 | | |
 | --- | --- |
-| `soekort.pmtiles` | **61.7 MB** (zoom 5-14, 223,969 tiles): t1 55.1 MB, t2 5.9 MB, t3 0.7 MB |
+| `soekort.pmtiles` | **61.4 MB** (zoom 5-14): t1 54.8 MB, t2 5.9 MB, t3 0.7 MB |
 | Downloads | DDM 128 MB (9 s), EMODnet 98 one-degree WCS tiles (393 MB, about 2 min), NOVANA WFS (144 MB) |
 | `grids` | 4 min (incl. the EMODnet download) |
 | Vector steps | about 13.5 min of work in total; 6-8 min wall time with `xargs -P 6` (`t1-areas` alone takes 6-8 min) |
@@ -89,8 +92,10 @@ model (540 MB as Float32) and a few working copies of it.
      arc over the label length), every 2 km (t1), 4 km (t2) or 40 km (t3),
      with the angle `a` for `text-rotate` kept upright.
    - `k=s`: shoal soundings, local minima of the smoothed model at least 1 m
-     shallower than the surroundings.
-   - `k=g`: a sparse grid of soundings, the shallowest cell per 1 km block.
+     shallower than the mean of the surroundings (finite cells only; 5,219 in
+     the full build).
+   - `k=g`: a sparse grid of soundings, the shallowest cell per 1 km block
+     (81,473), none next to a shoal sounding.
    
    Soundings use the unsmoothed model value, truncated to 0.1 m (towards the
    shallow side, as charts do).
@@ -122,7 +127,7 @@ PMTILES=~/dev/soekort-ddm/work/soekort.pmtiles node scripts/soekort/ddm-pmtiles/
 
 PMTILES=... KORT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs node scripts/soekort/ddm-pmtiles/preview/capture.mjs
 KORT_PLAYWRIGHT_MODULE=/path/to/playwright/index.mjs node scripts/soekort/ddm-pmtiles/preview/capture-prod.mjs
-node scripts/soekort/ddm-pmtiles/preview/export-styles.mjs
+PMTILES=~/dev/soekort-ddm/work/soekort.pmtiles node scripts/soekort/ddm-pmtiles/preview/export-styles.mjs
 ```
 
 - `serve.mjs` serves the page, MapLibre and pmtiles from `node_modules`, the
@@ -132,7 +137,10 @@ node scripts/soekort/ddm-pmtiles/preview/export-styles.mjs
   layers into the skærmkort style.
 - `capture.mjs` and `capture-prod.mjs` write the WebP images for the research
   folder. `capture-prod.mjs` uses kort.mahoje.dk's own "Download PDF".
-- `export-styles.mjs` writes the style JSON files.
+  `capture.mjs` does not save a shot when MapLibre reported an error (a
+  missing tile), and exits with status 1.
+- `export-styles.mjs` writes the style JSON files, with the attribution read
+  from the built file (it stops if the date or the terms link is missing).
 
 ## Hosting
 
@@ -150,5 +158,6 @@ Cloudflare caches for a day). Not uploaded yet.
 
 Keep the source file and its download date with the build: the DDM50 credit
 must name the date the data was fetched, and data fetched under the current
-terms may keep being used on them. The date is written into the PMTiles
-attribution.
+terms may keep being used on them. The date and a link to the DDM50 terms
+(which must be available to anyone who gets the data) are written into the
+PMTiles attribution, so the hosted file carries them on its own.

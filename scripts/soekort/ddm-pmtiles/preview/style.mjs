@@ -6,9 +6,27 @@
 // 300 dpi PDF gets the same weights as the screen. Zoom thresholds are given for
 // the screen (96 dpi) and shifted by the same factor: 1:25.000 is zoom 12.7 on
 // screen and 14.3 in a 300 dpi PDF, and both show the same things.
+//
+// The PDF loads tiles 1.6 zoom levels deeper than the screen at the same scale,
+// so it gets a finer data tier (1 m and 3 m bands, soundings). Every layer is
+// therefore split per data tier, with the tier's screen zoom range shifted like
+// the other thresholds, and shows only what that tier holds on screen.
 
 export const SCREEN_PX_PER_MM = 96 / 25.4;
 const FONT = ["Open Sans Regular"];
+
+/**
+ * What each zoom tier of soekort.pmtiles holds (TIERS and EMOD_LEVELS in
+ * build.py). `from` is the first tile zoom; on screen (512 px tiles, pixel
+ * ratio 1) the tile zoom is the screen zoom rounded down.
+ */
+export const DATA_TIERS = [
+  { from: 5, ddm: [2, 5, 10, 20, 50, 100, 200], emodnet: [10, 20, 50, 100, 200], lakes: false, soundings: false },
+  { from: 9, ddm: [2, 5, 10, 20, 30, 50, 100, 200], emodnet: [5, 10, 20, 50, 100, 200], lakes: true, soundings: false },
+  { from: 12, ddm: [1, 2, 3, 5, 10, 15, 20, 30, 50, 100, 200], emodnet: [5, 10, 20, 50, 100, 200], lakes: true, soundings: true },
+];
+// NOVANA lake data is the same in every tier that has lakes.
+const LAKE_LEVELS = [1, 2, 3, 5, 10, 15, 20, 30, 50, 100, 200];
 
 /**
  * Three variants. `bands` are [from-depth, colour]; the first entry is from 0 m.
@@ -42,7 +60,7 @@ export const VARIANTS = {
     gridMinZoom: 12.5,
   },
   // Little ink: two shallow tints, white beyond 5 m, darker labelled lines.
-  // Holds up on a laser printer and over DTK25 or aerial photos.
+  // Holds up on a laser printer. The bands are opaque, so not over raster base maps.
   linjer: {
     label: "Linjer (sparsomt blæk)",
     bands: [[0, "#c4def2"], [2, "#e2eff9"], [5, "#ffffff"]],
@@ -83,7 +101,12 @@ export function depthLayers(sourceId, { variant = "klassisk", pxPerMm = SCREEN_P
   // (1.75 mm is only 6.6 px at 96 dpi; at 300 dpi it is 20.7 px and the floor never applies).
   const size = (millimetres, minPx) => Math.max(millimetres * mm, minPx);
   const z = (screenZoom) => screenZoom + Math.log2(pxPerMm / SCREEN_PX_PER_MM);
-  const fill = ["step", ["get", "d0"], v.bands[0][1], ...v.bands.slice(1).flat()];
+  // Only the bands whose upper depths are levels of the tier; finer bands take the colour of the band around them.
+  const bandFill = (levels) => {
+    const bands = v.bands.filter(([from], i) => i === 0 || levels.includes(from));
+    return bands.length > 1 ? ["step", ["get", "d0"], bands[0][1], ...bands.slice(1).flat()] : bands[0][1];
+  };
+  const fill = bandFill(LAKE_LEVELS);
   const lastBand = v.bands[v.bands.length - 1][0];
   const major = inList(v.major);
   const safety = inList(v.safety);
@@ -201,7 +224,31 @@ export function depthLayers(sourceId, { variant = "klassisk", pxPerMm = SCREEN_P
       id: `${l.id}-${onlyLakes ? "lake" : "sea"}`,
       filter: ["all", [onlyLakes ? "==" : "!=", ["get", "src"], "novana"], ...(l.filter ? [l.filter] : [])],
     }));
-  return { sea: split(false), lake: split(true), labels };
+
+  // One copy per data tier, active over the tier's screen zoom range (shifted
+  // for print), showing only the levels the tier has: a PDF that loads a finer
+  // tier then shows what the screen shows at the same scale.
+  const perTier = (layer) =>
+    DATA_TIERS.flatMap((t, i) => {
+      const next = DATA_TIERS[i + 1];
+      const minzoom = Math.max(layer.minzoom ?? -Infinity, i ? z(t.from) : -Infinity);
+      const maxzoom = next ? z(next.from) : Infinity;
+      const sounding = layer.type === "symbol" && !layer.id.includes("contour-labels");
+      if (minzoom >= maxzoom || (sounding && !t.soundings)) return [];
+      const src = (lakes, emodnet, ddm) => ["match", ["get", "src"], "novana", lakes, "emodnet", emodnet, ddm];
+      const copy = { ...layer, id: `${layer.id}-z${t.from}` };
+      delete copy.minzoom;
+      if (minzoom > -Infinity) copy.minzoom = minzoom;
+      if (maxzoom < Infinity) copy.maxzoom = maxzoom;
+      if (layer.type === "fill") {
+        copy.filter = ["all", src(t.lakes, true, true), layer.filter];
+        copy.paint = { ...layer.paint, "fill-color": src(fill, bandFill(t.emodnet), bandFill(t.ddm)) };
+      } else if (!sounding) {
+        copy.filter = ["all", src(t.lakes, inList(t.emodnet), inList(t.ddm)), layer.filter];
+      }
+      return [copy];
+    });
+  return { sea: split(false).flatMap(perTier), lake: split(true).flatMap(perTier), labels: labels.flatMap(perTier) };
 }
 
 /**

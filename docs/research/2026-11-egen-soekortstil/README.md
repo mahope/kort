@@ -5,7 +5,7 @@ er ikke ændret. Byggescript: [`scripts/soekort/ddm-pmtiles/`](../../../scripts/
 
 ## Kort fortalt (dansk)
 
-- **Vi har nu egne dybdefliser for hele Danmark.** Én PMTiles-fil på 61,7 MB med
+- **Vi har nu egne dybdefliser for hele Danmark.** Én PMTiles-fil på 61,4 MB med
   dybdebånd, dybdekurver og dybdetal, bygget af Danmarks Dybdemodel (50 m) i
   danske farvande, EMODnet uden for og NOVANA-kurverne i 80 søer. Den bygges på
   cirka 21 minutter med ét script og uden nogen nøgle.
@@ -39,13 +39,15 @@ en indstilling i appen.
 
 | | Variant | Hvem | Billede |
 | --- | --- | --- | --- |
-| **A** | **Klassisk søkort**: fem blå toner (0-2, 2-5, 5-10, 10-20 og over 20 m), lavt vand mørkest, dybt vand næsten hvidt. 2 m- og 5 m-kurverne er tykkere. Grundtal fra 1:50.000 på print. | Alle; ligner et papirsøkort | ![Klassisk](svendborgsund-egen-klassisk-skaerm.webp) |
+| **A** | **Klassisk søkort**: fem blå toner (0-2, 2-5, 5-10, 10-20 og over 20 m), lavt vand mørkest, dybt vand næsten hvidt. 2 m- og 5 m-kurverne er tykkere. Grundtal fra cirka 1:40.000, på skærm og papir. | Alle; ligner et papirsøkort | ![Klassisk](svendborgsund-egen-klassisk-skaerm.webp) |
 | **B** | **Lavt vand (kano og kajak)**: de første 5 m meter for meter (0-1, 1-2, 2-3, 3-5), alt over 10 m hvidt, 1 m-kurver med tal. | Kano, kajak, jolle, spejdersejlads | ![Lavt vand](svendborgsund-egen-lavvande-skaerm.webp) |
-| **C** | **Linjer (sparsomt blæk)**: kun to lyse toner (0-2 og 2-5 m), hvidt derefter, mørkere kurver med tal. | Laserprinter, sort/hvid-kopi, over DTK25 eller luftfoto | ![Linjer](svendborgsund-egen-linjer-skaerm.webp) |
+| **C** | **Linjer (sparsomt blæk)**: kun to lyse toner (0-2 og 2-5 m), hvidt derefter, mørkere kurver med tal. | Laserprinter, sort/hvid-kopi | ![Linjer](svendborgsund-egen-linjer-skaerm.webp) |
 
 **Min anbefaling:** A som standard, B som valg for "lavt vand" i sidepanelet. C
-er god, hvis havdybder også skal kunne lægges over DTK25 og luftfoto, hvor fyldte
-bånd skjuler for meget.
+er god til sparsomt blæk. Over DTK25 og luftfoto duer ingen af de tre endnu:
+alle har dækkende bånd (C er hvid efter 5 m), og båndene går 1 km ind over
+land. Indtil båndene er klippet til kysten, viser fase 2 kun kurver og tal over
+raster-baggrundskort (afsnit 6).
 
 Samme tre varianter i Det Sydfynske Øhav (1:50.000):
 [klassisk](sydfynske-oehav-egen-klassisk-skaerm.webp),
@@ -172,6 +174,15 @@ paper, and zoom thresholds move with the dpi (1:25.000 is zoom 12.7 on screen
 and 14.3 at 300 dpi, and shows the same things at both). On screen, sizes have a
 pixel floor (text never under 10 px), which never applies at print dpi.
 
+At the same scale the PDF loads tiles 1.6 zoom levels deeper than the screen,
+so it can get a finer data tier (1 m and 3 m bands, soundings) than the
+screen. `style.mjs` therefore splits every layer per data tier (`DATA_TIERS`,
+mirroring `TIERS` in `build.py`), shifts each tier's zoom range like the other
+thresholds and shows only the levels that tier has on screen; finer bands
+take the colour of the band around them. A test simulates both renderers and
+requires the same bands, lines and numbers. Shoal soundings therefore start at
+zoom 12 (about 1:40.000), where the screen gets them.
+
 The layers come in three groups, and the order in the base map matters:
 
 | Group | Layers | Goes |
@@ -225,7 +236,10 @@ combined with other materials/data"). Reading:
 - **Credit changes** from "Indeholder WMS-tjeneste" to the download date:
   "Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning,
   hentet 23.11.2026. Model og data er ikke egnet til navigation." The build
-  writes this, with the date, into the PMTiles attribution. Keep the link to the
+  writes this, with the date and a link to the terms ("Der skal stilles en kopi
+  af nærværende vilkår, evt. ved hjælp af et link, til rådighed for
+  tredjemand"), into the PMTiles attribution, so someone who fetches the hosted
+  file directly gets the terms with it. Keep the link to the
   terms (on the map and on `/kilder`) and "IKKE TIL NAVIGATION" on the PDF.
 - "Data, der allerede er downloadet, når de nye vilkår træder i kraft, kan
   fortsat anvendes på de hidtil gældende vilkår": keep the source file and its
@@ -255,7 +269,7 @@ ssh hetzner-main 'mv /opt/kort-tiles/html/soekort.pmtiles.ny /opt/kort-tiles/htm
 curl -sI -H 'Range: bytes=0-127' https://tiles.mahoje.dk/soekort.pmtiles   # expect 206
 ```
 
-61.7 MB is in the same range as the contour file. The app would read the URL
+61.4 MB is in the same range as the contour file. The app would read the URL
 from a new `NEXT_PUBLIC_SOEKORT_URL` (default `https://tiles.mahoje.dk/soekort.pmtiles`),
 as `NEXT_PUBLIC_CONTOURS_URL` does. `tiles.mahoje.dk` is already in the CSP.
 
@@ -287,8 +301,11 @@ phase 2 starts after it lands.
    is no land polygon to hide the 1 km fill under, so the bands must be clipped
    to a real coastline in the build: GeoDanmark's coastline or DAGI land
    polygons (both CC BY 4.0, Klimadatastyrelsen; check where they are
-   downloadable after the move to Datafordeleren). Until then variant C (lines
-   and light tints) is the one that works over raster maps.
+   downloadable after the move to Datafordeleren). Until then no variant works
+   over raster maps as it is: all three have opaque bands (variant C is white
+   beyond 5 m) that would cover land and photo up to 1 km past the model's
+   coast. Over raster base maps, draw only the contours and numbers (leave out
+   the `areas` layers) until the bands are clipped.
 4. **PDF.** `renderMapToImage` already passes `pxPerMm`; the layers take it.
    Credit: replace the DDM "Indeholder WMS-tjeneste" sentence by the download
    date from the file's attribution (or a constant written by the build), add

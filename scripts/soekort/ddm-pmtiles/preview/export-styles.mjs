@@ -1,16 +1,47 @@
 // Writes the style samples as plain MapLibre style JSON (one per variant, screen
 // sizes at 96 dpi) to docs/research/2026-11-egen-soekortstil/style/.
 //
-//   node scripts/soekort/ddm-pmtiles/preview/export-styles.mjs
-import { mkdir, writeFile } from "node:fs/promises";
+//   PMTILES=~/dev/soekort-ddm/work/soekort.pmtiles node scripts/soekort/ddm-pmtiles/preview/export-styles.mjs
+//
+// The attribution (download date, "not for navigation", DDM50 terms link) is
+// read from the built file, so the styles carry exactly what the tiles say.
+import { open, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { PMTiles } from "pmtiles";
 import { depthLayers, VARIANTS } from "./style.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.resolve(HERE, "../../../../docs/research/2026-11-egen-soekortstil/style");
 // Proposed home of the file, next to kurver-5m.pmtiles (not uploaded yet).
 const URL = "pmtiles://https://tiles.mahoje.dk/soekort.pmtiles";
+
+const PMTILES_FILE = process.env.PMTILES || path.join(process.env.HOME, "dev/soekort-ddm/work/soekort.pmtiles");
+
+/** pmtiles Source over a local file. */
+class LocalFile {
+  constructor(file) {
+    this.file = file;
+  }
+  getKey() {
+    return this.file;
+  }
+  async getBytes(offset, length) {
+    const fh = await open(this.file);
+    try {
+      const buf = Buffer.alloc(length);
+      const { bytesRead } = await fh.read(buf, 0, length, offset);
+      return { data: buf.buffer.slice(buf.byteOffset, buf.byteOffset + bytesRead) };
+    } finally {
+      await fh.close();
+    }
+  }
+}
+
+const { attribution } = await new PMTiles(new LocalFile(PMTILES_FILE)).getMetadata();
+if (!attribution || !/hentet \d{2}\.\d{2}\.\d{4}/.test(attribution) || !attribution.includes("href=\"https://dataforsyningen.dk/asset/PDF/rettigheder_vilkaar/")) {
+  throw new Error(`${PMTILES_FILE}: attribution without download date or terms link: ${attribution}`);
+}
 
 await mkdir(OUT, { recursive: true });
 for (const [variant, v] of Object.entries(VARIANTS)) {
@@ -30,9 +61,7 @@ for (const [variant, v] of Object.entries(VARIANTS)) {
       dybder: {
         type: "vector",
         url: URL,
-        attribution:
-          "Indeholder data fra Geodatastyrelsen, Danmarks Dybdemodel, 50 m opløsning, hentet [dato]. Model og data er ikke egnet til navigation. " +
-          "EMODnet Bathymetry (CC BY 4.0). Sødybder: Danmarks Miljøportal (NOVANA)",
+        attribution,
       },
     },
     layers: [{ id: "background", type: "background", paint: { "background-color": "#deedff" } }, ...sea, ...lake, ...labels],
