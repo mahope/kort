@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { DDM_TERMS_PAGE_URL, DDM_TERMS_URL, NAVIGATION_WARNING, OVERLAY_LABELS, OVERLAY_SOURCES, SEA_OVERLAYS, kdsPrintCredit, layerMinzoom, sourceZoomLimit } from "../sources";
 import { offlineLayerIds } from "@/lib/offline/tiles";
+import { upstreamTileUrl } from "@/lib/tiles/upstream";
 import { deserializeState, serializeState } from "@/lib/url/urlState";
 import { thirdPartyCredits, drawThirdPartyCredits, overviewCreditsBox } from "@/lib/pdf/generator";
 import { overviewPlacement } from "@/lib/pdf/assembly";
@@ -77,7 +78,8 @@ describe("overlay layers", () => {
   });
 
   it("uses the smoothed 2.5 m contours for contours25", () => {
-    expect(OVERLAY_SOURCES.contours25.tiles[0]).toContain("LAYERS=dhm_kurve_traditionel");
+    expect(OVERLAY_SOURCES.contours25.tiles[0]).toContain("/api/tiles/contours25/");
+    expect(upstreamTileUrl("contours25", { z: 14, x: 8672, y: 5084 }, "png", "k")).toContain("LAYERS=dhm_kurve_traditionel");
   });
 
   it("marks the sea layers as not for navigation and keeps them out of offline saving", () => {

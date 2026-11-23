@@ -54,10 +54,20 @@ const SCREEN_RETRY_DELAYS_MS = [2000, 6000, 20000] as const;
 type MapEvent = TileEvent & { target: MaplibreMap; error?: unknown };
 
 /**
+ * A 4xx answer (MapLibre's AJAXError carries the status) says the same tile
+ * will fail again, e.g. the tile route's 404 outside Denmark. Timeouts (408)
+ * and rate limits (429) pass with time; errors without a status are network.
+ */
+function refused(error: unknown): boolean {
+  const status = (error as { status?: unknown } | undefined)?.status;
+  return typeof status === "number" && status >= 400 && status < 500 && status !== 408 && status !== 429;
+}
+
+/**
  * On screen MapLibre never asks again for a tile that failed (a WMS timeout or
- * a 5xx from Dataforsyningen), so the map kept a grey square of background
+ * a 5xx from the tile route), so the map kept a grey square of background
  * until the user panned. These handlers ask again a few times, with growing
- * pauses. Pass them to the map as onError and onSourceData: they must be there
+ * pauses, but not for a tile the server refused (4xx). Pass them to the map as onError and onSourceData: they must be there
  * from the start, since the first tiles load before the map's load event.
  */
 export function screenTileRetry(delays: readonly number[] = SCREEN_RETRY_DELAYS_MS) {
@@ -74,6 +84,7 @@ export function screenTileRetry(delays: readonly number[] = SCREEN_RETRY_DELAYS_
       const { sourceId } = e;
       const tileKey = e.tile?.tileID?.key;
       if (!sourceId || tileKey === undefined) return;
+      if (refused(e.error)) return;
       const key = `${sourceId}/${tileKey}`;
       const attempt = attempts.get(key) ?? 0;
       if (attempt >= delays.length) return; // the server keeps failing: leave it

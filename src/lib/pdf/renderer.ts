@@ -13,7 +13,6 @@ import {
   OVERLAY_SOURCES,
   printTilesFor,
   printZoomLimit,
-  sourceZoomLimit,
   usesNordicTopo,
   type RasterSourceConfig,
 } from "@/lib/map/sources";
@@ -237,12 +236,7 @@ export async function renderMapToImage({
         map.addLayer({ id: `${id}-layer`, type: "raster", source: id });
       }
     } else if (rasterSource) {
-      map.addSource(`base-${baseLayer}`, {
-        type: "raster",
-        tiles: rasterSource.tiles,
-        tileSize: rasterSource.tileSize,
-        ...sourceZoomLimit(rasterSource),
-      });
+      map.addSource(`base-${baseLayer}`, rasterSourceSpec(rasterSource));
       map.addLayer({ id: `base-${baseLayer}-layer`, type: "raster", source: `base-${baseLayer}` });
     }
 

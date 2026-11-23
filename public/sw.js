@@ -9,8 +9,14 @@ const OFFLINE_CACHE = "topoprint-offline-v2";
 // (the worker is plain JS and cannot import it).
 const OFFLINE_CONCURRENCY = 6;
 const OFFLINE_MAX_BATCH = 24;
-// Only Dataforsyningen tiles may be bulk-fetched (OSM's policy forbids it).
+// Only Dataforsyningen tiles and our own tile route (/api/tiles, the Danish
+// layers via Datafordeleren) may be bulk-fetched (OSM's policy forbids it).
 const OFFLINE_HOSTS = ["api.dataforsyningen.dk"];
+const TILE_ROUTE_PREFIX = "/api/tiles/";
+
+function isTileRoute(url) {
+  return url.origin === self.location.origin && url.pathname.startsWith(TILE_ROUTE_PREFIX);
+}
 // One A4 print at 300 dpi needs 88-98 tiles, so 3,000 covers roughly 30 prints
 // or a long browsing session while staying within a few hundred MB.
 const MAX_TILE_ENTRIES = 3000;
@@ -81,8 +87,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Map tiles: cache-first, revalidated at most once per 24 h
+  // Map tiles: cache-first, revalidated at most once per 24 h. Our own tile
+  // route is same-origin, so it must be caught before the same-origin branch.
   if (
+    isTileRoute(url) ||
     url.hostname === "api.dataforsyningen.dk" ||
     url.hostname === "tile.openstreetmap.org" ||
     url.hostname === "cdn.dataforsyningen.dk"
@@ -219,11 +227,12 @@ self.addEventListener("message", (event) => {
   );
 });
 
-// Cache key without the access token, so saved areas survive a token rotation.
+// Cache key without the access token or key, so saved areas survive a rotation.
 // Keep identical to offlineCacheKey() in src/lib/offline/tiles.ts.
 function offlineKey(url) {
   const u = new URL(url);
   u.searchParams.delete("token");
+  u.searchParams.delete("apikey");
   return u.href;
 }
 
@@ -238,7 +247,7 @@ function offlineUrls(urls, limit) {
         return null;
       }
     })
-    .filter((u) => u && u.protocol === "https:" && OFFLINE_HOSTS.includes(u.hostname))
+    .filter((u) => u && (isTileRoute(u) || (u.protocol === "https:" && OFFLINE_HOSTS.includes(u.hostname))))
     .slice(0, limit)
     .map((u) => u.href);
 }
@@ -289,13 +298,87 @@ async function offlineFetch(urls) {
 async function offlineDelete(urls) {
   const cache = await caches.open(OFFLINE_CACHE);
   let deleted = 0;
-  for (const u of offlineUrls(urls, 5000)) if (await cache.delete(offlineKey(u))) deleted++;
+  for (const u of offlineUrls(urls, 5000)) {
+    if (await cache.delete(offlineKey(u))) deleted++;
+    // Tiles not yet moved to the tile route's keys (see legacyOfflineKey).
+    const legacy = legacyOfflineKey(u);
+    if (legacy && (await cache.delete(legacy))) deleted++;
+  }
   return { deleted };
+}
+
+// Areas saved before the tile route sit under their old Dataforsyningen keys
+// until the page has moved them (src/lib/offline/legacyKeys.ts; keep these
+// templates identical to LEGACY_TILE_TEMPLATES there, minus the token, which
+// the key leaves out anyway). Keyed by "<route layer>.<format>".
+const LEGACY_WMS =
+  "service=WMS&version=1.1.1&request=GetMap&SRS=EPSG:3857&WIDTH=256&HEIGHT=256";
+const LEGACY_DHM = `https://api.dataforsyningen.dk/dhm_DAF?${LEGACY_WMS}&STYLES=&TRANSPARENT=TRUE&FORMAT=image/png`;
+function legacyWms(service, layers, rest = "TRANSPARENT=TRUE&FORMAT=image/png") {
+  return `https://api.dataforsyningen.dk/${service}?${LEGACY_WMS}&LAYERS=${layers}&STYLES=default&${rest}&BBOX={bbox}`;
+}
+const LEGACY_ROUTE_TEMPLATES = {
+  "ortofoto.jpg":
+    "https://api.dataforsyningen.dk/orto_foraar_webm_DAF?service=WMTS&request=GetTile&version=1.0.0" +
+    "&layer=orto_foraar_webm&style=default&TileMatrixSet=DFD_GoogleMapsCompatible" +
+    "&TileMatrix={z}&TileRow={y}&TileCol={x}&format=image/jpeg",
+  "dtk25.jpg": legacyWms("dtk_25_DAF", "DTK25", "TRANSPARENT=FALSE&FORMAT=image/jpeg"),
+  "historisk_hoeje.png": legacyWms("topo20_hoeje_maalebordsblade_DAF", "dtk_hoeje_maalebordsblade"),
+  "historisk_lave.png": legacyWms("topo20_lave_maalebordsblade_DAF", "dtk_lave_maalebordsblade"),
+  "stednavne.png": legacyWms("danske_stednavne_DAF", "danske_stednavne"),
+  "contours.png": `${LEGACY_DHM}&LAYERS=dhm_kurve_0_5_m&BBOX={bbox}`,
+  "contours25.png": `${LEGACY_DHM}&LAYERS=dhm_kurve_traditionel&BBOX={bbox}`,
+  "hillshade.png": `${LEGACY_DHM}&LAYERS=dhm_terraen_skyggekort&BBOX={bbox}`,
+};
+
+// Same arithmetic as tileBBox3857 in src/lib/tiles/bbox.ts.
+function tileBBox3857(z, x, y) {
+  const r = 6378137;
+  const world = 2 * Math.PI * r;
+  const originX = -Math.PI * r;
+  const tilesAtZoom = 2 ** z;
+  const extent = world / tilesAtZoom;
+  const gridMinY = Math.PI * r - world;
+  const row = tilesAtZoom - y - 1;
+  return `${originX + x * extent},${gridMinY + row * extent},${originX + (x + 1) * extent},${gridMinY + (row + 1) * extent}`;
+}
+
+function legacyOfflineKey(url) {
+  const u = new URL(url);
+  // The cadastre moved from forvaltning2_udv to wms/forvaltning2 with the same query.
+  if (u.hostname === "api.dataforsyningen.dk" && u.pathname === "/wms/forvaltning2") {
+    u.pathname = "/forvaltning2_udv";
+    return offlineKey(u.href);
+  }
+  if (!isTileRoute(u)) return null;
+  const m = u.pathname.slice(TILE_ROUTE_PREFIX.length).match(/^(\w+)\/(\d+)\/(\d+)\/(\d+)\.(png|jpg)$/);
+  const template = m && LEGACY_ROUTE_TEMPLATES[`${m[1]}.${m[5]}`];
+  if (!template) return null;
+  const [z, x, y] = [m[2], m[3], m[4]].map(Number);
+  return offlineKey(
+    template
+      .replace("{z}", z)
+      .replace("{x}", x)
+      .replace("{y}", y)
+      .replace("{bbox}", tileBBox3857(z, x, y))
+  );
+}
+
+async function savedTile(url) {
+  const cache = await caches.open(OFFLINE_CACHE);
+  const key = offlineKey(url);
+  const saved = await cache.match(key);
+  if (saved) return saved;
+  const legacy = legacyOfflineKey(url);
+  if (!legacy) return undefined;
+  // The page may move the tile between the two lookups: then it sits under
+  // the new key again.
+  return (await cache.match(legacy)) || cache.match(key);
 }
 
 // Cache-first; entries older than 24 h are refreshed in the background.
 async function tileStrategy(request, event) {
-  const saved = await (await caches.open(OFFLINE_CACHE)).match(offlineKey(request.url));
+  const saved = await savedTile(request.url);
   if (saved) return saved;
   const cache = await caches.open(TILE_CACHE);
   const cached = await cache.match(request);
@@ -327,10 +410,15 @@ async function fetchAndStoreTile(cache, request) {
       statusText: response.statusText,
       headers,
     });
-    await cache.put(request, stamped);
-    if (++tilesSinceTrim >= 50) {
-      tilesSinceTrim = 0;
-      await trimCache(cache, MAX_TILE_ENTRIES);
+    try {
+      await cache.put(request, stamped);
+      if (++tilesSinceTrim >= 50) {
+        tilesSinceTrim = 0;
+        await trimCache(cache, MAX_TILE_ENTRIES);
+      }
+    } catch {
+      // Storage full (quota) or unavailable: still show the tile we fetched,
+      // instead of turning a good answer into "Tile unavailable".
     }
   }
   return response;

@@ -106,8 +106,9 @@ and screenshots for both brands.
 
 ## Environment variables
 
-All are optional and public (`NEXT_PUBLIC_*` values are baked into the client
-bundle at build time). See [.env.example](.env.example) and [docs/tokens.md](docs/tokens.md).
+All are optional. The `NEXT_PUBLIC_*` values are public and baked into the
+client bundle at build time; `DATAFORDELER_API_KEY` is a server-side secret
+read at runtime. See [.env.example](.env.example) and [docs/tokens.md](docs/tokens.md).
 
 | Variable | Default | Purpose |
 |---|---|---|
@@ -115,6 +116,7 @@ bundle at build time). See [.env.example](.env.example) and [docs/tokens.md](doc
 | `NEXT_PUBLIC_DATAFORSYNINGEN_TOKEN` | fallback in `src/lib/map/styles.ts` | Map tiles and WMS from Dataforsyningen. Get your own free token at [dataforsyningen.dk](https://dataforsyningen.dk/) if you deploy a copy |
 | `NEXT_PUBLIC_ADRESSEVAELGER_TOKEN` | fallback in `src/lib/api/address.ts` | Address search (Adressevælger) |
 | `NEXT_PUBLIC_CONTOURS_URL` | `https://tiles.mahoje.dk/kurver-5m.pmtiles` | PMTiles file for the 5 m / 10 m contours |
+| `DATAFORDELER_API_KEY` | empty: same tiles from Dataforsyningen's older services | **Server-side, runtime.** Datafordeler API key for the Danish raster layers (DTK25, orthophoto, historic maps, place names, DHM). The tile route `/api/tiles` adds it on the server, so it never reaches the browser. Without it the app works as before, until Dataforsyningen closes those services on 26 Nov 2026 |
 
 Never give a secret a `NEXT_PUBLIC_` name. A service that needs a private key
 must be called through a server-side route.
@@ -128,8 +130,10 @@ docker build -t kort \
 docker run -p 3000:3000 kort
 ```
 
-Or `docker compose up` with the variables in your environment. Tokens are
-build arguments: changing them needs a new build, not just a restart.
+Or `docker compose up` with the variables in your environment. The public
+tokens are build arguments: changing them needs a new build, not just a
+restart. `DATAFORDELER_API_KEY` is the opposite: pass it at runtime
+(`docker run -e DATAFORDELER_API_KEY=…`), never as a build argument.
 
 Production runs on Dokploy. Both kort.mahoje.dk and kort.solaris.dk build the
 `Dockerfile` from `main` and deploy automatically on every merge. CI
@@ -140,7 +144,7 @@ audit and a gitleaks secret scan on every pull request; it does not deploy.
 
 ```
 src/
-├── app/            Next.js routes: / (map), /om, /kilder, /topografisk-kort-print, /api/stednavne
+├── app/            Next.js routes: / (map), /om, /kilder, /topografisk-kort-print, /api/stednavne, /api/tiles
 ├── components/     map/, sidebar/, search/, print/, ui/, about/
 ├── lib/
 │   ├── map/        map styles, sources and credits, our own vector overlays
@@ -150,14 +154,20 @@ src/
 │   ├── stednavne/  place-name index, search and rate limit
 │   ├── import/     GPX, GeoJSON and KML import
 │   ├── offline/    offline areas and tile cache (with public/sw.js)
+│   ├── tiles/      the tile route's layer list and upstream URLs (Datafordeleren)
 │   └── url/        shareable URL state
 ├── stores/         Zustand stores (map, print, ui, import, draw, history, bookmarks, offline)
 ├── constants/      scales, paper formats, data sources (shown on /kilder)
 └── config/         brand config (mahoje / solaris)
 ```
 
-- **Map:** Dataforsyningen's vector tiles and WMS in Web Mercator (EPSG:3857)
-  are rendered directly by MapLibre; no reprojection.
+- **Map:** Web Mercator (EPSG:3857) throughout, rendered directly by MapLibre;
+  no reprojection. The Danish raster layers (DTK25, orthophoto, historic maps,
+  place names, DHM) come from Datafordeleren through our own tile route
+  `/api/tiles/<layer>/<z>/<x>/<y>.<png|jpg>`, which adds the API key on the
+  server, refuses anything but known layers and tiles inside Denmark, and sets
+  long `Cache-Control` headers. Skærmkort, the cadastre and the sea depths
+  still load straight from Dataforsyningen with the public token.
 - **PDF:** the browser creates a hidden MapLibre instance at the target
   resolution (up to 300 dpi), waits for every tile, and adds the image to jsPDF
   with grid, scale bar, north arrow, declination diagram and credits. The scale
@@ -195,8 +205,8 @@ Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first. Releas
 The code is released under the [MIT License](LICENSE), © 2026 Mads Holst Jensen / Mahope.
 
 The map data is **not** covered by the MIT License. Danish map data comes from
-[Klimadatastyrelsen](https://www.klimadatastyrelsen.dk/) via
-[Dataforsyningen](https://dataforsyningen.dk/) under CC BY 4.0, which requires
+[Klimadatastyrelsen](https://www.klimadatastyrelsen.dk/) (cadastre: Geodatastyrelsen) via
+[Datafordeleren](https://datafordeler.dk/) and [Dataforsyningen](https://dataforsyningen.dk/) under CC BY 4.0, which requires
 credit. The app shows it on the map, in the PDF footer and on the
 [/kilder](https://kort.mahoje.dk/kilder) page, and so must your copy. Outside
 Denmark: © [Kartverket](https://www.kartverket.no/) (CC BY 4.0) and ©

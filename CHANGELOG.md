@@ -8,6 +8,18 @@ All notable changes to this project are documented here. The format is based on
 ## [Unreleased]
 
 ### Changed
+- The Danish raster layers (DTK25, orthophoto, Høje/Lave Målebordsblade, Danske
+  Stednavne, DHM contours and hillshade) now come from Datafordeleren through
+  the app's own tile route `/api/tiles`, which adds the API key on the server
+  and sets cache headers. Without `DATAFORDELER_API_KEY` the route serves the
+  same tiles from Dataforsyningen as before (#5).
+- Cadastre (Matrikelskel) moved to `wms/forvaltning2` and is credited to
+  Geodatastyrelsen on the map, in the PDF and on `/kilder` (#5).
+- The service worker caches and saves tiles from the tile route for offline use.
+  Areas saved before are moved to the new cache keys on the first load, so they
+  keep working offline. Until the move is done (or if storage is full), the
+  service worker still finds their tiles under the old keys, and the areas stay
+  in the list. Deleting such an area also deletes its tiles under the old keys.
 - Sea layers read like a chart: Danmarks Dybdemodel draws as smooth blue depths
   (the plain depth layer, enlarged from the model's own 50 m cells instead of
   grey-black blocks), the seabed relief always lies under the depth colours,
@@ -20,12 +32,20 @@ All notable changes to this project are documented here. The format is based on
   not Furesø).
 
 ### Fixed
-- A map tile that failed to load (a timeout or server error at Dataforsyningen)
-  stayed a grey square until the map moved; it is now requested again.
+- Saved offline areas are only dropped from the list when none of their tiles is
+  left, so a partial download no longer disappears because three sampled tiles
+  were missing.
+- A map tile that failed to load (a timeout or server error) stayed a grey
+  square until the map moved; it is now requested again. Tiles the server
+  refuses, such as the tile route's 404 outside Denmark, are not.
 - A shared link without opacities (`ov=dd,hb`) showed every layer at 100 %, so
   the grey relief covered the sea; it now uses each layer's default.
 - An overlay switched on later no longer draws over the ones below it in the
   list (the relief over the depths, or the depths over the wrecks).
+
+### Added
+- A short, closable notice over Danish views during Dataforsyningen's platform
+  move (26 Nov 16:00 to 30 Nov 08:00, 2026). It disappears by itself.
 
 ## [0.1.0] - 2026-11-23
 

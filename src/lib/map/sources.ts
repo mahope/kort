@@ -2,82 +2,45 @@ import type { BaseLayer, MapStyle, OverlayId } from "@/types/map";
 import type { MapRegion } from "@/lib/geo/regions";
 import { DATAFORSYNINGEN_TOKEN, MAP_STYLES } from "./styles";
 import { soekortDataUrl, type VectorOverlayKind } from "./vectorOverlays";
+import { getBrand } from "@/config/brand";
+import { DENMARK_TILE_BOUNDS, tileRouteTemplate } from "@/lib/tiles/routeLayers";
 
 /**
- * Ortofoto WMTS tile URL template.
- * Uses DFD_GoogleMapsCompatible TileMatrixSet (EPSG:3857).
+ * The Danish raster layers come through our own tile route (/api/tiles), which
+ * adds the Datafordeler API key on the server and sets cache headers; without
+ * a key it serves the same tiles from Dataforsyningen (src/lib/tiles/upstream.ts).
+ * MapLibre, the offline cache and the service worker need absolute URLs: the
+ * page's own origin in the browser, the brand's elsewhere (server, tests).
  */
-const ORTOFOTO_TILES_URL =
-  `https://api.dataforsyningen.dk/orto_foraar_webm_DAF?` +
-  `service=WMTS&request=GetTile&version=1.0.0` +
-  `&layer=orto_foraar_webm&style=default` +
-  `&TileMatrixSet=DFD_GoogleMapsCompatible` +
-  `&TileMatrix={z}&TileRow={y}&TileCol={x}` +
-  `&format=image/jpeg&token=${DATAFORSYNINGEN_TOKEN}`;
+const TILE_ORIGIN = typeof window !== "undefined" ? window.location.origin : getBrand().baseUrl;
 
-/**
- * DTK 25 (topografisk kort 1:25.000) WMS tile URL.
- * Uses Dataforsyningens dtk_25_DAF service.
- */
-export const DTK25_TILES_URL =
-  `https://api.dataforsyningen.dk/dtk_25_DAF?` +
-  `service=WMS&version=1.1.1&request=GetMap` +
-  `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
-  `&LAYERS=DTK25&STYLES=default` +
-  `&TRANSPARENT=TRUE&FORMAT=image/png` +
-  `&token=${DATAFORSYNINGEN_TOKEN}` +
-  `&BBOX={bbox-epsg-3857}`;
+/** Ortofoto (WMTS, DFD_GoogleMapsCompatible, JPEG). */
+const ORTOFOTO_TILES_URL = tileRouteTemplate(TILE_ORIGIN, "ortofoto", "jpg");
+
+/** DTK 25 (topografisk kort 1:25.000), transparent PNG for the PDF. */
+export const DTK25_TILES_URL = tileRouteTemplate(TILE_ORIGIN, "dtk25", "png");
 
 /**
  * DTK 25 for on-screen use: the layer is opaque, so JPEG is 7-13x smaller than
  * PNG. The PDF renderer keeps using DTK25_TILES_URL (PNG) for full quality.
  */
-const DTK25_SCREEN_TILES_URL = DTK25_TILES_URL.replace(
-  "TRANSPARENT=TRUE&FORMAT=image/png",
-  "TRANSPARENT=FALSE&FORMAT=image/jpeg"
-);
+const DTK25_SCREEN_TILES_URL = tileRouteTemplate(TILE_ORIGIN, "dtk25", "jpg");
+
+/** Høje Målebordsblade (1842-1899). */
+const HISTORISK_HOEJE_TILES_URL = tileRouteTemplate(TILE_ORIGIN, "historisk_hoeje", "png");
+
+/** Lave Målebordsblade (1901-1971). */
+const HISTORISK_LAVE_TILES_URL = tileRouteTemplate(TILE_ORIGIN, "historisk_lave", "png");
+
+/** Danske Stednavne. */
+const STEDNAVNE_TILES_URL = tileRouteTemplate(TILE_ORIGIN, "stednavne", "png");
 
 /**
- * Høje Målebordsblade (1842-1899) WMS tile URL.
- */
-const HISTORISK_HOEJE_TILES_URL =
-  `https://api.dataforsyningen.dk/topo20_hoeje_maalebordsblade_DAF?` +
-  `service=WMS&version=1.1.1&request=GetMap` +
-  `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
-  `&LAYERS=dtk_hoeje_maalebordsblade&STYLES=default` +
-  `&TRANSPARENT=TRUE&FORMAT=image/png` +
-  `&token=${DATAFORSYNINGEN_TOKEN}` +
-  `&BBOX={bbox-epsg-3857}`;
-
-/**
- * Lave Målebordsblade (1901-1971) WMS tile URL.
- */
-const HISTORISK_LAVE_TILES_URL =
-  `https://api.dataforsyningen.dk/topo20_lave_maalebordsblade_DAF?` +
-  `service=WMS&version=1.1.1&request=GetMap` +
-  `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
-  `&LAYERS=dtk_lave_maalebordsblade&STYLES=default` +
-  `&TRANSPARENT=TRUE&FORMAT=image/png` +
-  `&token=${DATAFORSYNINGEN_TOKEN}` +
-  `&BBOX={bbox-epsg-3857}`;
-
-/**
- * Danske Stednavne WMS tile URL.
- */
-const STEDNAVNE_TILES_URL =
-  `https://api.dataforsyningen.dk/danske_stednavne_DAF?` +
-  `service=WMS&version=1.1.1&request=GetMap` +
-  `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
-  `&LAYERS=danske_stednavne&STYLES=default` +
-  `&TRANSPARENT=TRUE&FORMAT=image/png` +
-  `&token=${DATAFORSYNINGEN_TOKEN}` +
-  `&BBOX={bbox-epsg-3857}`;
-
-/**
- * Matrikelskel WMS tile URL.
+ * Matrikelskel WMS tile URL. Geodatastyrelsen's cadastre, on Dataforsyningen's
+ * `wms/forvaltning2` (forvaltning2_udv closes on 26 Nov 2026; same layer and tiles).
  */
 const MATRIKEL_TILES_URL =
-  `https://api.dataforsyningen.dk/forvaltning2_udv?` +
+  `https://api.dataforsyningen.dk/wms/forvaltning2?` +
   `service=WMS&version=1.1.1&request=GetMap` +
   `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
   `&LAYERS=Matrikelskel&STYLES=default` +
@@ -85,29 +48,14 @@ const MATRIKEL_TILES_URL =
   `&token=${DATAFORSYNINGEN_TOKEN}` +
   `&BBOX={bbox-epsg-3857}`;
 
-/**
- * DHM (Danmarks Højdemodel) WMS base URL.
- * Used for contours and hillshade overlays.
- */
-const DHM_WMS_BASE =
-  `https://api.dataforsyningen.dk/dhm_DAF?` +
-  `service=WMS&version=1.1.1&request=GetMap` +
-  `&SRS=EPSG:3857&WIDTH=256&HEIGHT=256` +
-  `&STYLES=&TRANSPARENT=TRUE&FORMAT=image/png` +
-  `&token=${DATAFORSYNINGEN_TOKEN}`;
-
-/**
- * DHM Contour lines (0.5m) WMS tile URL.
- */
-const DHM_CONTOURS_URL =
-  `${DHM_WMS_BASE}&LAYERS=dhm_kurve_0_5_m&BBOX={bbox-epsg-3857}`;
+/** DHM (Danmarks Højdemodel) contour lines, 0.5 m. */
+const DHM_CONTOURS_URL = tileRouteTemplate(TILE_ORIGIN, "contours", "png");
 
 /**
  * DHM "traditionel" contours: 2.5 m interval, heavily smoothed for 1:25.000.
  * Much calmer on a 1:25.000 print than the 0.5 m lines.
  */
-const DHM_CONTOURS_25_URL =
-  `${DHM_WMS_BASE}&LAYERS=dhm_kurve_traditionel&BBOX={bbox-epsg-3857}`;
+const DHM_CONTOURS_25_URL = tileRouteTemplate(TILE_ORIGIN, "contours25", "png");
 
 /**
  * Danmarks Dybdemodel 2024, 50 m (Geodatastyrelsen): free to copy, publish and
@@ -186,11 +134,8 @@ const EMODNET_DEPTH_URL =
 /** OpenSeaMap seamarks (buoys, beacons, lights), transparent XYZ overlay. */
 const OPENSEAMAP_URL = "https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png";
 
-/**
- * DHM Hillshade (terrain shadow) WMS tile URL.
- */
-const DHM_HILLSHADE_URL =
-  `${DHM_WMS_BASE}&LAYERS=dhm_terraen_skyggekort&BBOX={bbox-epsg-3857}`;
+/** DHM hillshade (terrain shadow). */
+const DHM_HILLSHADE_URL = tileRouteTemplate(TILE_ORIGIN, "hillshade", "png");
 
 /**
  * Klimadatastyrelsen's free data is CC BY 4.0 since 16 May 2024: credit the
@@ -303,12 +248,14 @@ export function sourceZoomLimit(cfg: RasterSourceConfig): { maxzoom?: number } {
 
 const ORTOFOTO_SOURCE: RasterSourceConfig = {
   tiles: [ORTOFOTO_TILES_URL],
+  bounds: DENMARK_TILE_BOUNDS,
   tileSize: 256,
   attribution: "&copy; Klimadatastyrelsen",
 };
 
 export const DTK25_SOURCE: RasterSourceConfig = {
   tiles: [DTK25_TILES_URL],
+  bounds: DENMARK_TILE_BOUNDS,
   tileSize: 256,
   attribution: "&copy; Klimadatastyrelsen (DTK25)",
 };
@@ -327,12 +274,14 @@ const OSM_SOURCE: RasterSourceConfig = {
 
 const HISTORISK_HOEJE_SOURCE: RasterSourceConfig = {
   tiles: [HISTORISK_HOEJE_TILES_URL],
+  bounds: DENMARK_TILE_BOUNDS,
   tileSize: 256,
   attribution: "&copy; Klimadatastyrelsen (Høje Målebordsblade)",
 };
 
 const HISTORISK_LAVE_SOURCE: RasterSourceConfig = {
   tiles: [HISTORISK_LAVE_TILES_URL],
+  bounds: DENMARK_TILE_BOUNDS,
   tileSize: 256,
   attribution: "&copy; Klimadatastyrelsen (Lave Målebordsblade)",
 };
@@ -447,11 +396,13 @@ export const NORDIC_TOPO_SOURCES: readonly { id: string; cfg: RasterSourceConfig
 export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
   contours: {
     tiles: [DHM_CONTOURS_URL],
+    bounds: DENMARK_TILE_BOUNDS,
     tileSize: 256,
     attribution: "&copy; Klimadatastyrelsen (DHM)",
   },
   contours25: {
     tiles: [DHM_CONTOURS_25_URL],
+    bounds: DENMARK_TILE_BOUNDS,
     tileSize: 256,
     attribution: "&copy; Klimadatastyrelsen (DHM)",
   },
@@ -476,18 +427,22 @@ export const OVERLAY_SOURCES: Record<OverlayId, RasterSourceConfig> = {
   },
   hillshade: {
     tiles: [DHM_HILLSHADE_URL],
+    bounds: DENMARK_TILE_BOUNDS,
     tileSize: 256,
     attribution: "&copy; Klimadatastyrelsen (DHM)",
   },
   stednavne: {
     tiles: [STEDNAVNE_TILES_URL],
+    bounds: DENMARK_TILE_BOUNDS,
     tileSize: 256,
     attribution: "&copy; Klimadatastyrelsen (Stednavne)",
   },
   matrikel: {
     tiles: [MATRIKEL_TILES_URL],
     tileSize: 256,
-    attribution: "&copy; Klimadatastyrelsen (Matrikelskel)",
+    // The cadastre (MAT) is Geodatastyrelsen's: its terms ask for that credit, not KDS's.
+    attribution: `&copy; Geodatastyrelsen (Matrikelskel), <a href='${KDS_LICENCE_URL}'>CC BY 4.0</a>`,
+    credit: "Matrikelskel: Geodatastyrelsen, CC BY 4.0",
   },
   dybdemodel: {
     tiles: [DDM_DEPTH_URL],

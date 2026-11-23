@@ -101,6 +101,7 @@ vi.mock("../limits", async (orig) => ({
 }));
 
 import { renderMapToImage, TILE_RETRIES } from "../renderer";
+import { DENMARK_TILE_BOUNDS } from "@/lib/tiles/routeLayers";
 
 const OFFLINE_PDF_MESSAGE =
   "Du er offline: PDF kræver internet, også for gemte områder. Gemte områder virker kun i kortvisningen";
@@ -144,6 +145,15 @@ describe("renderMapToImage base map", () => {
   it("adds the raster tile source when a base map is selected", async () => {
     expect(await run({ ...base, overlays })).toHaveProperty("v");
     expect(addSource.mock.calls.map(([id]) => id)).toEqual(["base-ortofoto", "kurver5-overlay"]);
+  });
+
+  it("limits the Danish base map to the tile route's bounds, as the overlays", async () => {
+    const hillshade = [{ id: "hillshade", enabled: true, opacity: 1 }] as typeof base.overlays;
+    expect(await run({ ...base, baseLayer: "dtk25", overlays: hillshade })).toHaveProperty("v");
+    const specs = Object.fromEntries(addSource.mock.calls.map(([id, spec]) => [id, spec]));
+    expect(specs["base-dtk25"]).toMatchObject({ type: "raster", bounds: DENMARK_TILE_BOUNDS });
+    expect(specs["base-dtk25"].tiles[0]).toMatch(/\/api\/tiles\/dtk25\/\{z\}\/\{x\}\/\{y\}\.png$/);
+    expect(specs["hillshade-overlay"]).toMatchObject({ bounds: DENMARK_TILE_BOUNDS });
   });
 
   it("uses a white background and registers only the enabled overlays without a base map", async () => {

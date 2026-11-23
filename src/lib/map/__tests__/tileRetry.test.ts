@@ -32,9 +32,11 @@ function setup(delays: number[]) {
   return {
     map,
     retry,
-    fail: () => {
+    // Without a status like a timeout or network error; with one like MapLibre's AJAXError.
+    fail: (status?: number) => {
       map.states.set(42, "errored");
-      retry.onError({ target, sourceId: "base-raster", tile: { tileID: { key: 42 } } });
+      const error = status === undefined ? undefined : Object.assign(new Error(`HTTP ${status}`), { status });
+      retry.onError({ target, sourceId: "base-raster", tile: { tileID: { key: 42 } }, error });
     },
     load: () => {
       map.states.set(42, "loaded");
@@ -63,6 +65,26 @@ describe("screenTileRetry", () => {
       vi.advanceTimersByTime(3000);
     }
     expect(map.updates).toBe(2);
+  });
+
+  it("does not ask again for a tile the server refuses (the tile route's 404 outside Denmark, 400)", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { map, fail } = setup([1000]);
+    fail(404);
+    vi.advanceTimersByTime(1000);
+    fail(400);
+    vi.advanceTimersByTime(1000);
+    expect(map.updates).toBe(0);
+  });
+
+  it("asks again after a timeout, a rate limit or a server error", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    for (const status of [408, 429, 502, 503]) {
+      const { map, fail } = setup([1000]);
+      fail(status);
+      vi.advanceTimersByTime(1000);
+      expect(map.updates).toBe(1);
+    }
   });
 
   it("starts the count again once the tile has loaded", () => {
