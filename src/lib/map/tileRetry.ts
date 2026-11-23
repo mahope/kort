@@ -14,7 +14,10 @@ export type TileEvent = { sourceId?: string; dataType?: string; tile?: { tileID?
 // work for raster tiles (#66): as "expired" it counts as having data and was
 // drawn without a texture ("reading 'bind'"); as "loading" MapLibre dropped
 // some of them before they arrived, and the PDF was refused as incomplete.
-type Manager = { _removeTile?: (id: number | string) => void };
+type Manager = {
+  _removeTile?: (id: number | string) => void;
+  getTileByID?: (id: number | string) => { state?: string } | undefined;
+};
 
 type Internals = { _update?: () => void; redraw?: () => void; style?: { tileManagers?: Record<string, Manager> } };
 
@@ -59,7 +62,11 @@ type MapEvent = TileEvent & { target: MaplibreMap; error?: unknown };
  */
 export function screenTileRetry(delays: readonly number[] = SCREEN_RETRY_DELAYS_MS) {
   const attempts = new Map<string, number>();
-  const timers = new Set<ReturnType<typeof setTimeout>>();
+  const timers = new Map<string, ReturnType<typeof setTimeout>>();
+  const cancel = (key: string) => {
+    clearTimeout(timers.get(key));
+    timers.delete(key);
+  };
   return {
     onError(e: MapEvent) {
       // What react-map-gl does without an onError handler.
@@ -71,17 +78,26 @@ export function screenTileRetry(delays: readonly number[] = SCREEN_RETRY_DELAYS_
       const attempt = attempts.get(key) ?? 0;
       if (attempt >= delays.length) return; // the server keeps failing: leave it
       attempts.set(key, attempt + 1);
+      cancel(key);
       const timer = setTimeout(() => {
-        timers.delete(timer);
+        timers.delete(key);
+        // Only drop the tile if it is still the failed one: the base map keeps
+        // its source id when the user switches (setTiles), and the new map's
+        // tile under the same key must not be aborted.
+        const manager = (e.target as unknown as Internals).style?.tileManagers?.[sourceId];
+        if (manager?.getTileByID?.(tileKey)?.state !== "errored") return;
         retryTiles(e.target, new Map([[key, { sourceId, tileKey }]]));
       }, delays[attempt]);
-      timers.add(timer);
+      timers.set(key, timer);
     },
     onSourceData(e: TileEvent) {
-      if (e.tile && e.sourceId) attempts.delete(`${e.sourceId}/${e.tile.tileID?.key}`);
+      if (!e.tile || !e.sourceId) return;
+      const key = `${e.sourceId}/${e.tile.tileID?.key}`;
+      attempts.delete(key);
+      cancel(key);
     },
     stop() {
-      for (const t of timers) clearTimeout(t);
+      for (const t of timers.values()) clearTimeout(t);
       timers.clear();
     },
   };

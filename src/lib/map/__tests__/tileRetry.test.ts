@@ -2,13 +2,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Map as MaplibreMap } from "maplibre-gl";
 import { screenTileRetry } from "../tileRetry";
 
-/** Just enough of a MapLibre map: a tile manager and _update. */
+/** Just enough of a MapLibre map: a tile manager with tile states, and _update. */
 function fakeMap() {
   const removed: (string | number)[] = [];
+  const states = new Map<string | number, string>();
   const map = {
     updates: 0,
     removed,
-    style: { tileManagers: { "base-raster": { _removeTile: (k: string | number) => removed.push(k) } } },
+    states,
+    style: {
+      tileManagers: {
+        "base-raster": {
+          _removeTile: (k: string | number) => removed.push(k),
+          getTileByID: (k: string | number) => (states.has(k) ? { state: states.get(k) } : undefined),
+        },
+      },
+    },
     _update() {
       map.updates++;
     },
@@ -23,8 +32,14 @@ function setup(delays: number[]) {
   return {
     map,
     retry,
-    fail: () => retry.onError({ target, sourceId: "base-raster", tile: { tileID: { key: 42 } } }),
-    load: () => retry.onSourceData({ sourceId: "base-raster", dataType: "source", tile: { tileID: { key: 42 } } }),
+    fail: () => {
+      map.states.set(42, "errored");
+      retry.onError({ target, sourceId: "base-raster", tile: { tileID: { key: 42 } } });
+    },
+    load: () => {
+      map.states.set(42, "loaded");
+      retry.onSourceData({ sourceId: "base-raster", dataType: "source", tile: { tileID: { key: 42 } } });
+    },
   };
 }
 
@@ -58,6 +73,26 @@ describe("screenTileRetry", () => {
     fail();
     vi.advanceTimersByTime(1000);
     expect(map.updates).toBe(2);
+  });
+
+  it("leaves the new tile alone when the base map is switched before the retry", () => {
+    // DTK25 → ortofoto keeps the source id base-raster (setTiles), and MapLibre
+    // reloads the failed key as a new, loading tile from the new map.
+    const { map, fail } = setup([1000]);
+    fail();
+    map.states.set(42, "loading");
+    vi.advanceTimersByTime(1000);
+    expect(map.removed).toEqual([]);
+    expect(map.updates).toBe(0);
+  });
+
+  it("cancels the pending retry once the tile has loaded", () => {
+    const { map, fail, load } = setup([1000]);
+    fail();
+    load();
+    map.states.set(42, "errored"); // even if a later state looks failed again
+    vi.advanceTimersByTime(1000);
+    expect(map.updates).toBe(0);
   });
 
   it("ignores source errors without a tile, and stops when told to", () => {

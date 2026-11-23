@@ -90,6 +90,9 @@ export function MapContainer() {
 
   const mapStyle = getBaseMapStyle(baseLayer, style, nordic);
   const rasterBase = RASTER_BASE_LAYERS[baseLayer];
+  // What the always-mounted base-raster source is created with. It is hidden
+  // while the base map is not a raster, so these tiles are not requested then.
+  const mountedRaster = rasterBase ?? RASTER_BASE_LAYERS.dtk25;
 
   const onMove = useCallback(
     (evt: ViewStateChangeEvent) => {
@@ -172,19 +175,19 @@ export function MapContainer() {
       ))}
 
       {/* Raster base layer (ortofoto, dtk25, osm, historiske kort) */}
-      {/* Hidden, not unmounted, outside Denmark: a remount would add it on top of the overlays. */}
-      {rasterBase && (
-        <Source
-          id="base-raster"
-          type="raster"
-          tiles={rasterBase.tiles}
-          tileSize={rasterBase.tileSize}
-          {...sourceZoomLimit(rasterBase)}
-          attribution={rasterBase.attribution}
-        >
-          <Layer id="base-raster-layer" type="raster" layout={{ visibility: nordic ? "none" : "visible" }} />
-        </Source>
-      )}
+      {/* Hidden, not unmounted, outside Denmark and under a vector or no base
+          map: mounted later it would be added on top of the raster overlays,
+          which are always mounted, and cover them. Tiles follow via setTiles. */}
+      <Source
+        id="base-raster"
+        type="raster"
+        tiles={mountedRaster.tiles}
+        tileSize={mountedRaster.tileSize}
+        {...sourceZoomLimit(mountedRaster)}
+        attribution={mountedRaster.attribution}
+      >
+        <Layer id="base-raster-layer" type="raster" layout={{ visibility: rasterBase && !nordic ? "visible" : "none" }} />
+      </Source>
 
       {/* Overlays (generic loop). Raster overlays are always mounted and only
           hidden when off (hidden layers request no tiles): MapLibre puts a

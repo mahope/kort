@@ -253,7 +253,6 @@ export interface RasterSourceConfig {
     "raster-saturation"?: number;
     "raster-contrast"?: number;
     "raster-brightness-min"?: number;
-    "raster-brightness-max"?: number;
     "raster-resampling"?: "linear" | "nearest";
   };
   /** Third-party host whose terms do not cover bulk prefetching: never saved offline. */
